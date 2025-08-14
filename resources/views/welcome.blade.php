@@ -3,7 +3,7 @@
     <meta name="csrf-token" content="ZZFME39Fcxjv3N4ayHmc8eHBFUKX4Y59P6eicQgQ">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width,initial-scale=1.0">
-    <link rel="icon" href="/images/favicon.ico">
+    <link rel="icon" href="{{ asset('images/favicon.ico') }}">
     <link rel="stylesheet" href="/css/master.css">
 
     <title>Main Dashboard | Invento</title>
