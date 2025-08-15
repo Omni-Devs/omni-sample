@@ -9184,38 +9184,91 @@ input[type=color].form-control:disabled {
     <script src="/js/main.min.js"></script>
     
     <script>
-        document.addEventListener("DOMContentLoaded", function () {
-    const sidebar = document.querySelector(".ps-container.sidebar-left-secondary.ps.rtl-ps-none");
-console.log(sidebar)
-    if (!sidebar) return; // Safety check in case element not found
+document.addEventListener("DOMContentLoaded", function () {
+  const secondary = document.querySelector(".ps-container.sidebar-left-secondary.ps.rtl-ps-none");
+  if (!secondary) return;
 
-    // Add "open" on hover
-    document.addEventListener("mouseover", function (e) {
-        sidebar.classList.add("open");
+  // Map data-parent -> childNav <ul>
+  const childMap = new Map();
+  secondary.querySelectorAll("ul.childNav[data-parent]").forEach(ul => {
+    const key = (ul.dataset.parent || "").trim().toLowerCase();
+    if (key) childMap.set(key, ul);
+  });
 
-        // Detect if hovered element has data-parent
-            const parentItem = e.target.closest("[data-parent]");
-            if (parentItem) {
-                const parentValue = parentItem.getAttribute("data-parent");
-                // Find matching childNav
-                const childNav = document.querySelector(`.childNav[data-parent="${parentValue}"]`);
-            
-                console.log(childNav)
+  // Helpers
+  function hideAllChildNavs() {
+    childMap.forEach(ul => {
+      ul.classList.remove("d-block");
+      ul.classList.add("d-none");
+    });
+  }
+
+  function deactivateAllNavItems() {
+    secondary.querySelectorAll(".nav-item").forEach(item => {
+      item.classList.remove("active");
+    });
+  }
+
+  function showChildNav(key) {
+    const k = (key || "").toLowerCase();
+    const target = childMap.get(k);
+    if (!target) return;
+
+    hideAllChildNavs();
+    target.classList.remove("d-none");
+    target.classList.add("d-block");
+
+    deactivateAllNavItems();
+    const navItem = secondary.querySelector(`.nav-item[data-parent="${k}"], .nav-item a[href*="${k}"]`)?.closest(".nav-item");
+    if (navItem) navItem.classList.add("active");
+
+    secondary.classList.add("open");
+  }
+
+  function deriveKey(el) {
+    if (!el) return null;
+    if (el.dataset?.parent) return el.dataset.parent.toLowerCase();
+    if (el.dataset?.child) return el.dataset.child.toLowerCase();
+    if (el.dataset?.target) return el.dataset.target.toLowerCase();
+    const href = el.getAttribute?.("href");
+    if (href) {
+      const m = href.match(/\/app\/([^\/?#]+)/i);
+      if (m && childMap.has(m[1].toLowerCase())) return m[1].toLowerCase();
     }
+    const text = (el.textContent || "").trim().toLowerCase();
+    if (text && childMap.has(text)) return text;
+    return deriveKey(el.parentElement);
+  }
 
-        
-        console.log(parentItem)
-    });
+  // Hover handler
+  document.addEventListener("pointerover", function (e) {
+    const trigger = e.target.closest(
+      'a, button, [data-parent], .nav-item, .menu-item'
+    );
+    const key = deriveKey(trigger);
+    if (key) showChildNav(key);
+  }, true);
 
-    // Remove "open" if click outside
-    document.addEventListener("click", (event) => {
-        if (!sidebar.contains(event.target)) {
-            sidebar.classList.remove("open");
-        }
-    });
+  // Close on outside click
+  document.addEventListener("click", function (e) {
+    if (!secondary.contains(e.target)) {
+      secondary.classList.remove("open");
+      hideAllChildNavs();
+      deactivateAllNavItems();
+    }
+  });
+
+  // Default: Dashboard active
+  const activeNav = secondary.querySelector(".nav-item.active");
+  let defaultKey = "dashboard"; 
+  if (activeNav) {
+    const foundKey = deriveKey(activeNav);
+    if (foundKey) defaultKey = foundKey;
+  }
+  showChildNav(defaultKey);
 });
+</script>
 
-    </script>
   
 
 </body></html>
