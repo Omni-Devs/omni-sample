@@ -9181,7 +9181,41 @@ input[type=color].form-control:disabled {
                             Omnisystems Solutions, Inc.
                         </p> <p data-v-40d489d5="" class="m-0">All rights reserved - v4.0.6</p></div></div> <span data-v-40d489d5="" class="flex-grow-1"></span></div></div></div></div></div></main></div></div> <span><!----></span> <!----> <span><!----></span></div>
 
-    <script src="/js/main.min.js?v=4.0.6"></script>
+    <script src="/js/main.min.js"></script>
+    
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+    const sidebar = document.querySelector(".ps-container.sidebar-left-secondary.ps.rtl-ps-none");
+console.log(sidebar)
+    if (!sidebar) return; // Safety check in case element not found
+
+    // Add "open" on hover
+    document.addEventListener("mouseover", function (e) {
+        sidebar.classList.add("open");
+
+        // Detect if hovered element has data-parent
+            const parentItem = e.target.closest("[data-parent]");
+            if (parentItem) {
+                const parentValue = parentItem.getAttribute("data-parent");
+                // Find matching childNav
+                const childNav = document.querySelector(`.childNav[data-parent="${parentValue}"]`);
+            
+                console.log(childNav)
+    }
+
+        
+        console.log(parentItem)
+    });
+
+    // Remove "open" if click outside
+    document.addEventListener("click", (event) => {
+        if (!sidebar.contains(event.target)) {
+            sidebar.classList.remove("open");
+        }
+    });
+});
+
+    </script>
   
 
 </body></html>
