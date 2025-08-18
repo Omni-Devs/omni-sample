@@ -9174,126 +9174,85 @@ input[type=color].form-control:disabled {
     <script>
     document.addEventListener("DOMContentLoaded", function () {
         const secondary = document.querySelector(".ps-container.sidebar-left-secondary.ps.rtl-ps-none");
-        if (!secondary) return;
+        const navLeft = document.querySelector(".navigation-left");
+        if (!secondary || !navLeft) return;
 
 
-        // --- NEW CODE FOR GLOBAL SUBMENU ---
-        const dashboardChildNav = document.querySelector('.childNav[data-parent="dashboard"]');
-        if (dashboardChildNav) {
-            const globalDropdown = dashboardChildNav.querySelector('.dropdown-sidemenu');
-            const globalMenuItem = globalDropdown ? globalDropdown.querySelector('a') : null;
-            const submenu = globalDropdown ? globalDropdown.querySelector('ul.submenu') : null;
-            if (globalDropdown && globalMenuItem && submenu) {
-                submenu.classList.add('d-none');
-                globalDropdown.classList.remove('open');
-                globalMenuItem.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    const isOpen = globalDropdown.classList.contains('open');
-                    globalDropdown.classList.toggle('open');
-                    submenu.classList.toggle('d-none', isOpen);
-                    submenu.classList.toggle('d-block', !isOpen);
-                });
-            }
-        }
 
-        // --- NEW CODE FOR GENERAL SETTINGS SUBMENU ---
-        const settingsChildNav = document.querySelector('.childNav[data-parent="settings"]');
-        if (settingsChildNav) {
-            const generalDropdown = settingsChildNav.querySelector('.dropdown-sidemenu');
-            const generalMenuItem = generalDropdown ? generalDropdown.querySelector('a') : null;
-            const generalSubmenu = generalDropdown ? generalDropdown.querySelector('ul.submenu') : null;
-            if (generalDropdown && generalMenuItem && generalSubmenu) {
-                generalSubmenu.classList.add('d-none');
-                generalDropdown.classList.remove('open');
-                generalMenuItem.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    const isOpen = generalDropdown.classList.contains('open');
-                    generalDropdown.classList.toggle('open');
-                    generalSubmenu.classList.toggle('d-none', isOpen);
-                    generalSubmenu.classList.toggle('d-block', !isOpen);
-                });
-            }
-        }
+         // Map data-item -> nav-item
+  const navItems = new Map();
+  navLeft.querySelectorAll(":scope > .nav-item[data-item]").forEach(li => {
+    const key = (li.dataset.item || "").trim().toLowerCase();
+    if (key) navItems.set(key, li);
+  });
 
-        // Map data-parent -> childNav <ul>
-        const childMap = new Map();
-        secondary.querySelectorAll("ul.childNav[data-parent]").forEach(ul => {
-            const key = (ul.dataset.parent || "").trim().toLowerCase();
-            if (key) childMap.set(key, ul);
-        });
+  // Map data-parent -> childNav <ul>
+  const childMap = new Map();
+  secondary.querySelectorAll(":scope > div > ul.childNav[data-parent]").forEach(ul => {
+    const key = (ul.dataset.parent || "").trim().toLowerCase();
+    if (key) childMap.set(key, ul);
+  });
 
-        // Helpers
-        function hideAllChildNavs() {
-            childMap.forEach(ul => {
-            ul.classList.remove("d-block");
-            ul.classList.add("d-none");
-            });
-        }
-
-        function deactivateAllNavItems() {
-            secondary.querySelectorAll(".nav-item").forEach(item => {
-            item.classList.remove("active");
-            });
-        }
-
-        function showChildNav(key) {
-            const k = (key || "").toLowerCase();
-            const target = childMap.get(k);
-            if (!target) return;
-
-            hideAllChildNavs();
-            target.classList.remove("d-none");
-            target.classList.add("d-block");
-
-            deactivateAllNavItems();
-            const navItem = secondary.querySelector(`.nav-item[data-parent="${k}"], .nav-item a[href*="${k}"]`)?.closest(".nav-item");
-            if (navItem) navItem.classList.add("active");
-
-            secondary.classList.add("open");
-        }
-
-        function deriveKey(el) {
-            if (!el) return null;
-            if (el.dataset?.parent) return el.dataset.parent.toLowerCase();
-            if (el.dataset?.child) return el.dataset.child.toLowerCase();
-            if (el.dataset?.target) return el.dataset.target.toLowerCase();
-            const href = el.getAttribute?.("href");
-            if (href) {
-            const m = href.match(/\/app\/([^\/?#]+)/i);
-            if (m && childMap.has(m[1].toLowerCase())) return m[1].toLowerCase();
-            }
-            const text = (el.textContent || "").trim().toLowerCase();
-            if (text && childMap.has(text)) return text;
-            return deriveKey(el.parentElement);
-        }
-
-        // Hover handler
-        document.addEventListener("pointerover", function (e) {
-            const trigger = e.target.closest(
-            'a, button, [data-parent], .nav-item, .menu-item'
-            );
-            const key = deriveKey(trigger);
-            if (key) showChildNav(key);
-        }, true);
-
-        // Close on outside click
-        document.addEventListener("click", function (e) {
-            if (!secondary.contains(e.target)) {
-            secondary.classList.remove("open");
-            hideAllChildNavs();
-            deactivateAllNavItems();
-            }
-        });
-
-        // Default: Dashboard active
-        const activeNav = secondary.querySelector(".nav-item.active");
-        let defaultKey = "dashboard"; 
-        if (activeNav) {
-            const foundKey = deriveKey(activeNav);
-            if (foundKey) defaultKey = foundKey;
-        }
-        showChildNav(defaultKey);
+  function deactivateAll() {
+    navItems.forEach(li => li.classList.remove("active"));
+    childMap.forEach(ul => {
+      ul.classList.remove("d-block");
+      ul.classList.add("d-none");
     });
+  }
+
+  function activate(key) {
+    const li = navItems.get(key);
+    const ul = childMap.get(key);
+    if (!li || !ul) return;
+    deactivateAll();
+    li.classList.add("active");
+    ul.classList.remove("d-none");
+    ul.classList.add("d-block");
+    secondary.classList.add("open");
+  }
+
+  // Attach hover events
+  navItems.forEach((li, key) => {
+    li.addEventListener("mouseenter", () => activate(key));
+  });
+
+  // Close on outside click
+  document.addEventListener("click", (e) => {
+    if (!secondary.contains(e.target) && !navLeft.contains(e.target)) {
+      deactivateAll();
+      secondary.classList.remove("open");
+    }
+  });
+
+  // Default open = dashboard
+  activate("dashboard");
+});
+
+document.querySelectorAll('.dropdown-sidemenu > a').forEach(dropdownToggle => {
+    dropdownToggle.addEventListener('click', function (e) {
+        e.preventDefault(); // prevent jumping to top
+        
+        const parentLi = this.parentElement;
+
+        // Close other dropdowns at same level
+        parentLi.parentElement.querySelectorAll('.dropdown-sidemenu.open').forEach(openLi => {
+            if (openLi !== parentLi) {
+                openLi.classList.remove('open');
+                const submenu = openLi.querySelector('.submenu');
+                if (submenu) submenu.style.display = "none";
+            }
+        });
+
+        // Toggle this one
+        parentLi.classList.toggle('open');
+        const submenu = parentLi.querySelector('.submenu');
+        if (submenu) {
+            submenu.style.display = parentLi.classList.contains('open') ? "block" : "none";
+        }
+    });
+});
+
 </script>
 
   
