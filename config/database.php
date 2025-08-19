@@ -62,6 +62,16 @@ return [
             ]) : [],
         ],
 
+        'access' => [
+            'driver'   => 'odbc',
+            'dsn'      => "Driver={Microsoft Access Driver (*.mdb, *.accdb)};Dbq=" . base_path('OMNI_POS.accdb') . ";Uid=;Pwd=;",
+            'host'     => null,
+            'database' => base_path('OMNI_POS.accdb'),
+            'username' => null,
+            'password' => null,
+            'prefix'   => '',
+        ],
+
         'mariadb' => [
             'driver' => 'mariadb',
             'url' => env('DB_URL'),
