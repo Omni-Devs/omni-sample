@@ -23,4 +23,11 @@ class AccessDatabase
     {
         return $this->pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
     }
+
+    public function execute($query, $params = [])
+    {
+        $stmt = $this->pdo->prepare($query);
+        return $stmt->execute($params);
+    }
+
 }
