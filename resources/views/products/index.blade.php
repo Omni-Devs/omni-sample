@@ -9051,7 +9051,7 @@ input[type=color].form-control:disabled {
                         </button> <button class="btn btn-sm btn-outline-danger ripple mx-1"><i class="i-File-Excel"></i> EXCEL
                         </button> <button type="button" class="btn btn-info m-1 btn-sm"><i class="i-Upload"></i>
                             Import
-                        </button> <button type="button" class="btn mx-1 btn-btn btn-primary btn-icon"><i class="i-Add"></i>
+                        </button> <button type="button" class="btn mx-1 btn-btn btn-primary btn-icon" onclick="window.location='{{ url('products/create') }}'"><i class="i-Add"></i>
                             Add
                         </button> <button type="button" class="btn mx-1 btn-btn btn-primary">
                             Stock Alert Summary
