@@ -23,20 +23,14 @@ class ProductController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'prod_id'   => 'required|string',
-            'prod_name' => 'required|string',
-            'category'  => 'required|string',
-            'uprice'    => 'required|numeric',
+            'product_code'   => 'required|string',
+            'product_name' => 'required|string',
+            'category_id'  => 'required|numeric',
+            'sub_category_id'  => 'required|numeric',
+            'product_price'    => 'required|numeric',
         ]);
 
-        $db = new \App\Services\AccessDatabase();
-        $sql = "INSERT INTO Product (PROD_ID, PRODNAME, CATNAME, UPRICE) VALUES (?, ?, ?, ?)";
-        $db->execute($sql, [
-            $validated['prod_id'],
-            $validated['prod_name'],
-            $validated['category'],
-            $validated['uprice']    
-        ]);
+        Product::create($validated);
 
         return redirect()->route('products.index')->with('success', 'Product created successfully.');
     }
@@ -44,7 +38,7 @@ class ProductController extends Controller
     // Show the edit form
     public function edit($id)
     {
-        $product = \App\Models\Product::find($id);
+        $product = Product::find($id);
         if (!$product) {
             return redirect()->route('products.index')->with('error', 'Product not found.');
         }
@@ -55,10 +49,11 @@ class ProductController extends Controller
     public function update(Request $request, $id)
     {
         $validated = $request->validate([
-            'prod_id'   => 'required|string',
-            'prod_name' => 'required|string',
-            'category'  => 'required|string',
-            'uprice'    => 'required|numeric',
+            'product_code'   => 'required|string',
+            'product_name' => 'required|string',
+            'category_id'  => 'required|numeric',
+            'sub_category_id'  => 'required|numeric',
+            'product_price'    => 'required|numeric', 
         ]);
 
         Product::updateProduct($id, $validated);
@@ -68,7 +63,7 @@ class ProductController extends Controller
 
     public function destroy($id)
     {
-        $deleted = \App\Models\Product::deleteProduct($id);
+        $deleted = Product::deleteProduct($id);
 
         if ($deleted) {
             return redirect()->route('products.index')->with('success', 'Product deleted successfully.');

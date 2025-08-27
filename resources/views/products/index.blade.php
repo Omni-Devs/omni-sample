@@ -9067,11 +9067,15 @@ input[type=color].form-control:disabled {
                     <button><span class="sr-only">Sort table by Product Name in descending order</span></button>
                 </th>
                 <th scope="col" class="vgt-left-align text-left sortable">
-                    <span>Category</span>
+                    <span>Category Name</span>
+                    <button><span class="sr-only">Sort table by Category in descending order</span></button>
+                </th>
+                <th scope="col" class="vgt-left-align text-left sortable">
+                    <span>Sub Category Name</span>
                     <button><span class="sr-only">Sort table by Category in descending order</span></button>
                 </th>
                 <th scope="col" class="vgt-left-align text-right sortable">
-                    <span>Unit Price</span>
+                    <span>Product Price</span>
                     <button><span class="sr-only">Sort table by Unit Price in descending order</span></button>
                 </th>
                 <th scope="col" class="vgt-left-align text-right">
@@ -9083,13 +9087,14 @@ input[type=color].form-control:disabled {
         <tbody>
             @forelse ($products as $product)
                 <tr>
-                    <td class="text-left">{{ $product['PROD_ID'] }}</td>
-                    <td class="text-left">{{ $product['PRODNAME'] }}</td>
-                    <td class="text-left">{{ $product['CATNAME'] ?? 'N/A' }}</td>
-                    <td class="text-right">{{ number_format($product['UPRICE'], 2, '.', '') }}</td>
+                    <td class="text-left">{{ $product['PRODUCT_CODE'] }}</td>
+                    <td class="text-left">{{ $product['PRODUCT_NAME'] }}</td>
+                    <td class="text-left">{{ $product['CATEGORY'] ?? 'N/A' }}</td>
+                    <td class="text-left">{{ $product['SUBCATEGORY'] ?? 'N/A'}}</td>
+                    <td class="text-right">{{ number_format($product['PRODUCT_PRICE'], 2, '.', '') }}</td>
                     <td class="text-right">
-                        <a href="{{ route('products.edit', ['id' => $product['PROD_ID']]) }}" class="btn btn-sm btn-primary">Edit</a>
-                        <form action="{{ route('products.destroy', $product['PROD_ID']) }}" method="POST" style="display:inline-block;">
+                        <a href="{{ route('products.edit', ['id' => $product['PRODUCT_CODE']]) }}" class="btn btn-sm btn-primary">Edit</a>
+                        <form action="{{ route('products.destroy', $product['PRODUCT_CODE']) }}" method="POST" style="display:inline-block;">
                         @csrf
                         @method('DELETE')
                         <button type="submit" class="btn btn-sm btn-danger"
@@ -9112,7 +9117,7 @@ input[type=color].form-control:disabled {
             </option><option value="20">
             20
             </option><option value="30">
-            30
+            30x1
             </option><option value="40">
             40
             </option><option value="50">
