@@ -70,8 +70,7 @@ class Product
     {
         $db = new AccessDatabase();
 
-        $sql = "
-            UPDATE Products
+        $sql = "UPDATE Products
             SET PRODUCT_CODE = ?, PRODUCT_NAME = ?, CAT_ID = ?, SUBCAT_ID = ?, PRODUCT_PRICE = ? 
             WHERE PRODUCT_CODE = ?
         ";

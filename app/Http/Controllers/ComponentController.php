@@ -22,13 +22,17 @@ class ComponentController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'component' => 'required|string',
-            'catid'     => 'required|integer',
-            'ucost'     => 'required|numeric',
-            'unit'      => 'required|string',
+            'component_name' => 'required|string',
+            'category_id'     => 'required|integer',
+            'sub_category_id'     => 'required|integer',
+            'component_cost'     => 'required|numeric',
+            'component_price'     => 'required|numeric',
+            'component_unit'      => 'required|string',
             'onhand'    => 'required|integer',
+            // Remove 'for_sale' from validation, handle manually
         ]);
 
+        $validated['for_sale'] = $request->has('for_sale') ? 1 : 0;
         Component::create($validated);
 
         return redirect()->route('components.index')->with('success', 'Component created successfully.');
@@ -48,13 +52,17 @@ class ComponentController extends Controller
     public function update(Request $request, $id)
     {
         $validated = $request->validate([
-            'component' => 'required|string',
-            'catid'     => 'required|integer',
-            'ucost'     => 'required|numeric',
-            'unit'      => 'required|string',
+            'component_name' => 'required|string',
+            'category_id'     => 'required|integer',
+            'sub_category_id'     => 'nullable|integer',
+            'component_cost'     => 'required|numeric',
+            'component_price'     => 'required|numeric',
+            'component_unit'      => 'required|string',
             'onhand'    => 'required|integer',
+            // Remove 'for_sale' from validation, handle manually
         ]);
 
+        $validated['for_sale'] = $request->has('for_sale') ? 1 : 0;
         Component::updateComponent($id, $validated);
 
         return redirect()->route('components.index')->with('success', 'Component updated successfully.');
