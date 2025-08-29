@@ -101,4 +101,52 @@ class ProductController extends Controller
 
         return redirect()->route('products.index')->with('error', 'Failed to delete product.');
     }
+
+    /**
+     * AJAX endpoint: create a category and return JSON { id: <CAT_ID> }
+     */
+    public function storeCategory(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'Category_Name' => 'required|string',
+                'Description' => 'nullable|string'
+            ]);
+
+            $id = Product::createCategoryRecord($validated['Category_Name'], $validated['Description'] ?? '');
+            if ($id) {
+                return response()->json(['id' => $id]);
+            }
+
+            return response()->json(['error' => 'Failed to create category'], 500);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json(['error' => 'Validation failed', 'details' => $e->errors()], 422);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * AJAX endpoint: create a subcategory under a category and return JSON { id: <SUBCAT_ID> }
+     */
+    public function storeSubcategory(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'SUBCATEGORY_NAME' => 'required|string',
+                'CAT_ID' => 'required'
+            ]);
+
+            $id = Product::createSubcategoryRecord($validated['CAT_ID'], $validated['SUBCATEGORY_NAME'], $validated['Description'] ?? '');
+            if ($id) {
+                return response()->json(['id' => $id]);
+            }
+
+            return response()->json(['error' => 'Failed to create subcategory'], 500);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json(['error' => 'Validation failed', 'details' => $e->errors()], 422);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
 }

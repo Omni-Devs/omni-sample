@@ -105,4 +105,33 @@ class Product
         $sql = "DELETE FROM Products WHERE PRODUCT_CODE = ?";
         return $db->execute($sql, [$id]);
     }
+
+    /**
+     * Create a new category and return its ID (or null on failure).
+     */
+    public static function createCategoryRecord($name, $description = '')
+    {
+        $db = new AccessDatabase();
+
+        $sql = "INSERT INTO CATEGORY (Category_Name, Description) VALUES (?, ?)";
+        $db->execute($sql, [$name, $description]);
+
+        // Try to fetch the inserted ID. Use TOP 1 ordered by CAT_ID descending.
+        $res = $db->queryWithParams("SELECT TOP 1 CAT_ID FROM CATEGORY WHERE Category_Name = ? ORDER BY CAT_ID DESC", [$name]);
+        return $res && count($res) ? $res[0]['CAT_ID'] : null;
+    }
+
+    /**
+     * Create a new subcategory under a parent category and return its ID (or null on failure).
+     */
+    public static function createSubcategoryRecord($catId, $name, $description = '')
+    {
+        $db = new AccessDatabase();
+
+        $sql = "INSERT INTO SUBCATEGORY (CAT_ID, Subcategory_Name, Description) VALUES (?, ?, ?)";
+        $db->execute($sql, [$catId, $name, $description]);
+
+        $res = $db->queryWithParams("SELECT TOP 1 SUBCAT_ID FROM SUBCATEGORY WHERE Subcategory_Name = ? AND CAT_ID = ? ORDER BY SUBCAT_ID DESC", [$name, $catId]);
+        return $res && count($res) ? $res[0]['SUBCAT_ID'] : null;
+    }
 }
