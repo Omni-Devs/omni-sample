@@ -12,5 +12,9 @@
         @include('layouts.footer')
         </div>
     </main>
+     {{-- Global JS --}}
+
+    {{-- Page-specific JS --}}
+    @yield('scripts')
 </body>
 </html>

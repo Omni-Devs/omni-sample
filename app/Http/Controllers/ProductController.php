@@ -15,9 +15,39 @@ class ProductController extends Controller
     }
 
     public function create()
-    {
-        return view('products.create'); // make sure you have resources/views/products/create.blade.php
+{
+    $db = new AccessDatabase();
+
+    // Join CATEGORY and SUBCATEGORY
+    $results = $db->query("
+        SELECT c.CAT_ID, c.Category_Name, s.SUBCAT_ID, s.Subcategory_Name
+        FROM CATEGORY c
+        LEFT JOIN SUBCATEGORY s ON c.CAT_ID = s.CAT_ID
+        ORDER BY c.Category_Name, s.Subcategory_Name
+    ");
+
+    // Group subcategories under categories
+    $categories = [];
+    foreach ($results as $row) {
+        $catId = $row['CAT_ID'];
+        if (!isset($categories[$catId])) {
+            $categories[$catId] = [
+                'CAT_ID' => $catId,
+                'Category_Name' => $row['Category_Name'],
+                'subcategories' => []
+            ];
+        }
+        if (!empty($row['SUBCAT_ID'])) {
+            $categories[$catId]['subcategories'][] = [
+                'SUBCAT_ID' => $row['SUBCAT_ID'],
+                'Subcategory_Name' => $row['Subcategory_Name']
+            ];
+        }
     }
+
+   return view('products.create', ['categories' => array_values($categories)]);
+}
+
 
     // Store the product into Access DB
     public function store(Request $request)
@@ -26,7 +56,7 @@ class ProductController extends Controller
             'product_code'   => 'required|string',
             'product_name' => 'required|string',
             'category_id'  => 'required|numeric',
-            'sub_category_id'  => 'required|numeric',
+            'sub_category_id'  => 'nullable|numeric',
             'product_price'    => 'required|numeric',
         ]);
 

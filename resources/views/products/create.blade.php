@@ -139,9 +139,32 @@
                                        <fieldset class="form-group" id="__BVID__3458">
                                           <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0" id="__BVID__3458__BV_label_">Category *</legend>
                                           <div>
-                                             <input type="number" placeholder="Enter Category" class="form-control" aria-describedby="Name-feedback" id="category_id" name="category_id"> 
-                                             <div id="Name-feedback" class="invalid-feedback"></div>
-                                             <!----><!----><!---->
+                                             <div dir="auto" class="v-select vs--single vs--searchable" aria-describedby="Category-feedback">
+                                                <div id="vs3__combobox" role="combobox" aria-expanded="false" aria-owns="vs3__listbox" aria-label="Search for option" class="vs__dropdown-toggle">
+                                                   <div class="vs__selected-options"> 
+                                                      <!-- This shows the Category_Name (not submitted) -->
+                                                      <input placeholder="Select Category" aria-autocomplete="list" aria-labelledby="vs3__combobox" 
+                                                            aria-controls="vs3__listbox" type="search" autocomplete="off" 
+                                                            class="vs__search" id="category_display">
+                                                   </div>
+
+                                                   <!-- 🔒 Hidden input actually submitted -->
+                                                   <input type="hidden" name="cat_id" id="cat_id" value="{{ old('CAT_ID') }}">
+
+                                                   <div class="vs__actions">
+                                                      <button type="button" title="Clear Selected" aria-label="Clear Selected" class="vs__clear" style="display: none;">
+                                                         <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10">
+                                                            <path d="M6.895455 5l2.842897-2.842898c.348864-.348863.348864-.914488 0-1.263636L9.106534.261648c-.348864-.348864-.914489-.348864-1.263636 0L5 3.104545 2.157102.261648c-.348863-.348864-.914488-.348864-1.263636 0L.261648.893466c-.348864.348864-.348864.914489 0 1.263636L3.104545 5 .261648 7.842898c-.348864.348863-.348864.914488 0 1.263636l.631818.631818c.348864.348864.914773.348864 1.263636 0L5 6.895455l2.842898 2.842897c.348863.348864.914772.348864 1.263636 0l.631818-.631818c.348864-.348864.348864-.914489 0-1.263636L6.895455 5z"></path>
+                                                         </svg>
+                                                      </button>
+                                                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="10" role="presentation" class="vs__open-indicator">
+                                                         <path d="M9.211364 7.59931l4.48338-4.867229c.407008-.441854.407008-1.158247 0-1.60046l-.73712-.80023c-.407008-.441854-1.066904-.441854-1.474243 0L7 5.198617 2.51662.33139c-.407008-.441853-1.066904-.441853-1.474243 0l-.737121.80023c-.407008.441854-.407008 1.158248 0 1.600461l4.48338 4.867228L7 10l2.211364-2.40069z"></path>
+                                                      </svg>
+                                                      <div class="vs__spinner" style="display: none;">Loading...</div>
+                                                   </div>
+                                                </div>
+                                                <ul id="vs3__listbox" role="listbox" style="display: none; visibility: hidden;"></ul>
+                                             </div>
                                           </div>
                                        </fieldset>
                                     </span>
@@ -149,9 +172,42 @@
                                        <fieldset class="form-group" id="__BVID__9999">
                                           <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0" id="__BVID__9999__BV_label_">Subcategory *</legend>
                                           <div>
-                                             <input type="number" placeholder="Enter Subcategory" class="form-control" aria-describedby="Subcatid-feedback" id="sub_category_id" name="sub_category_id"> 
-                                             <div id="Subcatid-feedback" class="invalid-feedback"></div>
-                                             <!----><!----><!---->
+                                             <div dir="auto" class="v-select vs--single vs--searchable" aria-describedby="Brand-feedback">
+                                                <div id="vs4__combobox" role="combobox" aria-expanded="false" aria-owns="vs4__listbox"
+                                                      aria-label="Search for option" class="vs__dropdown-toggle">
+
+                                                      <div class="vs__selected-options"> 
+                                                         <!-- Visible input (shows name only) -->
+                                                         <input placeholder="Select Subcategory" aria-autocomplete="list" aria-labelledby="vs4__combobox"
+                                                               aria-controls="vs4__listbox" type="search" autocomplete="off"
+                                                               class="vs__search" id="subcategory_display">
+                                                      </div>
+
+                                                      <!-- Hidden input (actual value submitted to backend) -->
+                                                      <input type="hidden" name="subcat_id" id="subcat_id" value="{{ old('SUBCAT_ID') }}">
+
+                                                      <div class="vs__actions">
+                                                         <button type="button" title="Clear Selected" aria-label="Clear Selected" class="vs__clear" style="display: none;">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10">
+                                                               <path d="M6.895455 5l2.842897-2.842898c.348864-.348863.348864-.914488 
+                                                                        0-1.263636L9.106534.261648c-.348864-.348864-.914489-.348864-1.263636 
+                                                                        0L5 3.104545 2.157102.261648c-.348863-.348864-.914488-.348864-1.263636 
+                                                                        0L.261648.893466c-.348864.348864-.348864.914489 
+                                                                        0 1.263636L3.104545 5 .261648 7.842898c-.348864.348863-.348864.914488 
+                                                                        0 1.263636l.631818.631818c.348864.348864.914773.348864 
+                                                                        1.263636 0L5 6.895455l2.842898 2.842897c.348863.348864.914772.348864 
+                                                                        1.263636 0l.631818-.631818c.348864-.348864.348864-.914489 
+                                                                        0-1.263636L6.895455 5z"></path>
+                                                            </svg>
+                                                         </button>
+                                                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="10" role="presentation" class="vs__open-indicator">
+                                                         <path d="M9.211364 7.59931l4.48338-4.867229c.407008-.441854.407008-1.158247 0-1.60046l-.73712-.80023c-.407008-.441854-1.066904-.441854-1.474243 0L7 5.198617 2.51662.33139c-.407008-.441853-1.066904-.441853-1.474243 0l-.737121.80023c-.407008.441854-.407008 1.158248 0 1.600461l4.48338 4.867228L7 10l2.211364-2.40069z"></path>
+                                                      </svg>
+                                                      <div class="vs__spinner" style="display: none;">Loading...</div>
+                                                   </div>
+                                                </div>
+                                                <ul id="vs4__listbox" role="listbox" style="display: none; visibility: hidden;"></ul>
+                                             </div>
                                           </div>
                                        </fieldset>
                                     </span>
@@ -199,6 +255,9 @@
                                           </div>
                                        </fieldset>
                                     </span>
+                                    <button type="submit" class="btn btn-primary"><i class="i-Yes me-2 font-weight-bold"></i>
+                                       Submit Products
+                                    </button>
                                     <span>
                                        <fieldset class="form-group" id="__BVID__376" style="display: none;">
                                           <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0" id="__BVID__376__BV_label_">Stock Alert</legend>
@@ -605,8 +664,9 @@
                <div class="mt-3 col-md-12">
                   <div class="mr-2">
                      <div class="b-overlay-wrap position-relative d-inline-block btn-loader">
-                        <button type="submit" class="btn btn-primary"><i class="i-Yes me-2 font-weight-bold"></i>
-                        Submit</button><!---->
+                        <button type="button" onclick="createRecipe()" class="btn mx-1 btn-outline-success ripple btn-sm"><i class="i-Add"></i>
+                              Create Recipe
+                        </button>
                      </div>
                   </div>
                </div>
@@ -615,4 +675,252 @@
       </span>
    </div>
 </div>
+@endsection
+
+@section('scripts')
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    const categories = @json($categories);
+
+    const categoryCombo = document.getElementById("vs3__combobox");
+    const categoryInput = categoryCombo.querySelector(".vs__search");
+    const categoryListbox = document.getElementById("vs3__listbox");
+    const categoryClear = categoryCombo.querySelector(".vs__clear");
+
+    const subcategoryCombo = document.getElementById("vs4__combobox");
+    const subcategoryInput = subcategoryCombo.querySelector(".vs__search");
+    const subcategoryListbox = document.getElementById("vs4__listbox");
+    const subcategoryClear = subcategoryCombo.querySelector(".vs__clear");
+
+    let selectedCategory = null;
+    let selectedSubcategory = null;
+
+    // Show/hide helpers
+    function showListbox(listbox) {
+        listbox.style.display = "block";
+        listbox.style.visibility = "visible";
+    }
+    function hideListbox(listbox) {
+        listbox.style.display = "none";
+        listbox.style.visibility = "hidden";
+    }
+    function showClear(button) {
+        button.style.display = "inline-block";
+    }
+    function hideClear(button) {
+        button.style.display = "none";
+    }
+    function showListbox(listbox, combo) {
+    listbox.style.display = "block";
+    listbox.style.visibility = "visible";
+    combo.classList.add("vs--open");
+   }
+
+   function hideListbox(listbox, combo) {
+      listbox.style.display = "none";
+      listbox.style.visibility = "hidden";
+      combo.classList.remove("vs--open");
+   }
+
+
+    // Render categories
+function renderCategories(filter = "") {
+    categoryListbox.innerHTML = "";
+    const filtered = categories.filter(cat =>
+        cat.Category_Name.toLowerCase().includes(filter.toLowerCase())
+    );
+
+    if (filtered.length === 0) {
+        hideListbox(categoryListbox, categoryCombo);
+        return;
+    }
+
+    filtered.forEach(cat => {
+        const li = document.createElement("li");
+        li.setAttribute("role", "option");
+        li.textContent = cat.Category_Name;
+        li.dataset.value = cat.CAT_ID;
+
+        li.addEventListener("click", () => {
+            // Show name in visible input
+            document.getElementById("category_display").value = cat.Category_Name;
+            // Save ID in hidden input
+            document.getElementById("cat_id").value = cat.CAT_ID;
+
+            selectedCategory = cat;
+            hideListbox(categoryListbox, categoryCombo);
+            showClear(categoryClear);
+
+            // Reset subcategory
+            document.getElementById("subcategory_display").value = "";
+            document.getElementById("subcat_id").value = "";
+            selectedSubcategory = null;
+            hideListbox(subcategoryListbox, subcategoryCombo);
+            hideClear(subcategoryClear);
+
+            renderSubcategories(cat.subcategories);
+        });
+
+        categoryListbox.appendChild(li);
+    });
+
+    showListbox(categoryListbox, categoryCombo);
+}
+
+    // Render subcategories
+function renderSubcategories(subcategories, filter = "") {
+    subcategoryListbox.innerHTML = "";
+    const filtered = subcategories.filter(sub =>
+        sub.Subcategory_Name.toLowerCase().includes(filter.toLowerCase())
+    );
+
+    if (filtered.length === 0) {
+        hideListbox(subcategoryListbox, subcategoryCombo);
+        return;
+    }
+
+    filtered.forEach(sub => {
+        const li = document.createElement("li");
+        li.setAttribute("role", "option");
+        li.textContent = sub.Subcategory_Name;
+        li.dataset.value = sub.SUBCAT_ID;
+
+        li.addEventListener("click", () => {
+            // Show name in visible input
+            document.getElementById("subcategory_display").value = sub.Subcategory_Name;
+            // Save ID in hidden input
+            document.getElementById("subcat_id").value = sub.SUBCAT_ID;
+
+            selectedSubcategory = sub;
+            hideListbox(subcategoryListbox, subcategoryCombo);
+            showClear(subcategoryClear);
+        });
+
+        subcategoryListbox.appendChild(li);
+    });
+
+    showListbox(subcategoryListbox, subcategoryCombo);
+}
+
+    // Clear button handlers
+    categoryClear.addEventListener("click", () => {
+        categoryInput.value = "";
+        selectedCategory = null;
+        hideClear(categoryClear);
+
+        // Also reset subcategory
+        subcategoryInput.value = "";
+        selectedSubcategory = null;
+        hideClear(subcategoryClear);
+        hideListbox(subcategoryListbox);
+    });
+
+    subcategoryClear.addEventListener("click", () => {
+        subcategoryInput.value = "";
+        selectedSubcategory = null;
+        hideClear(subcategoryClear);
+        hideListbox(subcategoryListbox);
+    });
+
+    // Event listeners
+    categoryInput.addEventListener("focus", () => renderCategories());
+    categoryInput.addEventListener("input", (e) => renderCategories(e.target.value));
+
+    subcategoryInput.addEventListener("focus", () => {
+        if (selectedCategory) {
+            renderSubcategories(selectedCategory.subcategories);
+        }
+    });
+    subcategoryInput.addEventListener("input", (e) => {
+        if (selectedCategory) {
+            renderSubcategories(
+                selectedCategory.subcategories,
+                e.target.value
+            );
+        }
+    });
+
+    // Hide listboxes when clicking outside
+    document.addEventListener("click", (e) => {
+    if (!categoryCombo.contains(e.target)) hideListbox(categoryListbox, categoryCombo);
+    if (!subcategoryCombo.contains(e.target)) hideListbox(subcategoryListbox, subcategoryCombo);
+});
+
+//Swal Alert
+function createRecipe() {
+const swalWithBootstrapButtons = Swal.mixin({
+  customClass: {
+    confirmButton: "btn btn-success",
+    cancelButton: "btn btn-danger"
+  },
+  buttonsStyling: false
+});
+swalWithBootstrapButtons.fire({
+  title: "Add Recipe",
+  width: '800px',
+  html: `
+      <div style="max-height:400px; overflow-y:auto; text-align:left;">
+        <div class="mb-3">
+          <label class="form-label">Product Name *</label>
+          <input type="text" id="product_name" class="form-control" placeholder="Enter product name">
+        </div>
+        <div id="components_wrapper">
+          <div class="d-flex mb-2">
+            <input type="text" class="form-control me-2" placeholder="Component Name">
+            <input type="number" class="form-control quantity" placeholder="Qty">
+          </div>
+        </div>
+        <button type="button" class="btn btn-sm btn-outline-primary mt-2" onclick="addComponent()">+ Add Component</button>
+      </div>
+    `,
+  showCancelButton: true,
+  confirmButtonText: "Save",
+  cancelButtonText: "Cancel!",
+  reverseButtons: true,
+//   buttonsStyling: false,
+//     preConfirm: () => {
+//       const productName = document.getElementById('product_name').value;
+//       const components = [...document.querySelectorAll('.component')].map(el => el.value);
+//       const quantities = [...document.querySelectorAll('.quantity')].map(el => el.value);
+
+//       if (!productName) {
+//         Swal.showValidationMessage('Product name is required');
+//         return false;
+//       }
+
+//       return { productName, components, quantities };
+//     }
+}).then((result) => {
+  if (result.isConfirmed) {
+    swalWithBootstrapButtons.fire({
+      title: "Saved!",
+      text: "Recipe has been saved.",
+      icon: "success"
+    });
+  } else if (
+    /* Read more about handling dismissals below */
+    result.dismiss === Swal.DismissReason.cancel
+  ) {
+    swalWithBootstrapButtons.fire({
+      title: "Cancelled",
+      text: "No changes made",
+      icon: "error"
+    });
+  }
+});
+}
+
+function addComponent() {
+  const wrapper = document.getElementById('components_wrapper');
+  const div = document.createElement('div');
+  div.className = "d-flex mb-2";
+  div.innerHTML = `
+    <input type="text" class="form-control me-2 component" placeholder="Component Name">
+    <input type="number" class="form-control quantity" placeholder="Qty">
+  `;
+  wrapper.appendChild(div);
+}
+</script>
+
+
 @endsection
