@@ -9,22 +9,6 @@ class Product
     public static function all()
     {
         $db = new AccessDatabase();
-
-        // $sql = "
-        //     SELECT 
-        //         p.PRODUCT_CODE, 
-        //         p.PRODUCT_NAME, 
-        //         p.PRODUCT_PRICE, 
-        //         c.Category_Name AS CATEGORY,
-        //         s.SUBCATEGORY_NAME AS SUBCATEGORY
-        //     FROM ([PRODUCTS] AS p
-        //     INNER JOIN [CATEGORY] AS c 
-        //         ON p.CAT_ID = c.CAT_ID)
-        //     LEFT JOIN [SUBCATEGORY] AS s 
-        //         ON p.SUBCAT_ID = s.SUBCAT_ID
-        // ";
-
-        
         $sql = "
             SELECT 
                 CStr(p.PRODUCT_CODE) AS PRODUCT_CODE,
