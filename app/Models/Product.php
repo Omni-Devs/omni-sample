@@ -9,19 +9,49 @@ class Product
     public static function all()
     {
         $db = new AccessDatabase();
+
+        // $sql = "
+        //     SELECT 
+        //         p.PRODUCT_CODE, 
+        //         p.PRODUCT_NAME, 
+        //         p.PRODUCT_PRICE, 
+        //         c.Category_Name AS CATEGORY,
+        //         s.SUBCATEGORY_NAME AS SUBCATEGORY
+        //     FROM ([PRODUCTS] AS p
+        //     INNER JOIN [CATEGORY] AS c 
+        //         ON p.CAT_ID = c.CAT_ID)
+        //     LEFT JOIN [SUBCATEGORY] AS s 
+        //         ON p.SUBCAT_ID = s.SUBCAT_ID
+        // ";
+
+        
         $sql = "
             SELECT 
-                p.PRODUCT_CODE, 
-                p.PRODUCT_NAME, 
-                p.PRODUCT_PRICE, 
+                CStr(p.PRODUCT_CODE) AS PRODUCT_CODE,
+                p.PRODUCT_NAME AS PRODUCT_NAME,
+                p.PRODUCT_PRICE AS PRODUCT_PRICE,
                 c.Category_Name AS CATEGORY,
-                s.SUBCATEGORY_NAME AS SUBCATEGORY
+                s.SUBCATEGORY_NAME AS SUBCATEGORY,
+                'PRODUCT' AS TYPE
             FROM ([PRODUCTS] AS p
-            INNER JOIN [CATEGORY] AS c 
-                ON p.CAT_ID = c.CAT_ID)
-            LEFT JOIN [SUBCATEGORY] AS s 
-                ON p.SUBCAT_ID = s.SUBCAT_ID
+            INNER JOIN [CATEGORY] AS c ON p.CAT_ID = c.CAT_ID)
+            LEFT JOIN [SUBCATEGORY] AS s ON p.SUBCAT_ID = s.SUBCAT_ID
+
+            UNION
+
+            SELECT
+                CStr(comp.COMP_ID) AS PRODUCT_CODE,
+                comp.COMPONENT_NAME AS PRODUCT_NAME,
+                comp.COMPONENT_PRICE AS PRODUCT_PRICE,
+                c2.Category_Name AS CATEGORY,
+                s2.SUBCATEGORY_NAME AS SUBCATEGORY,
+                'COMPONENT' AS TYPE
+            FROM ([COMPONENT] AS comp
+            INNER JOIN [CATEGORY] AS c2 ON comp.CAT_ID = c2.CAT_ID)
+            LEFT JOIN [SUBCATEGORY] AS s2 ON comp.SUBCAT_ID = s2.SUBCAT_ID
+            WHERE comp.FOR_SALE = 1
         ";
+
         
         // dd($sql);
         return $db->query($sql);

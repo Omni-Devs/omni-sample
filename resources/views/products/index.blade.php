@@ -292,26 +292,30 @@
                            </tr>
                         </thead>
                         <tbody>
-                           @forelse ($products as $product)
-                           <tr>
-                              <td class="text-left">{{ $product['PRODUCT_CODE'] }}</td>
-                              <td class="text-left">{{ $product['PRODUCT_NAME'] }}</td>
-                              <td class="text-left">{{ $product['CATEGORY'] ?? 'N/A' }}</td>
-                              <td class="text-left">{{ $product['SUBCATEGORY'] ?? 'N/A'}}</td>
-                              <td class="text-right">{{ number_format($product['PRODUCT_PRICE'], 2, '.', '') }}</td>
-                              <td class="text-right">
-                                 <a href="{{ route('products.edit', ['id' => $product['PRODUCT_CODE']]) }}" class="btn btn-sm btn-primary">Edit</a>
-                                 <form action="{{ route('products.destroy', $product['PRODUCT_CODE']) }}" method="POST" style="display:inline-block;">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="btn btn-sm btn-danger"
-                                       onclick="return confirm('Are you sure you want to delete this product?')">
-                                    Delete
-                                    </button>
-                                 </form>
-                              </td>
-                           </tr>
-                           @empty
+                                                @forelse ($products as $product)
+                                 <tr>
+                                    <td class="text-left">{{ $product['PRODUCT_CODE'] }}</td>
+                                    <td class="text-left">{{ $product['PRODUCT_NAME'] }}</td>
+                                    <td class="text-left">{{ $product['CATEGORY'] ?? 'N/A' }}</td>
+                                    <td class="text-left">{{ $product['SUBCATEGORY'] ?? 'N/A' }}</td>
+                                    <td class="text-right">{{ number_format($product['PRODUCT_PRICE'], 2, '.', '') }}</td>
+                                    <td class="text-right">
+                                          @if($product['TYPE'] === 'PRODUCT')
+                                             <a href="{{ route('products.edit', ['id' => $product['PRODUCT_CODE']]) }}" class="btn btn-sm btn-primary">Edit</a>
+                                             <form action="{{ route('products.destroy', $product['PRODUCT_CODE']) }}" method="POST" style="display:inline-block;">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="btn btn-sm btn-danger"
+                                                      onclick="return confirm('Are you sure you want to delete this product?')">
+                                                      Delete
+                                                </button>
+                                             </form>
+                                          @else
+                                             <span class="badge bg-info">For Sale Component</span>
+                                          @endif
+                                    </td>
+                                 </tr>
+                              @empty
                            <tr>
                               <td colspan="5" class="vgt-center-align vgt-text-disabled">
                                  No data for table
@@ -555,4 +559,45 @@
    <!---->
 </span>
 </div>
+<script>
+   function handleProductsTypeChange(value) {
+      // When user selects "components" from Products page, redirect them to the Components index
+      if (value === 'components') {
+         window.location.href = "{{ url('components') }}";
+      }
+   }
+
+   // On load, replace any JS-rendered v-select for "Select Type" with a responsive native select
+   document.addEventListener('DOMContentLoaded', function () {
+      try {
+         var legends = document.querySelectorAll('fieldset.form-group legend');
+         legends.forEach(function (legend) {
+            if (legend && legend.textContent && legend.textContent.trim() === 'Select Type') {
+               var fieldset = legend.parentElement;
+               if (!fieldset) return;
+               // Build select HTML (Products page default is Products)
+               var html = '' +
+                  '<label for="products-select-type" class="bv-no-focus-ring col-form-label pt-0">Select Type</label>' +
+                  '<select id="products-select-type" class="form-control" aria-label="Select Type">' +
+                  '<option value="products" selected>Products</option>' +
+                  '<option value="components">Components</option>' +
+                  '</select>';
+               // Replace the inner content of the fieldset (remove v-select markup)
+               fieldset.innerHTML = html;
+
+               // Attach change handler
+               var sel = fieldset.querySelector('#products-select-type');
+               if (sel) {
+                  sel.addEventListener('change', function (e) {
+                     handleProductsTypeChange(e.target.value);
+                  });
+               }
+            }
+         });
+      } catch (e) {
+         console.error('Failed to replace Select Type control on products page:', e);
+      }
+   });
+</script>
+
 @endsection

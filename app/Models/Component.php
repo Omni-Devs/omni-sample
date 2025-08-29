@@ -16,6 +16,7 @@ class Component
                 comp.COMPONENT_PRICE,
                 comp.COMPONENT_UNIT,
                 comp.ONHAND,
+                comp.FOR_SALE,
                 cat.Category_Name AS CATEGORY,
                 s.SUBCATEGORY_NAME AS SUBCATEGORY
             FROM ([COMPONENT] AS comp
@@ -54,6 +55,7 @@ class Component
                 comp.COMPONENT_PRICE,
                 comp.COMPONENT_UNIT,
                 comp.ONHAND,
+                comp.FOR_SALE,
                 comp.CAT_ID,
                 comp.SUBCAT_ID,
                 cat.Category_Name AS CATEGORY,
