@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ComponentController;
 use App\Http\Controllers\ProductController;
 use Illuminate\Support\Facades\Route;
 
@@ -13,3 +14,9 @@ Route::post('/products', [ProductController::class, 'store'])->name('products.st
 Route::get('/products/{id}/edit', [ProductController::class, 'edit'])->name('products.edit');
 Route::put('/products/{id}/update', [ProductController::class, 'update'])->name('products.update');
 Route::delete('/products/{id}', [ProductController::class, 'destroy'])->name('products.destroy');
+Route::get('/components', [ComponentController::class, 'index'])->name('components.index');
+Route::get('/components/create', [ComponentController::class, 'create'])->name('components.create');
+Route::post('/components', [ComponentController::class, 'store'])->name('components.store');
+Route::get('/components/{id}/edit', [ComponentController::class, 'edit'])->name('components.edit');
+Route::put('/components/{id}/update', [ComponentController::class, 'update'])->name('components.update');
+Route::delete('/components/{id}', [ComponentController::class, 'destroy'])->name('components.destroy');
