@@ -600,4 +600,103 @@
    });
 </script>
 
+{{-- 3dots Dropdown Script --}}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  // select all dropdowns inside your table
+  const dropdowns = document.querySelectorAll(".dropdown");
+
+  dropdowns.forEach(dropdown => {
+    const toggleBtn = dropdown.querySelector("button");
+    const menu = dropdown.querySelector(".dropdown-menu");
+
+    toggleBtn.addEventListener("click", function (e) {
+      e.preventDefault();
+
+      // close other menus first
+      document.querySelectorAll(".dropdown-menu.show").forEach(openMenu => {
+        if (openMenu !== menu) {
+          openMenu.classList.remove("show");
+        }
+      });
+
+      // toggle this one
+      menu.classList.toggle("show");
+    });
+  });
+
+  // close menus when clicking outside
+  document.addEventListener("click", function (e) {
+    if (!e.target.closest(".dropdown")) {
+      document.querySelectorAll(".dropdown-menu.show").forEach(openMenu => {
+        openMenu.classList.remove("show");
+      });
+    }
+  });
+});
+</script>
+
+{{-- Searchbar Script --}}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const searchInput = document.querySelector("#vgt-search-352530096888");
+  const table = document.querySelector("#vgt-table"); // your main table
+  const rows = table.querySelectorAll("tbody tr");
+
+  searchInput.addEventListener("keyup", function () {
+    const searchTerm = this.value.toLowerCase();
+
+    rows.forEach(row => {
+      const text = row.textContent.toLowerCase();
+      if (text.includes(searchTerm)) {
+        row.style.display = "";
+      } else {
+        row.style.display = "none";
+      }
+    });
+  });
+});
+</script>
+
+{{-- Sortable Table Script --}}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const table = document.querySelector("#vgt-table");
+  const headers = table.querySelectorAll("thead th.sortable");
+
+  headers.forEach((header, index) => {
+    const button = header.querySelector("button");
+    if (!button) return;
+
+    let asc = true; // start ascending
+
+    button.addEventListener("click", function () {
+      const tbody = table.querySelector("tbody");
+      const rows = Array.from(tbody.querySelectorAll("tr"));
+
+      rows.sort((a, b) => {
+        let aText = a.querySelectorAll("td")[index]?.textContent.trim() || "";
+        let bText = b.querySelectorAll("td")[index]?.textContent.trim() || "";
+
+        // if numeric, compare as number
+        if (!isNaN(aText) && !isNaN(bText)) {
+          return asc ? aText - bText : bText - aText;
+        }
+
+        // else compare as string
+        return asc 
+          ? aText.localeCompare(bText) 
+          : bText.localeCompare(aText);
+      });
+
+      // re-append sorted rows
+      rows.forEach(row => tbody.appendChild(row));
+
+      // toggle sort direction
+      asc = !asc;
+    });
+  });
+});
+</script>
+
 @endsection
