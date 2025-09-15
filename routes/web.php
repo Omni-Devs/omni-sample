@@ -20,3 +20,6 @@ Route::post('/components', [ComponentController::class, 'store'])->name('compone
 Route::get('/components/{id}/edit', [ComponentController::class, 'edit'])->name('components.edit');
 Route::put('/components/{id}/update', [ComponentController::class, 'update'])->name('components.update');
 Route::delete('/components/{id}', [ComponentController::class, 'destroy'])->name('components.destroy');
+// API endpoints for creating categories and subcategories from the product form
+Route::post('/categories', [ProductController::class, 'storeCategory']);
+Route::post('/subcategories', [ProductController::class, 'storeSubcategory']);

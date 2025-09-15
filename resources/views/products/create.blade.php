@@ -13,6 +13,37 @@
       <div class="separator-breadcrumb border-top"></div>
    </div>
    <!----> 
+                        <!-- Recipe card: add components (COMP_ID), quantity and unit -->
+                        <div class="card mt-4">
+                           <div class="card-header">
+                              <h6 class="mb-0">Recipe</h6>
+                           </div>
+                           <div class="card-body">
+                              <p class="card-text">Add components (COMP_ID), quantity and unit for this product.</p>
+
+                              <div id="recipe-rows">
+                                 <div class="row recipe-row mb-2">
+                                    <div class="col-md-4">
+                                       <input type="text" name="comp_id[]" class="form-control" placeholder="Component COMP_ID">
+                                    </div>
+                                    <div class="col-md-3">
+                                       <input type="number" step="any" min="0" name="recipe_qty[]" class="form-control" placeholder="Quantity">
+                                    </div>
+                                    <div class="col-md-3">
+                                       <input type="text" name="recipe_unit[]" class="form-control" placeholder="Unit">
+                                    </div>
+                                    <div class="col-md-2 d-flex align-items-start">
+                                       <button type="button" class="btn btn-outline-danger btn-sm remove-recipe-row" style="display: none;">Remove</button>
+                                    </div>
+                                 </div>
+                              </div>
+
+                              <div class="mt-2">
+                                 <button type="button" id="add-recipe-row" class="btn btn-outline-primary btn-sm"><i class="i-Add"></i> Add Row</button>
+                              </div>
+                           </div>
+                        </div>
+                        <!----> 
    <div class="wrapper">
       <span>
          <form action="{{ route('products.store') }}" method="POST">
@@ -139,38 +170,20 @@
                                        <fieldset class="form-group" id="__BVID__3458">
                                           <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0" id="__BVID__3458__BV_label_">Category *</legend>
                                           <div>
-                                             <input type="number" placeholder="Enter Category" class="form-control" aria-describedby="Name-feedback" id="category_id" name="category_id"> 
-                                             <div id="Name-feedback" class="invalid-feedback"></div>
-                                             <!----><!----><!---->
-                                          </div>
-                                       </fieldset>
-                                    </span>
-                                    <span>
-                                       <fieldset class="form-group" id="__BVID__9999">
-                                          <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0" id="__BVID__9999__BV_label_">Subcategory *</legend>
-                                          <div>
-                                             <input type="number" placeholder="Enter Subcategory" class="form-control" aria-describedby="Subcatid-feedback" id="sub_category_id" name="sub_category_id"> 
-                                             <div id="Subcatid-feedback" class="invalid-feedback"></div>
-                                             <!----><!----><!---->
-                                          </div>
-                                       </fieldset>
-                                    </span>
-                                    {{-- 
-                                    <span>
-                                       <fieldset class="form-group" id="__BVID__370" style="display: none;">
-                                          <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0" id="__BVID__370__BV_label_">Brand *</legend>
-                                          <div>
-                                             <div dir="auto" class="v-select vs--single vs--searchable" aria-describedby="Brand-feedback">
-                                                <div id="vs16__combobox" role="combobox" aria-expanded="false" aria-owns="vs16__listbox" aria-label="Search for option" class="vs__dropdown-toggle">
-                                                   <div class="vs__selected-options">
-                                                      <span class="vs__selected">
-                                                         Marcela Farm
-                                                         <!---->
-                                                      </span>
-                                                      <input aria-autocomplete="list" aria-labelledby="vs16__combobox" aria-controls="vs16__listbox" type="search" autocomplete="off" class="vs__search">
+                                             <div dir="auto" class="v-select vs--single vs--searchable" aria-describedby="Category-feedback">
+                                                <div id="vs3__combobox" role="combobox" aria-expanded="false" aria-owns="vs3__listbox" aria-label="Search for option" class="vs__dropdown-toggle">
+                                                   <div class="vs__selected-options"> 
+                                                      <!-- This shows the Category_Name (not submitted) -->
+                                                      <input placeholder="Select Category" aria-autocomplete="list" aria-labelledby="vs3__combobox" 
+                                                            aria-controls="vs3__listbox" type="search" autocomplete="off" 
+                                                            class="vs__search" id="category_display">
                                                    </div>
+
+                                                   <!-- 🔒 Hidden input actually submitted -->
+                                                   <input type="hidden" name="cat_id" id="cat_id" value="{{ old('CAT_ID') }}">
+
                                                    <div class="vs__actions">
-                                                      <button type="button" title="Clear Selected" aria-label="Clear Selected" class="vs__clear">
+                                                      <button type="button" title="Clear Selected" aria-label="Clear Selected" class="vs__clear" style="display: none;">
                                                          <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10">
                                                             <path d="M6.895455 5l2.842897-2.842898c.348864-.348863.348864-.914488 0-1.263636L9.106534.261648c-.348864-.348864-.914489-.348864-1.263636 0L5 3.104545 2.157102.261648c-.348863-.348864-.914488-.348864-1.263636 0L.261648.893466c-.348864.348864-.348864.914489 0 1.263636L3.104545 5 .261648 7.842898c-.348864.348863-.348864.914488 0 1.263636l.631818.631818c.348864.348864.914773.348864 1.263636 0L5 6.895455l2.842898 2.842897c.348863.348864.914772.348864 1.263636 0l.631818-.631818c.348864-.348864.348864-.914489 0-1.263636L6.895455 5z"></path>
                                                          </svg>
@@ -181,14 +194,53 @@
                                                       <div class="vs__spinner" style="display: none;">Loading...</div>
                                                    </div>
                                                 </div>
-                                                <ul id="vs16__listbox" role="listbox" style="display: none; visibility: hidden;"></ul>
+                                                <ul id="vs3__listbox" role="listbox" style="display: none; visibility: hidden;"></ul>
                                              </div>
-                                             <div id="Brand-feedback" class="invalid-feedback"></div>
-                                             <!----><!----><!---->
                                           </div>
                                        </fieldset>
                                     </span>
-                                    --}}
+                                       <fieldset class="form-group" id="__BVID__9999">
+                                          <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0" id="__BVID__9999__BV_label_">Subcategory *</legend>
+                                          <div>
+                                             <div dir="auto" class="v-select vs--single vs--searchable" aria-describedby="Brand-feedback">
+                                                <div id="vs4__combobox" role="combobox" aria-expanded="false" aria-owns="vs4__listbox"
+                                                      aria-label="Search for option" class="vs__dropdown-toggle">
+
+                                                      <div class="vs__selected-options"> 
+                                                         <!-- Visible input (shows name only) -->
+                                                         <input placeholder="Select Subcategory" aria-autocomplete="list" aria-labelledby="vs4__combobox"
+                                                               aria-controls="vs4__listbox" type="search" autocomplete="off"
+                                                               class="vs__search" id="subcategory_display">
+                                                      </div>
+
+                                                      <!-- Hidden input (actual value submitted to backend) -->
+                                                      <input type="hidden" name="subcat_id" id="subcat_id" value="{{ old('SUBCAT_ID') }}">
+
+                                                      <div class="vs__actions">
+                                                         <button type="button" title="Clear Selected" aria-label="Clear Selected" class="vs__clear" style="display: none;">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10">
+                                                               <path d="M6.895455 5l2.842897-2.842898c.348864-.348863.348864-.914488 
+                                                                        0-1.263636L9.106534.261648c-.348864-.348864-.914489-.348864-1.263636 
+                                                                        0L5 3.104545 2.157102.261648c-.348863-.348864-.914488-.348864-1.263636 
+                                                                        0L.261648.893466c-.348864.348864-.348864.914489 
+                                                                        0 1.263636L3.104545 5 .261648 7.842898c-.348864.348863-.348864.914488 
+                                                                        0 1.263636l.631818.631818c.348864.348864.914773.348864 
+                                                                        1.263636 0L5 6.895455l2.842898 2.842897c.348863.348864.914772.348864 
+                                                                        1.263636 0l.631818-.631818c.348864-.348864.348864-.914489 
+                                                                        0-1.263636L6.895455 5z"></path>
+                                                            </svg>
+                                                         </button>
+                                                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="10" role="presentation" class="vs__open-indicator">
+                                                         <path d="M9.211364 7.59931l4.48338-4.867229c.407008-.441854.407008-1.158247 0-1.60046l-.73712-.80023c-.407008-.441854-1.066904-.441854-1.474243 0L7 5.198617 2.51662.33139c-.407008-.441853-1.066904-.441853-1.474243 0l-.737121.80023c-.407008.441854-.407008 1.158248 0 1.600461l4.48338 4.867228L7 10l2.211364-2.40069z"></path>
+                                                      </svg>
+                                                      <div class="vs__spinner" style="display: none;">Loading...</div>
+                                                   </div>
+                                                </div>
+                                                <ul id="vs4__listbox" role="listbox" style="display: none; visibility: hidden;"></ul>
+                                             </div>
+                                          </div>
+                                       </fieldset>
+                                    </span>
                                     <span>
                                        <fieldset class="form-group" id="__BVID__408">
                                           <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0" id="__BVID__408__BV_label_">Unit Price *</legend>
@@ -199,6 +251,9 @@
                                           </div>
                                        </fieldset>
                                     </span>
+                                    <button type="submit" class="btn btn-primary"><i class="i-Yes me-2 font-weight-bold"></i>
+                                       Submit Products
+                                    </button>
                                     <span>
                                        <fieldset class="form-group" id="__BVID__376" style="display: none;">
                                           <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0" id="__BVID__376__BV_label_">Stock Alert</legend>
@@ -211,40 +266,6 @@
                                     </span>
                                  </div>
                                  <div class="col-md-6">
-                                    {{-- 
-                                    <span>
-                                       <fieldset class="form-group" id="__BVID__379" style="visibility: hidden;">
-                                          <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0" id="__BVID__379__BV_label_">Barcode Symbology *</legend>
-                                          <div>
-                                             <div dir="auto" class="v-select vs--single vs--searchable" state="true">
-                                                <div id="vs17__combobox" role="combobox" aria-expanded="false" aria-owns="vs17__listbox" aria-label="Search for option" class="vs__dropdown-toggle">
-                                                   <div class="vs__selected-options">
-                                                      <span class="vs__selected">
-                                                         Code 128
-                                                         <!---->
-                                                      </span>
-                                                      <input aria-autocomplete="list" aria-labelledby="vs17__combobox" aria-controls="vs17__listbox" type="search" autocomplete="off" class="vs__search">
-                                                   </div>
-                                                   <div class="vs__actions">
-                                                      <button type="button" title="Clear Selected" aria-label="Clear Selected" class="vs__clear">
-                                                         <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10">
-                                                            <path d="M6.895455 5l2.842897-2.842898c.348864-.348863.348864-.914488 0-1.263636L9.106534.261648c-.348864-.348864-.914489-.348864-1.263636 0L5 3.104545 2.157102.261648c-.348863-.348864-.914488-.348864-1.263636 0L.261648.893466c-.348864.348864-.348864.914489 0 1.263636L3.104545 5 .261648 7.842898c-.348864.348863-.348864.914488 0 1.263636l.631818.631818c.348864.348864.914773.348864 1.263636 0L5 6.895455l2.842898 2.842897c.348863.348864.914772.348864 1.263636 0l.631818-.631818c.348864-.348864.348864-.914489 0-1.263636L6.895455 5z"></path>
-                                                         </svg>
-                                                      </button>
-                                                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="10" role="presentation" class="vs__open-indicator">
-                                                         <path d="M9.211364 7.59931l4.48338-4.867229c.407008-.441854.407008-1.158247 0-1.60046l-.73712-.80023c-.407008-.441854-1.066904-.441854-1.474243 0L7 5.198617 2.51662.33139c-.407008-.441853-1.066904-.441853-1.474243 0l-.737121.80023c-.407008.441854-.407008 1.158248 0 1.600461l4.48338 4.867228L7 10l2.211364-2.40069z"></path>
-                                                      </svg>
-                                                      <div class="vs__spinner" style="display: none;">Loading...</div>
-                                                   </div>
-                                                </div>
-                                                <ul id="vs17__listbox" role="listbox" style="display: none; visibility: hidden;"></ul>
-                                             </div>
-                                             <div class="invalid-feedback"></div>
-                                             <!----><!----><!---->
-                                          </div>
-                                       </fieldset>
-                                    </span>
-                                    --}}
                                     <span>
                                        <fieldset class="form-group" id="__BVID__3658">
                                           <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0" id="__BVID__3658__BV_label_">Type *</legend>
@@ -255,13 +276,41 @@
                                           </div>
                                        </fieldset>
                                     </span>
+                                       <span>
+                                          <fieldset class="form-group" id="">
+                                             <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0">&nbsp;</legend>
+                                             <div>
+                                                <button type="" onclick="" class="btn btn-outline-success btn-sm"><i class="i-Add"></i> </button>
+                                             </div>
+                                          </fieldset>
+                                       </span>
+
+                                       <!-- Create Category button aligned under Type -->
+                                       <span>
+                                          <fieldset class="form-group" id="create-recipe-field">
+                                             <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0">&nbsp;</legend>
+                                             <div>
+                                                <button type="button" onclick="createCategory()" class="btn btn-outline-success btn-sm"><i class="i-Add"></i> Create Category</button>
+                                             </div>
+                                          </fieldset>
+                                       </span>   
+
+                                       <!-- Create SuCategory button aligned under Type -->
+                                       <span>
+                                          <fieldset class="form-group" id="create-recipe-field">
+                                             <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0">&nbsp;</legend>
+                                             <div>
+                                                <button type="button" onclick="createSubCategory()" class="btn btn-outline-success btn-sm"><i class="i-Add"></i> Create Sub Category</button>
+                                             </div>
+                                          </fieldset>
+                                       </span>
                                  </div>
                                  <div class="mt-3 col-md-12" style="display: none;">
                                     <fieldset class="form-group" id="__BVID__384">
                                        <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0" id="__BVID__384__BV_label_">Description</legend>
                                        <div>
                                           <textarea rows="4" placeholder="A few words..." class="form-control"></textarea>
-                                          <!----><!----><!---->
+                                          <!----><!----><!----> 
                                        </div>
                                     </fieldset>
                                  </div>
@@ -602,17 +651,358 @@
                      </div>
                   </div>
                </div>
-               <div class="mt-3 col-md-12">
-                  <div class="mr-2">
-                     <div class="b-overlay-wrap position-relative d-inline-block btn-loader">
-                        <button type="submit" class="btn btn-primary"><i class="i-Yes me-2 font-weight-bold"></i>
-                        Submit</button><!---->
-                     </div>
-                  </div>
-               </div>
+               <!-- Create Recipe button moved next to Category -->
             </div>
          </form>
       </span>
    </div>
 </div>
+@endsection
+
+@section('scripts')
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+      const categories = @json($categories);
+
+      const categoryCombo = document.getElementById("vs3__combobox");
+      const categoryInput = categoryCombo.querySelector(".vs__search");
+      const categoryListbox = document.getElementById("vs3__listbox");
+      const categoryClear = categoryCombo.querySelector(".vs__clear");
+
+      const subcategoryCombo = document.getElementById("vs4__combobox");
+      const subcategoryInput = subcategoryCombo.querySelector(".vs__search");
+      const subcategoryListbox = document.getElementById("vs4__listbox");
+      const subcategoryClear = subcategoryCombo.querySelector(".vs__clear");
+
+      let selectedCategory = null;
+      let selectedSubcategory = null;
+
+      // Show/hide helpers
+      function showListbox(listbox) {
+         listbox.style.display = "block";
+         listbox.style.visibility = "visible";
+      }
+      function hideListbox(listbox) {
+         listbox.style.display = "none";
+         listbox.style.visibility = "hidden";
+      }
+      function showClear(button) {
+         button.style.display = "inline-block";
+      }
+      function hideClear(button) {
+         button.style.display = "none";
+      }
+      function showListbox(listbox, combo) {
+      listbox.style.display = "block";
+      listbox.style.visibility = "visible";
+      combo.classList.add("vs--open");
+   }
+
+   function hideListbox(listbox, combo) {
+      listbox.style.display = "none";
+      listbox.style.visibility = "hidden";
+      combo.classList.remove("vs--open");
+   }
+
+
+    // Render categories
+function renderCategories(filter = "") {
+         categoryListbox.innerHTML = "";
+         const filtered = categories.filter(cat =>
+            cat.Category_Name.toLowerCase().includes(filter.toLowerCase())
+         );
+
+         if (filtered.length === 0) {
+            hideListbox(categoryListbox, categoryCombo);
+            return;
+         }
+
+         filtered.forEach(cat => {
+            const li = document.createElement("li");
+            li.setAttribute("role", "option");
+            li.textContent = cat.Category_Name;
+            li.dataset.value = cat.CAT_ID;
+
+            li.addEventListener("click", () => {
+                  // Show name in visible input
+                  document.getElementById("category_display").value = cat.Category_Name;
+                  // Save ID in hidden input
+                  document.getElementById("cat_id").value = cat.CAT_ID;
+
+                  selectedCategory = cat;
+                  hideListbox(categoryListbox, categoryCombo);
+                  showClear(categoryClear);
+
+                  // Reset subcategory
+                  document.getElementById("subcategory_display").value = "";
+                  document.getElementById("subcat_id").value = "";
+                  selectedSubcategory = null;
+                  hideListbox(subcategoryListbox, subcategoryCombo);
+                  hideClear(subcategoryClear);
+
+                  renderSubcategories(cat.subcategories);
+            });
+
+            categoryListbox.appendChild(li);
+         });
+
+         showListbox(categoryListbox, categoryCombo);
+      }
+
+                  // Render subcategories
+      function renderSubcategories(subcategories, filter = "") {
+         subcategoryListbox.innerHTML = "";
+         const filtered = subcategories.filter(sub =>
+            sub.Subcategory_Name.toLowerCase().includes(filter.toLowerCase())
+         );
+
+         if (filtered.length === 0) {
+            hideListbox(subcategoryListbox, subcategoryCombo);
+            return;
+         }
+
+         filtered.forEach(sub => {
+            const li = document.createElement("li");
+            li.setAttribute("role", "option");
+            li.textContent = sub.Subcategory_Name;
+            li.dataset.value = sub.SUBCAT_ID;
+
+            li.addEventListener("click", () => {
+                  // Show name in visible input
+                  document.getElementById("subcategory_display").value = sub.Subcategory_Name;
+                  // Save ID in hidden input
+                  document.getElementById("subcat_id").value = sub.SUBCAT_ID;
+
+                  selectedSubcategory = sub;
+                  hideListbox(subcategoryListbox, subcategoryCombo);
+                  showClear(subcategoryClear);
+            });
+
+            subcategoryListbox.appendChild(li);
+         });
+
+         showListbox(subcategoryListbox, subcategoryCombo);
+      }
+
+         // Clear button handlers
+         categoryClear.addEventListener("click", () => {
+            categoryInput.value = "";
+            selectedCategory = null;
+            hideClear(categoryClear);
+
+            // Also reset subcategory
+            subcategoryInput.value = "";
+            selectedSubcategory = null;
+            hideClear(subcategoryClear);
+            hideListbox(subcategoryListbox);
+         });
+
+         subcategoryClear.addEventListener("click", () => {
+            subcategoryInput.value = "";
+            selectedSubcategory = null;
+            hideClear(subcategoryClear);
+            hideListbox(subcategoryListbox);
+         });
+
+         // Event listeners
+         categoryInput.addEventListener("focus", () => renderCategories());
+         categoryInput.addEventListener("input", (e) => renderCategories(e.target.value));
+
+         subcategoryInput.addEventListener("focus", () => {
+            if (selectedCategory) {
+                  renderSubcategories(selectedCategory.subcategories);
+            }
+         });
+         subcategoryInput.addEventListener("input", (e) => {
+            if (selectedCategory) {
+                  renderSubcategories(
+                     selectedCategory.subcategories,
+                     e.target.value
+                  );
+            }
+         });
+
+         // Hide listboxes when clicking outside
+         document.addEventListener("click", (e) => {
+         if (!categoryCombo.contains(e.target)) hideListbox(categoryListbox, categoryCombo);
+         if (!subcategoryCombo.contains(e.target)) hideListbox(subcategoryListbox, subcategoryCombo);
+      });
+
+         //Swal Alert
+         async function createCategory() {
+            const swalWithBootstrapButtons = Swal.mixin({
+               customClass: {
+                  confirmButton: "btn btn-success",
+                  cancelButton: "btn btn-danger"
+               },
+               buttonsStyling: false
+            });
+
+            const { value: formValues } = await swalWithBootstrapButtons.fire({
+               title: "Add Category",
+               width: '700px',
+               html: `
+                  <div class="mb-3 text-start">
+                     <label class="form-label">Category Name *</label>
+                     <input type="text" id="swal_category_name" class="form-control" placeholder="Enter category name">
+                  </div>
+                  <div class="mb-3 text-start">
+                     <label class="form-label">Description</label>
+                     <textarea id="swal_category_description" class="form-control" placeholder="Enter category description"></textarea>
+                  </div>
+               `,
+               focusConfirm: false,
+               showCancelButton: true,
+               confirmButtonText: 'Save',
+               preConfirm: () => {
+                  const name = document.getElementById('swal_category_name').value.trim();
+                  const description = document.getElementById('swal_category_description').value.trim();
+                  if (!name) {
+                     Swal.showValidationMessage('Category name is required');
+                     return false;
+                  }
+                  return { name, description };
+               }
+            });
+
+            if (!formValues) return;
+
+            const { name, description } = formValues;
+            const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+
+            try {
+                      const resp = await fetch('/categories', {
+                  method: 'POST',
+                  headers: {
+                     'Content-Type': 'application/json',
+                     'Accept': 'application/json',
+                     'X-CSRF-TOKEN': token || '',
+                     'X-Requested-With': 'XMLHttpRequest'
+                  },
+                         credentials: 'same-origin',
+                  body: JSON.stringify({ Category_Name: name, Description: description })
+               });
+
+               if (!resp.ok) {
+                  const err = await resp.json().catch(() => ({}));
+                  throw new Error(err.error || 'Failed to create category');
+               }
+
+               const data = await resp.json();
+               if (data && data.id) {
+                  const newCat = {
+                     CAT_ID: data.id,
+                     Category_Name: name,
+                     description: description,
+                     subcategories: []
+                  };
+                  categories.push(newCat);
+                  renderCategories();
+                  document.getElementById('category_display').value = name;
+                  document.getElementById('cat_id').value = data.id;
+                  selectedCategory = newCat;
+                  hideListbox(categoryListbox, categoryCombo);
+                  showClear(categoryClear);
+
+                  swalWithBootstrapButtons.fire({ title: 'Saved!', text: 'Category saved.', icon: 'success' });
+               } else {
+                  throw new Error('No id returned from server');
+               }
+            } catch (error) {
+               swalWithBootstrapButtons.fire({ title: 'Error', text: error.message || 'Failed to save category', icon: 'error' });
+            }
+         }
+
+         async function createSubCategory() {
+            // Build options for parent category select
+            const options = categories.map(c => `<option value="${c.CAT_ID}">${c.Category_Name}</option>`).join('');
+            const swalWithBootstrapButtons = Swal.mixin({
+               customClass: {
+                  confirmButton: "btn btn-success",
+                  cancelButton: "btn btn-danger"
+               },
+               buttonsStyling: false
+            });
+
+            const { value: formValues } = await swalWithBootstrapButtons.fire({
+               title: 'Add Sub Category',
+               width: '700px',
+               html: `
+                  <div class="mb-3 text-start">
+                     <label class="form-label">Parent Category *</label>
+                     <select id="swal_parent_cat" class="form-control">${options}</select>
+                  </div>
+                  <div class="mb-3 text-start">
+                     <label class="form-label">Subcategory Name *</label>
+                     <input type="text" id="swal_subcat_name" class="form-control" placeholder="Enter subcategory name">
+                  </div>
+                  <div class="mb-3 text-start">
+                     <label class="form-label">Description</label>
+                     <textarea id="swal_subcat_description" class="form-control" placeholder="Enter subcategory description"></textarea>
+                  </div>
+               `,
+               focusConfirm: false,
+               showCancelButton: true,
+               confirmButtonText: 'Save',
+               preConfirm: () => {
+                  const parentId = document.getElementById('swal_parent_cat').value;
+                  const name = document.getElementById('swal_subcat_name').value.trim();
+                  const description = document.getElementById('swal_subcat_description').value.trim();
+                  if (!name) { Swal.showValidationMessage('Subcategory name is required'); return false; }
+                  if (!parentId) { Swal.showValidationMessage('Please select a parent category'); return false; }
+                  return { parentId, name, description };
+               }
+            });
+
+            if (!formValues) return;
+
+            const { parentId, name, description } = formValues;
+            const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+
+            try {
+                      const resp = await fetch('/subcategories', {
+                  method: 'POST',
+                  headers: {
+                     'Content-Type': 'application/json',
+                     'Accept': 'application/json',
+                     'X-CSRF-TOKEN': token || '',
+                     'X-Requested-With': 'XMLHttpRequest'
+                  },
+                         credentials: 'same-origin',
+                  body: JSON.stringify({ SUBCATEGORY_NAME: name, CAT_ID: parentId, Description: description })
+               });
+
+               if (!resp.ok) {
+                  const err = await resp.json().catch(() => ({}));
+                  throw new Error(err.error || 'Failed to create subcategory');
+               }
+
+               const data = await resp.json();
+               if (data && data.id) {
+                  const parent = categories.find(c => String(c.CAT_ID) === String(parentId));
+                  if (parent) {
+                     const newSub = { SUBCAT_ID: data.id, Subcategory_Name: name, description };
+                     parent.subcategories = parent.subcategories || [];
+                     parent.subcategories.push(newSub);
+                     if (selectedCategory && String(selectedCategory.CAT_ID) === String(parentId)) {
+                        renderSubcategories(parent.subcategories);
+                        document.getElementById('subcategory_display').value = name;
+                        document.getElementById('subcat_id').value = data.id;
+                        selectedSubcategory = newSub;
+                        hideListbox(subcategoryListbox, subcategoryCombo);
+                        showClear(subcategoryClear);
+                     }
+                  }
+
+                  swalWithBootstrapButtons.fire({ title: 'Saved!', text: 'Subcategory saved.', icon: 'success' });
+               } else {
+                  throw new Error('No id returned from server');
+               }
+            } catch (error) {
+               swalWithBootstrapButtons.fire({ title: 'Error', text: error.message || 'Failed to save subcategory', icon: 'error' });
+            }
+         }
+</script>
+
+
 @endsection
