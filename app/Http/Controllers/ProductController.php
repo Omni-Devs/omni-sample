@@ -2,73 +2,62 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Category;
 use App\Models\Product;
-use App\Services\AccessDatabase;
+use App\Models\Subcategory;
 use Illuminate\Http\Request;
 
 class ProductController extends Controller
 {
     public function index()
     {
-        $products = Product::all();
+        $products = Product::with(['category', 'subcategory'])->get();
         return view('products.index', compact('products'));
     }
 
     public function create()
     {
-        return view('products.create'); // make sure you have resources/views/products/create.blade.php
+        $categories = Category::all();
+        $subcategories = Subcategory::all();
+        return view('products.create', compact('categories', 'subcategories'));
     }
 
-    // Store the product into Access DB
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'product_code'   => 'required|string',
-            'product_name' => 'required|string',
-            'category_id'  => 'required|numeric',
-            'sub_category_id'  => 'required|numeric',
-            'product_price'    => 'required|numeric',
+            'code' => 'required|string|unique:products,code',
+            'name' => 'required|string',
+            'price' => 'required|numeric',
+            'category_id' => 'required|exists:categories,id',
+            'subcategory_id' => 'nullable|exists:subcategories,id',
         ]);
 
         Product::create($validated);
-
         return redirect()->route('products.index')->with('success', 'Product created successfully.');
     }
 
-    // Show the edit form
-    public function edit($id)
+    public function edit(Product $product)
     {
-        $product = Product::find($id);
-        if (!$product) {
-            return redirect()->route('products.index')->with('error', 'Product not found.');
-        }
         return view('products.edit', compact('product'));
     }
 
-    // Update the product in Access DB
-    public function update(Request $request, $id)
+    public function update(Request $request, Product $product)
     {
         $validated = $request->validate([
-            'product_code'   => 'required|string',
-            'product_name' => 'required|string',
-            'category_id'  => 'required|numeric',
-            'sub_category_id'  => 'required|numeric',
-            'product_price'    => 'required|numeric', 
+            'code' => 'required|string|unique:products,code,' . $product->id,
+            'name' => 'required|string',
+            'price' => 'required|numeric',
+            'category_id' => 'required|exists:categories,id',
+            'subcategory_id' => 'nullable|exists:subcategories,id',
         ]);
 
-        Product::updateProduct($id, $validated);
-
+        $product->update($validated);
         return redirect()->route('products.index')->with('success', 'Product updated successfully.');
     }
 
-    public function destroy($id)
+    public function destroy(Product $product)
     {
-        $deleted = Product::deleteProduct($id);
-
-        if ($deleted) {
-            return redirect()->route('products.index')->with('success', 'Product deleted successfully.');
-        }
-
-        return redirect()->route('products.index')->with('error', 'Failed to delete product.');
+        $product->delete();
+        return redirect()->route('products.index')->with('success', 'Product deleted successfully.');
     }
 }
