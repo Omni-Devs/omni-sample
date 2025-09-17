@@ -119,7 +119,7 @@
                                        <fieldset class="form-group" id="__BVID__358">
                                           <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0" id="__BVID__358__BV_label_">SKU(Product Code) *</legend>
                                           <div>
-                                             <input type="text" placeholder="Enter SKU" class="form-control" aria-describedby="Name-feedback" label="Name" id="product_code" name="product_code" value="{{ old('PRODUCT_CODE') }}"> 
+                                             <input type="text" placeholder="Enter SKU" class="form-control" aria-describedby="Name-feedback" label="Name" id="code" name="code" value="{{ old('CODE') }}"> 
                                              <div id="SKU-feedback" class="invalid-feedback"></div>
                                              <!----><!----><!---->
                                           </div>
@@ -129,71 +129,37 @@
                                        <fieldset class="form-group" id="__BVID__3161">
                                           <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0" id="__BVID__3161__BV_label_">Product Name *</legend>
                                           <div>
-                                             <input type="text" placeholder="Enter Name of Product" class="form-control" aria-describedby="Name-feedback" label="Name" id="product_name" name="product_name" value="{{ old('PRODUCT_NAME') }}"> 
+                                          <input type="text" placeholder="Enter Name of Product" class="form-control" aria-describedby="Name-feedback" label="Name" id="name" name="name" value="{{ old('NAME') }}"> 
                                              <div id="Name-feedback" class="invalid-feedback"></div>
                                              <!----><!----><!---->
                                           </div>
                                        </fieldset>
                                     </span>
                                     <span>
-                                       <fieldset class="form-group" id="__BVID__3458">
-                                          <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0" id="__BVID__3458__BV_label_">Category *</legend>
-                                          <div>
-                                             <input type="number" placeholder="Enter Category" class="form-control" aria-describedby="Name-feedback" id="category_id" name="category_id"> 
-                                             <div id="Name-feedback" class="invalid-feedback"></div>
-                                             <!----><!----><!---->
+                                    <div class="form-group">
+                                             <label for="category_id">Category</label>
+                                             <select name="category_id" id="category_id" class="form-control">
+                                                   @foreach ($categories as $category)
+                                                      <option value="{{ $category->id }}">{{ $category->name }}</option>
+                                                   @endforeach
+                                             </select>
                                           </div>
-                                       </fieldset>
                                     </span>
                                     <span>
-                                       <fieldset class="form-group" id="__BVID__9999">
-                                          <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0" id="__BVID__9999__BV_label_">Subcategory *</legend>
-                                          <div>
-                                             <input type="number" placeholder="Enter Subcategory" class="form-control" aria-describedby="Subcatid-feedback" id="sub_category_id" name="sub_category_id"> 
-                                             <div id="Subcatid-feedback" class="invalid-feedback"></div>
-                                             <!----><!----><!---->
+                                          <div class="form-group">
+                                             <label for="subcategory_id">Subcategory</label>
+                                             <select name="subcategory_id" id="subcategory_id" class="form-control">
+                                                   @foreach ($subcategories as $subcategory)
+                                                      <option value="{{ $subcategory->id }}">{{ $subcategory->name }}</option>
+                                                   @endforeach
+                                             </select>
                                           </div>
-                                       </fieldset>
                                     </span>
-                                    {{-- 
-                                    <span>
-                                       <fieldset class="form-group" id="__BVID__370" style="display: none;">
-                                          <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0" id="__BVID__370__BV_label_">Brand *</legend>
-                                          <div>
-                                             <div dir="auto" class="v-select vs--single vs--searchable" aria-describedby="Brand-feedback">
-                                                <div id="vs16__combobox" role="combobox" aria-expanded="false" aria-owns="vs16__listbox" aria-label="Search for option" class="vs__dropdown-toggle">
-                                                   <div class="vs__selected-options">
-                                                      <span class="vs__selected">
-                                                         Marcela Farm
-                                                         <!---->
-                                                      </span>
-                                                      <input aria-autocomplete="list" aria-labelledby="vs16__combobox" aria-controls="vs16__listbox" type="search" autocomplete="off" class="vs__search">
-                                                   </div>
-                                                   <div class="vs__actions">
-                                                      <button type="button" title="Clear Selected" aria-label="Clear Selected" class="vs__clear">
-                                                         <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10">
-                                                            <path d="M6.895455 5l2.842897-2.842898c.348864-.348863.348864-.914488 0-1.263636L9.106534.261648c-.348864-.348864-.914489-.348864-1.263636 0L5 3.104545 2.157102.261648c-.348863-.348864-.914488-.348864-1.263636 0L.261648.893466c-.348864.348864-.348864.914489 0 1.263636L3.104545 5 .261648 7.842898c-.348864.348863-.348864.914488 0 1.263636l.631818.631818c.348864.348864.914773.348864 1.263636 0L5 6.895455l2.842898 2.842897c.348863.348864.914772.348864 1.263636 0l.631818-.631818c.348864-.348864.348864-.914489 0-1.263636L6.895455 5z"></path>
-                                                         </svg>
-                                                      </button>
-                                                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="10" role="presentation" class="vs__open-indicator">
-                                                         <path d="M9.211364 7.59931l4.48338-4.867229c.407008-.441854.407008-1.158247 0-1.60046l-.73712-.80023c-.407008-.441854-1.066904-.441854-1.474243 0L7 5.198617 2.51662.33139c-.407008-.441853-1.066904-.441853-1.474243 0l-.737121.80023c-.407008.441854-.407008 1.158248 0 1.600461l4.48338 4.867228L7 10l2.211364-2.40069z"></path>
-                                                      </svg>
-                                                      <div class="vs__spinner" style="display: none;">Loading...</div>
-                                                   </div>
-                                                </div>
-                                                <ul id="vs16__listbox" role="listbox" style="display: none; visibility: hidden;"></ul>
-                                             </div>
-                                             <div id="Brand-feedback" class="invalid-feedback"></div>
-                                             <!----><!----><!---->
-                                          </div>
-                                       </fieldset>
-                                    </span>
-                                    --}}
                                     <span>
                                        <fieldset class="form-group" id="__BVID__408">
                                           <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0" id="__BVID__408__BV_label_">Unit Price *</legend>
                                           <div>
-                                             <input class="form-control" aria-describedby="Price-feedback" placeholder="0" name="product_price" value="{{ old('PRODUCT_PRICE') }}" inputmode="decimal"> 
+                                             <input class="form-control" aria-describedby="Price-feedback" placeholder="0" name="price" value="{{ old('PRICE') }}" inputmode="decimal"> 
                                              <div id="Price-feedback" class="invalid-feedback"></div>
                                              <!----><!----><!---->
                                           </div>
@@ -211,40 +177,6 @@
                                     </span>
                                  </div>
                                  <div class="col-md-6">
-                                    {{-- 
-                                    <span>
-                                       <fieldset class="form-group" id="__BVID__379" style="visibility: hidden;">
-                                          <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0" id="__BVID__379__BV_label_">Barcode Symbology *</legend>
-                                          <div>
-                                             <div dir="auto" class="v-select vs--single vs--searchable" state="true">
-                                                <div id="vs17__combobox" role="combobox" aria-expanded="false" aria-owns="vs17__listbox" aria-label="Search for option" class="vs__dropdown-toggle">
-                                                   <div class="vs__selected-options">
-                                                      <span class="vs__selected">
-                                                         Code 128
-                                                         <!---->
-                                                      </span>
-                                                      <input aria-autocomplete="list" aria-labelledby="vs17__combobox" aria-controls="vs17__listbox" type="search" autocomplete="off" class="vs__search">
-                                                   </div>
-                                                   <div class="vs__actions">
-                                                      <button type="button" title="Clear Selected" aria-label="Clear Selected" class="vs__clear">
-                                                         <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10">
-                                                            <path d="M6.895455 5l2.842897-2.842898c.348864-.348863.348864-.914488 0-1.263636L9.106534.261648c-.348864-.348864-.914489-.348864-1.263636 0L5 3.104545 2.157102.261648c-.348863-.348864-.914488-.348864-1.263636 0L.261648.893466c-.348864.348864-.348864.914489 0 1.263636L3.104545 5 .261648 7.842898c-.348864.348863-.348864.914488 0 1.263636l.631818.631818c.348864.348864.914773.348864 1.263636 0L5 6.895455l2.842898 2.842897c.348863.348864.914772.348864 1.263636 0l.631818-.631818c.348864-.348864.348864-.914489 0-1.263636L6.895455 5z"></path>
-                                                         </svg>
-                                                      </button>
-                                                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="10" role="presentation" class="vs__open-indicator">
-                                                         <path d="M9.211364 7.59931l4.48338-4.867229c.407008-.441854.407008-1.158247 0-1.60046l-.73712-.80023c-.407008-.441854-1.066904-.441854-1.474243 0L7 5.198617 2.51662.33139c-.407008-.441853-1.066904-.441853-1.474243 0l-.737121.80023c-.407008.441854-.407008 1.158248 0 1.600461l4.48338 4.867228L7 10l2.211364-2.40069z"></path>
-                                                      </svg>
-                                                      <div class="vs__spinner" style="display: none;">Loading...</div>
-                                                   </div>
-                                                </div>
-                                                <ul id="vs17__listbox" role="listbox" style="display: none; visibility: hidden;"></ul>
-                                             </div>
-                                             <div class="invalid-feedback"></div>
-                                             <!----><!----><!---->
-                                          </div>
-                                       </fieldset>
-                                    </span>
-                                    --}}
                                     <span>
                                        <fieldset class="form-group" id="__BVID__3658">
                                           <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0" id="__BVID__3658__BV_label_">Type *</legend>

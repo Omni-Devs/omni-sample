@@ -119,37 +119,37 @@
                                         <fieldset class="form-group" id="__BVID__3161">
                                             <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0" id="__BVID__3161__BV_label_">Component Name *</legend>
                                             <div>
-                                                <input type="text" placeholder="Enter Name of Product" class="form-control" aria-describedby="Name-feedback" label="Name" id="component_name" name="component_name" value="{{ old('COMPONENT_NAME') }}"> 
+                                                <input type="text" placeholder="Enter Name of Product" class="form-control" aria-describedby="Name-feedback" label="Name" id="name" name="name" value="{{ old('name') }}"> 
                                                 <div id="Name-feedback" class="invalid-feedback"></div>
                                                 <!----><!----><!---->
                                             </div>
                                         </fieldset>
                                         </span>
                                         <span>
-                                        <fieldset class="form-group" id="__BVID__3458">
-                                            <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0" id="__BVID__3458__BV_label_">Category *</legend>
-                                            <div>
-                                                <input type="number" placeholder="Enter Category" class="form-control" aria-describedby="Name-feedback" id="category_id" name="category_id"> 
-                                                <div id="Name-feedback" class="invalid-feedback"></div>
-                                                <!----><!----><!---->
-                                            </div>
-                                        </fieldset>
+                                    <div class="form-group">
+                                            <label for="category_id">Category</label>
+                                            <select name="category_id" id="category_id" class="form-control">
+                                                @foreach ($categories as $category)
+                                                    <option value="{{ $category->id }}">{{ $category->name }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
                                         </span>
                                         <span>
-                                        <fieldset class="form-group" id="__BVID__9999">
-                                            <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0" id="__BVID__9999__BV_label_">Subcategory *</legend>
-                                            <div>
-                                                <input type="number" placeholder="Enter Subcategory" class="form-control" aria-describedby="Subcatid-feedback" id="sub_category_id" name="sub_category_id"> 
-                                                <div id="Subcatid-feedback" class="invalid-feedback"></div>
-                                                <!----><!----><!---->
-                                            </div>
-                                        </fieldset>
+                                        <div class="form-group">
+                                            <label for="subcategory_id">Subcategory</label>
+                                            <select name="subcategory_id" id="subcategory_id" class="form-control">
+                                                @foreach ($subcategories as $subcategory)
+                                                    <option value="{{ $subcategory->id }}">{{ $subcategory->name }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
                                         </span>
                                         <span>
                                         <fieldset class="form-group" id="__BVID__408">
                                             <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0" id="__BVID__408__BV_label_">Component Cost *</legend>
                                             <div>
-                                                <input class="form-control" aria-describedby="Price-feedback" placeholder="0" id="component_cost" name="component_cost" value="{{ old('COMPONENT_COST') }}" inputmode="decimal"> 
+                                                <input class="form-control" aria-describedby="Price-feedback" placeholder="0" id="cost" name="cost" value="{{ old('COST') }}" inputmode="decimal"> 
                                                 <div id="Price-feedback" class="invalid-feedback"></div>
                                                 <!----><!----><!---->
                                             </div>
@@ -159,7 +159,7 @@
                                         <fieldset class="form-group" id="__BVID__408">
                                             <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0" id="__BVID__408__BV_label_">Component Price *</legend>
                                             <div>
-                                                <input class="form-control" aria-describedby="Price-feedback" placeholder="0" id="component_price" name="component_price" value="{{ old('COMPONENT_PRICE') }}" inputmode="decimal"> 
+                                                <input class="form-control" aria-describedby="Price-feedback" placeholder="0" id="price" name="price" value="{{ old('PRICE') }}" inputmode="decimal"> 
                                                 <div id="Price-feedback" class="invalid-feedback"></div>
                                                 <!----><!----><!---->
                                             </div>
@@ -169,7 +169,7 @@
                                         <fieldset class="form-group" id="__BVID__408">
                                             <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0" id="__BVID__408__BV_label_">Component Unit *</legend>
                                             <div>
-                                                <input class="form-control" aria-describedby="Price-feedback" placeholder="0" id="component_unit" name="component_unit" value="{{ old('COMPONENT_UNIT') }}" inputmode="text"> 
+                                                <input class="form-control" aria-describedby="Price-feedback" placeholder="0" id="unit" name="unit" value="{{ old('UNIT') }}" inputmode="text"> 
                                                 <div id="Price-feedback" class="invalid-feedback"></div>
                                                 <!----><!----><!---->
                                             </div>

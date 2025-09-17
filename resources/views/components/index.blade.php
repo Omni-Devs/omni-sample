@@ -67,26 +67,23 @@
         <tbody>
             @forelse ($components as $component)
                 <tr>
-                    <td class="text-left">{{ $component['COMPONENT_NAME'] }}</td>
-                    <td class="text-left">{{ $component['CATEGORY'] }}</td>
-                    <td class="text-left">{{ $component['SUBCATEGORY'] }}</td>
-                    <td class="text-left">{{ number_format($component['COMPONENT_COST'], 2, '.', '') }}</td>
-                    <td class="text-left">{{ number_format($component['COMPONENT_PRICE'], 2, '.', '') }}</td>
-                    <td class="text-right">{{ $component['COMPONENT_UNIT'] }}</td>
-                    <td class="text-right">{{ $component['ONHAND'] }}</td>
-                    <td class="text-right">
-                        <input type="checkbox" {{ !empty($component['FOR_SALE']) && $component['FOR_SALE'] ? 'checked' : '' }}>
+                    <td>{{ $component->name }}</td>
+                    <td>{{ $component->category?->name ?? 'N/A' }}</td>
+                    <td>{{ $component->subcategory?->name ?? 'N/A' }}</td>
+                    <td>{{ number_format($component->cost, 2, '.', '') }}</td>
+                    <td>{{ number_format($component->price, 2, '.', '') }}</td>
+                    <td>{{ $component->unit }}</td>
+                    <td>{{ $component->onhand }}</td>
+                    <td>
+                        <input type="checkbox" {{ !empty($component->for_sale) && $component->for_sale ? 'checked' : '' }}>
                     </td>
                     <td class="text-right">
-                        <a href="{{ route('components.edit', ['id' => $component['COMP_ID']]) }}" class="btn btn-sm btn-primary">Edit</a>
-                        <form action="{{ route('components.destroy', $component['COMP_ID']) }}" method="POST" style="display:inline-block;">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" class="btn btn-sm btn-danger"
-                            onclick="return confirm('Are you sure you want to delete this component?')">
-                        Delete
-                                </button>
-                                </form>
+                        <a href="{{ route('components.edit', ['id' => $component['id']]) }}" class="btn btn-sm btn-primary">Edit</a>
+                        <form action="{{ route('components.destroy', $component->id) }}" method="POST">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                        </form>
                             </td>
                 </tr>
             @empty

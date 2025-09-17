@@ -2,80 +2,80 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Category;
 use App\Models\Component;
+use App\Models\Subcategory;
 use Illuminate\Http\Request;
 
 class ComponentController extends Controller
 {
     public function index()
     {
-        $components = Component::all();
+        // eager load category + subcategory for efficiency
+        $components = Component::with(['category', 'subcategory'])->get();
+
         return view('components.index', compact('components'));
     }
 
     public function create()
     {
-        return view('components.create'); // make sure you have resources/views/components/create.blade.php
+        $categories = Category::all();
+        $subcategories = Subcategory::all();
+        return view('components.create', compact('categories', 'subcategories'));
     }
-
-    // Store the component into Access DB
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'component_name' => 'required|string',
-            'category_id'     => 'required|integer',
-            'sub_category_id'     => 'required|integer',
-            'component_cost'     => 'required|numeric',
-            'component_price'     => 'required|numeric',
-            'component_unit'      => 'required|string',
-            'onhand'    => 'required|integer',
-            // Remove 'for_sale' from validation, handle manually
+            'name'          => 'required|string',
+            'category_id'   => 'required|integer|exists:categories,id',
+            'subcategory_id'=> 'nullable|integer|exists:subcategories,id',
+            'cost'          => 'required|numeric',
+            'price'         => 'required|numeric',
+            'unit'          => 'required|string',
+            'onhand'        => 'required|integer',
+            'for_sale'      => 'nullable|boolean',
         ]);
 
         $validated['for_sale'] = $request->has('for_sale') ? 1 : 0;
+
         Component::create($validated);
 
         return redirect()->route('components.index')->with('success', 'Component created successfully.');
     }
 
-    // Show the edit form
     public function edit($id)
     {
-        $component = Component::find($id);
-        if (!$component) {
-            return redirect()->route('components.index')->with('error', 'Component not found.');
-        }
+        $component = Component::findOrFail($id);
+
         return view('components.edit', compact('component'));
     }
 
-    // Update the component in Access DB
     public function update(Request $request, $id)
     {
         $validated = $request->validate([
-            'component_name' => 'required|string',
-            'category_id'     => 'required|integer',
-            'sub_category_id'     => 'nullable|integer',
-            'component_cost'     => 'required|numeric',
-            'component_price'     => 'required|numeric',
-            'component_unit'      => 'required|string',
-            'onhand'    => 'required|integer',
-            // Remove 'for_sale' from validation, handle manually
+            'name'          => 'required|string',
+            'category_id'   => 'required|integer|exists:categories,id',
+            'subcategory_id'=> 'nullable|integer|exists:subcategories,id',
+            'cost'          => 'required|numeric',
+            'price'         => 'required|numeric',
+            'unit'          => 'required|string',
+            'onhand'        => 'required|integer',
+            'for_sale'      => 'nullable|boolean',
         ]);
 
         $validated['for_sale'] = $request->has('for_sale') ? 1 : 0;
-        Component::updateComponent($id, $validated);
+
+        $component = Component::findOrFail($id);
+        $component->update($validated);
 
         return redirect()->route('components.index')->with('success', 'Component updated successfully.');
     }
 
     public function destroy($id)
     {
-        $deleted = Component::deleteComponent($id);
+        $component = Component::findOrFail($id);
+        $component->delete();
 
-        if ($deleted) {
-            return redirect()->route('components.index')->with('success', 'Component deleted successfully.');
-        }
-
-        return redirect()->route('components.index')->with('error', 'Failed to delete component.');
+        return redirect()->route('components.index')->with('success', 'Component deleted successfully.');
     }
 }
