@@ -292,13 +292,13 @@
                            </tr>
                         </thead>
                         <tbody>
-                                                @forelse ($products as $product)
+                                 @forelse ($products as $product)
                                  <tr>
-                                    <td class="text-left">{{ $product['PRODUCT_CODE'] }}</td>
-                                    <td class="text-left">{{ $product['PRODUCT_NAME'] }}</td>
-                                    <td class="text-left">{{ $product['CATEGORY'] ?? 'N/A' }}</td>
-                                    <td class="text-left">{{ $product['SUBCATEGORY'] ?? 'N/A' }}</td>
-                                    <td class="text-right">{{ number_format($product['PRODUCT_PRICE'], 2, '.', '') }}</td>
+                                    <td class="text-left">{{ $product->code }}</td>
+                                    <td class="text-left">{{ $product->name }}</td>
+                                    <td class="text-left">{{ $product->category?->name ?? 'N/A' }}</td>
+                                    <td class="text-left">{{ $product->subcategory?->name ?? 'N/A' }}</td>
+                                    <td class="text-right">{{ number_format($product->price, 2, '.', '') }}</td>
                                     <td class="text-right">
                                           @if($product['TYPE'] === 'PRODUCT')
                                              <a href="{{ route('products.edit', ['id' => $product['PRODUCT_CODE']]) }}" class="btn btn-sm btn-primary">Edit</a>
