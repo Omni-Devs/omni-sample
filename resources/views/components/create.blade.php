@@ -298,16 +298,11 @@
                             <!-- Unit -->
                             <div class="col-md-5">
                             <fieldset class="form-group">
-                        <legend class="col-form-label pt-0">Unit *</legend>
-                        <div class="input-group">
-                            <div class="input-group-prepend">
-                                <span class="input-group-text">₱</span>
-                            </div>
-                            <input class="form-control" placeholder="0" id="unit" name="unit"
-                                value="{{ old('UNIT') }}" inputmode="text">
-                        </div>
-                        <div class="invalid-feedback"></div>
-                    </fieldset>
+                                <legend class="col-form-label pt-0">Unit *</legend>
+                                <input class="form-control" placeholder="0" id="unit" name="unit"
+                                    value="{{ old('UNIT') }}" inputmode="text">
+                                <div class="invalid-feedback"></div>
+                            </fieldset>
                             </div>
                         </div>
                                         <span>
