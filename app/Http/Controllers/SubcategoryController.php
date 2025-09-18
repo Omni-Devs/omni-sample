@@ -45,4 +45,10 @@ class SubcategoryController extends Controller
             ->with('success', 'Subcategory created successfully.');
     }
 
-}
+    public function byCategory($categoryId)
+    {
+        $subcategories = Subcategory::where('category_id', $categoryId)->get(['id', 'name']);
+        return response()->json($subcategories);
+    }
+
+}   

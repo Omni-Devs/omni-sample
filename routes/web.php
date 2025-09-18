@@ -29,3 +29,4 @@ Route::get('/categories', [CategoryController::class, 'index'])->name('categorie
 Route::post('/categories', [CategoryController::class, 'store'])->name('categories.store');
 Route::get('/subcategories', [SubcategoryController::class, 'index'])->name('subcategories.index');
 Route::post('/subcategories', [SubcategoryController::class, 'store'])->name('subcategories.store');
+Route::get('/categories/{id}/subcategories', [SubcategoryController::class, 'byCategory']);
