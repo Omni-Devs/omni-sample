@@ -3,7 +3,15 @@
       <div>
          <ul class="navigation-left">
             <li data-item="dashboard" data-submenu="true" class="nav-item active">
-               <a href="#" class="nav-item-hold"><i class="nav-icon i-Bar-Chart"></i> <span class="nav-text">Dashboard</span></a> 
+               <a href="#" class="nav-item-hold"><i class="nav-icon i-Bar-Chart"></i> <span class="nav-text">Menu</span></a> 
+               <div class="triangle"></div>
+            </li>
+            <li data-item="Sales" data-submenu="true" class="nav-item">
+               <a href="#" class="nav-item-hold"><i class="nav-icon i-Full-Basket"></i> <span class="nav-text">Sales Menu</span></a> 
+               <div class="triangle"></div>
+            </li>
+            <li data-item="Inventory" data-submenu="true" class="nav-item">
+               <a href="#" class="nav-item-hold"><i class="nav-icon i-Building"></i> <span class="nav-text">Inventory</span></a> 
                <div class="triangle"></div>
             </li>
             <li data-item="employee_dashboard" data-submenu="true" class="nav-item" style="display: none;">
@@ -15,10 +23,6 @@
                <div class="triangle"></div>
             </li>
             <li data-item="EmployeeSubordinates" data-submenu="true" class="nav-item" style="display: none;"><a href="#" class="nav-item-hold"><i class="nav-icon i-Business-Mens"></i> <span class="nav-text">My Subordinates</span></a></li>
-            <li data-item="settings" data-submenu="true" class="nav-item">
-               <a href="#" class="nav-item-hold"><i class="nav-icon i-Data-Settings"></i> <span class="nav-text">Settings</span></a> 
-               <div class="triangle"></div>
-            </li>
             <li data-item="People" data-submenu="true" class="nav-item">
                <a href="#" class="nav-item-hold"><i class="nav-icon i-Business-Mens"></i> <span class="nav-text">People</span></a> 
                <div class="triangle"></div>
@@ -27,20 +31,16 @@
                <a href="#" class="nav-item-hold"><i class="nav-icon i-Library"></i> <span class="nav-text">Workforce</span></a> 
                <div class="triangle"></div>
             </li>
-            <li data-item="Inventory" data-submenu="true" class="nav-item">
-               <a href="#" class="nav-item-hold"><i class="nav-icon i-Building"></i> <span class="nav-text">Inventory</span></a> 
-               <div class="triangle"></div>
-            </li>
-            <li data-item="Sales" data-submenu="true" class="nav-item">
-               <a href="#" class="nav-item-hold"><i class="nav-icon i-Full-Basket"></i> <span class="nav-text">Sales</span></a> 
-               <div class="triangle"></div>
-            </li>
             <li data-item="Accounting" data-submenu="true" class="nav-item">
                <a href="#" class="nav-item-hold"><i class="nav-icon i-Edit-Map"></i> <span class="nav-text">Accounting</span></a> 
                <div class="triangle"></div>
             </li>
             <li data-item="reports" data-submenu="true" class="nav-item">
                <a href="#" class="nav-item-hold"><i class="nav-icon i-Line-Chart"></i> <span class="nav-text">Reports</span></a> 
+               <div class="triangle"></div>
+            </li>
+            <li data-item="settings" data-submenu="true" class="nav-item">
+               <a href="#" class="nav-item-hold"><i class="nav-icon i-Data-Settings"></i> <span class="nav-text">Settings</span></a> 
                <div class="triangle"></div>
             </li>
          </ul>
@@ -61,7 +61,7 @@
             <!----> <!----> <!----> <!----> <!----> <!----> <!----> <!----> <!----> <!----> <!----> <!----> <!---->
          </ul>
          <ul data-parent="dashboard" class="childNav d-none d-block">
-            <li class="nav-item"><a href="/app/dashboard/main" class=""><i class="nav-icon i-Bar-Chart"></i> <span class="item-name">Branch</span></a></li>
+            {{-- <li class="nav-item"><a href="/app/dashboard/main" class=""><i class="nav-icon i-Bar-Chart"></i> <span class="item-name">Branch</span></a></li>
             <li class="nav-item dropdown-sidemenu">
                <a href="#"><i class="nav-icon i-Line-Chart"></i> <span class="item-name">Global</span> <i class="dd-arrow i-Arrow-Down"></i></a> 
                <ul class="submenu">
@@ -71,11 +71,12 @@
                   <li><a href="/app/dashboard/accounting" class=""><i class="nav-icon i-ID-Card"></i> <span class="item-name">Accounting</span></a></li>
                </ul>
             </li>
-            <li class="nav-item"><a href="/app/dashboard/log-histories" class=""><i class="nav-icon i-Administrator"></i> <span class="item-name">Log History</span></a></li>
+            <li class="nav-item"><a href="/app/dashboard/log-histories" class=""><i class="nav-icon i-Administrator"></i> <span class="item-name">Log History</span></a></li> --}}
          </ul>
          <ul data-parent="reports" class="childNav d-none">
-            <li class="nav-item dropdown-sidemenu">
-               <a href="#"><i class="nav-icon i-Library"></i> <span class="item-name">Workforce</span> <i class="dd-arrow i-Arrow-Down"></i></a> 
+            <li class="nav-item"><a href="/app/dashboard/x-reading" class=""><i class="nav-icon i-Edit-Map"></i> <span class="item-name">X Reading</span></a> </li>
+            <li class="nav-item"><a href="/app/dashboard/y-reading" class=""><i class="nav-icon i-Receipt-3"></i> <span class="item-name">Y Reading</span></a> </li>
+               {{-- <a href="#"><i class="nav-icon i-Library"></i> <span class="item-name">Workforce</span> <i class="dd-arrow i-Arrow-Down"></i></a> 
                <ul class="submenu">
                   <li><a href="/app/reports/workforce/summary" class=""><i class="nav-icon i-ID-Card"></i> <span class="item-name">Summary</span></a></li>
                   <li><a href="/app/reports/workforce/employee-profiles" class=""><i class="nav-icon i-Business-ManWoman"></i> <span class="item-name">Employee Profiles</span></a></li>
@@ -91,8 +92,8 @@
                   <li><a href="/app/reports/workforce/leaves" class=""><i class="nav-icon i-Ticket"></i> <span class="item-name">Leaves</span></a></li>
                   <li><a href="/app/reports/workforce/benefits" class=""><i class="nav-icon i-Betvibes"></i> <span class="item-name">Benefits</span></a></li>
                </ul>
-            </li>
-            <li class="nav-item dropdown-sidemenu">
+            </li> --}}
+            {{-- <li class="nav-item dropdown-sidemenu">
                <a href="#"><i class="nav-icon i-Building"></i> <span class="item-name">Inventory</span> <i class="dd-arrow i-Arrow-Down"></i></a> 
                <ul class="submenu">
                   <li><a href="/app/reports/inventory/summary" class=""><i class="nav-icon i-Posterous"></i> <span class="item-name">Summary Report</span></a></li>
@@ -108,8 +109,8 @@
                   <li><a href="/app/reports/inventory/audits" class=""><i class="nav-icon i-Approved-Window"></i> <span class="item-name">Audit Report</span></a></li>
                   <li><a href="/app/reports/inventory/input-taxes" class=""><i class="nav-icon i-Dollar"></i> <span class="item-name">Input Taxes</span></a></li>
                </ul>
-            </li>
-            <li class="nav-item dropdown-sidemenu">
+            </li> --}}
+            {{-- <li class="nav-item dropdown-sidemenu">
                <a href="#"><i class="nav-icon i-Full-Cart"></i> <span class="item-name">Sales</span> <i class="dd-arrow i-Arrow-Down"></i></a> 
                <ul class="submenu">
                   <li><a href="/app/reports/sales/summary" class=""><i class="nav-icon i-Pie-Chart"></i> <span class="item-name">Summary</span></a></li>
@@ -122,9 +123,9 @@
                   <li><a href="/app/reports/sales/voided-sales" class=""><i class="nav-icon i-Billing"></i> <span class="item-name">Voided Sales</span></a></li>
                   <li><a href="/app/reports/sales/output-taxes" class=""><i class="nav-icon i-Receipt-3"></i> <span class="item-name">Output Taxes</span></a></li>
                </ul>
-            </li>
-            <li class="nav-item dropdown-sidemenu">
-               <a href="#"><i class="nav-icon i-Edit-Map"></i> <span class="item-name">Accounting</span> <i class="dd-arrow i-Arrow-Down"></i></a> 
+            </li> --}}
+            {{-- <li class="nav-item dropdown-sidemenu">
+               <a href="#"><i class="nav-icon i-Edit-Map"></i> <span class="item-name">X Reading</span> <i class="dd-arrow i-Arrow-Down"></i></a> 
                <ul class="submenu">
                   <li><a href="/app/reports/accounting/accounts-receivable" class=""><i class="nav-icon i-Add-Cart"></i> <span class="item-name">Accounts Receivable</span></a></li>
                   <li><a href="/app/reports/accounting/accounts-payable" class=""><i class="nav-icon i-Bag-Coins"></i> <span class="item-name">Accounts Payable</span></a></li>
@@ -136,9 +137,9 @@
                   <li><a href="/app/reports/accounting/tax-journal" class=""><i class="nav-icon i-Receipt-3"></i> <span class="item-name">Tax Journal</span></a></li>
                   <li><a href="/app/reports/accounting/assets-summary" class=""><i class="nav-icon i-Building"></i> <span class="item-name">Assets Summary</span></a></li>
                </ul>
-            </li>
+            </li> --}}
          </ul>
-         <ul data-parent="Workforce" class="childNav d-none">
+         {{-- <ul data-parent="Workforce" class="childNav d-none">
             <li class="nav-item"><a href="/app/workforce/upload-files" class=""><i class="nav-icon i-Upload-Window"></i> <span class="item-name">Upload Employee Files</span></a></li>
             <li class="nav-item"><a href="/app/workforce/assign-shifts" class=""><i class="nav-icon i-Business-Mens"></i> <span class="item-name">Assign Shifts</span></a></li>
             <li class="nav-item"><a href="/app/workforce/assign-leaves" class=""><i class="nav-icon i-Ticket"></i> <span class="item-name">Assign Leaves</span></a></li>
@@ -173,23 +174,23 @@
                   <li><a href="/app/workforce/settings/disciplinary-actions" class=""><i class="nav-icon i-Financial"></i> <span class="item-name">Disciplinary Actions</span></a></li>
                </ul>
             </li>
-         </ul>
+         </ul> --}}
          <ul data-parent="Inventory" class="childNav d-none">
-            <li class="nav-item"><a href="/products" class="router-link-exact-active open" aria-current="page"><i class="nav-icon i-Posterous"></i> <span class="item-name">Products and Inventories</span></a></li>
-            <li class="nav-item"><a href="/app/inventory/adjustments" class=""><i class="nav-icon i-Laptop-Secure"></i> <span class="item-name">Products and Inventories Adjustments</span></a></li>
-            <li class="nav-item"><a href="/app/inventory/procurements" class=""><i class="nav-icon i-Computer-Secure"></i> <span class="item-name">PRF - Procurement Request Form</span></a></li>
+            <li class="nav-item"><a href="/products" class="router-link-exact-active open" aria-current="page"><i class="nav-icon i-Posterous"></i> <span class="item-name">Products</span></a></li>
+            <li class="nav-item"><a href="/app/inventory/adjustments" class=""><i class="nav-icon i-Laptop-Secure"></i> <span class="item-name">Components</span></a></li>
+            {{-- <li class="nav-item"><a href="/app/inventory/procurements" class=""><i class="nav-icon i-Computer-Secure"></i> <span class="item-name">PRF - Procurement Request Form</span></a></li> --}}
             <li class="nav-item"><a href="/app/inventory/purchases" class=""><i class="nav-icon i-Billing"></i> <span class="item-name">PO - Purchase Orders</span></a></li>
-            <li class="nav-item"><a href="/app/inventory/purchase-deliveries" class=""><i class="nav-icon i-Ambulance"></i> <span class="item-name">Manage PO Deliveries</span></a></li>
-            <li class="nav-item"><a href="/app/inventory/transfers" class=""><i class="nav-icon i-Jeep-2"></i> <span class="item-name">Warehouse to Warehouse (Inbound)</span></a></li>
-            <li class="nav-item"><a href="/app/inventory/warehouse-transfers" class=""><i class="nav-icon i-Jeep-2"></i> <span class="item-name">Warehouse to Warehouse (Outbound)</span></a></li>
-            <li class="nav-item"><a href="/app/inventory/stock-requests" class=""><i class="nav-icon i-Safe-Box"></i> <span class="item-name">Branch to Branch (Inbound)</span></a></li>
-            <li class="nav-item"><a href="/app/inventory/send-out-stocks" class=""><i class="nav-icon i-Mail-Outbox"></i> <span class="item-name">Branch to Branch (Outbound)</span></a></li>
-            <li class="nav-item"><a href="/app/inventory/disbursements" class=""><i class="nav-icon i-Split-Vertical"></i> <span class="item-name">Inventory Request</span></a></li>
-            <li class="nav-item"><a href="/app/inventory/processed-goods" class=""><i class="nav-icon i-Recycling-2"></i> <span class="item-name">Log Processed Goods</span></a></li>
-            <li class="nav-item"><a href="/app/inventory/audits" class=""><i class="nav-icon i-Approved-Window"></i> <span class="item-name">Audits</span></a></li>
-            <li class="nav-item"><a href="/app/inventory/print-labels" class=""><i class="nav-icon i-Tag-4"></i> <span class="item-name">Generate and Print Labels</span></a></li>
+            <li class="nav-item"><a href="/app/inventory/purchase-deliveries" class=""><i class="nav-icon i-Ambulance"></i> <span class="item-name">Transfer</span></a></li>
+            {{-- <li class="nav-item"><a href="/app/inventory/transfers" class=""><i class="nav-icon i-Jeep-2"></i> <span class="item-name">Warehouse to Warehouse (Inbound)</span></a></li> --}}
+            {{-- <li class="nav-item"><a href="/app/inventory/warehouse-transfers" class=""><i class="nav-icon i-Jeep-2"></i> <span class="item-name">Warehouse to Warehouse (Outbound)</span></a></li> --}}
+            {{-- <li class="nav-item"><a href="/app/inventory/stock-requests" class=""><i class="nav-icon i-Safe-Box"></i> <span class="item-name">Branch to Branch (Inbound)</span></a></li> --}}
+            {{-- <li class="nav-item"><a href="/app/inventory/send-out-stocks" class=""><i class="nav-icon i-Mail-Outbox"></i> <span class="item-name">Branch to Branch (Outbound)</span></a></li> --}}
+            {{-- <li class="nav-item"><a href="/app/inventory/disbursements" class=""><i class="nav-icon i-Split-Vertical"></i> <span class="item-name">Inventory Request</span></a></li> --}}
+            {{-- <li class="nav-item"><a href="/app/inventory/processed-goods" class=""><i class="nav-icon i-Recycling-2"></i> <span class="item-name">Log Processed Goods</span></a></li> --}}
+            {{-- <li class="nav-item"><a href="/app/inventory/audits" class=""><i class="nav-icon i-Approved-Window"></i> <span class="item-name">Audits</span></a></li> --}}
+            {{-- <li class="nav-item"><a href="/app/inventory/print-labels" class=""><i class="nav-icon i-Tag-4"></i> <span class="item-name">Generate and Print Labels</span></a></li> --}}
             <li class="nav-item dropdown-sidemenu">
-               <a href="#"><i class="nav-icon i-Gear"></i> <span class="item-name">Settings</span> <i class="dd-arrow i-Arrow-Down"></i></a> 
+               {{-- <a href="#"><i class="nav-icon i-Gear"></i> <span class="item-name">Settings</span> <i class="dd-arrow i-Arrow-Down"></i></a>  --}}
                <ul class="submenu">
                   <li class="nav-item"><a href="/app/settings/warehouses" class=""><i class="nav-icon i-Building"></i> <span class="item-name">Warehouses</span></a></li>
                   <li><a href="/app/inventory/settings/assign-warehouses" class=""><i class="nav-icon i-Building"></i> <span class="item-name">Assign Default Warehouse</span></a></li>
@@ -204,16 +205,16 @@
             </li>
          </ul>
          <ul data-parent="Sales" class="childNav d-none">
-            <li class="nav-item"><a href="/app/pos" class=""><i class="nav-icon i-Clothing-Store"></i> <span class="item-name">Point of Sale</span></a></li>
+            <li class="nav-item"><a href="/pos" class=""><i class="nav-icon i-Clothing-Store"></i> <span class="item-name">Point of Sale</span></a></li>
             <li class="nav-item"><a href="/app/sales/sales-invoicing" class=""><i class="nav-icon i-Receipt"></i> <span class="item-name">Sales Invoicing</span></a></li>
-            <li class="nav-item"><a href="/app/sales/sales-return/search" class=""><i class="nav-icon i-Remove-Bag"></i> <span class="item-name">Sales Return</span></a></li>
+            {{-- <li class="nav-item"><a href="/app/sales/sales-return/search" class=""><i class="nav-icon i-Remove-Bag"></i> <span class="item-name">Sales Return</span></a></li> --}}
             <li class="nav-item"><a href="/app/sales/orders" class=""><i class="nav-icon i-Full-Basket"></i> <span class="item-name">Orders and Reservations</span></a></li>
-            <li class="nav-item"><a href="/app/sales/quotations" class=""><i class="nav-icon i-Receipt-3"></i> <span class="item-name">Quotations</span></a></li>
-            <li class="nav-item"><a href="/app/sales/manage-pick-ups" class=""><i class="nav-icon i-Hand"></i> <span class="item-name">Manage Pick-ups</span></a></li>
-            <li class="nav-item"><a href="/app/sales/manage-deliveries" class=""><i class="nav-icon i-Jeep"></i> <span class="item-name">Manage Deliveries</span></a></li>
-            <li class="nav-item"><a href="/app/sales/manage-prospects" class=""><i class="nav-icon i-Checked-User"></i> <span class="item-name">Manage Prospects</span></a></li>
+            {{-- <li class="nav-item"><a href="/app/sales/quotations" class=""><i class="nav-icon i-Receipt-3"></i> <span class="item-name">Quotations</span></a></li> --}}
+            {{-- <li class="nav-item"><a href="/app/sales/manage-pick-ups" class=""><i class="nav-icon i-Hand"></i> <span class="item-name">Manage Pick-ups</span></a></li> --}}
+            {{-- <li class="nav-item"><a href="/app/sales/manage-deliveries" class=""><i class="nav-icon i-Jeep"></i> <span class="item-name">Manage Deliveries</span></a></li> --}}
+            {{-- <li class="nav-item"><a href="/app/sales/manage-prospects" class=""><i class="nav-icon i-Checked-User"></i> <span class="item-name">Manage Prospects</span></a></li> --}}
             <li class="nav-item dropdown-sidemenu">
-               <a href="#"><i class="nav-icon i-Gear"></i> <span class="item-name">Settings</span> <i class="dd-arrow i-Arrow-Down"></i></a> 
+               {{-- <a href="#"><i class="nav-icon i-Gear"></i> <span class="item-name">Settings</span> <i class="dd-arrow i-Arrow-Down"></i></a>  --}}
                <ul class="submenu">
                   <li><a href="/app/sales/settings/payment-methods" class=""><i class="nav-icon i-Wallet"></i> <span class="item-name">Payment Methods</span></a></li>
                   <li><a href="/app/sales/settings/discounts" class=""><i class="nav-icon i-Coins"></i> <span class="item-name">Discounts</span></a></li>
@@ -231,7 +232,7 @@
             <li class="nav-item"><a href="/app/accounting/assets" class=""><i class="nav-icon i-Building"></i> <span class="item-name">Assets Management</span></a></li>
             <li class="nav-item"><a href="/app/accounting/fund-transfers" class=""><i class="nav-icon i-Letter-Sent"></i> <span class="item-name">Fund Transfer</span></a></li>
             <li class="nav-item"><a href="/app/accounting/liquidations" class=""><i class="nav-icon i-Maximize-Window"></i> <span class="item-name">Liquidate</span></a></li>
-            <li class="nav-item dropdown-sidemenu">
+            {{-- <li class="nav-item dropdown-sidemenu">
                <a href="#"><i class="nav-icon i-Gear"></i> <span class="item-name">Settings</span> <i class="dd-arrow i-Arrow-Down"></i></a> 
                <ul class="submenu">
                   <li><a href="/app/accounting/settings/sources-destinations" class=""><i class="nav-icon i-Wallet"></i> <span class="item-name">Cash Equivalents</span></a></li>
@@ -242,7 +243,7 @@
                   <li><a href="/app/accounting/settings/footnotes" class=""><i class="nav-icon i-Navigate-End"></i> <span class="item-name">Footnotes</span></a></li>
                   <li><a href="/app/accounting/settings/taxes" class=""><i class="nav-icon i-Receipt-3"></i> <span class="item-name">Tax</span></a></li>
                </ul>
-            </li>
+            </li> --}}
          </ul>
          <ul data-parent="People" class="childNav d-none">
             <li class="nav-item"><a href="/app/people/users" class=""><i class="nav-icon i-Administrator"></i> <span class="item-name">Users</span></a></li>

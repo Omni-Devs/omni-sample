@@ -46,68 +46,6 @@
                </div>
             </fieldset>
          </div>
-         <div class="col-sm-12 col-md-4">
-            <fieldset class="form-group" id="__BVID__232">
-               <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0" id="__BVID__232__BV_label_">Select Sub-Type</legend>
-               <div>
-                  <div dir="auto" class="v-select vs--single vs--searchable">
-                     <div id="vs5__combobox" role="combobox" aria-expanded="false" aria-owns="vs5__listbox" aria-label="Search for option" class="vs__dropdown-toggle">
-                        <div class="vs__selected-options">
-                           <span class="vs__selected">
-                              For Sale
-                              <!---->
-                           </span>
-                           <input aria-autocomplete="list" aria-labelledby="vs5__combobox" aria-controls="vs5__listbox" type="search" autocomplete="off" class="vs__search">
-                        </div>
-                        <div class="vs__actions">
-                           <button type="button" title="Clear Selected" aria-label="Clear Selected" class="vs__clear">
-                              <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10">
-                                 <path d="M6.895455 5l2.842897-2.842898c.348864-.348863.348864-.914488 0-1.263636L9.106534.261648c-.348864-.348864-.914489-.348864-1.263636 0L5 3.104545 2.157102.261648c-.348863-.348864-.914488-.348864-1.263636 0L.261648.893466c-.348864.348864-.348864.914489 0 1.263636L3.104545 5 .261648 7.842898c-.348864.348863-.348864.914488 0 1.263636l.631818.631818c.348864.348864.914773.348864 1.263636 0L5 6.895455l2.842898 2.842897c.348863.348864.914772.348864 1.263636 0l.631818-.631818c.348864-.348864.348864-.914489 0-1.263636L6.895455 5z"></path>
-                              </svg>
-                           </button>
-                           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="10" role="presentation" class="vs__open-indicator">
-                              <path d="M9.211364 7.59931l4.48338-4.867229c.407008-.441854.407008-1.158247 0-1.60046l-.73712-.80023c-.407008-.441854-1.066904-.441854-1.474243 0L7 5.198617 2.51662.33139c-.407008-.441853-1.066904-.441853-1.474243 0l-.737121.80023c-.407008.441854-.407008 1.158248 0 1.600461l4.48338 4.867228L7 10l2.211364-2.40069z"></path>
-                           </svg>
-                           <div class="vs__spinner" style="display: none;">Loading...</div>
-                        </div>
-                     </div>
-                     <ul id="vs5__listbox" role="listbox" style="display: none; visibility: hidden;"></ul>
-                  </div>
-                  <!----><!----><!---->
-               </div>
-            </fieldset>
-         </div>
-         <div class="col-sm-12 col-md-4">
-            <fieldset class="form-group" id="__BVID__237">
-               <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0" id="__BVID__237__BV_label_">Select Warehouse</legend>
-               <div>
-                  <div dir="auto" class="v-select vs--single vs--searchable">
-                     <div id="vs6__combobox" role="combobox" aria-expanded="false" aria-owns="vs6__listbox" aria-label="Search for option" class="vs__dropdown-toggle">
-                        <div class="vs__selected-options">
-                           <span class="vs__selected">
-                              Main
-                              <!---->
-                           </span>
-                           <input aria-autocomplete="list" aria-labelledby="vs6__combobox" aria-controls="vs6__listbox" type="search" autocomplete="off" class="vs__search">
-                        </div>
-                        <div class="vs__actions">
-                           <button type="button" title="Clear Selected" aria-label="Clear Selected" class="vs__clear">
-                              <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10">
-                                 <path d="M6.895455 5l2.842897-2.842898c.348864-.348863.348864-.914488 0-1.263636L9.106534.261648c-.348864-.348864-.914489-.348864-1.263636 0L5 3.104545 2.157102.261648c-.348863-.348864-.914488-.348864-1.263636 0L.261648.893466c-.348864.348864-.348864.914489 0 1.263636L3.104545 5 .261648 7.842898c-.348864.348863-.348864.914488 0 1.263636l.631818.631818c.348864.348864.914773.348864 1.263636 0L5 6.895455l2.842898 2.842897c.348863.348864.914772.348864 1.263636 0l.631818-.631818c.348864-.348864.348864-.914489 0-1.263636L6.895455 5z"></path>
-                              </svg>
-                           </button>
-                           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="10" role="presentation" class="vs__open-indicator">
-                              <path d="M9.211364 7.59931l4.48338-4.867229c.407008-.441854.407008-1.158247 0-1.60046l-.73712-.80023c-.407008-.441854-1.066904-.441854-1.474243 0L7 5.198617 2.51662.33139c-.407008-.441853-1.066904-.441853-1.474243 0l-.737121.80023c-.407008.441854-.407008 1.158248 0 1.600461l4.48338 4.867228L7 10l2.211364-2.40069z"></path>
-                           </svg>
-                           <div class="vs__spinner" style="display: none;">Loading...</div>
-                        </div>
-                     </div>
-                     <ul id="vs6__listbox" role="listbox" style="display: none; visibility: hidden;"></ul>
-                  </div>
-                  <!----><!----><!---->
-               </div>
-            </fieldset>
-         </div>
       </div>
       <div class="card mt-4">
          <!----><!---->
@@ -239,7 +177,7 @@
                   <div class="vgt-fixed-header">
                      <!---->
                   </div>
-                  <div class="vgt-responsive">
+                  <div class="vgt-responsive"style="max-height: 400px; overflow-y: auto;">
                      <table id="vgt-table" class="table-hover tableOne vgt-table custom-vgt-table ">
                         <colgroup>
                            <col id="col-0">
@@ -260,11 +198,7 @@
                            <col id="col-15">
                            <col id="col-16">
                         </colgroup>
-                        <thead>
-                           <tr>
-                              <!----><!----><!---->
-                              <th scope="col" aria-sort="descending" aria-controls="col-5" class="vgt-left-align text-left sortable" style="min-width: auto; width: auto;">
-                        <thead>
+                        <thead style="min-width: auto; width: auto;">
                            <tr>
                               <th scope="col" class="vgt-left-align text-left sortable">
                                  <span>Product ID</span>
@@ -300,19 +234,11 @@
                                     <td class="text-left">{{ $product->subcategory?->name ?? 'N/A' }}</td>
                                     <td class="text-right">{{ number_format($product->price, 2, '.', '') }}</td>
                                     <td class="text-right">
-                                          @if($product['TYPE'] === 'PRODUCT')
-                                             <a href="{{ route('products.edit', ['id' => $product['PRODUCT_CODE']]) }}" class="btn btn-sm btn-primary">Edit</a>
-                                             <form action="{{ route('products.destroy', $product['PRODUCT_CODE']) }}" method="POST" style="display:inline-block;">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="btn btn-sm btn-danger"
-                                                      onclick="return confirm('Are you sure you want to delete this product?')">
-                                                      Delete
-                                                </button>
-                                             </form>
-                                          @else
-                                             <span class="badge bg-info">For Sale Component</span>
-                                          @endif
+                                       @include('layouts.actions-dropdown', [
+                                          'id' => $product->id, 
+                                          'editRoute' => route('products.edit', $product),   {{-- pass model, works with route-model binding --}}
+                                          'deleteRoute' => route('products.destroy', $product)
+                                       ])
                                     </td>
                                  </tr>
                               @empty
@@ -559,45 +485,12 @@
    <!---->
 </span>
 </div>
-<script>
-   function handleProductsTypeChange(value) {
-      // When user selects "components" from Products page, redirect them to the Components index
-      if (value === 'components') {
-         window.location.href = "{{ url('components') }}";
-      }
-   }
+@endsection
 
-   // On load, replace any JS-rendered v-select for "Select Type" with a responsive native select
-   document.addEventListener('DOMContentLoaded', function () {
-      try {
-         var legends = document.querySelectorAll('fieldset.form-group legend');
-         legends.forEach(function (legend) {
-            if (legend && legend.textContent && legend.textContent.trim() === 'Select Type') {
-               var fieldset = legend.parentElement;
-               if (!fieldset) return;
-               // Build select HTML (Products page default is Products)
-               var html = '' +
-                  '<label for="products-select-type" class="bv-no-focus-ring col-form-label pt-0">Select Type</label>' +
-                  '<select id="products-select-type" class="form-control" aria-label="Select Type">' +
-                  '<option value="products" selected>Products</option>' +
-                  '<option value="components">Components</option>' +
-                  '</select>';
-               // Replace the inner content of the fieldset (remove v-select markup)
-               fieldset.innerHTML = html;
+@section('scripts')
+    <script>
+        window.currentPage = "{{ request()->is('components*') ? 'components' : 'products' }}";
+    </script>
 
-               // Attach change handler
-               var sel = fieldset.querySelector('#products-select-type');
-               if (sel) {
-                  sel.addEventListener('change', function (e) {
-                     handleProductsTypeChange(e.target.value);
-                  });
-               }
-            }
-         });
-      } catch (e) {
-         console.error('Failed to replace Select Type control on products page:', e);
-      }
-   });
-</script>
-
+    <script src="{{ asset('js/tableFunctions.js') }}"></script>
 @endsection
