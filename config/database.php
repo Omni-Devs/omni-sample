@@ -61,17 +61,7 @@ return [
                 PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
             ]) : [],
         ],
-
-        'access' => [
-            'driver'   => 'odbc',
-            'dsn'      => "Driver={Microsoft Access Driver (*.mdb, *.accdb)};Dbq=" . base_path('OMNI_POS_UPDATED1.accdb') . ";Uid=;Pwd=;",
-            'host'     => null,
-            'database' => base_path('OMNI_POS_UPDATED1.accdb'),
-            'username' => null,
-            'password' => null,
-            'prefix'   => '',
-        ],
-
+        
         'mariadb' => [
             'driver' => 'mariadb',
             'url' => env('DB_URL'),
