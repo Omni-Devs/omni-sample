@@ -1,7 +1,9 @@
 <?php
 
+use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ComponentController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\SubcategoryController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -23,3 +25,7 @@ Route::post('/components', [ComponentController::class, 'store'])->name('compone
 Route::get('/components/{id}/edit', [ComponentController::class, 'edit'])->name('components.edit');
 Route::put('/components/{id}/update', [ComponentController::class, 'update'])->name('components.update');
 Route::delete('/components/{id}', [ComponentController::class, 'destroy'])->name('components.destroy');
+Route::get('/categories', [CategoryController::class, 'index'])->name('categories.index');
+Route::post('/categories', [CategoryController::class, 'store'])->name('categories.store');
+Route::get('/subcategories', [SubcategoryController::class, 'index'])->name('subcategories.index');
+Route::post('/subcategories', [SubcategoryController::class, 'store'])->name('subcategories.store');
