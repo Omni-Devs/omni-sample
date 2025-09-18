@@ -1,3 +1,17 @@
+<style>
+   .sidebar-left {
+  height: 100vh;           /* Full screen height */
+  overflow: hidden;        /* Let Perfect Scrollbar handle scrolling */
+  position: relative;
+}
+
+.sidebar-left .navigation-left {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+</style>
 <div class="side-content-wrap">
    <section class="ps-container sidebar-left rtl-ps-none ps scroll open ps--active-y">
       <div>
@@ -252,16 +266,15 @@
             <li class="nav-item"><a href="/app/people/suppliers" class=""><i class="nav-icon i-Business-Mens"></i> <span class="item-name">Suppliers</span></a></li>
          </ul>
          <ul data-parent="settings" class="childNav d-none">
-            <li class="nav-item"><a href="/app/settings/branches" class=""><i class="nav-icon i-Location-2"></i> <span class="item-name">Branches</span></a></li>
+            {{-- <li class="nav-item"><a href="/app/settings/branches" class=""><i class="nav-icon i-Location-2"></i> <span class="item-name">Branches</span></a></li>
             <li class="nav-item"><a href="/app/settings/System_settings" class=""><i class="nav-icon i-Gear"></i> <span class="item-name">System Settings</span></a></li>
-            <li class="nav-item"><a href="/app/settings/permissions" class=""><i class="nav-icon i-Key"></i> <span class="item-name">Permissions</span></a></li>
             <li class="nav-item"><a href="/app/settings/currencies" class=""><i class="nav-icon i-Dollar-Sign"></i> <span class="item-name">Currency</span></a></li>
             <li class="nav-item"><a href="/app/settings/payment_gateway" class=""><i class="nav-icon i-Money-2"></i> <span class="item-name">Payment Gateway</span></a></li>
             <li class="nav-item"><a href="/app/settings/sms_settings" class=""><i class="nav-icon i-Speach-Bubble"></i> <span class="item-name">SMS Settings</span></a></li>
             <li class="nav-item"><a href="/app/settings/sms_templates" class=""><i class="nav-icon i-Speach-Bubble"></i> <span class="item-name">SMS Templates</span></a></li>
             <li class="nav-item"><a href="/app/settings/mail_settings" class=""><i class="nav-icon i-Email"></i> <span class="item-name">Email Settings</span></a></li>
             <li class="nav-item"><a href="/app/settings/email_templates" class=""><i class="nav-icon i-Email"></i> <span class="item-name">Email Templates</span></a></li>
-            <li class="nav-item"><a href="/app/settings/Backup" class=""><i class="nav-icon i-Data-Backup"></i> <span class="item-name">Back-Up Database</span></a></li>
+            <li class="nav-item"><a href="/app/settings/Backup" class=""><i class="nav-icon i-Data-Backup"></i> <span class="item-name">Back-Up Database</span></a></li> --}}
             <li class="nav-item dropdown-sidemenu">
                <a href="#"><i class="nav-icon i-Gear"></i> <span class="item-name">General Settings</span> <i class="dd-arrow i-Arrow-Down"></i></a> 
                <ul class="submenu">
@@ -272,6 +285,7 @@
                   <li class="nav-item"><a href="/app/settings/general/font-sizes" class=""><i class="nav-icon i-Width-Window"></i> <span class="item-name">Font Size</span></a></li>
                </ul>
             </li>
+            <li class="nav-item"><a href="/app/settings/permissions" class=""><i class="nav-icon i-Key"></i> <span class="item-name">Permissions</span></a></li>
          </ul>
       </div>
       <div class="ps__rail-x" style="left: 0px; bottom: 0px;">
@@ -283,3 +297,15 @@
    </section>
    <div class="sidebar-overlay"></div>
 </div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const sidebar = document.querySelector(".sidebar-left");
+    if (sidebar) {
+      new PerfectScrollbar(sidebar, {
+        wheelPropagation: true,   // lets the mouse wheel work properly
+        suppressScrollX: true     // disable horizontal scrollbar
+      });
+    }
+  });
+</script>

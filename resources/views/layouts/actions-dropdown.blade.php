@@ -28,7 +28,7 @@
         </li>
 
         <!-- Delete -->
-        <li role="presentation">
+        {{-- <li role="presentation">
             <form action="{{ $deleteRoute }}" method="POST"
                   onsubmit="return confirm('Are you sure you want to delete this item?');"
                   style="display:inline;">
@@ -38,7 +38,7 @@
                     <i class="nav-icon i-Letter-Close font-weight-bold mr-2"></i> Delete
                 </button>
             </form>
-        </li>
+        </li> --}}
 
         <!-- Logs -->
         <li role="presentation">
