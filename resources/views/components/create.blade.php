@@ -250,46 +250,66 @@
                             </script>
 
                 <div class="row">
-                <!-- Purchase Cost -->
+                    <!-- Purchase Cost -->
                 <div class="col-md-5">
                     <fieldset class="form-group">
                         <legend class="col-form-label pt-0">Purchase Cost *</legend>
-                        <input class="form-control" placeholder="0" id="cost" name="cost"
-                            value="{{ old('COST') }}" inputmode="decimal">
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text">₱</span>
+                            </div>
+                            <input class="form-control" placeholder="0" id="cost" name="cost"
+                                value="{{ old('COST') }}" inputmode="decimal">
+                        </div>
                         <div class="invalid-feedback"></div>
                     </fieldset>
-                </div>
+                            </div>
 
-                <!-- Selling Price -->
-                <div class="col-md-5">
-                    <fieldset class="form-group">
+                            <!-- Selling Price -->
+                            <div class="col-md-5">
+                            <fieldset class="form-group">
                         <legend class="col-form-label pt-0">Selling Price *</legend>
-                        <input class="form-control" placeholder="0" id="price" name="price"
-                            value="{{ old('PRICE') }}" inputmode="decimal">
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text">₱</span>
+                            </div>
+                            <input class="form-control" placeholder="0" id="price" name="price"
+                                value="{{ old('PRICE') }}" inputmode="decimal">
+                        </div>
                         <div class="invalid-feedback"></div>
                     </fieldset>
-                </div>
+                            </div>
 
-                <!-- Qty on Hand -->
-                <div class="col-md-5">
-                    <fieldset class="form-group">
+                            <!-- Qty on Hand -->
+                            <div class="col-md-5">
+                            <fieldset class="form-group">
                         <legend class="col-form-label pt-0">QTY on Hand *</legend>
-                        <input class="form-control" placeholder="0" id="onhand" name="onhand"
-                            value="{{ old('ONHAND') }}" inputmode="decimal">
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text">₱</span>
+                            </div>
+                            <input class="form-control" placeholder="0" id="onhand" name="onhand"
+                                value="{{ old('ONHAND') }}" inputmode="decimal">
+                        </div>
                         <div class="invalid-feedback"></div>
                     </fieldset>
-                </div>
+                            </div>
 
-                <!-- Unit -->
-                <div class="col-md-5">
-                    <fieldset class="form-group">
+                            <!-- Unit -->
+                            <div class="col-md-5">
+                            <fieldset class="form-group">
                         <legend class="col-form-label pt-0">Unit *</legend>
-                        <input class="form-control" placeholder="0" id="unit" name="unit"
-                            value="{{ old('UNIT') }}" inputmode="text">
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text">₱</span>
+                            </div>
+                            <input class="form-control" placeholder="0" id="unit" name="unit"
+                                value="{{ old('UNIT') }}" inputmode="text">
+                        </div>
                         <div class="invalid-feedback"></div>
                     </fieldset>
-                </div>
-            </div>
+                            </div>
+                        </div>
                                         <span>
                                         <fieldset class="form-group">
                                             <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0">For Sale</legend>
@@ -486,7 +506,7 @@
                             }
                             </script>
 
-                                        <span>
+                                        {{-- <span>
                                         <fieldset class="form-group">
                                             <legend>Component Image</legend>
                                             <div id="drop-area" 
@@ -499,6 +519,165 @@
                                                     class="img-fluid mt-2 d-none" style="max-height: 200px;">
                                             </div>
                                         </fieldset>
+                                    <script>
+                                    document.addEventListener('DOMContentLoaded', function () {
+                                    const dropArea = document.getElementById('drop-area');
+                                    const fileInput = document.getElementById('image');
+                                    const preview = document.getElementById('preview');
+                                    if (!dropArea || !fileInput || !preview) return;
+
+                                    // Prevent default behavior for drag-and-drop
+                                    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(evt => {
+                                        dropArea.addEventListener(evt, (e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        });
+                                    });
+
+                                    // Highlight on dragover
+                                    ['dragenter', 'dragover'].forEach(evt => {
+                                        dropArea.addEventListener(evt, () => {
+                                        dropArea.classList.add('border-primary');
+                                        dropArea.classList.add('bg-light');
+                                        });
+                                    });
+
+                                    ['dragleave', 'drop'].forEach(evt => {
+                                        dropArea.addEventListener(evt, () => {
+                                        dropArea.classList.remove('border-primary');
+                                        dropArea.classList.remove('bg-light');
+                                        });
+                                    });
+
+                                    dropArea.addEventListener('drop', (e) => {
+                                        const files = e.dataTransfer.files;
+                                        if (!files || files.length === 0) return;
+                                        // Assign dropped files to the input
+                                        fileInput.files = files;
+                                        handleFiles(files);
+                                    });
+
+                                    fileInput.addEventListener('change', () => handleFiles(fileInput.files));
+
+                                    function handleFiles(files) {
+                                        const file = files[0];
+                                        if (!file || !file.type.startsWith('image/')) return;
+                                        const reader = new FileReader();
+                                        reader.onload = (ev) => {
+                                        preview.src = ev.target.result;
+                                        preview.classList.remove('d-none');
+                                        };
+                                        reader.readAsDataURL(file);
+                                    }
+                                    });
+
+                                    // Prevent the browser from opening the file when dropped outside dropArea
+                                    window.addEventListener('dragover', function(e){ e.preventDefault(); }, false);
+                                    window.addEventListener('drop', function(e){ e.preventDefault(); }, false);
+                                    </script> --}}
+
+                                    <fieldset class="form-group">
+    <legend>Multiple Images</legend>
+    <div id="drop-area" class="upload-box"
+        onclick="document.getElementById('images').click();">
+        <i class="fas fa-hand-pointer fa-2x mb-2 text-muted"></i>
+        <p class="text-muted">Drag & Drop Multiple images For product<br><strong>(or) Select</strong></p>
+        <input type="file" id="images" name="images[]" multiple class="d-none" accept="image/*">
+
+        <!-- 🖼️ Previews will show inside this box -->
+        <div id="preview-container" class="preview-box mt-3"></div>
+    </div>
+</fieldset>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+.upload-box {
+    border: 2px dashed #ccc;
+    border-radius: 6px;
+    padding: 30px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.3s, background-color 0.3s;
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+.upload-box:hover {
+    border-color: #28a745;
+    background-color: #f8f9fa;
+}
+.upload-box.dragover {
+    border-color: #007bff;
+    background-color: #e9f5ff;
+}
+.preview-box {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 15px;
+}
+.preview-box img {
+    width: 150px;   /* fixed width */
+    height: 150px;  /* fixed height */
+    object-fit: cover; /* keeps proportions but crops if needed */
+    margin: 8px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 3px;
+    background: #fff;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const dropArea = document.getElementById('drop-area');
+    const fileInput = document.getElementById('images');
+    const previewContainer = document.getElementById('preview-container');
+
+    // Prevent defaults
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(evt => {
+        dropArea.addEventListener(evt, (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+        });
+    });
+
+    // Highlight
+    ['dragenter', 'dragover'].forEach(evt => {
+        dropArea.addEventListener(evt, () => dropArea.classList.add('dragover'));
+    });
+    ['dragleave', 'drop'].forEach(evt => {
+        dropArea.addEventListener(evt, () => dropArea.classList.remove('dragover'));
+    });
+
+    // Drop files
+    dropArea.addEventListener('drop', (e) => {
+        const files = e.dataTransfer.files;
+        if (files.length) handleFiles(files);
+    });
+
+    // Select files
+    fileInput.addEventListener('change', () => handleFiles(fileInput.files));
+
+    function handleFiles(files) {
+        previewContainer.innerHTML = ""; // clear previews
+        [...files].forEach(file => {
+            if (!file.type.startsWith('image/')) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                const img = document.createElement('img');
+                img.src = ev.target.result;
+                previewContainer.appendChild(img);
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+});
+</script>
+
                                     </span>
                                     </div>
                                     <div class="mt-3 col-md-12" style="display: none;">
