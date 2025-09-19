@@ -30,12 +30,12 @@
         <!-- Delete -->
         <li role="presentation">
             <form action="{{ $deleteRoute }}" method="POST"
-                  onsubmit="return confirm('Are you sure you want to delete this item?');"
+                  onsubmit="return confirm('Are you sure you want to move this item to the archive?');"
                   style="display:inline;">
                 @csrf
                 @method('DELETE')
                 <button type="submit" class="dropdown-item">
-                    <i class="nav-icon i-Letter-Close font-weight-bold mr-2"></i> Delete
+                    <i class="nav-icon i-Letter-Close font-weight-bold mr-2"></i> Move to Archive
                 </button>
             </form>
         </li>

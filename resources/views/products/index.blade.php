@@ -3,7 +3,7 @@
 <div class="main-content">
    <div>
       <div class="breadcrumb">
-         <h1 class="mr-3">Products and Inventories</h1>
+         <h1 class="mr-3">Products and Components</h1>
          <ul>
             <li><a href=""> Inventory </a></li>
             <!----> <!---->
@@ -19,29 +19,24 @@
             <fieldset class="form-group" id="__BVID__227">
                <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0" id="__BVID__227__BV_label_">Select Type</legend>
                <div>
-                  <div dir="auto" class="v-select vs--single vs--searchable">
-                     <div id="vs4__combobox" role="combobox" aria-expanded="false" aria-owns="vs4__listbox" aria-label="Search for option" class="vs__dropdown-toggle">
+                  <div class="v-select vs--single vs--searchable">
+                     <div class="vs__dropdown-toggle">
                         <div class="vs__selected-options">
-                           <span class="vs__selected">
-                              Products
-                              <!---->
-                           </span>
-                           <input aria-autocomplete="list" aria-labelledby="vs4__combobox" aria-controls="vs4__listbox" type="search" autocomplete="off" class="vs__search">
+                           <span class="vs__selected">Products</span>
+                           {{-- <input type="search" class="vs__search" placeholder="Search..."> --}}
                         </div>
                         <div class="vs__actions">
-                           <button type="button" title="Clear Selected" aria-label="Clear Selected" class="vs__clear">
-                              <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10">
-                                 <path d="M6.895455 5l2.842897-2.842898c.348864-.348863.348864-.914488 0-1.263636L9.106534.261648c-.348864-.348864-.914489-.348864-1.263636 0L5 3.104545 2.157102.261648c-.348863-.348864-.914488-.348864-1.263636 0L.261648.893466c-.348864.348864-.348864.914489 0 1.263636L3.104545 5 .261648 7.842898c-.348864.348863-.348864.914488 0 1.263636l.631818.631818c.348864.348864.914773.348864 1.263636 0L5 6.895455l2.842898 2.842897c.348863.348864.914772.348864 1.263636 0l.631818-.631818c.348864-.348864.348864-.914489 0-1.263636L6.895455 5z"></path>
-                              </svg>
-                           </button>
+                           {{-- <button type="button" title="Clear Selected" aria-label="Clear Selected" class="vs__clear">&times;</button> --}}
                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="10" role="presentation" class="vs__open-indicator">
-                              <path d="M9.211364 7.59931l4.48338-4.867229c.407008-.441854.407008-1.158247 0-1.60046l-.73712-.80023c-.407008-.441854-1.066904-.441854-1.474243 0L7 5.198617 2.51662.33139c-.407008-.441853-1.066904-.441853-1.474243 0l-.737121.80023c-.407008.441854-.407008 1.158248 0 1.600461l4.48338 4.867228L7 10l2.211364-2.40069z"></path>
+                           <path d="M9.211364 7.59931l4.48338-4.867229c.407008-.441854.407008-1.158247 0-1.60046l-.73712-.80023c-.407008-.441854-1.066904-.441854-1.474243 0L7 5.198617 2.51662.33139c-.407008-.441853-1.066904-.441853-1.474243 0l-.737121.80023c-.407008.441854-.407008 1.158248 0 1.600461l4.48338 4.867228L7 10l2.211364-2.40069z"></path>
                            </svg>
-                           <div class="vs__spinner" style="display: none;">Loading...</div>
                         </div>
                      </div>
-                     <ul id="vs4__listbox" role="listbox" style="display: none; visibility: hidden;"></ul>
-                  </div>
+                     <ul class="vs__listbox">
+                     <a href="/products" style="color: black"><li>Products</li></a>
+                     <a href="/components" style="color: black"><li>Components</li></a>
+                     </ul>
+                     </div>
                   <!----><!----><!---->
                </div>
             </fieldset>

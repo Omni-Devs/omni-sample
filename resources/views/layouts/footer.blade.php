@@ -26,137 +26,150 @@
 </div>
 </div>
 <script>
-   document.addEventListener("DOMContentLoaded", function () {
-     const secondary = document.querySelector(".ps-container.sidebar-left-secondary.ps.rtl-ps-none");
-     const navLeft = document.querySelector(".navigation-left");
-     if (!secondary || !navLeft) return;
-   
-     // Map data-item -> nav-item
-     const navItems = new Map();
-     navLeft.querySelectorAll(":scope > .nav-item[data-item]").forEach(li => {
-       const key = (li.dataset.item || "").trim().toLowerCase();
-       if (key) navItems.set(key, li);
-     });
-   
-     // Map data-parent -> childNav <ul>
-     const childMap = new Map();
-     secondary.querySelectorAll(":scope > div > ul.childNav[data-parent]").forEach(ul => {
-       const key = (ul.dataset.parent || "").trim().toLowerCase();
-       if (key) childMap.set(key, ul);
-     });
-   
-     function deactivateAll() {
-       navItems.forEach(li => li.classList.remove("active"));
-       childMap.forEach(ul => {
-         ul.classList.remove("d-block");
-         ul.classList.add("d-none");
-       });
-     }
-   
-     function activate(key) {
-       const li = navItems.get(key);
-       const ul = childMap.get(key);
-       if (!li || !ul) return;
-       deactivateAll();
-       li.classList.add("active");
-       ul.classList.remove("d-none");
-       ul.classList.add("d-block");
-       secondary.classList.add("open");
-     }
-   
-     // Attach hover events
-     navItems.forEach((li, key) => {
-       li.addEventListener("mouseenter", () => activate(key));
-     });
-   
-     // Close on outside click
-     document.addEventListener("click", (e) => {
-       if (!secondary.contains(e.target) && !navLeft.contains(e.target)) {
-         deactivateAll();
-         secondary.classList.remove("open");
-       }
-     });
-   
-     document.querySelectorAll('.dropdown-sidemenu > a').forEach(dropdownToggle => {
-       dropdownToggle.addEventListener('click', function (e) {
-           e.preventDefault(); // prevent jumping to top
-           
-           const parentLi = this.parentElement;
-   
-           // Close other dropdowns at same level
-           parentLi.parentElement.querySelectorAll('.dropdown-sidemenu.open').forEach(openLi => {
-               if (openLi !== parentLi) {
-                   openLi.classList.remove('open');
-                   const submenu = openLi.querySelector('.submenu');
-                   if (submenu) submenu.style.display = "none";
-               }
-           });
-   
-           // Toggle this one
-           parentLi.classList.toggle('open');
-           const submenu = parentLi.querySelector('.submenu');
-           if (submenu) {
-               submenu.style.display = parentLi.classList.contains('open') ? "block" : "none";
-           }
-       });
-   });
-   
-   
-     // Default open = dashboard
-     activate("dashboard");
-   });
+document.addEventListener("DOMContentLoaded", function () {
+  const secondary = document.querySelector(".ps-container.sidebar-left-secondary.ps.rtl-ps-none");
+  const navLeft = document.querySelector(".navigation-left");
+  const sideWrap = document.querySelector(".side-content-wrap");
+  const overlay = document.querySelector(".sidebar-overlay"); // 👈 overlay element
+  const hamburger = document.querySelector(".menu-toggle");   // 👈 your hamburger button
 
-   document.addEventListener('DOMContentLoaded', () => {
-  const sideWrap = document.querySelector('.side-content-wrap');
-  if (!sideWrap) return;
+  if (secondary && navLeft) {
+    // Map data-item -> nav-item
+    const navItems = new Map();
+    navLeft.querySelectorAll(":scope > .nav-item[data-item]").forEach(li => {
+      const key = (li.dataset.item || "").trim().toLowerCase();
+      if (key) navItems.set(key, li);
+    });
 
-  // Prevent page scroll when wheel/touch is inside side-content-wrap
-  sideWrap.addEventListener('wheel', e => {
-    const { scrollTop, scrollHeight, clientHeight } = sideWrap;
-    const atTop = scrollTop === 0;
-    const atBottom = scrollTop + clientHeight >= scrollHeight;
+    // Map data-parent -> childNav <ul>
+    const childMap = new Map();
+    secondary.querySelectorAll(":scope > div > ul.childNav[data-parent]").forEach(ul => {
+      const key = (ul.dataset.parent || "").trim().toLowerCase();
+      if (key) childMap.set(key, ul);
+    });
 
-    if ((atTop && e.deltaY < 0) || (atBottom && e.deltaY > 0)) {
-      // Prevent "scroll chaining" to body
-      e.preventDefault();
+    function deactivateAll() {
+      navItems.forEach(li => li.classList.remove("active"));
+      childMap.forEach(ul => {
+        ul.classList.remove("d-block");
+        ul.classList.add("d-none");
+      });
     }
-  }, { passive: false });
 
-  // Same for touch scroll (mobile)
-  let startY = 0;
-  sideWrap.addEventListener('touchstart', e => {
-    startY = e.touches[0].clientY;
-  });
-  sideWrap.addEventListener('touchmove', e => {
-    const { scrollTop, scrollHeight, clientHeight } = sideWrap;
-    const currentY = e.touches[0].clientY;
-    const diff = startY - currentY;
-
-    const atTop = scrollTop === 0;
-    const atBottom = scrollTop + clientHeight >= scrollHeight;
-
-    if ((atTop && diff < 0) || (atBottom && diff > 0)) {
-      e.preventDefault();
+    function activate(key) {
+      const li = navItems.get(key);
+      const ul = childMap.get(key);
+      if (!li || !ul) return;
+      deactivateAll();
+      li.classList.add("active");
+      ul.classList.remove("d-none");
+      ul.classList.add("d-block");
+      secondary.classList.add("open");
     }
-  }, { passive: false });
+
+    // Attach hover events
+    navItems.forEach((li, key) => {
+      li.addEventListener("mouseenter", () => activate(key));
+    });
+
+    document.addEventListener("click", (e) => {
+  const isSmall = window.matchMedia("(max-width: 1200px)").matches;
+
+  if (isSmall) {
+    // 👉 Mobile: close the whole sidebar + overlay
+    if (sideWrap && overlay && !sideWrap.contains(e.target) && !e.target.closest(".menu-toggle")) {
+      sideWrap.classList.remove("active");
+      overlay.classList.remove("active");
+      deactivateAll();
+      secondary.classList.remove("open");
+    }
+  } else {
+    // 👉 Desktop: only close the secondary if clicked outside
+    if (!secondary.contains(e.target) && !navLeft.contains(e.target)) {
+      deactivateAll();
+      secondary.classList.remove("open");
+    }
+  }
 });
 
-document.addEventListener("DOMContentLoaded", () => {
-  const railX = document.querySelector(".ps__rail-x");
-  const railY = document.querySelector(".ps__rail-y");
-  const thumbY = document.querySelector(".ps__thumb-y");
-  const psContent = document.querySelector(".side-content-wrap .ps"); // actual scrolling area
 
-  if (!railX || !railY || !thumbY || !psContent) return;
+    // Dropdown toggle in side menu
+    document.querySelectorAll('.dropdown-sidemenu > a').forEach(dropdownToggle => {
+      dropdownToggle.addEventListener('click', function (e) {
+        e.preventDefault();
 
-  psContent.addEventListener("scroll", () => {
-    console.log("Scrolling inside sidebar!");
+        const parentLi = this.parentElement;
 
-    railX.style.bottom = "-64px";
-    railY.style.top = "64px";
-    thumbY.style.top = "60px";
-  });
+        // Close others at same level
+        parentLi.parentElement.querySelectorAll('.dropdown-sidemenu.open').forEach(openLi => {
+          if (openLi !== parentLi) {
+            openLi.classList.remove('open');
+            const submenu = openLi.querySelector('.submenu');
+            if (submenu) submenu.style.display = "none";
+          }
+        });
+
+        // Toggle current
+        parentLi.classList.toggle('open');
+        const submenu = parentLi.querySelector('.submenu');
+        if (submenu) {
+          submenu.style.display = parentLi.classList.contains('open') ? "block" : "none";
+        }
+      });
+    });
+
+    // Default open = dashboard
+    activate("dashboard");
+  }
+
+  // Scroll lock inside side-content-wrap
+  if (sideWrap) {
+    sideWrap.addEventListener('wheel', e => {
+      const { scrollTop, scrollHeight, clientHeight } = sideWrap;
+      const atTop = scrollTop === 0;
+      const atBottom = scrollTop + clientHeight >= scrollHeight;
+
+      if ((atTop && e.deltaY < 0) || (atBottom && e.deltaY > 0)) {
+        e.preventDefault();
+      }
+    }, { passive: false });
+
+    let startY = 0;
+    sideWrap.addEventListener('touchstart', e => {
+      startY = e.touches[0].clientY;
+    });
+    sideWrap.addEventListener('touchmove', e => {
+      const { scrollTop, scrollHeight, clientHeight } = sideWrap;
+      const currentY = e.touches[0].clientY;
+      const diff = startY - currentY;
+
+      const atTop = scrollTop === 0;
+      const atBottom = scrollTop + clientHeight >= scrollHeight;
+
+      if ((atTop && diff < 0) || (atBottom && diff > 0)) {
+        e.preventDefault();
+      }
+    }, { passive: false });
+  }
+
+  // 👇 Hamburger + Overlay logic
+  if (hamburger && sideWrap && overlay) {
+    function closeSidebar() {
+      sideWrap.classList.remove("active");
+      overlay.classList.remove("active");
+    }
+
+    hamburger.addEventListener("click", () => {
+      sideWrap.classList.toggle("active");
+      overlay.classList.toggle("active");
+    });
+
+    overlay.addEventListener("click", closeSidebar);
+
+    // Close with ESC
+    document.addEventListener("keydown", e => {
+      if (e.key === "Escape") closeSidebar();
+    });
+  }
 });
-
-   
 </script>

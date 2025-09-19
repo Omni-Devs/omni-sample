@@ -1,9 +1,59 @@
+<style>
+   .sidebar-left {
+  height: 100vh;           /* Full screen height */
+  overflow: hidden;        /* Let Perfect Scrollbar handle scrolling */
+  position: relative;
+}
+
+.sidebar-left .navigation-left {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+/* Sidebar */
+.side-content-wrap {
+  width: 240px;
+  transition: transform 0.3s ease;
+}
+
+/* On small screens, hide by default */
+@media (max-width: 1199px) {
+  .side-content-wrap {
+    transform: translateX(-100%);
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100%;
+    background: #fff; /* adjust for your theme */
+    z-index: 99;
+  }
+
+  .side-content-wrap.active {
+    transform: translateX(0);
+  }
+
+  /* Overlay */
+  .sidebar-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: none;
+    z-index: 1040;
+  }
+
+  .sidebar-overlay.active {
+    display: block;
+  }
+}
+
+
+</style>
 <div class="side-content-wrap">
    <section class="ps-container sidebar-left rtl-ps-none ps scroll open ps--active-y">
       <div>
          <ul class="navigation-left">
             <li data-item="dashboard" data-submenu="true" class="nav-item active">
-               <a href="#" class="nav-item-hold"><i class="nav-icon i-Bar-Chart"></i> <span class="nav-text">Menu</span></a> 
+               <a href="/" class="nav-item-hold"><i class="nav-icon i-Bar-Chart"></i> <span class="nav-text">Menu</span></a> 
                <div class="triangle"></div>
             </li>
             <li data-item="Sales" data-submenu="true" class="nav-item">
@@ -52,7 +102,7 @@
          <div class="ps__thumb-y" tabindex="0" style="top: 0px; height: 770px;"></div>
       </div>
    </section>
-   <section class="ps-container sidebar-left-secondary ps rtl-ps-none open">
+   <section class="ps-container sidebar-left-secondary ps rtl-ps-none">
       <div>
          <ul data-parent="EmployeeProfile" class="childNav d-none">
             <!----> <!----> <!----> <!----> <!----> <!----> <!----> <!----> <!----> <!----> <!----> <!----> <!----> <!---->
@@ -60,8 +110,8 @@
          <ul data-parent="EmployeeSubordinates" class="childNav d-none">
             <!----> <!----> <!----> <!----> <!----> <!----> <!----> <!----> <!----> <!----> <!----> <!----> <!---->
          </ul>
-         <ul data-parent="dashboard" class="childNav d-none d-block">
-            {{-- <li class="nav-item"><a href="/app/dashboard/main" class=""><i class="nav-icon i-Bar-Chart"></i> <span class="item-name">Branch</span></a></li>
+         {{-- <ul data-parent="dashboard" class="childNav d-none d-block">
+            <li class="nav-item"><a href="/app/dashboard/main" class=""><i class="nav-icon i-Bar-Chart"></i> <span class="item-name">Branch</span></a></li>
             <li class="nav-item dropdown-sidemenu">
                <a href="#"><i class="nav-icon i-Line-Chart"></i> <span class="item-name">Global</span> <i class="dd-arrow i-Arrow-Down"></i></a> 
                <ul class="submenu">
@@ -71,11 +121,11 @@
                   <li><a href="/app/dashboard/accounting" class=""><i class="nav-icon i-ID-Card"></i> <span class="item-name">Accounting</span></a></li>
                </ul>
             </li>
-            <li class="nav-item"><a href="/app/dashboard/log-histories" class=""><i class="nav-icon i-Administrator"></i> <span class="item-name">Log History</span></a></li> --}}
-         </ul>
+            <li class="nav-item"><a href="/app/dashboard/log-histories" class=""><i class="nav-icon i-Administrator"></i> <span class="item-name">Log History</span></a></li>
+         </ul> --}}
          <ul data-parent="reports" class="childNav d-none">
-            <li class="nav-item"><a href="/app/dashboard/x-reading" class=""><i class="nav-icon i-Edit-Map"></i> <span class="item-name">X Reading</span></a> </li>
-            <li class="nav-item"><a href="/app/dashboard/y-reading" class=""><i class="nav-icon i-Receipt-3"></i> <span class="item-name">Y Reading</span></a> </li>
+            <li class="nav-item"><a href="/app/reports/x-reading" class=""><i class="nav-icon i-Edit-Map"></i> <span class="item-name">X Reading</span></a> </li>
+            <li class="nav-item"><a href="/app/reports/y-reading" class=""><i class="nav-icon i-Receipt-3"></i> <span class="item-name">Y Reading</span></a> </li>
                {{-- <a href="#"><i class="nav-icon i-Library"></i> <span class="item-name">Workforce</span> <i class="dd-arrow i-Arrow-Down"></i></a> 
                <ul class="submenu">
                   <li><a href="/app/reports/workforce/summary" class=""><i class="nav-icon i-ID-Card"></i> <span class="item-name">Summary</span></a></li>
@@ -176,8 +226,8 @@
             </li>
          </ul> --}}
          <ul data-parent="Inventory" class="childNav d-none">
-            <li class="nav-item"><a href="/products" class="router-link-exact-active open" aria-current="page"><i class="nav-icon i-Posterous"></i> <span class="item-name">Products</span></a></li>
-            <li class="nav-item"><a href="/app/inventory/adjustments" class=""><i class="nav-icon i-Laptop-Secure"></i> <span class="item-name">Components</span></a></li>
+            <li class="nav-item"><a href="/products" class=""><i class="nav-icon i-Posterous"></i> <span class="item-name">Products and Components</span></a></li>
+            <li class="nav-item"><a href="/app/inventory/adjustments" class=""><i class="nav-icon i-Laptop-Secure"></i> <span class="item-name">Inventory Adjustments</span></a></li>
             {{-- <li class="nav-item"><a href="/app/inventory/procurements" class=""><i class="nav-icon i-Computer-Secure"></i> <span class="item-name">PRF - Procurement Request Form</span></a></li> --}}
             <li class="nav-item"><a href="/app/inventory/purchases" class=""><i class="nav-icon i-Billing"></i> <span class="item-name">PO - Purchase Orders</span></a></li>
             <li class="nav-item"><a href="/app/inventory/purchase-deliveries" class=""><i class="nav-icon i-Ambulance"></i> <span class="item-name">Transfer</span></a></li>
@@ -283,3 +333,28 @@
    </section>
    <div class="sidebar-overlay"></div>
 </div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const sidebar = document.querySelector(".sidebar-left");
+    if (sidebar) {
+      new PerfectScrollbar(sidebar, {
+        wheelPropagation: true,   // lets the mouse wheel work properly
+        suppressScrollX: true     // disable horizontal scrollbar
+      });
+    }
+  });
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const toggleBtn = document.querySelector(".menu-toggle");
+  const sidebar = document.getElementById("sidebar");
+
+  if (toggleBtn && sidebar) {
+    toggleBtn.addEventListener("click", function () {
+      sidebar.classList.toggle("active");
+    });
+  }
+});
+</script>
