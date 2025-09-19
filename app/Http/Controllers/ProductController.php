@@ -30,10 +30,29 @@ class ProductController extends Controller
             'price' => 'required|numeric',
             'category_id' => 'required|exists:categories,id',
             'subcategory_id' => 'nullable|exists:subcategories,id',
+            // Recipe validation
+            'recipes.component_id.*' => 'required|exists:components,id',
+            'recipes.quantity.*' => 'required|numeric',
+            'recipes.unit.*' => 'required|string',
         ]);
 
-        Product::create($validated);
-        return redirect()->route('products.index')->with('success', 'Product created successfully.');
+        // Create product
+        $product = Product::create($validated);
+
+        // Save recipes
+        if ($request->has('recipes')) {
+            foreach ($request->recipes['component_id'] as $index => $component_id) {
+                $quantity = $request->recipes['quantity'][$index];
+                $unit = $request->recipes['unit'][$index];
+                $product->recipes()->create([
+                    'component_id' => $component_id,
+                    'quantity' => $quantity,
+                    'unit' => $unit,
+                ]);
+            }
+        }
+
+        return redirect()->route('products.index')->with('success', 'Product created with recipes.');
     }
 
     public function edit($id)
