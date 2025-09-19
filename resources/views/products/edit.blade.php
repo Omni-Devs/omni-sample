@@ -15,7 +15,7 @@
    <!----> 
    <div class="wrapper">
       <span>
-         <form action="{{ route('products.update', $product['PRODUCT_CODE']) }}" method="POST">
+         <form action="{{ route('products.update', $product->id) }}" method="POST">
             @csrf
             @method('PUT')
             <div class="row">

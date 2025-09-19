@@ -15,7 +15,7 @@
     <!----> 
     <div class="wrapper">
         <span>
-            <form action="{{ route('components.update', $component['COMP_ID']) }}" method="POST">
+            <form action="{{ route('components.update', $component->id) }}" method="POST">
                 @csrf
                 @method('PUT')
                 <div class="row">
