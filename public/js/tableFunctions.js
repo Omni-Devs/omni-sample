@@ -7,39 +7,77 @@ function handleProductsTypeChange(value) {
     }
 }
 
-document.addEventListener("DOMContentLoaded", function () {
-    try {
-        var legends = document.querySelectorAll("fieldset.form-group legend");
-        legends.forEach(function (legend) {
-            if (legend && legend.textContent && legend.textContent.trim() === "Select Type") {
-                var fieldset = legend.parentElement;
-                if (!fieldset) return;
+// document.addEventListener("DOMContentLoaded", function () {
+//     try {
+//         var legends = document.querySelectorAll("fieldset.form-group legend");
+//         legends.forEach(function (legend) {
+//             if (legend && legend.textContent && legend.textContent.trim() === "Select Type") {
+//                 var fieldset = legend.parentElement;
+//                 if (!fieldset) return;
 
-                // decide which option should be selected
-                var current = window.currentPage || "products";
+//                 // decide which option should be selected
+//                 var current = window.currentPage || "products";
 
-                var html =
-                    '<label for="products-select-type" class="bv-no-focus-ring col-form-label pt-0">Select Type</label>' +
-                    '<select id="products-select-type" class="form-control" aria-label="Select Type">' +
-                    '<option value="products" ' + (current === "products" ? "selected" : "") + '>Products</option>' +
-                    '<option value="components" ' + (current === "components" ? "selected" : "") + '>Components</option>' +
-                    "</select>";
+//                 var html =
+//                     '<label for="products-select-type" class="bv-no-focus-ring col-form-label pt-0">Select Type</label>' +
+//                     '<select id="products-select-type" class="form-control" aria-label="Select Type">' +
+//                     '<option value="products" ' + (current === "products" ? "selected" : "") + '>Products</option>' +
+//                     '<option value="components" ' + (current === "components" ? "selected" : "") + '>Components</option>' +
+//                     "</select>";
 
-                fieldset.innerHTML = html;
+//                 fieldset.innerHTML = html;
 
-                var sel = fieldset.querySelector("#products-select-type");
-                if (sel) {
-                    sel.addEventListener("change", function (e) {
-                        handleProductsTypeChange(e.target.value);
-                    });
-                }
-            }
-        });
-    } catch (e) {
-        console.error("Failed to replace Select Type control on products page:", e);
-    }
-});
+//                 var sel = fieldset.querySelector("#products-select-type");
+//                 if (sel) {
+//                     sel.addEventListener("change", function (e) {
+//                         handleProductsTypeChange(e.target.value);
+//                     });
+//                 }
+//             }
+//         });
+//     } catch (e) {
+//         console.error("Failed to replace Select Type control on products page:", e);
+//     }
+// });
 
+
+  document.querySelectorAll('.v-select').forEach(select => {
+    const toggle = select.querySelector('.vs__dropdown-toggle');
+    const arrow = select.querySelector('.vs__open-indicator');
+    const listbox = select.querySelector('.vs__listbox');
+    const selected = select.querySelector('.vs__selected');
+    const clearBtn = select.querySelector('.vs__clear');
+
+    // toggle dropdown
+    toggle.addEventListener('click', e => {
+      if (e.target.closest('.vs__clear')) return; // skip if clear clicked
+      listbox.style.display = listbox.style.display === 'block' ? 'none' : 'block';
+      arrow.classList.toggle('rotate');
+    });
+
+    // choose option
+    listbox.querySelectorAll('li').forEach(item => {
+      item.addEventListener('click', () => {
+        selected.textContent = item.textContent;
+        listbox.style.display = 'none';
+        arrow.classList.remove('rotate');
+      });
+    });
+
+    // clear selection
+    clearBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      selected.textContent = '';
+    });
+
+    // click outside closes dropdown
+    document.addEventListener('click', e => {
+      if (!select.contains(e.target)) {
+        listbox.style.display = 'none';
+        arrow.classList.remove('rotate');
+      }
+    });
+  });
 
 // --- Searchbar ---
 document.addEventListener("DOMContentLoaded", function () {
