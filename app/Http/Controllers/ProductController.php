@@ -36,13 +36,17 @@ class ProductController extends Controller
         return redirect()->route('products.index')->with('success', 'Product created successfully.');
     }
 
-    public function edit(Product $product)
+    public function edit($id)
     {
+        $product = Product::findOrFail($id);
+
         return view('products.edit', compact('product'));
     }
 
-    public function update(Request $request, Product $product)
+    public function update(Request $request, $id)
     {
+        $product = Product::findOrFail($id);
+
         $validated = $request->validate([
             'code' => 'required|string|unique:products,code,' . $product->id,
             'name' => 'required|string',
@@ -52,6 +56,7 @@ class ProductController extends Controller
         ]);
 
         $product->update($validated);
+
         return redirect()->route('products.index')->with('success', 'Product updated successfully.');
     }
 
