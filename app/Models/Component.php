@@ -20,4 +20,9 @@ class Component extends Model
     public function subcategory() {
         return $this->belongsTo(Subcategory::class);
     }
+
+    public function recipes()
+    {
+        return $this->hasMany(Recipe::class);
+    }
 }
