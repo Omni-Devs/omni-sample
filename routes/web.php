@@ -23,7 +23,7 @@ Route::get('/components', [ComponentController::class, 'index'])->name('componen
 Route::get('/components/create', [ComponentController::class, 'create'])->name('components.create');
 Route::post('/components', [ComponentController::class, 'store'])->name('components.store');
 Route::get('/components/{id}/edit', [ComponentController::class, 'edit'])->name('components.edit');
-Route::put('/components/{id}/update', [ComponentController::class, 'update'])->name('components.update');
+Route::put('/components/{component}', [ComponentController::class, 'update'])->name('components.update');
 Route::delete('/components/{id}', [ComponentController::class, 'destroy'])->name('components.destroy');
 Route::get('/categories', [CategoryController::class, 'index'])->name('categories.index');
 Route::post('/categories', [CategoryController::class, 'store'])->name('categories.store');

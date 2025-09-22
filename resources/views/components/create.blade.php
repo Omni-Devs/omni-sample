@@ -81,25 +81,6 @@
                                             </div>
                                         </fieldset>
                                         </span>
-                                        {{-- <span>
-                                    <div class="form-group">
-                                            <label for="category_id">Category</label>
-                                            <select name="category_id" id="category_id" class="form-control">
-                                                @foreach ($categories as $category)
-                                                    <option value="{{ $category->id }}">{{ $category->name }}</option>
-                                                @endforeach
-                                            </select>
-                                        </div>
-                                        </span>
-                                        <span>
-                                            <fieldset class="form-group" id="create-recipe-field">
-                                                <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0">&nbsp;</legend>
-                                                <div>
-                                                    <button type="button" onclick="createCategory()" class="btn btn-outline-success btn-sm"><i class="i-Add"></i> Create Category</button>
-                                                </div>
-                                            </fieldset>
-                                        </span>   --}}
-
                             <!-- Category select + New button -->
                             <div class="form-group">
                                 <label for="category_id">Category</label>

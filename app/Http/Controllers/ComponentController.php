@@ -59,18 +59,16 @@ class ComponentController extends Controller
         return view('components.edit', compact('component'));
     }
 
-    public function update(Request $request, $id)
+    public function update(Request $request, Component $component)
     {
-        $component = Component::findOrFail($id);
-        
         $validated = $request->validate([
             'name'          => 'required|string',
-            'code'          => 'required|string|unique:components,code',
+                'code' => 'required|string|unique:components,code,' . $component->id,
             'category_id'   => 'required|integer|exists:categories,id',
             'subcategory_id'=> 'nullable|integer|exists:subcategories,id',
             'cost'          => 'required|numeric',
             'price'         => 'required|numeric',
-            'unit'          => 'required|string',
+            'unit'          => 'required|string', 
             'onhand'        => 'required|integer',
             'image'         => 'nullable|image|mimes:jpg,jpeg,png,gif|max:2048',
             'for_sale'      => 'nullable|boolean',
@@ -85,7 +83,6 @@ class ComponentController extends Controller
             $validated['image'] = $request->file('image')->store('components', 'public');
         }
 
-        $component = Component::findOrFail($id);
         $component->update($validated);
 
         return redirect()->route('components.index')->with('success', 'Component updated successfully.');
