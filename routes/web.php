@@ -1,9 +1,11 @@
 <?php
 
+use App\Http\Controllers\BranchesController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ComponentController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\SubcategoryController;
+use App\Http\Controllers\SystemSettingController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -30,3 +32,11 @@ Route::post('/categories', [CategoryController::class, 'store'])->name('categori
 Route::get('/subcategories', [SubcategoryController::class, 'index'])->name('subcategories.index');
 Route::post('/subcategories', [SubcategoryController::class, 'store'])->name('subcategories.store');
 Route::get('/categories/{id}/subcategories', [SubcategoryController::class, 'byCategory']);
+Route::get('/settings', [SystemSettingController::class, 'index'])->name('settings.index');
+Route::get('/settings/create', [SystemSettingController::class, 'create'])->name('settings.create');
+Route::post('/settings', [SystemSettingController::class, 'store'])->name('settings.store');
+Route::get('/branches', [BranchesController::class, 'index'])->name('branches.index');
+Route::post('/branches', [BranchesController::class, 'store'])->name('branches.store');
+Route::get('/branches/{id}/edit', [BranchesController::class, 'edit'])->name('branches.edit');
+Route::put('/branches/{id}/update', [BranchesController::class, 'update'])->name('branches.update');
+Route::delete('/branches/{id}', [BranchesController::class, 'destroy'])->name('branches.destroy');
