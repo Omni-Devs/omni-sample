@@ -19,6 +19,7 @@ return new class extends Migration
             $table->string('email')->required();
             $table->string('tin')->nullable();
             $table->text('address')->nullable();
+            $table->string('contact_person')->nullable();
             $table->timestamps();
         });
     }

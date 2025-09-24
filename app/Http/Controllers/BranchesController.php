@@ -27,6 +27,7 @@ class BranchesController extends Controller
             'email'    => 'required|email|unique:branches,email',
             'tin'      => 'nullable|string|max:50',
             'address'  => 'nullable|string|max:500',
+            'contact_person' => 'required|string|max:255',
         ]);
 
         Branch::create($validated);

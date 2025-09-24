@@ -115,6 +115,10 @@
                 <label>TIN</label>
                 <input type="text" name="tin" class="form-control">
             </div>
+            <div class="col-md-6">
+                <label>Contact Person</label>
+                <input type="text" name="contact_person" class="form-control">
+            </div>
             <div class="col-md-12">
                 <label>Address</label>
                 <textarea name="address" class="form-control"></textarea>
@@ -177,6 +181,10 @@
                                 Sort table by TIN in descending order
                                 </span></button>
                             </th>
+                            <th scope="col" aria-sort="descending" aria-controls="col-5" class="vgt-left-align text-left sortable" style="min-width: auto; width: auto;"><span>Contact Person</span> <button><span class="sr-only">
+                                Sort table by Contact Person in descending order
+                                </span></button>
+                            </th>
                             <th scope="col" aria-sort="descending" aria-controls="col-6" class="vgt-left-align text-right" style="min-width: auto; width: auto;">
                                 <span>Action</span> <!---->
                             </th>
@@ -192,6 +200,7 @@
                                 <td>{{ $branch->mobile_number }}</td>
                                 <td>{{ $branch->email }}</td>
                                 <td>{{ $branch->tin }}</td>
+                                <td>{{ $branch->contact_person  }}</td>
                                 <td class="text-right">
                                         @include('layouts.actions-dropdown', [
                                             'id' => $branch->id, 
