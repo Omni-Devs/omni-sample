@@ -16,5 +16,6 @@ class Branch extends Model
         'email',
         'tin',
         'address',
+        'contact_person',
     ];
 }
