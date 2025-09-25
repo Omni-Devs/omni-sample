@@ -21,7 +21,21 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'username',
+        'role',
+        'landline_number',
+        'image',
+        'mobile_number',
+        'address',
+        'active',
+        
     ];
+
+    public function branches()
+    {
+        return $this->belongsToMany(Branch::class);
+    }
+
 
     /**
      * The attributes that should be hidden for serialization.

@@ -55,15 +55,25 @@
   }
 </style>
 <body>
+  @php
+    $user = Auth::user();
+  @endphp
+  @if($user && $user->role === 'admin')
     @include('layouts.header')
     @include('layouts.sidebar')
 
     <main>
-        <div class="main-content-wrap d-flex flex-column flex-grow-1 sidenav-open">
-        @yield('content')
-        @include('layouts.footer')
-        </div>
+      <div class="main-content-wrap d-flex flex-column flex-grow-1 sidenav-open">
+      @yield('content')
+      @include('layouts.footer')
+      </div>
     </main>
     @yield('scripts')
+  @else
+    <div style="text-align:center; margin-top:100px;">
+      <h2>Access Denied</h2>
+      <p>You do not have permission to view this page.</p>
+    </div>
+  @endif
 </body>
 </html>
