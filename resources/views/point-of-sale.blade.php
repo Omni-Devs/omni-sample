@@ -38,13 +38,13 @@
   <div class="sidebar">
     <h3>Tables (drag → canvas)</h3>
     <div class="table-list" id="tableList">
-      <!-- initial templates -->
-      <div class="table-item" draggable="true" data-size="small" data-label="Table 1">Table 1 <span class="badge">S</span></div>
-      <div class="table-item" draggable="true" data-size="medium" data-label="Table 2">Table 2 <span class="badge">M</span></div>
-      <div class="table-item" draggable="true" data-size="large" data-label="Table 3">Table 3 <span class="badge">L</span></div>
-      <div class="table-item" draggable="true" data-size="small" data-label="Table 4">Table 4 <span class="badge">S</span></div>
-      <div class="table-item" draggable="true" data-size="medium" data-label="Table 5">Table 5 <span class="badge">M</span></div>
-    </div>
+  <!-- initial templates -->
+  <div class="table-item" draggable="true" data-size="large" data-label="Table 1">Table 1 <span class="badge">L</span></div>
+  <div class="table-item" draggable="true" data-size="large" data-label="Table 2">Table 2 <span class="badge">L</span></div>
+  <div class="table-item" draggable="true" data-size="large" data-label="Table 3">Table 3 <span class="badge">L</span></div>
+  <div class="table-item" draggable="true" data-size="medium" data-label="Table 4">Table 4 <span class="badge">M</span></div>
+  <div class="table-item" draggable="true" data-size="small" data-label="Table 5">Table 5 <span class="badge">S</span></div>
+</div>
 
     <div class="controls">
       <input id="newTableName" placeholder="Name" style="flex:1;padding:8px;border-radius:6px;border:1px solid #ccc" />
@@ -141,13 +141,18 @@
       canvas.addEventListener('dragover', e=>{ e.preventDefault(); });
       canvas.addEventListener('drop', e=>{
         e.preventDefault();
-        const rect = canvas.getBoundingClientRect();
-        const payload = e.dataTransfer.getData('text/plain');
-        let obj;
-        try{ obj = JSON.parse(payload);}catch(err){return}
-        const x = e.clientX - rect.left + canvas.scrollLeft;
-        const y = e.clientY - rect.top + canvas.scrollTop;
-        createPlaced({label:obj.label,size:obj.size,x,y,floor:activeFloor});
+  const rect = canvas.getBoundingClientRect();
+  const payload = e.dataTransfer.getData('text/plain');
+  let obj;
+  try{ obj = JSON.parse(payload);}catch(err){return}
+  const x = e.clientX - rect.left + canvas.scrollLeft;
+  const y = e.clientY - rect.top + canvas.scrollTop;
+
+  createPlaced({label:obj.label,size:obj.size,x,y,floor:activeFloor});
+
+  // remove the dragged item from sidebar (make it unavailable)
+  const dragged = document.querySelector(`.table-item[data-label="${obj.label}"]`);
+  if (dragged) dragged.remove();
       });
 
       // create placed table
@@ -364,7 +369,8 @@
       }
 
       // initial
-      renderFloors(); seedDemo();
+      renderFloors(); 
+      // seedDemo();
 
       // load layout when switching floor
       document._layout = document._layout || [];

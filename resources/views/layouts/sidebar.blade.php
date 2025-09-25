@@ -310,7 +310,7 @@
                   </a>
                </li>
                <li class="nav-item"><a href="{{ route('branches.index') }}" class=""><i class="nav-icon i-Location-2"></i> <span class="item-name">Branches</span></a></li>
-               <li class="nav-item"><a href="/app/settings/general/inventory" class=""><i class="nav-icon i-Administrator"></i> <span class="item-name">Users</span></a></li>
+               <li class="nav-item"><a href="/users" class=""><i class="nav-icon i-Administrator"></i> <span class="item-name">Users</span></a></li>
                <li class="nav-item"><a href="/app/settings/general/sales" class=""><i class="nav-icon i-Key"></i> <span class="item-name">Permission</span></a></li>
                <li class="nav-item"><a href="/app/settings/general/accounting" class=""><i class="nav-icon i-Data-Backup"></i> <span class="item-name">Back-Up Database</span></a></li>
             </ul>

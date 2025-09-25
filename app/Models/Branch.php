@@ -17,4 +17,10 @@ class Branch extends Model
         'tin',
         'address',
     ];
+
+    public function users()
+    {
+        return $this->belongsToMany(User::class);
+    }
+
 }
