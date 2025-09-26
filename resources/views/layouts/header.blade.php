@@ -9115,26 +9115,84 @@ input[type=color].form-control:disabled {
 </head>
 
 <body class="  text-left">
-    <noscript>
-        <strong>
-            We're sorry but Invento doesn't work properly without JavaScript
-            enabled. Please enable it to continue.</strong
-        >
-    </noscript>
-
-    <!-- built files will be auto injected -->
-    <div class="loading_wrap" id="loading_wrap" style="display: none;">
-        <div class="loader_logo">
-        <img src="/images/logo.png" class="" alt="logo">
-
-        </div>
-
-        <div class="loading"></div>
-    </div>
-    <div><div data-v-558582d2=""></div> <div><div class="app-admin-wrap layout-sidebar-large clearfix"><div class="main-header"><div class="logo"><a href="/app/dashboard/main" aria-current="page" class="router-link-exact-active open"><img src="/images/logo-default.png" alt="" width="60" height="60"></a></div> <div class="menu-toggle"><div></div> <div></div> <div></div></div> <div style="margin: auto;"></div> <div class="header-part-right"><div class="mr-3"><div class="b-overlay-wrap position-relative d-inline-block btn-loader"><button type="button" class="btn btn-outline-primary ripple btn-sm"><i class="i-Brush" style="font-size: 12px;"></i>
-                    Clear Cache
-                </button><!----></div></div> <div class="mr-3"><div class="dropdown b-dropdown btn-group" id="__BVID__24"><!----><button aria-haspopup="menu" aria-expanded="false" type="button" class="btn dropdown-toggle btn-link btn-lg text-decoration-none dropdown-toggle-no-caret" id="__BVID__24__BV_toggle_"><small><i class="i-Shop-4 mr-2"></i> <strong>
-                            Bantayan
-                        </strong></small></button><ul role="menu" tabindex="-1" class="dropdown-menu" aria-labelledby="__BVID__24__BV_toggle_"> <li role="presentation"><a role="menuitem" href="#" target="_self" class="dropdown-item active">
-                    Bantayan
-                </a></li></ul></div></div> <!----> <i class="i-Full-Screen header-icon d-none d-sm-inline-block"></i> <div class="dropdown"><div id="dropdown-1" class="dropdown b-dropdown m-md-2 badge-top-container d-none d-sm-inline-block btn-group"><!----><button id="dropdown-1__BV_toggle_" aria-haspopup="menu" aria-expanded="false" type="button" class="btn dropdown-toggle btn-link text-decoration-none dropdown-toggle-no-caret"><!----> <i class="i-Bell text-muted header-icon"></i></button><ul role="menu" tabindex="-1" aria-labelledby="dropdown-1__BV_toggle_" class="dropdown-menu"> <section class="ps-container dropdown-menu-right rtl-ps-none notification-dropdown ps scroll open"><div class="ps__rail-x" style="left: 0px; bottom: 0px;"><div class="ps__thumb-x" tabindex="0" style="left: 0px; width: 0px;"></div></div><div class="ps__rail-y" style="top: 0px; right: 0px;"><div class="ps__thumb-y" tabindex="0" style="top: 0px; height: 0px;"></div></div></section></ul></div></div> <div class="dropdown"><div id="dropdown-1" class="dropdown b-dropdown m-md-2 user col align-self-end d-md-block btn-group"><!----><button id="dropdown-1__BV_toggle_" aria-haspopup="menu" aria-expanded="false" type="button" class="btn dropdown-toggle btn-link text-decoration-none dropdown-toggle-no-caret"><img src="/images/avatar/no_avatar.png" id="userDropdown" alt="" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></button><ul role="menu" tabindex="-1" aria-labelledby="dropdown-1__BV_toggle_" class="dropdown-menu"> <div aria-labelledby="userDropdown" class="dropdown-menu-right"><div class="dropdown-header"><i class="i-Lock-User mr-1"></i> <span>John</span></div> <a href="/app/profile" class="dropdown-item">Profile</a> <a href="/app/log-histories" class="dropdown-item">Log History</a> <!----> <a href="#" class="dropdown-item">Logout</a></div></ul></div></div></div></div>
+   <noscript>
+      <strong>
+      We're sorry but Invento doesn't work properly without JavaScript
+      enabled. Please enable it to continue.</strong
+         >
+   </noscript>
+   <!-- built files will be auto injected -->
+   <div class="loading_wrap" id="loading_wrap" style="display: none;">
+      <div class="loader_logo">
+         <img src="/images/logo.png" class="" alt="logo">
+      </div>
+      <div class="loading"></div>
+   </div>
+   <div>
+   <div data-v-558582d2=""></div>
+   <div>
+   <div class="app-admin-wrap layout-sidebar-large clearfix">
+   <div class="main-header">
+      <div class="logo"><a href="/app/dashboard/main" aria-current="page" class="router-link-exact-active open"><img src="/images/logo-default.png" alt="" width="60" height="60"></a></div>
+      <div class="menu-toggle">
+         <div></div>
+         <div></div>
+         <div></div>
+      </div>
+      <div style="margin: auto;"></div>
+      <div class="header-part-right">
+         <div class="mr-3">
+            <div class="b-overlay-wrap position-relative d-inline-block btn-loader">
+               <form action="{{ route('logout') }}" method="POST">
+                @csrf
+                <button type="submit" class="btn btn-outline-primary ripple btn-sm"><i class="i-Brush" style="font-size: 12px;"></i>
+               Logout
+               </button><!---->
+               </form>
+            </div>
+         </div>
+         <div class="mr-3">
+            <div class="dropdown b-dropdown btn-group" id="__BVID__24">
+               <!----><button aria-haspopup="menu" aria-expanded="false" type="button" class="btn dropdown-toggle btn-link btn-lg text-decoration-none dropdown-toggle-no-caret" id="__BVID__24__BV_toggle_"><small><i class="i-Shop-4 mr-2"></i> <strong>
+               Bantayan
+               </strong></small></button>
+               <ul role="menu" tabindex="-1" class="dropdown-menu" aria-labelledby="__BVID__24__BV_toggle_">
+                  <li role="presentation"><a role="menuitem" href="#" target="_self" class="dropdown-item active">
+                     Bantayan
+                     </a>
+                  </li>
+               </ul>
+            </div>
+         </div>
+         <!----> <i class="i-Full-Screen header-icon d-none d-sm-inline-block"></i> 
+         <div class="dropdown">
+            <div id="dropdown-1" class="dropdown b-dropdown m-md-2 badge-top-container d-none d-sm-inline-block btn-group">
+               <!---->
+               <button id="dropdown-1__BV_toggle_" aria-haspopup="menu" aria-expanded="false" type="button" class="btn dropdown-toggle btn-link text-decoration-none dropdown-toggle-no-caret">
+                  <!----> <i class="i-Bell text-muted header-icon"></i>
+               </button>
+               <ul role="menu" tabindex="-1" aria-labelledby="dropdown-1__BV_toggle_" class="dropdown-menu">
+                  <section class="ps-container dropdown-menu-right rtl-ps-none notification-dropdown ps scroll open">
+                     <div class="ps__rail-x" style="left: 0px; bottom: 0px;">
+                        <div class="ps__thumb-x" tabindex="0" style="left: 0px; width: 0px;"></div>
+                     </div>
+                     <div class="ps__rail-y" style="top: 0px; right: 0px;">
+                        <div class="ps__thumb-y" tabindex="0" style="top: 0px; height: 0px;"></div>
+                     </div>
+                  </section>
+               </ul>
+            </div>
+         </div>
+         <div class="dropdown">
+            <div id="dropdown-1" class="dropdown b-dropdown m-md-2 user col align-self-end d-md-block btn-group">
+               <!----><button id="dropdown-1__BV_toggle_" aria-haspopup="menu" aria-expanded="false" type="button" class="btn dropdown-toggle btn-link text-decoration-none dropdown-toggle-no-caret"><img src="/images/avatar/no_avatar.png" id="userDropdown" alt="" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></button>
+               <ul role="menu" tabindex="-1" aria-labelledby="dropdown-1__BV_toggle_" class="dropdown-menu">
+                  <div aria-labelledby="userDropdown" class="dropdown-menu-right">
+                     <div class="dropdown-header"><i class="i-Lock-User mr-1"></i> <span>John</span></div>
+                     <a href="/app/profile" class="dropdown-item">Profile</a> <a href="/app/log-histories" class="dropdown-item">Log History</a> <!----> <a href="#" class="dropdown-item">Logout</a>
+                  </div>
+               </ul>
+            </div>
+         </div>
+      </div>
+   </div>

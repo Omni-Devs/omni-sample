@@ -90,6 +90,21 @@ document.addEventListener("DOMContentLoaded", function () {
       secondary.classList.remove("open");
     }
   }
+
+  // Fullscreen toggle
+  const fullscreenBtn = document.querySelector('.i-Full-Screen');
+
+    if (fullscreenBtn) {
+      fullscreenBtn.addEventListener('click', () => {
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen().catch(err => {
+            console.warn(`Error enabling fullscreen: ${err.message}`);
+          });
+        } else {
+          document.exitFullscreen();
+        }
+      });
+    }
 });
 
 

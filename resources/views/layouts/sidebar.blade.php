@@ -57,7 +57,7 @@
                <div class="triangle"></div>
             </li>
             <li data-item="Sales" data-submenu="true" class="nav-item">
-               <a href="#" class="nav-item-hold"><i class="nav-icon i-Full-Basket"></i> <span class="nav-text">Sales Menu</span></a> 
+               <a href="#" class="nav-item-hold"><i class="nav-icon i-Full-Basket"></i> <span class="nav-text">POS</span></a> 
                <div class="triangle"></div>
             </li>
             <li data-item="Inventory" data-submenu="true" class="nav-item">
@@ -255,10 +255,10 @@
             </li>
          </ul>
          <ul data-parent="Sales" class="childNav d-none">
-            <li class="nav-item"><a href="/pos" class=""><i class="nav-icon i-Clothing-Store"></i> <span class="item-name">Point of Sale</span></a></li>
-            <li class="nav-item"><a href="/app/sales/sales-invoicing" class=""><i class="nav-icon i-Receipt"></i> <span class="item-name">Sales Invoicing</span></a></li>
-            {{-- <li class="nav-item"><a href="/app/sales/sales-return/search" class=""><i class="nav-icon i-Remove-Bag"></i> <span class="item-name">Sales Return</span></a></li> --}}
-            <li class="nav-item"><a href="/app/sales/orders" class=""><i class="nav-icon i-Full-Basket"></i> <span class="item-name">Orders and Reservations</span></a></li>
+            <li class="nav-item"><a href="/orders" class=""><i class="nav-icon i-Clothing-Store"></i> <span class="item-name">Orders</span></a></li>
+            <li class="nav-item"><a href="/app/sales/sales-invoicing" class=""><i class="nav-icon i-Receipt"></i> <span class="item-name">Billing</span></a></li>
+            <li class="nav-item"><a href="/app/sales/orders" class=""><i class="nav-icon i-Full-Basket"></i> <span class="item-name">Payments</span></a></li>
+            <li class="nav-item"><a href="/app/sales/sales-return/search" class=""><i class="nav-icon i-Remove-Bag"></i> <span class="item-name">Kitchen</span></a></li>
             {{-- <li class="nav-item"><a href="/app/sales/quotations" class=""><i class="nav-icon i-Receipt-3"></i> <span class="item-name">Quotations</span></a></li> --}}
             {{-- <li class="nav-item"><a href="/app/sales/manage-pick-ups" class=""><i class="nav-icon i-Hand"></i> <span class="item-name">Manage Pick-ups</span></a></li> --}}
             {{-- <li class="nav-item"><a href="/app/sales/manage-deliveries" class=""><i class="nav-icon i-Jeep"></i> <span class="item-name">Manage Deliveries</span></a></li> --}}

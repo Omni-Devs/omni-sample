@@ -17,6 +17,13 @@
 <link rel="stylesheet" href="https://unpkg.com/vue-select@3.20.2/dist/vue-select.css">
 <script src="https://unpkg.com/vue-select@3.20.2"></script>
 
+<!-- BootstrapVue CSS -->
+<link rel="stylesheet" href="https://unpkg.com/bootstrap-vue@2.23.1/dist/bootstrap-vue.min.css">
+
+<!-- BootstrapVue JS -->
+<script src="https://unpkg.com/bootstrap-vue@2.23.1/dist/bootstrap-vue.min.js"></script>
+
+
 </head>
 <style>
   /* simple styles for dropdown list */
