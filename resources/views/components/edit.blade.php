@@ -469,135 +469,82 @@
                                 }
                             }
                             </script>
-                            {{-- Image feat --}}
-              {{-- Multiple Images --}}
-{{-- Image Upload --}}
-<fieldset class="form-group">
-    <legend>Component Image</legend>
-    <div id="drop-area" class="upload-box" onclick="document.getElementById('image').click();">
-        <i class="fas fa-hand-pointer fa-2x mb-2 text-muted"></i>
-        <p class="text-muted">Drag & Drop an image for the component<br><strong>(or) Select</strong></p>
+            {{-- Image feat --}}
+        <fieldset class="form-group">
+            <legend>Component Image</legend>
+            <div id="drop-area" class="upload-box text-center p-3 border rounded" onclick="document.getElementById('image').click();">
+                <i class="fas fa-hand-pointer fa-2x mb-2 text-muted"></i>
+                <p class="text-muted">Drag & Drop an image for the component<br><strong>(or) Select</strong></p>
+                
+                <input type="file" id="image" name="image" class="d-none" accept="image/*">
 
-        <!-- File input -->
-        <input type="file" id="image" name="image" class="d-none" accept="image/*" onchange="previewImage(event)">
+                <!-- Preview -->
+                <div id="preview-container" class="preview-box mt-3">
+                    @if($component->image)
+                        <img src="{{ asset('storage/' . $component->image) }}" alt="Component Image" 
+                            class="img-thumbnail" style="max-width: 200px;">
+                    @endif
+                </div>
+            </div>
+        </fieldset>
 
-        <!-- 🖼️ Preview -->
-        <div id="preview-container" class="preview-box mt-3">
-            @if($component->image)
-                <img src="{{ asset('storage/' . $component->image) }}" 
-                     alt="Component Image" 
-                     id="image-preview"
-                     class="img-thumbnail" 
-                     style="max-width: 200px;">
-            @else
-                <img id="image-preview" class="img-thumbnail d-none" style="max-width: 200px;">
-            @endif
-        </div>
-    </div>
-</fieldset>
-
-@push('scripts')
-<script>
-function previewImage(event) {
-    const reader = new FileReader();
-    reader.onload = function(){
-        const preview = document.getElementById('image-preview');
-        preview.src = reader.result;
-        preview.classList.remove('d-none'); // show if hidden
-    }
-    reader.readAsDataURL(event.target.files[0]);
-}
-</script>
-@endpush
 
             <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-            <style>
-            .upload-box {
-                border: 2px dashed #ccc;
-                border-radius: 6px;
-                padding: 30px 20px;
-                text-align: center;
-                cursor: pointer;
-                transition: border-color 0.3s, background-color 0.3s;
-                min-height: 200px;
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
-            }
-            .upload-box:hover {
-                border-color: #28a745;
-                background-color: #f8f9fa;
-            }
-            .upload-box.dragover {
-                border-color: #007bff;
-                background-color: #e9f5ff;
-            }
-            .preview-box {
-                display: flex;
-                flex-wrap: wrap;
-                justify-content: center;
-                margin-top: 15px;
-            }
-            .preview-box img {
-                width: 150px;   /* fixed width */
-                height: 150px;  /* fixed height */
-                object-fit: cover; /* keeps proportions but crops if needed */
-                margin: 8px;
-                border: 1px solid #ddd;
-                border-radius: 6px;
-                padding: 3px;
-                background: #fff;
-                box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-            }
-            </style>
+                                    <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const fileInput = document.getElementById('image');
+                const dropArea = document.getElementById('drop-area');
+                const previewContainer = document.getElementById('preview-container');
 
-                        <script>
-                        document.addEventListener('DOMContentLoaded', function () {
-                            const dropArea = document.getElementById('drop-area');
-                            const fileInput = document.getElementById('images');
-                            const previewContainer = document.getElementById('preview-container');
+                // Prevent default drag behaviors
+                ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                    dropArea.addEventListener(eventName, (e) => e.preventDefault(), false);
+                    document.body.addEventListener(eventName, (e) => e.preventDefault(), false);
+                });
 
-                            // Prevent defaults
-                            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(evt => {
-                                dropArea.addEventListener(evt, (e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                });
-                            });
+                // Highlight drop area on dragover
+                dropArea.addEventListener('dragover', () => {
+                    dropArea.classList.add('border-primary');
+                }, false);
 
-                            // Highlight
-                            ['dragenter', 'dragover'].forEach(evt => {
-                                dropArea.addEventListener(evt, () => dropArea.classList.add('dragover'));
-                            });
-                            ['dragleave', 'drop'].forEach(evt => {
-                                dropArea.addEventListener(evt, () => dropArea.classList.remove('dragover'));
-                            });
+                dropArea.addEventListener('dragleave', () => {
+                    dropArea.classList.remove('border-primary');
+                }, false);
 
-                            // Drop files
-                            dropArea.addEventListener('drop', (e) => {
-                                const files = e.dataTransfer.files;
-                                if (files.length) handleFiles(files);
-                            });
+                // Handle drop
+                dropArea.addEventListener('drop', (e) => {
+                    dropArea.classList.remove('border-primary');
+                    const files = e.dataTransfer.files;
+                    if (files.length > 0) {
+                        fileInput.files = files; // attach files to hidden input
+                        previewFile(files[0]);   // show preview
+                    }
+                }, false);
 
-                            // Select files
-                            fileInput.addEventListener('change', () => handleFiles(fileInput.files));
+                // Handle file select (click input)
+                fileInput.addEventListener('change', () => {
+                    if (fileInput.files.length > 0) {
+                        previewFile(fileInput.files[0]);
+                    }
+                });
 
-                            function handleFiles(files) {
-                                previewContainer.innerHTML = ""; // clear previews
-                                [...files].forEach(file => {
-                                    if (!file.type.startsWith('image/')) return;
-                                    const reader = new FileReader();
-                                    reader.onload = (ev) => {
-                                        const img = document.createElement('img');
-                                        img.src = ev.target.result;
-                                        previewContainer.appendChild(img);
-                                    };
-                                    reader.readAsDataURL(file);
-                                });
-                            }
-                        });
-                        </script>
+                function previewFile(file) {
+                    previewContainer.innerHTML = ""; 
+                    if (file && file.type.startsWith('image/')) {
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            const img = document.createElement('img');
+                            img.src = e.target.result;
+                            img.classList.add('img-thumbnail');
+                            img.style.maxWidth = "200px";
+                            previewContainer.appendChild(img);
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                }
+            });
+            </script>
                         </span>
                         </div>
                         <div class="mr-2">

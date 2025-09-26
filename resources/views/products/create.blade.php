@@ -13,9 +13,9 @@
       <div class="separator-breadcrumb border-top"></div>
    </div>
    <!----> 
-   <div class="wrapper">
-      <span>
-         <form action="{{ route('products.store') }}" method="POST">
+   <div class="card mt-4">
+      <div class="card-body">
+         <form action="{{ route('products.store') }}" method="POST"  enctype="multipart/form-data">
             @csrf
             <div class="row">
                <div class="top-wrapper" style="display: none;">
@@ -23,9 +23,9 @@
                <div class="col-sm-12">
                   <div class="row">
                      <div class="mt-3 col-md-8">
-                        <div class="card">
+                        {{-- <div class="card">
                            <!----><!---->
-                           <div class="card-body">
+                           <div class="card-body"> --}}
                               <!----><!---->
                               <div class="row">
                                  <div class="col-md-6">
@@ -43,16 +43,17 @@
                               <div class="form-group">
                                  <label for="category_id">Category</label>
                                  <div class="d-flex">
-                                       <select name="category_id" id="category_id" class="form-control mr-2">
-                                          @foreach ($categories as $category)
-                                             <option value="{{ $category->id }}" {{ old('category_id') == $category->id ? 'selected' : '' }}>
-                                                   {{ $category->name }}
-                                             </option>
-                                          @endforeach
-                                       </select>
-                                       <button type="button" id="toggleCategoryBtn" class="btn btn-outline-success btn-sm" onclick="toggleCategoryForm()">
-                                          <i class="i-Add"></i>
-                                       </button>
+                                    <select name="category_id" id="category_id" class="custom-select mr-2">
+                                       <option value="" disabled selected></option>
+                                       @foreach ($categories as $category)
+                                          <option value="{{ $category->id }}" {{ old('category_id') == $category->id ? 'selected' : '' }}>
+                                             {{ $category->name }}
+                                          </option>
+                                       @endforeach
+                                    </select>
+                                    <button type="button" id="toggleCategoryBtn" class="btn btn-outline-success btn-sm" onclick="toggleCategoryForm()">
+                                       <i class="i-Add"></i>
+                                    </button>
                                  </div>
                               </div>
 
@@ -195,19 +196,20 @@
                                           </div>
                                        </fieldset>
                                     </span>
+
                   <!-- Subcategory select + New button -->
                   <div class="form-group">
                      <label for="subcategory_id">Subcategory</label>
                      <div class="d-flex">
-                           <select name="subcategory_id" id="subcategory_id" class="form-control mr-2">
-                              {{-- no default placeholder, will be filled dynamically --}}
-                           </select>
-                           <button type="button" id="toggleSubCategoryBtn" class="btn btn-outline-success btn-sm" onclick="toggleSubCategoryForm()">
-                              <i class="i-Add"></i>
-                           </button>
+                        <select name="subcategory_id" id="subcategory_id" class="custom-select mr-2">
+                           <option value="" disabled selected></option>
+                           {{-- Options will be filled dynamically --}}
+                        </select>
+                        <button type="button" id="toggleSubCategoryBtn" class="btn btn-outline-success btn-sm" onclick="toggleSubCategoryForm()">
+                           <i class="i-Add"></i>
+                        </button>
                      </div>
                   </div>
-
 
                   <script>
                   document.getElementById('category_id').addEventListener('change', async function () {
@@ -368,12 +370,64 @@
                                  }
                               }
                               </script>
-                                 </div>
-                           <!----><!---->
-                        </div>
+         <script>
+         document.addEventListener('DOMContentLoaded', function () {
+            const fileInput = document.getElementById('image');
+            const dropArea = document.getElementById('drop-area');
+            const previewContainer = document.getElementById('preview-container');
+
+            // Prevent default drag behaviors
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+               dropArea.addEventListener(eventName, (e) => e.preventDefault(), false);
+               document.body.addEventListener(eventName, (e) => e.preventDefault(), false);
+            });
+
+            // Highlight drop area on dragover
+            dropArea.addEventListener('dragover', () => {
+               dropArea.classList.add('border-primary');
+            }, false);
+
+            dropArea.addEventListener('dragleave', () => {
+               dropArea.classList.remove('border-primary');
+            }, false);
+
+            // Handle drop
+            dropArea.addEventListener('drop', (e) => {
+               dropArea.classList.remove('border-primary');
+               const files = e.dataTransfer.files;
+               if (files.length > 0) {
+                     fileInput.files = files; // attach files to hidden input
+                     previewFile(files[0]);   // show preview
+               }
+            }, false);
+
+            // Handle file select (click input)
+            fileInput.addEventListener('change', () => {
+               if (fileInput.files.length > 0) {
+                     previewFile(fileInput.files[0]);
+               }
+            });
+
+            function previewFile(file) {
+               previewContainer.innerHTML = ""; 
+               if (file && file.type.startsWith('image/')) {
+                     const reader = new FileReader();
+                     reader.onload = (e) => {
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        img.classList.add('img-thumbnail');
+                        img.style.maxWidth = "200px";
+                        previewContainer.appendChild(img);
+                     };
+                     reader.readAsDataURL(file);
+               }
+            }
+         });
+         </script>
+         </div>
+      </div>
 
       <div class="row">
-
          <div class="col-md-12 mt-4">
                <!-- Recipe Table -->
                <h5>Ingredients</h5>
@@ -422,9 +476,12 @@
          const tbody = document.querySelector('#recipeTable tbody');
          const tr = document.createElement('tr');
 
-         const componentOptions = components.map(c =>
+      const componentOptions = `
+         <option value="" disabled selected></option>
+         ${components.map(c =>
             `<option value="${c.id}" data-cost="${c.cost}">${c.name}</option>`
-         ).join('');
+         ).join('')}
+      `;
 
          tr.innerHTML = `
             <td>
@@ -482,7 +539,28 @@
    </script>
 
       <div class="row">
+
    </form>
+
+      <div class="col-md-10 mt-3 mt-md-0">
+   <fieldset class="form-group">
+            <legend>Product Image</legend>
+            <div id="drop-area" class="upload-box text-center p-3 border rounded" onclick="document.getElementById('image').click();">
+               <i class="fas fa-hand-pointer fa-2x mb-2 text-muted"></i>
+               <p class="text-muted">Drag & Drop an image for the product<br><strong>(or) Select</strong></p>
+               
+               <input type="file" id="image" name="image" class="d-none" accept="image/*">
+
+               <!-- Preview -->
+               <div id="preview-container" class="preview-box mt-3">
+                     @if(isset($product) && $product->image)
+                        <img src="{{ asset('storage/' . $product->image) }}" alt="Product Image" 
+                              class="img-thumbnail" style="max-width: 200px;">
+                     @endif
+               </div>
+            </div>
+      </fieldset>
+   </div>
 </span>
 </div>
 </div>
