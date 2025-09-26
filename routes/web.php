@@ -11,14 +11,25 @@ use App\Http\Controllers\LoginController;
 use App\Http\Controllers\UserController;
 
 Route::get('/', function () {
-    return view('welcome');
-});
+    return redirect()->route('login');
+})->middleware('redirect.auth');
+
 Route::get('/pos', function () {
     return view('point-of-sale');
 });
 
+Route::get('/', function () {
+    return view('welcome');
+})->name('welcome');
+
+Route::get('/orders', function () {
+    return view('orders.index');
+});
+
 Route::get('/login', [LoginController::class, 'index'])->name('login');
 Route::post('/login', [LoginController::class, 'login'])->name('login.submit');
+
+Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
 Route::get('/users', [UserController::class, 'index'])->name('users.index');
 Route::post('/users', [UserController::class, 'store'])->name('users.store');
