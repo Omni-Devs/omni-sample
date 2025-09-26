@@ -18,7 +18,7 @@
         <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
         <span>
-            <form action="{{ route('components.store') }}" method="POST">
+            <form action="{{ route('components.store') }}" method="POST" enctype="multipart/form-data">
                 @csrf
                 <div class="row">
                 <div class="top-wrapper" style="display: none;">
@@ -85,7 +85,8 @@
                             <div class="form-group">
                                 <label for="category_id">Category</label>
                                 <div class="d-flex">
-                                    <select name="category_id" id="category_id" class="form-control mr-2">
+                                    <select name="category_id" id="category_id" class="custom-select mr-2">
+                                        <option value="" disabled selected></option>
                                         @foreach ($categories as $category)
                                             <option value="{{ $category->id }}" {{ old('category_id') == $category->id ? 'selected' : '' }}>
                                                 {{ $category->name }}
@@ -296,7 +297,8 @@
                 <div class="form-group">
                     <label for="subcategory_id">Subcategory</label>
                     <div class="d-flex">
-                        <select name="subcategory_id" id="subcategory_id" class="form-control mr-2">
+                        <select name="subcategory_id" id="subcategory_id" class="custom-select mr-2">
+                            <option value="" disabled selected></option>
                             {{-- no default placeholder, will be filled dynamically --}}
                         </select>
                         <button type="button" id="toggleSubCategoryBtn" class="btn btn-outline-success btn-sm" onclick="toggleSubCategoryForm()">
@@ -464,108 +466,82 @@
                                 }
                             }
                             </script>
-                            {{-- Image feat --}}
-                <fieldset class="form-group">
-                <legend>Multiple Images</legend>
-                <div id="drop-area" class="upload-box"
-                    onclick="document.getElementById('images').click();">
+                        {{-- Image feat --}}
+            <fieldset class="form-group">
+                <legend>Product Image</legend>
+                <div id="drop-area" class="upload-box text-center p-3 border rounded" onclick="document.getElementById('image').click();">
                     <i class="fas fa-hand-pointer fa-2x mb-2 text-muted"></i>
-                    <p class="text-muted">Drag & Drop Multiple images For product<br><strong>(or) Select</strong></p>
-                    <input type="file" id="images" name="images[]" multiple class="d-none" accept="image/*">
+                    <p class="text-muted">Drag & Drop an image for the product<br><strong>(or) Select</strong></p>
+                    
+                    <input type="file" id="image" name="image" class="d-none" accept="image/*">
 
-                    <!-- 🖼️ Previews will show inside this box -->
-                    <div id="preview-container" class="preview-box mt-3"></div>
+                    <!-- Preview -->
+                    <div id="preview-container" class="preview-box mt-3">
+                            @if(isset($product) && $product->image)
+                            <img src="{{ asset('storage/' . $product->image) }}" alt="Product Image" 
+                                    class="img-thumbnail" style="max-width: 200px;">
+                            @endif
+                    </div>
                 </div>
             </fieldset>
 
             <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-            <style>
-            .upload-box {
-                border: 2px dashed #ccc;
-                border-radius: 6px;
-                padding: 30px 20px;
-                text-align: center;
-                cursor: pointer;
-                transition: border-color 0.3s, background-color 0.3s;
-                min-height: 200px;
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
-            }
-            .upload-box:hover {
-                border-color: #28a745;
-                background-color: #f8f9fa;
-            }
-            .upload-box.dragover {
-                border-color: #007bff;
-                background-color: #e9f5ff;
-            }
-            .preview-box {
-                display: flex;
-                flex-wrap: wrap;
-                justify-content: center;
-                margin-top: 15px;
-            }
-            .preview-box img {
-                width: 150px;   /* fixed width */
-                height: 150px;  /* fixed height */
-                object-fit: cover; /* keeps proportions but crops if needed */
-                margin: 8px;
-                border: 1px solid #ddd;
-                border-radius: 6px;
-                padding: 3px;
-                background: #fff;
-                box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-            }
-            </style>
+                                    <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const fileInput = document.getElementById('image');
+                const dropArea = document.getElementById('drop-area');
+                const previewContainer = document.getElementById('preview-container');
 
-                        <script>
-                        document.addEventListener('DOMContentLoaded', function () {
-                            const dropArea = document.getElementById('drop-area');
-                            const fileInput = document.getElementById('images');
-                            const previewContainer = document.getElementById('preview-container');
+                // Prevent default drag behaviors
+                ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                    dropArea.addEventListener(eventName, (e) => e.preventDefault(), false);
+                    document.body.addEventListener(eventName, (e) => e.preventDefault(), false);
+                });
 
-                            // Prevent defaults
-                            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(evt => {
-                                dropArea.addEventListener(evt, (e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                });
-                            });
+                // Highlight drop area on dragover
+                dropArea.addEventListener('dragover', () => {
+                    dropArea.classList.add('border-primary');
+                }, false);
 
-                            // Highlight
-                            ['dragenter', 'dragover'].forEach(evt => {
-                                dropArea.addEventListener(evt, () => dropArea.classList.add('dragover'));
-                            });
-                            ['dragleave', 'drop'].forEach(evt => {
-                                dropArea.addEventListener(evt, () => dropArea.classList.remove('dragover'));
-                            });
+                dropArea.addEventListener('dragleave', () => {
+                    dropArea.classList.remove('border-primary');
+                }, false);
 
-                            // Drop files
-                            dropArea.addEventListener('drop', (e) => {
-                                const files = e.dataTransfer.files;
-                                if (files.length) handleFiles(files);
-                            });
+                // Handle drop
+                dropArea.addEventListener('drop', (e) => {
+                    dropArea.classList.remove('border-primary');
+                    const files = e.dataTransfer.files;
+                    if (files.length > 0) {
+                        fileInput.files = files; // attach files to hidden input
+                        previewFile(files[0]);   // show preview
+                    }
+                }, false);
 
-                            // Select files
-                            fileInput.addEventListener('change', () => handleFiles(fileInput.files));
+                // Handle file select (click input)
+                fileInput.addEventListener('change', () => {
+                    if (fileInput.files.length > 0) {
+                        previewFile(fileInput.files[0]);
+                    }
+                });
 
-                            function handleFiles(files) {
-                                previewContainer.innerHTML = ""; // clear previews
-                                [...files].forEach(file => {
-                                    if (!file.type.startsWith('image/')) return;
-                                    const reader = new FileReader();
-                                    reader.onload = (ev) => {
-                                        const img = document.createElement('img');
-                                        img.src = ev.target.result;
-                                        previewContainer.appendChild(img);
-                                    };
-                                    reader.readAsDataURL(file);
-                                });
-                            }
-                        });
-                        </script>
+                function previewFile(file) {
+                    previewContainer.innerHTML = ""; 
+                    if (file && file.type.startsWith('image/')) {
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            const img = document.createElement('img');
+                            img.src = e.target.result;
+                            img.classList.add('img-thumbnail');
+                            img.style.maxWidth = "200px";
+                            previewContainer.appendChild(img);
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                }
+            });
+            </script>
+
                         </span>
                         </div>
                         <div class="mr-2">

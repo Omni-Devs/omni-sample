@@ -3,7 +3,7 @@
 <div class="main-content">
    <div>
       <div class="breadcrumb">
-         <h1 class="mr-3">Edit Product</h1>
+         <h1 class="mr-3">Create Product</h1>
          <ul>
             <li><a href=""> Inventory </a></li>
             <!----> <!---->
@@ -13,102 +13,78 @@
       <div class="separator-breadcrumb border-top"></div>
    </div>
    <!----> 
-   <div class="card">
+   <div class="card mt-4">
       <div class="card-body">
-         <form action="{{ route('products.update', $product->id) }}" method="POST" id="productForm">
-         @csrf
-         @method('PUT')
+         <form action="{{ route('products.update', $product->id) }}" method="POST" id="productForm" enctype="multipart/form-data">
+            @csrf
+            @method('PUT')
 
-         <div class="row">
-               <!-- SKU -->
-               <div class="col-md-4 mb-3">
-                  <label for="code" class="form-label">SKU (Product Code) *</label>
-                  <input type="text" readonly
-                        name="code" 
-                        id="code" 
-                        class="form-control @error('code') is-invalid @enderror" 
-                        value="{{ old('code', $product->code) }}" 
-                        placeholder="Enter SKU">
-                  @error('code')
-                     <div class="invalid-feedback">{{ $message }}</div>
-                  @enderror
+            <div class="row">
+               <div class="top-wrapper" style="display: none;">
                </div>
+               <div class="col-sm-12">
+                  <div class="row">
+                     <div class="mt-3 col-md-8">
 
-               <!-- Product Name -->
-               <div class="col-md-4 mb-3">
-                  <label for="name" class="form-label">Product Name *</label>
-                  <input type="text" 
-                        name="name" 
-                        id="name" 
-                        class="form-control @error('name') is-invalid @enderror" 
-                        value="{{ old('name', $product->name) }}" 
-                        placeholder="Enter Name of Product">
-                  @error('name')
-                     <div class="invalid-feedback">{{ $message }}</div>
-                  @enderror
-               </div>
-         </div>
+                              <!----><!---->
+                              <div class="row">
+                                 <div class="col-md-6">
+                                    <span>
+                                       <fieldset class="form-group" id="__BVID__358">
+                                          <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0" id="__BVID__358__BV_label_">SKU(Product Code) *</legend>
+                                          <div>
+                                             <input type="text" readonly
+                                                   name="code" 
+                                                   id="code" 
+                                                   class="form-control @error('code') is-invalid @enderror" 
+                                                   value="{{ old('code', $product->code) }}" 
+                                                   placeholder="Enter SKU">
+                                             @error('code')
+                                                <div class="invalid-feedback">{{ $message }}</div>
+                                             @enderror
+                                             <div id="SKU-feedback" class="invalid-feedback"></div>
+                                          </div>
+                                       </fieldset>
+                                    </span>
 
-         <div class="row">
-               <!-- Category -->
-               {{-- <div class="col-md-4 mb-3">
-                  <label for="category_id" class="form-label">Category</label>
-                  <div class="d-flex">
-                     <select name="category_id" id="category_id" 
-                              class="form-control @error('category_id') is-invalid @enderror">
-                           @foreach($categories as $category)
-                              <option value="{{ $category->id }}" 
-                                 {{ old('category_id', $product->category_id) == $category->id ? 'selected' : '' }}>
-                                 {{ $category->name }}
-                              </option>
-                           @endforeach
-                     </select>
-                  </div>
-                  @error('category_id')
-                     <div class="invalid-feedback">{{ $message }}</div>
-                  @enderror
-               </div> --}}
+                                       <!-- Category select + New button -->
+                              <div class="form-group">
+                                 <label for="category_id">Category</label>
+                                 <div class="d-flex">
+                                    <select name="category_id" id="category_id" class="form-control mr-2">
+                                       @foreach ($categories as $category)
+                                          <option value="{{ $category->id }}" {{ old('category_id', $product->category_id) == $category->id ? 'selected' : '' }}>
+                                                {{ $category->name }}
+                                          </option>
+                                       @endforeach
+                                    </select>
+                                    <button type="button" id="toggleCategoryBtn" class="btn btn-outline-success btn-sm" onclick="toggleCategoryForm()">
+                                       <i class="i-Add"></i>
+                                    </button>
+                                 </div>
+                              </div>
 
-                 <!-- Category select + New button -->
-<div class="col-md-4 mb-3">
-    <div class="form-group">
-        <label for="category_id">Category</label>
-        <div class="d-flex">
-            <select name="category_id" id="category_id" class="form-control mr-2">
-                @foreach ($categories as $category)
-                    <option value="{{ $category->id }}" {{ old('category_id', $product->category_id) == $category->id ? 'selected' : '' }}>
-                        {{ $category->name }}
-                    </option>
-                @endforeach
-            </select>
-            <button type="button" id="toggleCategoryBtn" class="btn btn-outline-success btn-sm" onclick="toggleCategoryForm()">
-                <i class="i-Add"></i>
-            </button>
-        </div>
-    </div>
+                              <!-- Inline new category form (hidden) -->
+                              <div id="newCategoryForm" class="border rounded p-4 mt-3 bg-white shadow-sm" style="display:none; max-width:600px; margin:auto;">
+                                 <h4 class="text-center mb-4">Add Category</h4>
 
-    <!-- Inline new category form (hidden) -->
-    <div id="newCategoryForm" class="border rounded p-4 mt-3 bg-white shadow-sm" style="display:none;">
-        <h4 class="text-center mb-4">Add Category</h4>
+                                 <div class="form-group">
+                                       <label for="new_category_name" class="font-weight-bold">Category Name *</label>
+                                       <input type="text" id="new_category_name" class="form-control" placeholder="Enter category name">
+                                       <div class="invalid-feedback" id="err_new_category_name"></div>
+                                 </div>
 
-        <div class="form-group">
-            <label for="new_category_name" class="font-weight-bold">Category Name *</label>
-            <input type="text" id="new_category_name" class="form-control" placeholder="Enter category name">
-            <div class="invalid-feedback" id="err_new_category_name"></div>
-        </div>
+                                 <div class="form-group mt-3">
+                                       <label for="new_category_description" class="font-weight-bold">Description</label>
+                                       <textarea id="new_category_description" class="form-control" rows="3" placeholder="Enter category description"></textarea>
+                                       <div class="invalid-feedback" id="err_new_category_description"></div>
+                                 </div>
 
-        <div class="form-group mt-3">
-            <label for="new_category_description" class="font-weight-bold">Description</label>
-            <textarea id="new_category_description" class="form-control" rows="3" placeholder="Enter category description"></textarea>
-            <div class="invalid-feedback" id="err_new_category_description"></div>
-        </div>
-
-        <div class="d-flex justify-content-center mt-4">
-            <button type="button" onclick="saveCategory()" class="btn btn-success px-4 mr-2">Save</button>
-            <button type="button" onclick="toggleCategoryForm()" class="btn btn-danger px-4">Cancel</button>
-        </div>
-    </div>
-</div>
+                                 <div class="d-flex justify-content-center mt-4">
+                                       <button type="button" onclick="saveCategory()" class="btn btn-success px-4 mr-2">Save</button>
+                                       <button type="button" onclick="toggleCategoryForm()" class="btn btn-danger px-4">Cancel</button>
+                                 </div>
+                              </div>
 
                               <!-- JS: improved fetch + error handling -->
                               <script>
@@ -204,29 +180,44 @@
                               }
                               </script>
 
-
-               {{-- <!-- Subcategory -->
-               <div class="col-md-4 mb-3">
-                  <label for="subcategory_id" class="form-label">Subcategory</label>
-                  <div class="d-flex">
-                     <select name="subcategory_id" id="subcategory_id" 
-                              class="form-control @error('subcategory_id') is-invalid @enderror">
-                           @foreach($subcategories as $subcategory)
-                              <option value="{{ $subcategory->id }}" 
-                                 {{ old('subcategory_id', $product->subcategory_id) == $subcategory->id ? 'selected' : '' }}>
-                                 {{ $subcategory->name }}
-                              </option>
-                           @endforeach
-                     </select>
-                  </div>
-                  @error('subcategory_id')
-                     <div class="invalid-feedback">{{ $message }}</div>
-                  @enderror
-               </div>
-         </div> --}}
-
-          <!-- Subcategory select + New button -->
-          <div class="col-md-4 mb-3">
+                                    <span>
+                                       <fieldset class="form-group" id="__BVID__408">
+                                          <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0" id="__BVID__408__BV_label_">Unit Price *</legend>
+                                          <div>
+                                             <input type="number" step="0.01" 
+                                                   name="price" 
+                                                   id="price" 
+                                                   class="form-control @error('price') is-invalid @enderror" 
+                                                   value="{{ old('price', $product->price) }}">
+                                             @error('price')
+                                                <div class="invalid-feedback">{{ $message }}</div>
+                                             @enderror
+                                             <div id="Price-feedback" class="invalid-feedback"></div>
+                                             <!----><!----><!---->
+                                          </div>
+                                       </fieldset>
+                                    </span>
+                                    
+                                 </div>
+                                 <div class="col-md-6">
+                                    <span>
+                                       <fieldset class="form-group" id="__BVID__3161">
+                                          <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0" id="__BVID__3161__BV_label_">Product Name *</legend>
+                                          <div>
+                                          <input type="text" 
+                                                   name="name" 
+                                                   id="name" 
+                                                   class="form-control @error('name') is-invalid @enderror" 
+                                                   value="{{ old('name', $product->name) }}" 
+                                                   placeholder="Enter Name of Product">
+                                             @error('name')
+                                                <div class="invalid-feedback">{{ $message }}</div>
+                                             @enderror
+                                             <div id="Name-feedback" class="invalid-feedback"></div>
+                                          </div>
+                                       </fieldset>
+                                    </span>
+                  <!-- Subcategory select + New button -->
                   <div class="form-group">
                      <label for="subcategory_id">Subcategory</label>
                      <div class="d-flex">
@@ -399,24 +390,67 @@
                                  }
                               }
                               </script>
-                                 </div>
-                           <!----><!---->
-                        </div>
 
-         <!-- Unit Price -->
-         <div class="row">
-               <div class="col-md-4 mb-3">
-                  <label for="price" class="form-label">Unit Price *</label>
-                  <input type="number" step="0.01" 
-                        name="price" 
-                        id="price" 
-                        class="form-control @error('price') is-invalid @enderror" 
-                        value="{{ old('price', $product->price) }}">
-                  @error('price')
-                     <div class="invalid-feedback">{{ $message }}</div>
-                  @enderror
-               </div>
+      <script>
+document.addEventListener('DOMContentLoaded', function () {
+      const fileInput = document.getElementById('image');
+      const dropArea = document.getElementById('drop-area');
+      const previewContainer = document.getElementById('preview-container');
+
+      // Allow click to trigger file input
+      dropArea.addEventListener('click', () => fileInput.click());
+
+      // Prevent default drag behaviors
+      ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+         dropArea.addEventListener(eventName, (e) => e.preventDefault(), false);
+         document.body.addEventListener(eventName, (e) => e.preventDefault(), false);
+      });
+
+      // Highlight drop area on dragover
+      dropArea.addEventListener('dragover', () => {
+         dropArea.classList.add('border-primary');
+      }, false);
+
+      dropArea.addEventListener('dragleave', () => {
+         dropArea.classList.remove('border-primary');
+      }, false);
+
+      // Handle drop
+      dropArea.addEventListener('drop', (e) => {
+         dropArea.classList.remove('border-primary');
+         const files = e.dataTransfer.files;
+         if (files.length > 0) {
+               fileInput.files = files; // attach files to hidden input
+               previewFile(files[0]);   // show preview
+         }
+      }, false);
+
+      // Handle file select (click input)
+      fileInput.addEventListener('change', () => {
+         if (fileInput.files.length > 0) {
+               previewFile(fileInput.files[0]);
+         }
+      });
+
+      function previewFile(file) {
+         previewContainer.innerHTML = ""; 
+         if (file && file.type.startsWith('image/')) {
+               const reader = new FileReader();
+               reader.onload = (e) => {
+                  const img = document.createElement('img');
+                  img.src = e.target.result;
+                  img.classList.add('img-thumbnail');
+                  img.style.maxWidth = "200px";
+                  previewContainer.appendChild(img);
+               };
+               reader.readAsDataURL(file);
+         }
+      }
+});
+</script>
+
          </div>
+      </div>
 
 @php
     // Build $oldRecipes: prefer old() (after validation error), otherwise derive from $product->recipes
@@ -501,6 +535,15 @@
       <div class="col-md-9 text-right"><label><strong>Total Cost:</strong></label></div>
       <div class="col-md-2"><input type="text" id="totalCost" class="form-control" value="0.00" readonly></div>
    </div>
+
+      <div class="mt-3 col-md-12">
+         <div class="mr-2">
+            <div class="b-overlay-wrap position-relative d-inline-block btn-loader">
+            <button type="submit" class="btn btn-primary mt-3">Save Product</button>
+            </div>
+         </div>
+      </div>
+   </div>
 </div>
 
 <script>
@@ -540,7 +583,6 @@
                <input type="hidden" name="recipes[${i}][id]" value="${prefill.id ?? ''}">
                <td>
                   <select name="recipes[${i}][component_id]" class="form-control component-select" required>
-                     <option value="">-- Select Component --</option>
                      ${createComponentOptionsHTML(compId)}
                   </select>
                </td>
@@ -605,14 +647,29 @@
          }
       });
 </script>
-
-<!-- Save Button -->
-            <div class="mt-3">
-               <button type="submit" class="btn btn-primary">Update Product</button>
-            </div>
-            
+     <div class="row">
       </form>
-   </div>
+
+         <div class="col-md-10 mt-3 mt-md-0">
+      <fieldset class="form-group">
+                  <legend>Product Image</legend>
+                  <div id="drop-area" class="upload-box text-center p-3 border rounded" onclick="document.getElementById('image').click();">
+                  <i class="fas fa-hand-pointer fa-2x mb-2 text-muted"></i>
+                  <p class="text-muted">Drag & Drop an image for the product<br><strong>(or) Select</strong></p>
+                  
+                  <input type="file" id="image" name="image" class="d-none" accept="image/*">
+
+                  <!-- Preview -->
+                  <div id="preview-container" class="preview-box mt-3">
+                           @if(isset($product) && $product->image)
+                              <img src="{{ asset('storage/' . $product->image) }}" alt="Product Image" 
+                                 class="img-thumbnail" style="max-width: 200px;">
+                           @endif
+                  </div>
+                  </div>
+         </fieldset>
+      </div>
+</span>
 </div>
 </div>
 @endsection
