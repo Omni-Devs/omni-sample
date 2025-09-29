@@ -5,7 +5,7 @@
         .categories {
     display: flex;
     flex-direction: column;   /* Stack vertically */
-    max-height: 300px;        /* Set height for scroll area */
+    max-height: 500px;        /* Set height for scroll area */
     overflow-y: auto;         /* Vertical scroll */
     padding: 10px;
     gap: 10px;
@@ -105,38 +105,90 @@
         table, th, td { border: 1px solid #ddd; }
         th, td { padding: 8px; text-align: center; }
         input[type=number] { width: 60px; }
+        .d-flex { margin: 10px 0; gap: 15px; }
     </style>
-<div id="app">
+<div id="app" class="main-content">
     <h2>Order Entry</h2>
     <!-- Order Header -->
-    <div class="order-header">
-        <p><label>Order No:</label> @{{ orderNo }}</p>
-        <p><label>Date:</label> @{{ date }}</p>
-        <p>
-            <label>Waiter:</label>
-            <select v-model="waiter">
-                <option v-for="w in waiters" :key="w.id" :value="w.id">@{{ w.name }}</option>
-            </select>
+    <div class="order-header mb-3">
+        <div class="card">
+        <div class="card-body">
+    <!-- Row 1: Order No. and Date -->
+    <div class="d-flex justify-content-between mb-2">
+        <p class="mb-0">
+            <label class="fw-bold me-2">Order No:</label> <span>1</span>
         </p>
-        <p>
-            <label>Status:</label>
-            <select v-model="status">
-                <option>Pending</option>
-                <option>Served</option>
-                <option>Paid</option>
-                <option>Cancelled</option>
-            </select>
-        </p>
-        <p>
-            <label>No. of Pax:</label>
-            <input type="number" v-model.number="pax" min="1">
-        </p>
-        <p>
-            <label>Table No:</label>
-            <input type="text" v-model="tableNo">
+        <p class="mb-0">
+            <label class="fw-bold me-2">Date:</label> <span>9/26/2025, 9:38:52 AM</span>
         </p>
     </div>
-    <div class="container">
+
+    <!-- Row 2: Status, Waiter, Pax, Table -->
+    <div class="d-flex flex-wrap gap-3 align-items-center" style="justify-content: space-between;">
+        <!-- Status -->
+        <div class="d-flex align-items-center">
+            <label class="fw-bold me-2">Status:</label>
+            <input type="text" class="form-control form-control-sm" value="Serving" readonly>
+        </div>
+
+        <!-- Waiter (searchable) -->
+        <div class="d-flex align-items-center">
+            <label class="fw-bold me-2">Waiter:</label>
+                <v-select
+                :options="waiters"
+                v-model="selectedWaiter"
+                label="name"
+                :reduce="waiter => waiter.id"
+                placeholder="Select Waiter"
+                style="width: 250px;"
+            ></v-select>
+            <small v-if="!selectedWaiter" class="text-danger">Required field</small>
+
+        <!-- No. of Pax -->
+        <div class="d-flex align-items-center">
+            <label class="fw-bold me-2">No. of Pax:</label>
+            <input 
+                type="number" 
+                min="1" 
+                v-model.number="pax" 
+                class="form-control form-control-sm"
+                style="max-width:120px"
+                >
+        </div>
+         <small v-if="!pax" class="text-danger">Required field</small>
+
+        <!-- Table No. -->
+        <div class="d-flex align-items-center">
+            <label class="fw-bold me-2">Table No:</label>
+            <input 
+                type="text" 
+                v-model.trim="tableNo" 
+                class="form-control form-control-sm"
+                style="max-width:120px"
+                >
+        </div>
+    </div>
+    </div>
+     <!-- Add Order Button -->
+    <button 
+        class="btn btn-primary mb-3" 
+        data-bs-toggle="modal" 
+        :disabled="!isFormValid"
+        data-bs-target="#orderModal">
+        Add Order
+    </button>
+    <!-- Modal -->
+<div class="modal fade" id="orderModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered" style="max-width: 1250px;">
+    <div class=" modal-content" style="height: 600px">
+
+      <div class="modal-header">
+        <h5 class="modal-title">Add Order</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">X</button>
+      </div>
+
+      <div class="container">
+   
         <!-- Categories -->
         <div class="categories">
             <button 
@@ -161,32 +213,101 @@
         </div>
     </div>
     </div>
+    </div>
+    </div>
+        </div>
+  </div>
+</div>
 
     <!-- Order Details -->
-    <h3>Order Details</h3>
-    <table>
-        <thead>
-        <tr>
-            <th>SKU</th>
-            <th>Product</th>
-            <th>Qty</th>
-            <th>Amount</th>
-            <th>Total</th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr v-for="item in orderDetails" :key="item.sku">
-            <td>@{{ item.sku }}</td>
-            <td>@{{ item.name }}</td>
-            <td><input type="number" v-model.number="item.qty" min="1"></td>
-            <td>@{{ item.amount }}</td>
-            <td>@{{ item.qty * item.amount }}</td>
-        </tr>
-        </tbody>
-    </table>
+    <h2 class=" mt-4">Order Details</h2>
+    <div class="card">
+    <nav class="card-header">
+        <ul class="nav nav-tabs card-header-tabs">
+            <li class="nav-item">
+                <a href="#" target="_self" class="nav-link active">
+                Serving
+                </a>
+            </li>
+             <li class="nav-item">
+                <a href="#" target="_self" class="nav-link">
+               Billing
+                </a>
+            </li>
+             <li class="nav-item">
+                <a href="#" target="_self" class="nav-link">
+                Payment
+                </a>
+            </li>
+        </ul>
+    </nav>
+    <div class="card">
+        <div class="card-body">
+            <div class="vgt-wrap">
+                <div class="vgt-inner-wrap">
+                    <!-- Table -->
+                    <div class="vgt-responsive" style="max-height: 400px; overflow-y: auto;">
+                    <table id="order-details-table" class="table-hover tableOne vgt-table custom-vgt-table">
+                        <thead>
+                            <tr>
+                                <th scope="col" class="vgt-left-align text-left sortable">
+                                <span>SKU</span>
+                                </th>
+                                <th scope="col" class="vgt-left-align text-left sortable">
+                                <span>Product</span>
+                                </th>
+                                <th scope="col" class="vgt-left-align text-right sortable">
+                                <span>Qty</span>
+                                </th>
+                                <th scope="col" class="vgt-left-align text-right sortable">
+                                <span>Amount</span>
+                                </th>
+                                <th scope="col" class="vgt-left-align text-right sortable">
+                                <span>Total</span>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="item in orderDetails" :key="item.sku">
+                                <td>@{{ item.sku }}</td>
+                                <td>@{{ item.name }}</td>
+                                <td>
+                                <input type="number" v-model.number="item.qty" min="1" class="form-control form-control-sm">
+                                </td>
+                                <td>@{{ item.amount }}</td>
+                                <td>@{{ (item.qty * item.amount).toFixed(2) }}</td>
+                            </tr>
+                            <tr v-if="orderDetails.length === 0">
+                                <td colspan="5" class="vgt-center-align vgt-text-disabled">
+                                No order details available
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    </div>
+                    <!-- Footer -->
+                    <div class="vgt-wrap__footer vgt-clearfix">
+                    <div class="footer__row-count vgt-pull-left">
+                        <span>Total Items: @{{ orderDetails.length }}</span>
+                    </div>
+                    <div class="footer__navigation vgt-pull-right">
+                        <span class="font-weight-bold">
+                            Grand Total: 
+                            @{{ orderDetails.reduce((sum, item) => sum + (item.qty * item.amount), 0).toFixed(2) }}
+                        </span>
+                    </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+
 </div>
 
 <script>
+    // Register vue-select globally
+    Vue.component('v-select', VueSelect.VueSelect)
 new Vue({
     el: "#app",
     data: {
@@ -197,6 +318,9 @@ new Vue({
             { id: 1, name: "Waiter A" },
             { id: 2, name: "Waiter B" }
         ],
+        selectedWaiter: null,
+        pax: null,
+        tableNo: "",
          categories: [
             "PORK",
             "CHICKEN",
@@ -229,6 +353,9 @@ new Vue({
     computed: {
         filteredProducts() {
             return this.products.filter(p => p.category === this.selectedCategory);
+        },
+        isFormValid() {
+            return this.selectedWaiter && this.pax && this.tableNo;
         }
     },
     methods: {
