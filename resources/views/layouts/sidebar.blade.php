@@ -282,18 +282,6 @@
             <li class="nav-item"><a href="/app/accounting/assets" class=""><i class="nav-icon i-Building"></i> <span class="item-name">Assets Management</span></a></li>
             <li class="nav-item"><a href="/app/accounting/fund-transfers" class=""><i class="nav-icon i-Letter-Sent"></i> <span class="item-name">Fund Transfer</span></a></li>
             <li class="nav-item"><a href="/app/accounting/liquidations" class=""><i class="nav-icon i-Maximize-Window"></i> <span class="item-name">Liquidate</span></a></li>
-            {{-- <li class="nav-item dropdown-sidemenu">
-               <a href="#"><i class="nav-icon i-Gear"></i> <span class="item-name">Settings</span> <i class="dd-arrow i-Arrow-Down"></i></a> 
-               <ul class="submenu">
-                  <li><a href="/app/accounting/settings/sources-destinations" class=""><i class="nav-icon i-Wallet"></i> <span class="item-name">Cash Equivalents</span></a></li>
-                  <li><a href="/app/accounting/settings/assets-categories" class=""><i class="nav-icon i-Network-Window"></i> <span class="item-name">Assets Category</span></a></li>
-                  <li><a href="/app/accounting/settings/account-charts/cost-of-sales" class=""><i class="nav-icon i-Receipt"></i> <span class="item-name">Chart of Accounts - Cost of Sales</span></a></li>
-                  <li><a href="/app/accounting/settings/account-charts/expenses" class=""><i class="nav-icon i-Receipt-4"></i> <span class="item-name">Chart of Accounts - Expenses</span></a></li>
-                  <li><a href="/app/accounting/settings/set-beginning-balance" class=""><i class="nav-icon i-Money"></i> <span class="item-name">Set Beginning Balance</span></a></li>
-                  <li><a href="/app/accounting/settings/footnotes" class=""><i class="nav-icon i-Navigate-End"></i> <span class="item-name">Footnotes</span></a></li>
-                  <li><a href="/app/accounting/settings/taxes" class=""><i class="nav-icon i-Receipt-3"></i> <span class="item-name">Tax</span></a></li>
-               </ul>
-            </li> --}}
          </ul>
          <ul data-parent="People" class="childNav d-none">
             <li class="nav-item"><a href="/app/people/users" class=""><i class="nav-icon i-Administrator"></i> <span class="item-name">Users</span></a></li>
@@ -318,7 +306,28 @@
                <a href="#"><i class="nav-icon i-Gear"></i> <span class="item-name">General Settings</span> <i class="dd-arrow i-Arrow-Down"></i></a> 
                <ul class="submenu">
                   <li class="nav-item"><a href="/app/settings/general/workforce" class=""><i class="nav-icon i-Library"></i> <span class="item-name">Workforce</span></a></li>
-                  <li class="nav-item"><a href="/app/settings/general/inventory" class=""><i class="nav-icon i-Building"></i> <span class="item-name">Inventory</span></a></li>
+                  
+                  <li class="nav-item dropdown-sidemenu">
+                     <a href="#">
+                        <i class="nav-icon i-Building"></i>
+                        <span class="item-name">Inventory</span>
+                        <i class="dd-arrow i-Arrow-Down"></i>
+                     </a>
+                     <ul class="submenu">
+                        <li class="nav-item">
+                           <a href="{{ route('categories.index') }}">
+                              <i class="nav-icon i-ID-Card"></i>
+                              <span class="item-name">Category</span>
+                           </a>
+                        </li>
+                        <li class="nav-item">
+                           <a href="{{ route('units.index') }}">
+                              <i class="nav-icon i-Ruler"></i>
+                              <span class="item-name">Unit</span>
+                           </a>
+                        </li>
+                     </ul>
+                  </li>
                   <li class="nav-item"><a href="/app/settings/general/sales" class=""><i class="nav-icon i-Full-Basket"></i> <span class="item-name">Sales</span></a></li>
                   <li class="nav-item"><a href="/app/settings/general/accounting" class=""><i class="nav-icon i-Edit-Map"></i> <span class="item-name">Accounting</span></a></li>
                </ul>

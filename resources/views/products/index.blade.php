@@ -231,7 +231,7 @@
                                     <td class="text-right">
                                        @include('layouts.actions-dropdown', [
                                           'id' => $product->id, 
-                                          'editRoute' => route('products.edit', $product),   {{-- pass model, works with route-model binding --}}
+                                          'editRoute' => route('products.edit', $product),
                                           'deleteRoute' => route('products.destroy', $product)
                                        ])
                                     </td>
