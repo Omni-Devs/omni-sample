@@ -322,7 +322,7 @@
                         </li>
                         <li class="nav-item">
                            <a href="{{ route('units.index') }}">
-                              <i class="nav-icon i-Ruler"></i>
+                              <i class="nav-icon i-Road-2"></i>
                               <span class="item-name">Unit</span>
                            </a>
                         </li>
