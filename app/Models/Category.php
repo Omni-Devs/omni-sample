@@ -10,7 +10,7 @@ class Category extends Model
 {
     use HasFactory;
     
-    protected $fillable = ['name', 'description'];
+    protected $fillable = ['name', 'description', 'created_at','created_by'];
 
     public function subcategories() {
         return $this->hasMany(Subcategory::class);
@@ -22,5 +22,10 @@ class Category extends Model
 
     public function components() {
         return $this->hasMany(Component::class);
+    }
+
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'created_by');
     }
 }

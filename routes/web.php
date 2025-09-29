@@ -8,6 +8,7 @@ use App\Http\Controllers\SubcategoryController;
 use App\Http\Controllers\SystemSettingController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\LoginController;
+use App\Http\Controllers\UnitController;
 use App\Http\Controllers\UserController;
 
 Route::get('/', function () {
@@ -48,6 +49,9 @@ Route::put('/components/{component}', [ComponentController::class, 'update'])->n
 Route::delete('/components/{id}', [ComponentController::class, 'destroy'])->name('components.destroy');
 Route::get('/categories', [CategoryController::class, 'index'])->name('categories.index');
 Route::post('/categories', [CategoryController::class, 'store'])->name('categories.store');
+Route::get('/categories/{id}/edit', [CategoryController::class, 'edit'])->name('categories.edit');
+Route::put('/categories/{category}', [CategoryController::class, 'update'])->name('categories.update');
+Route::delete('/categories/{id}', [CategoryController::class, 'destroy'])->name('categories.destroy');
 Route::get('/subcategories', [SubcategoryController::class, 'index'])->name('subcategories.index');
 Route::post('/subcategories', [SubcategoryController::class, 'store'])->name('subcategories.store');
 Route::get('/categories/{id}/subcategories', [SubcategoryController::class, 'byCategory']);
@@ -56,6 +60,11 @@ Route::get('/settings/create', [SystemSettingController::class, 'create'])->name
 Route::post('/settings', [SystemSettingController::class, 'store'])->name('settings.store');
 Route::get('/branches', [BranchesController::class, 'index'])->name('branches.index');
 Route::post('/branches', [BranchesController::class, 'store'])->name('branches.store');
-Route::get('/branches/{id}/edit', [BranchesController::class, 'edit'])->name('branches.edit');
+Route::get('/branches/{id}/edit', [BranchesController::class, 'edit'])->name('branchees.dit');
 Route::put('/branches/{id}/update', [BranchesController::class, 'update'])->name('branches.update');
 Route::delete('/branches/{id}', [BranchesController::class, 'destroy'])->name('branches.destroy');
+Route::get('/units', [UnitController::class, 'index'])->name('units.index');
+Route::post('/units', [UnitController::class, 'store'])->name('units.store');
+Route::get('/units/{id}/edit', [UnitController::class, 'edit'])->name('units.edit');
+Route::put('/units/{unit}', [UnitController::class, 'update'])->name('units.update');
+Route::delete('/units/{id}', [UnitController::class, 'destroy'])->name('units.destroy');
