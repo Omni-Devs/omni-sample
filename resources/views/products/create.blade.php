@@ -39,7 +39,7 @@
                                        </fieldset>
                                     </span>
 
-                                       <!-- Category select + New button -->
+                              <!-- Category select + New button -->
                               <div class="form-group">
                                  <label for="category_id">Category</label>
                                  <div class="d-flex">

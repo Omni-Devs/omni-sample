@@ -7,10 +7,15 @@ use Illuminate\Http\Request;
 
 class CategoryController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $categories = Category::with('creator')->get();
-        return view('categories.index', compact('categories'));
+        $status = $request->get('status', 'active'); // default active
+
+        $categories = Category::where('status', $status)
+        ->orderBy('created_at', 'desc')
+        ->get();
+        
+        return view('categories.index', compact('categories', 'status'));
     }
     public function store(Request $request)
     {
@@ -79,5 +84,33 @@ class CategoryController extends Controller
         }
 
         return redirect()->route('categories.index')->with('success', 'Category updated successfully.');
+    }
+
+    /**
+     * Move the specified Category to archive (status change).
+     */
+    public function archive(Category $category)
+    {
+        $category->update([
+            'status' => 'archived'
+        ]);
+
+        return redirect()
+            ->route('categories.index')
+            ->with('success', 'Category moved to archive successfully.');
+    }
+
+    /**
+     * Restore a category from archive.
+     */
+    public function restore(Category $category)
+    {
+        $category->update([
+            'status' => 'active'
+        ]);
+
+        return redirect()
+            ->route('categories.index')
+            ->with('success', 'Category restored to active successfully.');
     }
 }

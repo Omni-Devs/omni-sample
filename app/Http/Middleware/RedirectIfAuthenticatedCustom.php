@@ -18,7 +18,7 @@ class RedirectIfAuthenticatedCustom
     {
         if (Auth::check()) {
             // If logged in → send to dashboard
-            return redirect()->route('welcome');
+            return redirect()->route('dashboard');
         }
 
         // If not logged in → continue (go to login)

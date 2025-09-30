@@ -550,7 +550,7 @@
                         <div class="mr-2">
                         <div class="b-overlay-wrap position-relative d-inline-block btn-loader">
                             <button type="submit" class="btn btn-primary"><i class="i-Yes me-2 font-weight-bold"></i>
-                            Save Component</button><!---->
+                            Update Component</button><!---->
                         </div>
                 </div> {{-- col-sm-12 --}}
             </div> {{-- row --}}
