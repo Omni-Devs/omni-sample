@@ -10,17 +10,22 @@ use Illuminate\Support\Facades\Storage;
 
 class ComponentController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        // eager load category + subcategory for efficiency
-        $components = Component::with(['category', 'subcategory'])->get();
+        $status = $request->get('status', 'active');
 
-        return view('components.index', compact('components'));
+        // eager load category + subcategory for efficiency
+        $components = Component::with(['category', 'subcategory'])
+            ->where('status', $status)
+                        ->orderBy('created_at', 'desc')
+                        ->get();
+                        
+        return view('components.index', compact('components', 'status'));
     }
 
     public function create()
     {
-        $categories = Category::all();
+        $categories = Category::where('status', 'active')->get();
         $subcategories = Subcategory::all();
         return view('components.create', compact('categories', 'subcategories'));
     }
@@ -57,7 +62,7 @@ class ComponentController extends Controller
         $component = Component::with('recipes')->findOrFail($id);
 
         // pass categories, subcategories and components to the edit view
-        $categories = Category::all();
+        $categories = Category::where('status', 'active')->get();
         $subcategories = Subcategory::all();
         $components = Component::all();
 
@@ -100,5 +105,33 @@ class ComponentController extends Controller
         $component->delete();
 
         return redirect()->route('components.index')->with('success', 'Component deleted successfully.');
+    }
+
+    /**
+     * Move the specified Component to archive (status change).
+     */
+    public function archive(Component $component)
+    {
+        $component->update([
+            'status' => 'archived'
+        ]);
+
+        return redirect()
+            ->route('components.index')
+            ->with('success', 'Unit moved to archive successfully.');
+    }
+
+    /**
+     * Restore a component from archive.
+     */
+    public function restore(Component $component)
+    {
+        $component->update([
+            'status' => 'active'
+        ]);
+
+        return redirect()
+            ->route('components.index')
+            ->with('success', 'Component restored to active successfully.');
     }
 }

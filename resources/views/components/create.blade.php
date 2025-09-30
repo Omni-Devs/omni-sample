@@ -468,7 +468,7 @@
                             </script>
                         {{-- Image feat --}}
             <fieldset class="form-group">
-                <legend>Product Image</legend>
+                <legend>Component Image</legend>
                 <div id="drop-area" class="upload-box text-center p-3 border rounded" onclick="document.getElementById('image').click();">
                     <i class="fas fa-hand-pointer fa-2x mb-2 text-muted"></i>
                     <p class="text-muted">Drag & Drop an image for the product<br><strong>(or) Select</strong></p>

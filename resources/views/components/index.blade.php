@@ -40,17 +40,16 @@
       </div>
       <div class="card mt-4">
          <!----><!---->
-         <nav class="card-header">
+         <div class="card-body">
+            <nav class="card-header">
             <ul class="nav nav-tabs card-header-tabs">
-               <li class="nav-item"><a href="#" target="_self" class="nav-link active">
-                  Active
-                  </a>
-               </li>
-               <li class="nav-item"><a href="#" target="_self" class="nav-link">
-                  Archived
-                  </a>
-               </li>
-            </ul>
+                  <li class="nav-item">
+                     <a href="{{ route('components.index', ['status' => 'active']) }}" class="nav-link {{ $status === 'active' ? 'active' : '' }}">Active</a>
+                  </li>
+                  <li class="nav-item">
+                     <a href="{{ route('components.index', ['status' => 'archived']) }}" class="nav-link {{ $status === 'archived' ? 'active' : '' }}">Archived</a>
+                  </li>
+               </ul>
          </nav>
          <div class="card-body">
             <!----><!---->
@@ -241,9 +240,12 @@
                               </td>
                               <td class="text-right">
                                  @include('layouts.actions-dropdown', [
-                                 'id' => $component->id,
-                                 'editRoute' => route('components.edit', $component->id),
-                                 'deleteRoute' => route('components.destroy', $component->id)
+                                    'id' => $component->id,
+                                    'editRoute' => route('components.edit', $component->id),
+                                    'deleteRoute' => route('components.destroy', $component->id),
+                                    'archiveRoute' => route('components.archive', $component->id),
+                                    'restoreRoute' => route('components.restore', $component->id),
+                                    'status' => $component->status
                                  ])
                               </td>
                            </tr>

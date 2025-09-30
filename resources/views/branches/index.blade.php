@@ -204,7 +204,7 @@
                                 <td class="text-right">
                                         @include('layouts.actions-dropdown', [
                                             'id' => $branch->id, 
-                                            'editRoute' => route('branches.edit', $branch),   {{-- pass model, works with route-model binding --}}
+                                            'editRoute' => route('branches.edit', $branch),
                                             'deleteRoute' => route('branches.destroy', $branch)
                                         ])
                                     </td>

@@ -20,8 +20,12 @@
         <div class="card-body">
             <nav class="card-header">
             <ul class="nav nav-tabs card-header-tabs">
-                <li class="nav-item"><a href="#" class="nav-link active">Active</a></li>
-                <li class="nav-item"><a href="#" class="nav-link">Archived</a></li>
+                <li class="nav-item">
+                    <a href="{{ route('units.index', ['status' => 'active']) }}" class="nav-link {{ $status === 'active' ? 'active' : '' }}">Active</a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ route('units.index', ['status' => 'archived']) }}" class="nav-link {{ $status === 'archived' ? 'active' : '' }}">Archived</a>
+                </li>
             </ul>
         </nav>
             <!----><!---->
@@ -169,8 +173,8 @@
                 <!-- Edit -->
                 <li role="presentation">
                     <a class="dropdown-item" href="#"
-                       data-bs-toggle="modal"
-                       data-bs-target="#editUnitModal{{ $unit->id }}">
+                        data-bs-toggle="modal"
+                        data-bs-target="#editUnitModal{{ $unit->id }}">
                         <i class="nav-icon i-Edit font-weight-bold mr-2"></i> Edit
                     </a>
                 </li>
@@ -182,18 +186,31 @@
                     </a>
                 </li>
 
-                <!-- Delete -->
-                <li role="presentation">
-                    <form action="{{ route('units.destroy', $unit) }}" method="POST"
-                        onsubmit="return confirm('Are you sure you want to move this item to the archive?');"
-                        style="display:inline;">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" class="dropdown-item">
-                            <i class="nav-icon i-Letter-Close font-weight-bold mr-2"></i> Move to Archive
-                        </button>
-                    </form>
-                </li>
+                <!-- Archive -->
+                @if($unit->status === 'active')
+                <form action="{{ route('units.archive', $unit) }}" method="POST"
+                    onsubmit="return confirm('Are you sure you want to move this item to the archive?');"
+                    style="display:inline;">
+                    @csrf
+                    @method('PUT')
+                    <button type="submit" class="dropdown-item">
+                        <i class="nav-icon i-Letter-Close font-weight-bold mr-2"></i> Move to Archive
+                    </button>
+                </form>
+                @endif
+
+                <!-- Restore -->
+                @if($unit->status === 'archived')
+                <form action="{{ route('units.restore', $unit) }}" method="POST"
+                    onsubmit="return confirm('Are you sure you want to restore this item to active?');"
+                    style="display:inline;">
+                    @csrf
+                    @method('PUT')
+                    <button type="submit" class="dropdown-item">
+                        <i class="nav-icon i-Eye font-weight-bold mr-2font-weight-bold mr-2"></i> Restore as Active
+                    </button>
+                </form>
+                @endif
 
                 <!-- Logs -->
                 <li role="presentation">

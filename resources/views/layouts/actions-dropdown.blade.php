@@ -28,17 +28,44 @@
         </li>
 
         <!-- Delete -->
-        <li role="presentation">
+        {{-- <li role="presentation">
             <form action="{{ $deleteRoute }}" method="POST"
-                  onsubmit="return confirm('Are you sure you want to move this item to the archive?');"
-                  style="display:inline;">
+                    onsubmit="return confirm('Are you sure you want to move this item to the archive?');"
+                    style="display:inline;">
                 @csrf
                 @method('DELETE')
                 <button type="submit" class="dropdown-item">
                     <i class="nav-icon i-Letter-Close font-weight-bold mr-2"></i> Move to Archive
                 </button>
             </form>
-        </li>
+        </li> --}}
+
+        <!-- Archive -->
+        <!-- Archive -->
+        @if(isset($status) && $status === 'active')
+            <form action="{{ $archiveRoute }}" method="POST"
+                onsubmit="return confirm('Are you sure you want to move this item to the archive?');"
+                style="display:inline;">
+                @csrf
+                @method('PUT')
+                <button type="submit" class="dropdown-item">
+                    <i class="nav-icon i-Letter-Close font-weight-bold mr-2"></i> Move to Archive
+                </button>
+            </form>
+        @endif
+
+        <!-- Restore -->
+        @if(isset($status) && $status === 'archived')
+            <form action="{{ $restoreRoute }}" method="POST"
+                onsubmit="return confirm('Are you sure you want to restore this item to active?');"
+                style="display:inline;">
+                @csrf
+                @method('PUT')
+                <button type="submit" class="dropdown-item">
+                    <i class="nav-icon i-Eye font-weight-bold mr-2"></i> Restore as Active
+                </button>
+            </form>
+        @endif
 
         <!-- Logs -->
         <li role="presentation">

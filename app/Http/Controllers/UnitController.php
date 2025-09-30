@@ -9,8 +9,13 @@ class UnitController extends Controller
 {
     public function index()
     {
-        $units = Unit::with('creator')->get();
-        return view('units.index', compact('units'));
+        $status = request()->get('status', 'active');
+
+        $units = Unit::where('status', $status)
+        ->orderBy('created_at', 'desc')
+        ->get();
+        
+        return view('units.index', compact('units', 'status'));
     }
 
     public function store(Request $request)
@@ -71,5 +76,33 @@ class UnitController extends Controller
         }
 
         return redirect()->route('units.index')->with('success', 'Unit updated successfully.');
+    }
+
+    /**
+     * Move the specified Unit to archive (status change).
+     */
+    public function archive(Unit $unit)
+    {
+        $unit->update([
+            'status' => 'archived'
+        ]);
+
+        return redirect()
+            ->route('units.index')
+            ->with('success', 'Unit moved to archive successfully.');
+    }
+
+    /**
+     * Restore a unit from archive.
+     */
+    public function restore(Unit $unit)
+    {
+        $unit->update([
+            'status' => 'active'
+        ]);
+
+        return redirect()
+            ->route('units.index')
+            ->with('success', 'Unit restored to active successfully.');
     }
 }

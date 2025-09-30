@@ -4,9 +4,9 @@
 <div class="main-content">
     <div>
         <div class="breadcrumb">
-            <h1 class="mr-3">Categories</h1>
+            <h1 class="mr-3">Payment Method</h1>
             <ul>
-                <li><a href=""> Settings </a></li>
+                <li><a href=""> Sales Settings </a></li>
                 <!----> <!---->
             </ul>
             <div class="breadcrumb-action"></div>
@@ -21,10 +21,10 @@
             <nav class="card-header">
             <ul class="nav nav-tabs card-header-tabs">
                 <li class="nav-item">
-                    <a href="{{ route('categories.index', ['status' => 'active']) }}" class="nav-link {{ $status === 'active' ? 'active' : '' }}">Active</a>
+                    <a href="{{ route('payments.index', ['status' => 'active']) }}" class="nav-link {{ $status === 'active' ? 'active' : '' }}">Active</a>
                 </li>
                 <li class="nav-item">
-                    <a href="{{ route('categories.index', ['status' => 'archived']) }}" class="nav-link {{ $status === 'archived' ? 'active' : '' }}">Archived</a>
+                    <a href="{{ route('payments.index', ['status' => 'archived']) }}" class="nav-link {{ $status === 'archived' ? 'active' : '' }}">Archived</a>
                 </li>
             </ul>
         </nav>
@@ -68,7 +68,7 @@
                 </button>
             </div>
 
-            <form action="{{ route('categories.store') }}" method="POST">
+            <form action="{{ route('payments.store') }}" method="POST">
     @csrf
     <div class="modal-body">
         <div class="row">
@@ -95,12 +95,8 @@
                         </small>
                     </div>
                     <div class="col-md-12">
-                        <label>Name *</label>
+                        <label>Payment Method Name *</label>
                         <input type="text" name="name" class="form-control" required>
-                    </div>
-                    <div class="col-md-12">
-                        <label>Description *</label>
-                        <input type="text" name="description" class="form-control" required>
                     </div>
                     <div class="mt-3 col-md-12">
                         <div class="mr-2">
@@ -116,7 +112,6 @@
         </div>
     </div>
 </form>
-
 
             </div>
         </div>
@@ -138,12 +133,8 @@
                                 Sort table by Date and Time Created in descending order
                                 </span></button>
                             </th>
-                            <th scope="col" aria-sort="descending" aria-controls="col-1" class="vgt-left-align text-left sortable" style="min-width: auto; width: auto;"><span>Category Name</span> <button><span class="sr-only">
-                                Sort table by Category Name in descending order
-                                </span></button>
-                            </th>
-                            <th scope="col" aria-sort="descending" aria-controls="col-2" class="vgt-left-align text-left sortable" style="min-width: auto; width: auto;"><span>Description</span> <button><span class="sr-only">
-                                Sort table by Description in descending order
+                            <th scope="col" aria-sort="descending" aria-controls="col-1" class="gvt-left-align text-left sortable" style="min-width: auto; width: auto;"><span>Payment Method Name</span> <button><span class="sr-only">
+                                Sort table by Payment Method Name in descending order
                                 </span></button>
                             </th>
                             <th scope="col" aria-sort="descending" aria-controls="col-3" class="vgt-left-align text-left sortable" style="min-width: auto; width: auto;"><span>Created By</span> <button><span class="sr-only">
@@ -157,136 +148,136 @@
                             <!---->
                         </thead>
                         <tbody>
-                        @forelse($categories as $category)
-                        <tr>
-                            <td class="vgt-checkbox-col"><input type="checkbox"></td>
-                            <td class="vgt-left-align text-left">{{ $category->created_at->format('Y-m-d H:i') }}</td>
-                            <td class="vgt-left-align text-left">{{ $category->name }}</td>
-                            <td class="vgt-left-align text-left">{{ $category->description }}</td>
-                            <td class="vgt-left-align text-left">{{ $category->creator?->username ?? 'N/A' }}</td>
-                            <td class="vgt-left-align text-right">
-                            <div class="dropdown btn-group">
-                                <!-- 3-dot button -->
-            <button id="dropdownMenu{{ $category->id }}"
-                type="button"
-                class="btn dropdown-toggle btn-link btn-lg text-decoration-none dropdown-toggle-no-caret"
-                data-bs-toggle="dropdown"
-                aria-haspopup="true"
-                aria-expanded="false">
-                <span class="_dot _r_block-dot bg-dark"></span>
-                <span class="_dot _r_block-dot bg-dark"></span>
-                <span class="_dot _r_block-dot bg-dark"></span>
-            </button>
+                        @forelse($payments as $payment)
+                <tr>
+                    <td class="vgt-checkbox-col"><input type="checkbox"></td>
+                    <td class="vgt-left-align text-left">{{ $payment->created_at->format('Y-m-d H:i') }}</td>
+                    <td class="vgt-left-align text-left">{{ $payment->name }}</td>
+                    <td class="vgt-left-align text-left">{{ $payment->creator?->username ?? 'N/A' }}</td>
+                    <td class="vgt-left-align text-right">
+                        <div class="dropdown b-dropdown btn-group">
+                            <!-- 3-dot button -->
+                            <button id="dropdownMenu{{ $payment->id }}"
+                                type="button"
+                                class="btn dropdown-toggle btn-link btn-lg text-decoration-none dropdown-toggle-no-caret"
+                                data-bs-toggle="dropdown"
+                                aria-haspopup="true"
+                                aria-expanded="false">
+                                <span class="_dot _r_block-dot bg-dark"></span>
+                                <span class="_dot _r_block-dot bg-dark"></span>
+                                <span class="_dot _r_block-dot bg-dark"></span>
+                            </button>
 
-            <!-- Dropdown items -->
-            <ul class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownMenu{{ $category->id }}">
-                <!-- Edit -->
-                <li role="presentation">
-                    <a class="dropdown-item" href="#"
-                        data-bs-toggle="modal"
-                        data-bs-target="#editCategoryModal{{ $category->id }}">
-                        <i class="nav-icon i-Edit font-weight-bold mr-2"></i> Edit
-                    </a>
-                </li>
+                            <!-- Dropdown items -->
+                            <ul class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownMenu{{ $payment->id }}">
+                                <!-- Edit -->
+                                <li role="presentation">
+                                    <a class="dropdown-item" href="#"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#editPaymentModal{{ $payment->id }}">
+                                        <i class="nav-icon i-Edit font-weight-bold mr-2"></i> Edit
+                                    </a>
+                                </li>
 
-                <!-- View Stock Card -->
-                <li role="presentation">
-                    <a class="dropdown-item" href="#">
-                        <i class="nav-icon i-Receipt font-weight-bold mr-2"></i> View Stock Card
-                    </a>
-                </li>
+                                <!-- View Stock Card -->
+                                <li role="presentation">
+                                    <a class="dropdown-item" href="#">
+                                        <i class="nav-icon i-Receipt font-weight-bold mr-2"></i> View Stock Card
+                                    </a>
+                                </li>
 
-                <!-- Archive -->
-                @if($category->status === 'active')
-                <form action="{{ route('categories.archive', $category) }}" method="POST"
-                    onsubmit="return confirm('Are you sure you want to move this item to the archive?');"
-                    style="display:inline;">
-                    @csrf
-                    @method('PUT')
-                    <button type="submit" class="dropdown-item">
-                        <i class="nav-icon i-Letter-Close font-weight-bold mr-2"></i> Move to Archive
-                    </button>
-                </form>
-                @endif
+                                <!-- Archive -->
+                                @if($payment->status === 'active')
+                                <form action="{{ route('payments.archive', $payment) }}" method="POST"
+                                    onsubmit="return confirm('Are you sure you want to move this item to the archive?');"
+                                    style="display:inline;">
+                                    @csrf
+                                    @method('PUT')
+                                    <button type="submit" class="dropdown-item">
+                                        <i class="nav-icon i-Letter-Close font-weight-bold mr-2"></i> Move to Archive
+                                    </button>
+                                </form>
+                                @endif
 
-                <!-- Restore -->
-                @if($category->status === 'archived')
-                <form action="{{ route('categories.restore', $category) }}" method="POST"
-                    onsubmit="return confirm('Are you sure you want to restore this item to active?');"
-                    style="display:inline;">
-                    @csrf
-                    @method('PUT')
-                    <button type="submit" class="dropdown-item">
-                        <i class="nav-icon i-Eye font-weight-bold mr-2font-weight-bold mr-2"></i> Restore as Active
-                    </button>
-                </form>
-                @endif
+                                <!-- Restore -->
+                                @if($payment->status === 'archived')
+                                <form action="{{ route('payments.restore', $payment) }}" method="POST"
+                                    onsubmit="return confirm('Are you sure you want to restore this item to active?');"
+                                    style="display:inline;">
+                                    @csrf
+                                    @method('PUT')
+                                    <button type="submit" class="dropdown-item">
+                                        <i class="nav-icon i-Eye font-weight-bold mr-2font-weight-bold mr-2"></i> Restore as Active
+                                    </button>
+                                </form>
+                                @endif
 
-                <!-- Logs -->
-                <li role="presentation">
-                    <a class="dropdown-item" href="#">
-                        <i class="nav-icon i-Computer-Secure font-weight-bold mr-2"></i> Logs
-                    </a>
-                </li>
+                                <!-- Logs -->
+                                <li role="presentation">
+                                    <a class="dropdown-item" href="#">
+                                        <i class="nav-icon i-Computer-Secure font-weight-bold mr-2"></i> Logs
+                                    </a>
+                                </li>
 
-                <!-- Remarks -->
-                <li role="presentation">
-                    <a class="dropdown-item" href="#">
-                        <i class="nav-icon i-Mail-Attachement font-weight-bold mr-2"></i> Remarks
-                    </a>
-                </li>
-            </ul>
-        </div>
-    </td>
-</tr>
-<!-- Edit Modal for this Category -->
-<div class="modal fade" id="editCategoryModal{{ $category->id }}" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <form action="{{ route('categories.update', $category->id) }}" method="POST">
-        @csrf
-        @method('PUT')
-        <div class="modal-content">
-            <div class="modal-header">
-            <h5 class="modal-title">Edit Category</h5>
-            <button type="button" class="close" data-dismiss="modal">
-                <span>&times;</span>
-            </button>
-            </div>
-            <div class="modal-body">
+                                <!-- Remarks -->
+                                <li role="presentation">
+                                    <a class="dropdown-item" href="#">
+                                        <i class="nav-icon i-Mail-Attachement font-weight-bold mr-2"></i> Remarks
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </td>
+                </tr>
+                <!-- Edit Modal for this Payment -->
+                <div class="modal fade" id="editPaymentModal{{ $payment->id }}" tabindex="-1" aria-labelledby="editPaymentModalLabel{{ $payment->id }}" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <form action="{{ route('payments.update', $payment->id) }}" method="POST">
+                                @csrf
+                                @method('PUT')
 
-            <div class="form-group mb-3">
-                <label for="category-created-{{ $category->id }}">Date &amp; Time Created</label>
-                <input type="datetime-local"
-                        name="created_at"
-                        id="category-created-{{ $category->id }}"
-                        class="form-control"
-                        value="{{ $category->created_at ? $category->created_at->format('Y-m-d\TH:i') : '' }}">
-                <small class="form-text text-muted">
-                    Leave blank to keep the original creation date.
-                </small>
-            </div>
-            <div class="form-group">
-                <label for="name">Name</label>
-                <input type="text" name="name" class="form-control" value="{{ $category->name }}" required>
-            </div>
-            <div class="form-group">
-                <label for="description">Description</label>
-                <textarea name="description" class="form-control">{{ $category->description }}</textarea>
-            </div>
-            </div>
-            <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-            <button type="submit" class="btn btn-primary">Update</button>
-            </div>
-        </div>
-        </form>
-    </div>
-</div>
-                        @empty
-                        <tr>
-                            <td colspan="4" class="text-center">No categories found.</td>
-                        </tr>
-                        @endforelse
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="editPaymentModalLabel{{ $payment->id }}">Edit Payment</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+
+                                <div class="modal-body">
+                                    <!-- Created At -->
+                                    <div class="form-group mb-3">
+                                        <label for="payment-created-{{ $payment->id }}">Date &amp; Time Created</label>
+                                        <input type="datetime-local"
+                                                name="created_at"
+                                                id="payment-created-{{ $payment->id }}"
+                                                class="form-control"
+                                                value="{{ $payment->created_at ? $payment->created_at->format('Y-m-d\TH:i') : '' }}">
+                                        <small class="form-text text-muted">
+                                            Leave blank to keep the original creation date.
+                                        </small>
+                                    </div>
+
+                                    <!-- Payment Name -->
+                                    <div class="form-group mb-3">
+                                        <label for="payment-name-{{ $payment->id }}">Payment Method Name</label>
+                                        <input type="text"
+                                                name="name"
+                                                id="payment-name-{{ $payment->id }}"
+                                                class="form-control"
+                                                value="{{ $payment->name }}" required>
+                                        </div>
+                                </div> <!-- ✅ properly closed -->
+
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                    <button type="submit" class="btn btn-primary">Update</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                @empty
+                @endforelse
                     </tbody>
                         
                         <!---->

@@ -29,7 +29,7 @@ class LoginController extends Controller
         }
 
         Auth::login($user);
-        return redirect()->intended('/');
+        return redirect()->intended('/dashboard');
     }
 
      public function logout(Request $request)

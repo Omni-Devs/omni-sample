@@ -328,7 +328,28 @@
                         </li>
                      </ul>
                   </li>
-                  <li class="nav-item"><a href="/app/settings/general/sales" class=""><i class="nav-icon i-Full-Basket"></i> <span class="item-name">Sales</span></a></li>
+
+                  <li class="nav-item dropdown-sidemenu">
+                     <a href="#">
+                        <i class="nav-icon i-Full-Basket"></i>
+                        <span class="item-name">Sales</span>
+                        <i class="dd-arrow i-Arrow-Down"></i>
+                     </a>
+                     <ul class="submenu">
+                        <li class="nav-item">
+                           <a href="{{ route('payments.index') }}">
+                              <i class="nav-icon i-Wallet"></i>
+                              <span class="item-name">Payment Methods</span>
+                           </a>
+                        </li>
+                        <li class="nav-item">
+                           <a href="{{ route('discounts.index') }}">
+                              <i class="nav-icon i-Coins"></i>
+                              <span class="item-name">Discounts</span>
+                           </a>
+                        </li>
+                     </ul>
+                  </li>
                   <li class="nav-item"><a href="/app/settings/general/accounting" class=""><i class="nav-icon i-Edit-Map"></i> <span class="item-name">Accounting</span></a></li>
                </ul>
             </li>

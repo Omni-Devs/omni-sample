@@ -44,17 +44,16 @@
       </div>
       <div class="card mt-4">
          <!----><!---->
-         <nav class="card-header">
+         <div class="card-body">
+            <nav class="card-header">
             <ul class="nav nav-tabs card-header-tabs">
-               <li class="nav-item"><a href="#" target="_self" class="nav-link active">
-                  Active
-                  </a>
-               </li>
-               <li class="nav-item"><a href="#" target="_self" class="nav-link">
-                  Archived
-                  </a>
-               </li>
-            </ul>
+                  <li class="nav-item">
+                     <a href="{{ route('products.index', ['status' => 'active']) }}" class="nav-link {{ $status === 'active' ? 'active' : '' }}">Active</a>
+                  </li>
+                  <li class="nav-item">
+                     <a href="{{ route('products.index', ['status' => 'archived']) }}" class="nav-link {{ $status === 'archived' ? 'active' : '' }}">Archived</a>
+                  </li>
+               </ul>
          </nav>
          <div class="card-body">
             <!----><!---->
@@ -230,9 +229,12 @@
                                     <td class="text-right">{{ number_format($product->price, 2, '.', '') }}</td>
                                     <td class="text-right">
                                        @include('layouts.actions-dropdown', [
-                                          'id' => $product->id, 
-                                          'editRoute' => route('products.edit', $product),
-                                          'deleteRoute' => route('products.destroy', $product)
+                                          'id' => $product->id,
+                                          'editRoute' => route('products.edit', $product->id),
+                                          'deleteRoute' => route('products.destroy', $product->id),
+                                          'archiveRoute' => route('products.archive', $product->id),
+                                          'restoreRoute' => route('products.restore', $product->id),
+                                          'status' => $product->status
                                        ])
                                     </td>
                                  </tr>

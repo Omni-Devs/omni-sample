@@ -13,15 +13,23 @@ use Illuminate\Support\Facades\Storage;
 
 class ProductController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $products = Product::with(['category', 'subcategory'])->get();
-        return view('products.index', compact('products'));
+        // Default to 'active'
+        $status = $request->get('status', 'active');
+
+        // Fetch only products with the given status
+        $products = Product::with(['category', 'subcategory'])
+            ->where('status', $status)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return view('products.index', compact('products', 'status'));
     }
 
     public function create()
     {
-        $categories = Category::all();
+        $categories = Category::where('status', 'active')->get();
         $subcategories = Subcategory::all();
         return view('products.create', compact('categories', 'subcategories'));
     }
@@ -69,7 +77,7 @@ class ProductController extends Controller
     public function edit($id)
     {
         $product = Product::with('recipes')->findOrFail($id);
-        $categories = Category::all();
+        $categories = Category::where('status', 'active')->get();
         $subcategories = Subcategory::all();
         $components = Component::all();
 
@@ -145,5 +153,33 @@ class ProductController extends Controller
     {
         $product->delete();
         return redirect()->route('products.index')->with('success', 'Product deleted successfully.');
+    }
+
+    /**
+     * Move the specified Product to archive (status change).
+     */
+    public function archive(Product $product)
+    {
+        $product->update([
+            'status' => 'archived'
+        ]);
+
+        return redirect()
+            ->route('products.index')
+            ->with('success', 'Unit moved to archive successfully.');
+    }
+
+    /**
+     * Restore a product from archive.
+     */
+    public function restore(Product $product)
+    {
+        $product->update([
+            'status' => 'active'
+        ]);
+
+        return redirect()
+            ->route('products.index')
+            ->with('success', 'Product restored to active successfully.');
     }
 }

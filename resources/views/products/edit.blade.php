@@ -3,7 +3,7 @@
 <div class="main-content">
    <div>
       <div class="breadcrumb">
-         <h1 class="mr-3">Create Product</h1>
+         <h1 class="mr-3">Edit Product</h1>
          <ul>
             <li><a href=""> Inventory </a></li>
             <!----> <!---->
@@ -539,7 +539,7 @@ document.addEventListener('DOMContentLoaded', function () {
       <div class="mt-3 col-md-12">
          <div class="mr-2">
             <div class="b-overlay-wrap position-relative d-inline-block btn-loader">
-            <button type="submit" class="btn btn-primary mt-3">Save Product</button>
+            <button type="submit" class="btn btn-primary mt-3">Update Product</button>
             </div>
          </div>
       </div>
