@@ -12,6 +12,16 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/perfect-scrollbar/1.5.5/perfect-scrollbar.min.js"></script>
 <!-- Vue -->
 <script src="https://unpkg.com/vue@2.7.14/dist/vue.js"></script>
+<!-- Include Axios -->
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+<script>
+  // Set CSRF token header for all Axios requests
+  axios.defaults.headers.common['X-CSRF-TOKEN'] = document
+    .querySelector('meta[name="csrf-token"]')
+    .getAttribute('content');
+</script>
+
 
 <!-- Vue Select -->
 <link rel="stylesheet" href="https://unpkg.com/vue-select@3.20.2/dist/vue-select.css">

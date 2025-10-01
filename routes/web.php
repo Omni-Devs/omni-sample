@@ -25,9 +25,10 @@ Route::get('/dashboard', function () {
     return view('dashboard');
 })->name('dashboard');
 
-Route::get('/orders', function () {
-    return view('orders.index');
-});
+use App\Http\Controllers\OrderController;
+Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
+Route::get('/order/create', [OrderController::class, 'create'])->name('orders.create');
+Route::post('/orders/store', [OrderController::class, 'store'])->name('orders.store');
 
 Route::get('/login', [LoginController::class, 'index'])->name('login');
 Route::post('/login', [LoginController::class, 'login'])->name('login.submit');
