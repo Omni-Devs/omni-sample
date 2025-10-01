@@ -239,7 +239,6 @@ input[type=number] {
                 name="table_no"
                 type="number" 
                 class="form-control" 
-                placeholder="Enter Table No" 
                 required
                 >
                 <small v-if="!tableNo" class="text-danger">Required field</small>
@@ -340,9 +339,9 @@ input[type=number] {
                      </div>
                      <div class="footer__navigation vgt-pull-right">
                         <span class="font-weight-bold">
-  Grand Total: 
-  @{{ orderDetails.reduce((sum, item) => sum + (item.qty * item.price), 0).toFixed(2) }}
-</span>
+                        Grand Total: 
+                        @{{ orderDetails.reduce((sum, item) => sum + (item.qty * item.price), 0).toFixed(2) }}
+                        </span>
                      </div>
                   </div>
                   <button type="submit" class="primary-btn btn btn-primary mt-3">Submit Order</button>
