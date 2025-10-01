@@ -20,11 +20,15 @@
          <nav class="card-header">
             <ul class="nav nav-tabs card-header-tabs">
                <li class="nav-item"><a href="#" target="_self" class="nav-link active">
-                  Active
+                  Serving
                   </a>
                </li>
                <li class="nav-item"><a href="#" target="_self" class="nav-link">
-                  Archived
+                  Bill-Out
+                  </a>
+               </li>
+               <li class="nav-item"><a href="#" target="_self" class="nav-link">
+                 Payment
                   </a>
                </li>
             </ul>
@@ -168,6 +172,9 @@
                         </colgroup>
                         <thead style="min-width: auto; width: auto;">
                            <tr>
+                            <th scope="col" class="vgt-left-align text-left sortable">
+                                 <span>Show Details</span>
+                              </th>
                               <th scope="col" class="vgt-left-align text-left sortable">
                                  <span>Order No.</span>
                                  <button><span class="sr-only">Sort table by Product ID in descending order</span></button>
@@ -195,25 +202,77 @@
                         </thead>
                   <tbody>
                      @forelse ($orders as $order)
-                        <tr>
-                           <td class="text-left">{{ $order->id }}</td>
-                           <td class="text-left">{{ $order->user?->name ?? 'N/A' }}</td>
-                           <td class="text-left">{{ $order->table_no }}</td>
-                           <td class="text-left">{{ $order->number_pax }}</td>
-                           <td class="text-left">{{ ucfirst($order->status) }}</td>
-                           <td class="text-left">
-                              <ul style="padding-left: 18px;">
-                                 @foreach($order->details as $detail)
-                                    <li>
-                                       {{ $detail->product?->name ?? 'N/A' }} (x{{ $detail->quantity }}) - ₱{{ number_format($detail->price, 2) }}
-                                    </li>
-                                 @endforeach
-                              </ul>
-                           </td>
-                           <td class="text-right">
-                              {{-- Add actions as needed, e.g. view, edit, delete --}}
-                           </td>
-                        </tr>
+                        <tr x-data="{ open: false }">
+    <!-- Checkbox -->
+    <td>
+        <input type="checkbox" class="toggle-details" data-id="{{ $order->id }}">
+    </td>
+
+    <!-- Order Data -->
+    <td class="text-left">{{ $order->id }}</td>
+    <td class="text-left">{{ $order->user?->name ?? 'N/A' }}</td>
+    <td class="text-left">{{ $order->table_no }}</td>
+    <td class="text-left">{{ $order->number_pax }}</td>
+    <td class="text-left">{{ ucfirst($order->status) }}</td>
+    <td class="text-right">
+        {{-- Actions --}}
+    </td>
+    </tr>
+
+    <!-- Hidden Details Row -->
+    <tr id="details-{{ $order->id }}" class="order-details" style="display:none;">
+      <td colspan="7">
+        <div style="max-height:200px; overflow-y:auto; padding:10px; border:1px solid #ddd; background:#f9f9f9;">
+          <table style="width:100%; border-collapse:collapse;">
+            <thead style="border-bottom:1px solid #ccc; background:#e9e9e9;">
+          <tr>
+            <th>SKU</th>
+            <th>Product</th>
+            <th>Qty</th>
+            <th>Amount</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+        @php 
+            $grandTotal = 0; 
+            $totalItems = 0;
+          @endphp
+            @foreach($order->details as $detail)
+             @php 
+              $lineTotal = $detail->quantity * $detail->price; 
+              $grandTotal += $lineTotal; 
+              $totalItems += $detail->quantity;
+            @endphp
+            <tr>
+            <td>
+                {{ $detail->product?->sku ?? 'N/A' }}
+            </td>
+            <td>
+                {{ $detail->product?->name ?? 'N/A' }}
+            </td>
+            <td>
+                {{ $detail->quantity }}
+            </td>
+            <td>
+                ₱{{ number_format($detail->price, 2) }}
+            </td>
+          <td></td>
+            </tr>
+            @endforeach
+          </tbody>
+            <tfoot style="border-top:2px solid #000; font-weight:bold;">
+          <tr>
+            <td colspan="2" style="text-align:right;">Total Items:</td>
+            <td>{{ $totalItems }}</td>
+            <td style="text-align:right;">Grand Total:</td>
+            <td>₱{{ number_format($grandTotal, 2) }}</td>
+          </tr>
+        </tfoot>
+            </table>
+        </div>
+      </td>
+    </tr>
                      @empty
                         <tr>
                            <td colspan="7" class="vgt-center-align vgt-text-disabled">
@@ -463,6 +522,32 @@
 @section('scripts')
     <script>
         window.currentPage = "{{ request()->is('components*') ? 'components' : 'products' }}";
+
+        document.addEventListener("DOMContentLoaded", function () {
+    const toggles = document.querySelectorAll(".toggle-details");
+
+    toggles.forEach(toggle => {
+        toggle.addEventListener("change", function () {
+            const orderId = this.dataset.id;
+
+            // Hide all detail rows
+            document.querySelectorAll(".order-details").forEach(row => {
+                row.style.display = "none";
+            });
+
+            // Uncheck all checkboxes
+            toggles.forEach(t => {
+                if (t !== this) t.checked = false;
+            });
+
+            // Show selected details if checked
+            const detailsRow = document.getElementById("details-" + orderId);
+            if (this.checked && detailsRow) {
+                detailsRow.style.display = "table-row";
+            }
+        });
+    });
+});
     </script>
 
     <script src="{{ asset('js/tableFunctions.js') }}"></script>
