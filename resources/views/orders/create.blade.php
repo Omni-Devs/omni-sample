@@ -171,6 +171,9 @@ input[type=number] {
     margin: 10px 0;
     gap: 15px;
 }
+.is-invalid {
+  border: 1px solid #dc3545 !important;
+}
 
 </style>
 <div id="app" class="main-content">
@@ -183,11 +186,12 @@ input[type=number] {
         <div class="card-body">
           <div class="d-flex justify-content-between mb-2">
             <p class="mb-0">
-              <label class="fw-bold me-2">Order No:</label> <span>1</span>
+              <label class="fw-bold me-2">Order No:</label>
+              <span>@{{ orderNo  }}</span>
             </p>
             <p class="mb-0">
               <label class="fw-bold me-2">Date:</label>
-              <span>9/26/2025, 9:38:52 AM</span>
+              <span>@{{ date }}</span>
             </p>
           </div>
 
@@ -208,40 +212,43 @@ input[type=number] {
             <!-- Waiter -->
             <div class="col-md-6">
             <label class="fw-bold">Waiter:</label>
-            <v-select
+           <span v-if="!selectedWaiter" class="text-danger">*</span>
+             <v-select
+                class="waiter-select"
+                :class="{ 'is-invalid': invalidWaiter }"
                 :options="waiters"
                 v-model="selectedWaiter"
                 label="name"
                 :reduce="user => user.id"
                 placeholder="Select Waiter"
             ></v-select>
-            <small v-if="!selectedWaiter" class="text-danger">Required field</small>
             </div>
 
             <!-- No. of Pax -->
             <div class="col-md-6">
               <label class="fw-bold">No. of Pax:</label>
+              <small v-if="!pax" class="text-danger">*</small>
               <input
-                type="number"
-                name="number_pax"
-                min="1"
-                v-model.number="pax"
-                class="form-control form-control-sm"
-              />
-              <small v-if="!pax" class="text-danger">Required field</small>
+                    type="number"
+                    name="number_pax"
+                    min="1"
+                    v-model.number="pax"
+                    class="form-control form-control-sm"
+                    :class="{ 'is-invalid': invalidPax }"
+                />
             </div>
 
             <!-- Table No. -->
             <div class="col-md-6">
               <label class="fw-bold">Table No:</label>
+              <small v-if="!tableNo" class="text-danger">*</small>
               <input 
-                v-model="tableNo" 
-                name="table_no"
-                type="number" 
-                class="form-control" 
-                required
-                >
-                <small v-if="!tableNo" class="text-danger">Required field</small>
+                    v-model="tableNo" 
+                    name="table_no"
+                    type="number" 
+                    class="form-control"
+                    :class="{ 'is-invalid': invalidTable }"
+                />
             </div>
           </div>
 
@@ -446,13 +453,17 @@ input[type=number] {
    new Vue({
    el: "#app",
    data: {
-       orderNo: 1,
+       orderNo: @json($nextOrderNo),
        date: new Date().toLocaleString(),
        waiter: null,
        waiters: @json($waiters),
        selectedWaiter: null,
        pax: null,
        tableNo: null,
+        // validation flags
+        invalidWaiter: false,
+        invalidPax: false,
+        invalidTable: false,
        categories: @json($categories),
        selectedCategory: @json($categories[0] ?? ''),
        currentPage: 1,
@@ -493,6 +504,35 @@ input[type=number] {
    },
    methods: {
        addToOrder(product) {
+    // Reset validation states
+    this.invalidWaiter = false;
+    this.invalidPax = false;
+    this.invalidTable = false;
+
+    // Validation checks
+    if (!this.selectedWaiter) {
+      this.invalidWaiter = true;
+      this.$nextTick(() => {
+        document.querySelector('.waiter-select input')?.focus();
+      });
+      return;
+    }
+    if (!this.pax) {
+      this.invalidPax = true;
+      this.$nextTick(() => {
+        document.querySelector('[name="number_pax"]')?.focus();
+      });
+      return;
+    }
+    if (!this.tableNo) {
+      this.invalidTable = true;
+      this.$nextTick(() => {
+        document.querySelector('[name="table_no"]')?.focus();
+      });
+      return;
+    }
+
+    // If all fields are valid → proceed
     const existing = this.orderDetails.find(item => item.id === product.id);
     if (existing) {
       existing.qty++;
@@ -555,7 +595,16 @@ input[type=number] {
     if (newVal !== oldVal) {
       this.currentPage = 1; // ✅ always reset to page 1 when searching
     }
-  }
+  },
+  selectedWaiter(val) {
+    if (val) this.invalidWaiter = false;
+  },
+  pax(val) {
+    if (val) this.invalidPax = false;
+  },
+  tableNo(val) {
+    if (val) this.invalidTable = false;
+  },
 }
    });
    

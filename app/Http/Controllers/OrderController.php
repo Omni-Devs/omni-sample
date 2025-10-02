@@ -44,11 +44,15 @@ class OrderController extends Controller
                             ->unique()
                             ->values()
                             ->toArray();
+        // Get latest order number
+        $latestOrder = Order::latest('id')->first();
+        $nextOrderNo = $latestOrder ? $latestOrder->id + 1 : 1;
 
         return view('orders.create', [
         'products'   => $productsTransformed,
         'categories' => $categories,
         'waiters'    => $waiters,
+        'nextOrderNo' => $nextOrderNo,
          ]);
     }
     public function store(Request $request)
