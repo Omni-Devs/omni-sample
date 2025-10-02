@@ -1,0 +1,14 @@
+/* Make the header sticky */
+.vgt-responsive table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 10; /* keep it above table rows */
+    background: #fff; /* white background so text stays visible */
+    border-bottom: 2px solid #dee2e6; /* optional: nice bottom border */
+}
+
+/* Ensure the scroll container is set correctly */
+.vgt-responsive {
+    max-height: 400px; /* adjust height as needed */
+    overflow-y: auto;
+}

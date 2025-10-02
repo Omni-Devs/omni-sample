@@ -47,7 +47,6 @@ class ProductController extends Controller
             // Recipe validation
             'recipes.component_id.*' => 'required|exists:components,id',
             'recipes.quantity.*' => 'required|numeric',
-            'recipes.unit.*' => 'required|string',
         ]);
 
         // Handle image upload
@@ -66,7 +65,6 @@ class ProductController extends Controller
                 $product->recipes()->create([
                     'component_id' => $component_id,
                     'quantity' => $quantity,
-                    'unit' => $unit,
                 ]);
             }
         }

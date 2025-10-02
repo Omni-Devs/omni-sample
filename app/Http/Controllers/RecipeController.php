@@ -28,8 +28,7 @@ class RecipesController extends Controller
         $recipe = new Recipe();
         $recipe->product_id = $request->input('product_id');
         $recipe->component_id = $request->input('component_id');
-        $recipe->quantity = $request->input('quantity');
-        $recipe->unit = $request->input('unit');
+        $recipe->quantity = $request->input('quantity');;
         $recipe->save();
 
         return redirect()->route('recipes.show', $recipe);

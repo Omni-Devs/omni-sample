@@ -479,7 +479,9 @@
       const componentOptions = `
          <option value="" disabled selected></option>
          ${components.map(c =>
-            `<option value="${c.id}" data-cost="${c.cost}">${c.name}</option>`
+               `<option value="${c.id}" data-cost="${c.cost}" data-unit="${c.unit}">
+                  ${c.name}
+               </option>`
          ).join('')}
       `;
 
@@ -490,7 +492,7 @@
                   </select>
             </td>
             <td><input type="number" name="recipes[quantity][]" class="form-control recipe-quantity" step="0.01" required></td>
-            <td><input type="text" name="recipes[unit][]" class="form-control" required></td>
+            <td><input type="text" name="recipes[unit][]" class="form-control recipe-unit" readonly></td>
             <td><input type="text" name="recipes[cost][]" class="form-control component-cost" readonly></td>
             <td><button type="button" class="btn btn-danger btn-sm remove-row">x</button></td>
          `;
@@ -504,9 +506,33 @@
 
          const select = tr.querySelector('.component-select');
          const quantityInput = tr.querySelector('.recipe-quantity');
+         const unitInput = tr.querySelector('.recipe-unit');
          const costInput = tr.querySelector('.component-cost');
          const removeBtn = tr.querySelector('.remove-row');
 
+         function updateFields() {
+            const selectedOption = select.options[select.selectedIndex];
+            const baseCost = parseFloat(selectedOption?.getAttribute('data-cost')) || 0;
+            const unit = selectedOption?.getAttribute('data-unit') || '';
+
+            // auto-fill unit
+            unitInput.value = unit;
+   
+            // auto-fill cost depending on quantity
+            const qty = parseFloat(quantityInput.value) || 0;
+            costInput.value = qty > 0 ? (baseCost * qty).toFixed(2) : '';
+
+            updateTotalCost();
+         }
+
+         select.addEventListener('change', updateFields);
+         quantityInput.addEventListener('input', updateFields);
+
+         removeBtn.addEventListener('click', function () {
+            tr.remove();
+            updateTotalCost();
+         });
+         
          function updateCost() {
             const selectedOption = select.options[select.selectedIndex];
             const baseCost = parseFloat(selectedOption.getAttribute('data-cost')) || 0;
