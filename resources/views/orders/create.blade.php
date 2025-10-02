@@ -248,6 +248,7 @@ input[type=number] {
                     type="number" 
                     class="form-control"
                     :class="{ 'is-invalid': invalidTable }"
+                    min="0"
                 />
             </div>
           </div>
@@ -447,6 +448,10 @@ input[type=number] {
     </button>
   </li>
 </ul>
+</div>
+</div>
+</div>
+</div>
 <script>
    // Register vue-select globally
    Vue.component('v-select', VueSelect.VueSelect)
