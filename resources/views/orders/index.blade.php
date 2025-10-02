@@ -177,23 +177,27 @@
                               </th>
                               <th scope="col" class="vgt-left-align text-left sortable">
                                  <span>Order No.</span>
-                                 <button><span class="sr-only">Sort table by Product ID in descending order</span></button>
+                                 <button><span class="sr-only">Sort table by Product No in descending order</span></button>
                               </th>
                               <th scope="col" class="vgt-left-align text-left sortable">
                                  <span>Waiter Name</span>
-                                 <button><span class="sr-only">Sort table by Product Name in descending order</span></button>
+                                 <button><span class="sr-only">Sort table by Waiter Name in descending order</span></button>
                               </th>
                               <th scope="col" class="vgt-left-align text-left sortable">
                                  <span>Table No.</span>
-                                 <button><span class="sr-only">Sort table by Category in descending order</span></button>
+                                 <button><span class="sr-only">Sort table by Table No in descending order</span></button>
                               </th>
                               <th scope="col" class="vgt-left-align text-left sortable">
                                  <span>Number Of Pax</span>
-                                 <button><span class="sr-only">Sort table by Category in descending order</span></button>
+                                 <button><span class="sr-only">Sort table by Number of Pax in descending order</span></button>
                               </th>
                               <th scope="col" class="vgt-left-align text-right sortable">
                                  <span>Status</span>
-                                 <button><span class="sr-only">Sort table by Unit Price in descending order</span></button>
+                                 <button><span class="sr-only">Sort table by Status in descending order</span></button>
+                              </th>
+                              <th scope="col" class="vgt-left-align text-right sortable">
+                                 <span>Amount</span>
+                                 <button><span class="sr-only">Sort table by Amount Price in descending order</span></button>
                               </th>
                               <th scope="col" class="vgt-left-align text-right">
                                  <span>Action</span>
@@ -214,8 +218,35 @@
     <td class="text-left">{{ $order->table_no }}</td>
     <td class="text-left">{{ $order->number_pax }}</td>
     <td class="text-left">{{ ucfirst($order->status) }}</td>
+    <td class="text-left">
+      @php 
+          $grandTotal = 0; 
+          $totalItems = 0;
+      @endphp
+
+      @foreach($order->details as $detail)
+          @php 
+              $lineTotal = $detail->quantity * $detail->price; 
+              $grandTotal += $lineTotal; 
+              $totalItems += $detail->quantity;
+          @endphp
+      @endforeach
+      ₱{{ number_format($grandTotal, 2) }}
+    </td>
+    {{-- Actions --}}
     <td class="text-right">
-        {{-- Actions --}}
+      @include('layouts.actions-dropdown', [
+        'id' => $order->id,
+        'editRoute' => '#',
+        'viewRoute' => '#',
+        'deleteRoute' => '#',
+        'remarksRoute' => '#',
+        'status' => '#',
+
+        // Custom labels
+        'viewLabel' => 'Bill out',
+        'deleteLabel' => 'Cancel',
+    ])
     </td>
     </tr>
 
@@ -234,19 +265,10 @@
           </tr>
         </thead>
         <tbody>
-        @php 
-            $grandTotal = 0; 
-            $totalItems = 0;
-          @endphp
             @foreach($order->details as $detail)
-             @php 
-              $lineTotal = $detail->quantity * $detail->price; 
-              $grandTotal += $lineTotal; 
-              $totalItems += $detail->quantity;
-            @endphp
             <tr>
             <td>
-                {{ $detail->product?->sku ?? 'N/A' }}
+                {{ $detail->product?->code ?? 'N/A' }}
             </td>
             <td>
                 {{ $detail->product?->name ?? 'N/A' }}
@@ -261,14 +283,6 @@
             </tr>
             @endforeach
           </tbody>
-            <tfoot style="border-top:2px solid #000; font-weight:bold;">
-          <tr>
-            <td colspan="2" style="text-align:right;">Total Items:</td>
-            <td>{{ $totalItems }}</td>
-            <td style="text-align:right;">Grand Total:</td>
-            <td>₱{{ number_format($grandTotal, 2) }}</td>
-          </tr>
-        </tfoot>
             </table>
         </div>
       </td>
