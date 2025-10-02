@@ -166,6 +166,7 @@
                   <div class="vgt-fixed-header">
                      <!---->
                   </div>
+
                   <div class="vgt-responsive" style="max-height: 400px; overflow-y: auto;">
                      <table id="vgt-table" class="table-hover tableOne vgt-table custom-vgt-table ">
                         <colgroup>
@@ -187,6 +188,7 @@
                            <col id="col-15">
                            <col id="col-16">
                         </colgroup>
+                        
                         <thead style="min-width: auto; width: auto;">
                            <tr>
                               <th scope="col" class="vgt-left-align text-left sortable">
