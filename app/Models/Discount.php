@@ -24,4 +24,9 @@ class Discount extends Model
     {
         return $this->belongsTo(User::class, 'created_by');
     }
+
+    public function discountEntries()
+    {
+        return $this->hasMany(DiscountEntry::class);
+    }
 }

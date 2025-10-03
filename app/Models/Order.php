@@ -9,11 +9,21 @@ class Order extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
+        protected $fillable = [
         'user_id',
         'table_no',
         'number_pax',
         'status',
+        'gross_amount',
+        'sr_pwd_discount',
+        'other_discounts',
+        'net_amount',
+        'vatable',
+        'vat_12',
+        'non_taxable',
+        'total_charge',
+        'discount_total',
+        'charges_description',
     ];
 
     public function user()
@@ -23,6 +33,11 @@ class Order extends Model
 
     public function details()
     {
-        return $this->hasMany(OrderDetail::class, 'order_id'); // make sure 'order_id' is correct
+        return $this->hasMany(OrderDetail::class, 'order_id');
+    }
+
+    public function discountEntries()
+    {
+        return $this->hasMany(DiscountEntry::class);
     }
 }

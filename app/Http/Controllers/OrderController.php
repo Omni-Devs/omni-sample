@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Component;
+use App\Models\Category;
+use App\Models\Discount;
 use App\Models\Product;
 use App\Models\Order;
 use App\Models\User;
@@ -14,7 +16,10 @@ class OrderController extends Controller
     {
         // Get all orders with details and user
         $orders = Order::with(['details.product', 'user'])->get();
-        return view('orders.index', compact('orders'));
+
+        $discounts = Discount::where('status', 'active')->get();
+
+        return view('orders.index', compact('orders', 'discounts'));
     }
 
     public function create()
@@ -99,7 +104,14 @@ class OrderController extends Controller
         'order_details.*.quantity' => 'required|integer|min:1',
         'order_details.*.price'    => 'required|numeric|min:0',
         'order_details.*.discount' => 'nullable|numeric|min:0',
-        'order_details.*.notes'    => 'nullable|string|max:255',
+        'order_details.*.notes' => 'nullable|string|max:255',
+
+         // ✅ validation for discount entries
+        'discount_entries' => 'nullable|array',
+        'discount_entries.*.discount_id' => 'required|exists:discounts,id',
+        'discount_entries.*.person_name' => 'nullable|string|max:255',
+        'discount_entries.*.person_id_number' => 'nullable|string|max:100',
+        'discount_entries.*.quantity' => 'required|integer|min:1',
     ]);
 
     // ✅ Extra validation: must have at least one of product_id or component_id
@@ -130,6 +142,30 @@ class OrderController extends Controller
             'discount'     => $detail['discount'] ?? 0,
             'notes'        => $detail['notes'] ?? null,
         ]);
+    }
+
+    // ✅ Attach discount entries (if any)
+    if (!empty($validated['discount_entries'])) {
+        foreach ($validated['discount_entries'] as $entry) {
+            $order->discountEntries()->create([
+                'discount_id'     => $entry['discount_id'],
+                'person_name'     => $entry['person_name'] ?? null,
+                'person_id_number'=> $entry['person_id_number'] ?? null,
+                'quantity'        => $entry['quantity'],
+            ]);
+        }
+    }
+
+    // ✅ Attach discount entries (if any)
+    if (!empty($validated['discount_entries'])) {
+        foreach ($validated['discount_entries'] as $entry) {
+            $order->discountEntries()->create([
+                'discount_id'     => $entry['discount_id'],
+                'person_name'     => $entry['person_name'] ?? null,
+                'person_id_number'=> $entry['person_id_number'] ?? null,
+                'quantity'        => $entry['quantity'],
+            ]);
+        }
     }
 
     return response()->json([

@@ -14,8 +14,10 @@ class CategoryController extends Controller
         $categories = Category::where('status', $status)
         ->orderBy('created_at', 'desc')
         ->get();
+
+        $allCategories = Category::pluck('name', 'id');
         
-        return view('categories.index', compact('categories', 'status'));
+        return view('categories.index', compact('categories', 'status', 'allCategories'));
     }
     public function store(Request $request)
     {

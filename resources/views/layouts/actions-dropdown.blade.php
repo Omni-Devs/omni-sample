@@ -22,11 +22,19 @@
 
         <!-- View / Bill out -->
         @isset($viewRoute)
-        <li role="presentation">
-            <a class="dropdown-item" href="{{ $viewRoute }}">
-                <i class="nav-icon i-Receipt font-weight-bold mr-2"></i> {{ $viewLabel ?? 'View Stock Card' }}
-            </a>
-        </li>
+            <li role="presentation">
+                @if($viewRoute === '#')
+                    <a class="dropdown-item" href="javascript:void(0);"
+                    data-bs-toggle="modal"
+                    data-bs-target="#billOutModal{{ $id }}">
+                        <i class="nav-icon i-Receipt font-weight-bold mr-2"></i> {{ $viewLabel ?? 'Bill out' }}
+                    </a>
+                @else
+                    <a class="dropdown-item" href="{{ $viewRoute }}">
+                        <i class="nav-icon i-Receipt font-weight-bold mr-2"></i> {{ $viewLabel ?? 'Bill out' }}
+                    </a>
+                @endif
+            </li>
         @endisset
 
         <!-- Delete / Cancel -->
