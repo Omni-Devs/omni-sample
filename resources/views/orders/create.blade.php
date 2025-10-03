@@ -381,7 +381,7 @@ input[type=number] {
     <button 
       v-for="c in categories" 
       :key="c" 
-      @click="selectCategory(c)"
+      @click.prevent="selectCategory(c)"
       :class="{ active: selectedCategory === c }"
     >
       @{{ c }}
@@ -392,7 +392,7 @@ input[type=number] {
     <div 
       class="product-card" 
       v-for="p in paginatedProducts" 
-      :key="p.id"
+      :key="p.type + '-' + p.id"
       @click="addToOrder(p)"
       style="cursor: pointer;"
     >
@@ -411,31 +411,31 @@ input[type=number] {
 
   <!-- First & Prev -->
   <li class="page-item" :class="{ disabled: currentPage === 1 }">
-    <button class="page-link" @click="goToPage(1)" :disabled="currentPage === 1">
+    <button class="page-link" @click.prevent="goToPage(1)" :disabled="currentPage === 1">
       «
     </button>
   </li>
   <li class="page-item" :class="{ disabled: currentPage === 1 }">
-    <button class="page-link" @click="prevPage" :disabled="currentPage === 1">
+    <button class="page-link" @click.prevent="prevPage" :disabled="currentPage === 1">
       <i class="i-Arrow-Left"></i>
     </button>
   </li>
 
   <!-- Page Numbers -->
   <li v-for="page in totalPages" :key="page" class="page-item" :class="{ active: currentPage === page }">
-    <button class="page-link" @click="goToPage(page)">
+    <button class="page-link" @click.prevent="goToPage(page)">
       @{{ page }}
     </button>
   </li>
 
   <!-- Next & Last -->
   <li class="page-item" :class="{ disabled: currentPage === totalPages }">
-    <button class="page-link" @click="nextPage" :disabled="currentPage === totalPages">
+    <button class="page-link" @click.prevent="nextPage" :disabled="currentPage === totalPages">
       <i class="i-Arrow-Right"></i>
     </button>
   </li>
   <li class="page-item" :class="{ disabled: currentPage === totalPages }">
-    <button class="page-link" @click="goToPage(totalPages)" :disabled="currentPage === totalPages">
+    <button class="page-link" @click.prevent="goToPage(totalPages)" :disabled="currentPage === totalPages">
       »
     </button>
   </li>
@@ -493,6 +493,35 @@ input[type=number] {
    },
    methods: {
        addToOrder(product) {
+    // Reset validation states
+    this.invalidWaiter = false;
+    this.invalidPax = false;
+    this.invalidTable = false;
+
+    // Validation checks
+    if (!this.selectedWaiter) {
+      this.invalidWaiter = true;
+      this.$nextTick(() => {
+        document.querySelector('.waiter-select input')?.focus();
+      });
+      return;
+    }
+    if (!this.pax) {
+      this.invalidPax = true;
+      this.$nextTick(() => {
+        document.querySelector('[name="number_pax"]')?.focus();
+      });
+      return;
+    }
+    if (!this.tableNo) {
+      this.invalidTable = true;
+      this.$nextTick(() => {
+        document.querySelector('[name="table_no"]')?.focus();
+      });
+      return;
+    }
+
+    // If all fields are valid → proceed
     const existing = this.orderDetails.find(item => item.id === product.id);
     if (existing) {
       existing.qty++;
@@ -530,16 +559,17 @@ input[type=number] {
   },
   submitOrder() {
   const payload = {
-    user_id: this.selectedWaiter, // waiter ID
-    table_no: parseInt(this.tableNo),
-    number_pax:  parseInt(this.pax),
-    status: "serving",
-    order_details: this.orderDetails.map(item => ({
-      product_id: item.id,
-      quantity: item.qty,
-      price: item.price
-    }))
-  };
+  user_id: this.selectedWaiter, // waiter ID
+  table_no: parseInt(this.tableNo),
+  number_pax: parseInt(this.pax),
+  status: "serving",
+  order_details: this.orderDetails.map(item => ({
+    product_id: item.type === "product" ? item.id : null,
+    component_id: item.type === "component" ? item.id : null,
+    quantity: item.qty,
+    price: item.price
+  }))
+};
 
   console.log("Submitting order payload:", payload);
 
