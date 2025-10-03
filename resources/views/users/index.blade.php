@@ -199,18 +199,6 @@
                         </div>
                         <div class="col-md-6">
                             <span>
-                            <fieldset class="form-group" id="__BVID__397">
-                                <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0" id="__BVID__397__BV_label_">Email *</legend>
-                                <div>
-                                    <input type="text" placeholder="Email" class="form-control" aria-describedby="Email-feedback" label="Email" id="__BVID__398" name="email"> 
-                                    <div id="Email-feedback" class="invalid-feedback"></div>
-                                    <!----><!----><!---->
-                                </div>
-                            </fieldset>
-                            </span>
-                        </div>
-                        <div class="col-md-6">
-                            <span>
                             <fieldset class="form-group" id="__BVID__400">
                                 <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0" id="__BVID__400__BV_label_">Password *</legend>
                                 <div>
@@ -223,11 +211,11 @@
                         </div>
                         <div class="col-md-6">
                             <span>
-                            <fieldset class="form-group" id="__BVID__403">
-                                <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0" id="__BVID__403__BV_label_">Mobile #</legend>
+                            <fieldset class="form-group" id="__BVID__397">
+                                <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0" id="__BVID__397__BV_label_">Email *</legend>
                                 <div>
-                                    <input type="text" placeholder="Mobile #" class="form-control" aria-describedby="MobileNo-feedback" label="MobileNo" id="__BVID__404" name="mobile_number"> 
-                                    <div id="MobileNo-feedback" class="invalid-feedback"></div>
+                                    <input type="text" placeholder="Email" class="form-control" aria-describedby="Email-feedback" label="Email" id="__BVID__398" name="email"> 
+                                    <div id="Email-feedback" class="invalid-feedback"></div>
                                     <!----><!----><!---->
                                 </div>
                             </fieldset>
@@ -235,11 +223,11 @@
                         </div>
                         <div class="col-md-6">
                             <span>
-                            <fieldset class="form-group" id="__BVID__406">
-                                <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0" id="__BVID__406__BV_label_">Landline #</legend>
+                            <fieldset class="form-group" id="__BVID__403">
+                                <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0" id="__BVID__403__BV_label_">Mobile #</legend>
                                 <div>
-                                    <input type="text" placeholder="Landline #" class="form-control" aria-describedby="LandlineNo-feedback" label="LandlineNo" id="__BVID__407"> 
-                                    <div id="LandlineNo-feedback" class="invalid-feedback"></div>
+                                    <input type="text" placeholder="Mobile #" class="form-control" aria-describedby="MobileNo-feedback" label="MobileNo" id="__BVID__404" name="mobile_number"> 
+                                    <div id="MobileNo-feedback" class="invalid-feedback"></div>
                                     <!----><!----><!---->
                                 </div>
                             </fieldset>
@@ -260,7 +248,7 @@
                         <div class="mt-4 col-sm-12">
                             <span>
                             <fieldset class="form-group" id="__BVID__411">
-                                <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0" id="__BVID__411__BV_label_">Branch *</legend>
+                                <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0" id="__BVID__411__BV_label_">Permissions *</legend>
                                 <div id="app">
                                     <v-select
                                         multiple

@@ -12,6 +12,7 @@ class OrderDetail extends Model
     protected $fillable = [
         'order_id',
         'product_id',
+        'component_id',
         'quantity',
         'price',
         'discount',
@@ -26,5 +27,15 @@ class OrderDetail extends Model
     public function product()
     {
         return $this->belongsTo(Product::class, 'product_id');
+    }
+    public function component()
+    {
+        return $this->belongsTo(Component::class, 'component_id');
+    }
+
+    // Helper: return either product or component name
+    public function getItemNameAttribute()
+    {
+        return $this->product->name ?? $this->component->name ?? 'Unknown Item';
     }
 }

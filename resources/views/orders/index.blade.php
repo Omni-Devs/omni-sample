@@ -265,23 +265,22 @@
           </tr>
         </thead>
         <tbody>
-            @foreach($order->details as $detail)
-            <tr>
-            <td>
-                {{ $detail->product?->code ?? 'N/A' }}
-            </td>
-            <td>
-                {{ $detail->product?->name ?? 'N/A' }}
-            </td>
-            <td>
-                {{ $detail->quantity }}
-            </td>
-            <td>
-                ₱{{ number_format($detail->price, 2) }}
-            </td>
-          <td></td>
-            </tr>
-            @endforeach
+           @foreach($order->details as $detail)
+    <tr>
+        <td>
+            {{ $detail->product?->code ?? $detail->component?->code ?? 'N/A' }}
+        </td>
+        <td>
+            {{ $detail->item_name }}
+        </td>
+        <td>
+            {{ $detail->quantity }}
+        </td>
+        <td>
+            ₱{{ number_format($detail->price, 2) }}
+        </td>
+    </tr>
+@endforeach
           </tbody>
             </table>
         </div>
