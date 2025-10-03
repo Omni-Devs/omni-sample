@@ -207,96 +207,439 @@
                   <tbody>
                      @forelse ($orders as $order)
                         <tr x-data="{ open: false }">
-    <!-- Checkbox -->
-    <td>
-        <input type="checkbox" class="toggle-details" data-id="{{ $order->id }}">
-    </td>
-
-    <!-- Order Data -->
-    <td class="text-left">{{ $order->id }}</td>
-    <td class="text-left">{{ $order->user?->name ?? 'N/A' }}</td>
-    <td class="text-left">{{ $order->table_no }}</td>
-    <td class="text-left">{{ $order->number_pax }}</td>
-    <td class="text-left">{{ ucfirst($order->status) }}</td>
-    <td class="text-left">
-      @php 
-          $grandTotal = 0; 
-          $totalItems = 0;
-      @endphp
-
-      @foreach($order->details as $detail)
-          @php 
-              $lineTotal = $detail->quantity * $detail->price; 
-              $grandTotal += $lineTotal; 
-              $totalItems += $detail->quantity;
-          @endphp
-      @endforeach
-      ₱{{ number_format($grandTotal, 2) }}
-    </td>
-    {{-- Actions --}}
-    <td class="text-right">
-      @include('layouts.actions-dropdown', [
-        'id' => $order->id,
-        'editRoute' => '#',
-        'viewRoute' => '#',
-        'deleteRoute' => '#',
-        'remarksRoute' => '#',
-        'status' => '#',
-
-        // Custom labels
-        'viewLabel' => 'Bill out',
-        'deleteLabel' => 'Cancel',
-    ])
-    </td>
-    </tr>
-
-    <!-- Hidden Details Row -->
-    <tr id="details-{{ $order->id }}" class="order-details" style="display:none;">
-      <td colspan="7">
-        <div style="max-height:200px; overflow-y:auto; padding:10px; border:1px solid #ddd; background:#f9f9f9;">
-          <table style="width:100%; border-collapse:collapse;">
-            <thead style="border-bottom:1px solid #ccc; background:#e9e9e9;">
-          <tr>
-            <th>SKU</th>
-            <th>Product</th>
-            <th>Qty</th>
-            <th>Amount</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-            @foreach($order->details as $detail)
-            <tr>
-            <td>
-                {{ $detail->product?->code ?? 'N/A' }}
-            </td>
-            <td>
-                {{ $detail->product?->name ?? 'N/A' }}
-            </td>
-            <td>
-                {{ $detail->quantity }}
-            </td>
-            <td>
-                ₱{{ number_format($detail->price, 2) }}
-            </td>
-          <td></td>
-            </tr>
-            @endforeach
-          </tbody>
-            </table>
-        </div>
+      <!-- Checkbox -->
+      <td>
+         <input type="checkbox" class="toggle-details" data-id="{{ $order->id }}">
       </td>
-    </tr>
-                     @empty
-                        <tr>
-                           <td colspan="7" class="vgt-center-align vgt-text-disabled">
-                              No orders found
-                           </td>
-                        </tr>
-                     @endforelse
-                        </tbody>
+
+      <!-- Order Data -->
+      <td class="text-left">{{ $order->id }}</td>
+      <td class="text-left">{{ $order->user?->name ?? 'N/A' }}</td>
+      <td class="text-left">{{ $order->table_no }}</td>
+      <td class="text-left">{{ $order->number_pax }}</td>
+      <td class="text-left">{{ ucfirst($order->status) }}</td>
+      <td class="text-left">
+         @php 
+            $grandTotal = 0; 
+            $totalItems = 0;
+         @endphp
+
+         @foreach($order->details as $detail)
+            @php 
+               $lineTotal = $detail->quantity * $detail->price; 
+               $grandTotal += $lineTotal; 
+               $totalItems += $detail->quantity;
+            @endphp
+         @endforeach
+         ₱{{ number_format($grandTotal, 2) }}
+      </td>
+      {{-- Actions --}}
+      <td class="text-right">
+         @include('layouts.actions-dropdown', [
+         'id' => $order->id,
+         'editRoute' => '#',
+         'viewRoute' => '#',
+         'deleteRoute' => '#',
+         'remarksRoute' => '#',
+         'status' => '#',
+
+         // Custom labels
+         'viewLabel' => 'Bill out',
+         'deleteLabel' => 'Cancel',
+      ])
+      </td>
+      </tr>
+
+      <!-- Hidden Details Row -->
+      <tr id="details-{{ $order->id }}" class="order-details" style="display:none;">
+         <td colspan="7">
+         <div style="max-height:200px; overflow-y:auto; padding:10px; border:1px solid #ddd; background:#f9f9f9;">
+            <table style="width:100%; border-collapse:collapse;">
+               <thead style="border-bottom:1px solid #ccc; background:#e9e9e9;">
+            <tr>
+               <th>SKU</th>
+               <th>Product</th>
+               <th>Qty</th>
+               <th>Amount</th>
+               <th></th>
+            </tr>
+         </thead>
+         <tbody>
+            @foreach($order->details as $detail)
+               <tr>
+                  <td>
+                        {{ $detail->product?->code ?? $detail->component?->code ?? 'N/A' }}
+                  </td>
+                  <td>
+                        {{ $detail->item_name }}
+                  </td>
+                  <td>
+                        {{ $detail->quantity }}
+                  </td>
+                  <td>
+                        ₱{{ number_format($detail->price, 2) }}
+                  </td>
+               </tr>
+            @endforeach
+            </tbody>
+               </table>
+         </div>
+         </td>
+      </tr>
+   @empty
+      <tr>
+         <td colspan="7" class="vgt-center-align vgt-text-disabled">
+            No orders found
+         </td>
+      </tr>
+   @endforelse
+      </tbody>
+
+      
                   </div>
                   </td></tr></tbody></table>
+@foreach($orders as $order)
+<div class="modal fade" id="billOutModal{{ $order->id }}" tabindex="-1" aria-labelledby="billOutLabel{{ $order->id }}" aria-hidden="true">
+   <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+
+         {{-- Modal Header --}}
+         <div class="modal-header">
+         <h5 class="modal-title">Bill Out - Order #{{ $order->id }}</h5>
+         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+         </div>
+
+         {{-- Modal Body --}}
+         <div class="modal-body">
+         <div class="container-fluid">
+            {{-- Order Info --}}
+            <div class="row mb-2">
+               <div class="col-md-2">
+               <label class="form-label">Order No</label>
+               <input type="text" class="form-control" value="{{ $order->id }}" readonly>
+               </div>
+               <div class="col-md-2">
+               <label class="form-label">No of Pax</label>
+               <input type="text" class="form-control" value="{{ $order->number_pax }}" readonly>
+               </div>
+               <div class="col-md-3">
+               <label class="form-label">Date & Time</label>
+               <input type="text" class="form-control" value="{{ $order->created_at->format('Y-m-d H:i') }}" readonly>
+               </div>
+            </div>
+
+            <div class="row mb-2">
+               <div class="col-md-2">
+               <label class="form-label">Table No</label>
+               <input type="text" class="form-control" value="{{ $order->table_no }}" readonly>
+               </div>
+               <div class="col-md-3">
+               <label class="form-label">Waiter</label>
+               <input type="text" class="form-control" value="{{ $order->user?->name }}" readonly>
+               </div>
+               <div class="col-md-2">
+               <label class="form-label">Status</label>
+               <input type="text" class="form-control" value="{{ ucfirst($order->status) }}" readonly>
+               </div>
+               <div class="col-md-3">
+               <label class="form-label">Cashier</label>
+               <input type="text" class="form-control" value="{{ auth()->user()->name ?? '' }}" readonly>
+               </div>
+            </div>
+
+            {{-- Gross Charge --}}
+            <hr>
+            <h6 class="fw-bold text-center">GROSS CHARGE</h6>
+            <div class="row mb-3">
+               <div class="col-md-4 offset-md-4">
+               <input type="text" class="form-control text-center fw-bold" 
+                        value="₱{{ number_format($order->details->sum(fn($d) => ($d->price * $d->quantity) - ($d->discount ?? 0)), 2) }}" readonly>
+               </div>
+            </div>
+
+            {{-- Entries Section --}}
+            <hr>
+            <div class="card">
+               <div class="card-body">
+               <h6 class="fw-bold text-center">ENTRIES</h6>
+
+               <form action="{{ route('orders.store') }}" method="POST">
+                  @csrf
+                  <input type="hidden" name="order_id" value="{{ $order->id }}">
+
+   <div class="col-md-5 position-relative">
+      <label class="form-label">Discount</label>
+
+      <!-- Input that shows selected discounts -->
+      <input type="text" id="selectedDiscountName_{{ $order->id }}" 
+            class="form-control"  placeholder="Select discounts..."
+            onclick="toggleDiscountDropdown({{ $order->id }})">
+
+      <!-- Dropdown list -->
+      <div id="discountDropdown_{{ $order->id }}" 
+            class="border rounded p-2 position-absolute bg-white w-100"
+            style="display:none; max-height:200px; overflow-y:auto; z-index:100;">
+         @foreach($discounts as $discount)
+         <div class="form-check">
+               <input class="form-check-input" type="checkbox" 
+                     value="{{ $discount->id }}" 
+                     data-name="{{ $discount->name }}"
+                     onchange="updateSelectedDiscounts({{ $order->id }})" 
+                     id="discountCheck_{{ $order->id }}_{{ $discount->id }}">
+               <label class="form-check-label" for="discountCheck_{{ $order->id }}_{{ $discount->id }}">
+                  {{ $discount->name }}
+               </label>
+         </div>
+         @endforeach
+      </div>
+
+      <!-- Hidden input to store selected IDs for backend -->
+      <input type="hidden" name="discount_ids_{{ $order->id }}" id="discountIds_{{ $order->id }}">
+
+      <!-- Manage Button -->
+      <button type="button" class="btn btn-outline-primary btn-sm mt-2 manage-btn"
+               onclick="toggleDiscountForm({{ $order->id }})">
+         Manage
+      </button>
+</div>
+
+      <!-- Inline Manage Discount Form (hidden by default) -->
+      <div id="discountForm_{{ $order->id }}" class="border rounded p-3 mt-3" style="display:none;">
+   <h6 class="text-center mb-3">Apply Discount</h6>
+
+   <!-- Container for selected discounts -->
+   <div id="selectedDiscountsContainer_{{ $order->id }}"></div>
+
+   <div class="d-flex justify-content-center mt-3">
+      <button type="button" class="btn btn-danger btn-sm px-3" onclick="toggleDiscountForm({{ $order->id }})">
+            Close
+      </button>
+   </div>
+</div>
+
+                  <div class="row mb-2">
+                     <div class="col-md-4">
+                     <label class="form-label">Other Charges</label>
+                     <input type="number" class="form-control" name="other_charges" placeholder="Enter amount">
+                     </div>
+                     <div class="col-md-4">
+                     <label class="form-label">Charges Description</label>
+                     <input type="text" class="form-control" name="charges_description" placeholder="Description">
+                     </div>
+                  </div>
+
+                  <div class="row mb-3">
+   <div class="col-md-12 text-center">
+      <button type="button" class="btn btn-success"
+              onclick="calculateChargesAndDiscounts({{ $order->id }}, {{ $grandTotal }}, {{ $order->number_pax }})">
+         Calculate Charges and Discounts
+      </button>
+   </div>
+</div>
+
+                  <!-- Charges and Discounts Section -->
+<hr>
+<h6 class="fw-bold text-center">CHARGES AND DISCOUNTS</h6>
+<div class="row">
+   <div class="col-md-4">
+      <label class="form-label">SR/PWD Bill</label>
+      <input type="text" id="srPwdBill_{{ $order->id }}" class="form-control" readonly>
+   </div>
+   <div class="col-md-4">
+      <label class="form-label">Reg Bill</label>
+      <input type="text" id="regBill_{{ $order->id }}" class="form-control" readonly>
+   </div>
+   <div class="col-md-4">
+      <label class="form-label">20% Discount</label>
+      <input type="text" id="discount20_{{ $order->id }}" class="form-control" readonly>
+   </div>
+</div>
+
+<div class="row mt-2">
+   <div class="col-md-4">
+      <label class="form-label">Vatable</label>
+      <input type="text" id="vatable_{{ $order->id }}" class="form-control" readonly>
+   </div>
+   <div class="col-md-4">
+      <label class="form-label">VAT 12%</label>
+      <input type="text" id="vat12_{{ $order->id }}" class="form-control" readonly>
+   </div>
+   <div class="col-md-4">
+      <label class="form-label">Net Bill</label>
+      <input type="text" id="netBill_{{ $order->id }}" class="form-control" readonly>
+   </div>
+</div>
+
+<div class="row mt-2">
+   <div class="col-md-4">
+      <label class="form-label">Other Discount</label>
+      <input type="text" id="otherDiscount_{{ $order->id }}" class="form-control" readonly>
+   </div>
+   <div class="col-md-8">
+      <label class="form-label fw-bold">TOTAL CHARGE</label>
+      <input type="text" id="totalCharge_{{ $order->id }}" class="form-control fw-bold text-success" readonly>
+   </div>
+</div>
+
+                  {{-- Modal Footer (Submit inside form now) --}}
+                  <div class="modal-footer">
+                     <button type="button8" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                     <button type="submit" class="btn btn-primary">Confirm Bill Out</button>
+                  </div>
+               </form>
+
+               </div>
+            </div>
+         </div>
+         </div>
+
+      </div>
+   </div>
+</div>
+@endforeach
+
+   <script>
+
+   // Function to calculate charges and discounts
+   function calculateChargesAndDiscounts(orderId, grossAmount, pax) {
+      const vatRate = 0.12;
+      let srPwdBill = 0, regBill = 0, discount20 = 0, vatable = 0, vat12 = 0, netBill = 0, totalCharge = 0;
+
+      // Check if PWD or Senior is selected
+      const selectedDiscounts = document.getElementById("discountIds_" + orderId).value.split(",");
+      const hasSrPwd = selectedDiscounts.some(id => {
+         const chk = document.getElementById(`discountCheck_${orderId}_${id}`);
+         return chk && (chk.dataset.name.toLowerCase().includes("pwd") || chk.dataset.name.toLowerCase().includes("senior"));
+      });
+
+      if (hasSrPwd) {
+         // If SR/PWD Discount applies
+         srPwdBill = (grossAmount / pax); // per pax bill
+         regBill = grossAmount - srPwdBill;
+
+         discount20 = (regBill / 1.12) * 0.2;
+         netBill = (regBill / 1.12) - discount20;
+
+         vatable = regBill / 1.12;
+         vat12 = regBill - vatable;
+         totalCharge = netBill;
+      } else {
+         // No SR/PWD
+         regBill = grossAmount;
+         discount20 = grossAmount * 0.2; // Example if other discounts apply
+         vatable = grossAmount / 1.12;
+         vat12 = grossAmount - vatable;
+         netBill = vatable - discount20;
+         totalCharge = netBill;
+      }
+
+      // Update UI
+      document.getElementById("srPwdBill_" + orderId).value = srPwdBill.toFixed(2);
+      document.getElementById("regBill_" + orderId).value = regBill.toFixed(2);
+      document.getElementById("discount20_" + orderId).value = discount20.toFixed(2);
+      document.getElementById("vatable_" + orderId).value = vatable.toFixed(2);
+      document.getElementById("vat12_" + orderId).value = vat12.toFixed(2);
+      document.getElementById("netBill_" + orderId).value = netBill.toFixed(2);
+      document.getElementById("otherDiscount_" + orderId).value = "0.00"; // placeholder
+      document.getElementById("totalCharge_" + orderId).value = totalCharge.toFixed(2);
+   }
+
+
+function toggleDiscountForm(orderId) {
+      const form = document.getElementById('discountForm_' + orderId);
+      const hidden = document.getElementById('discountIds_' + orderId);
+      const selectedIds = hidden.value ? hidden.value.split(',') : [];
+
+      if (!selectedIds.length) {
+         alert('Please select at least one discount first.');
+         return;
+      }
+
+      const container = document.getElementById('selectedDiscountsContainer_' + orderId);
+      container.innerHTML = ''; // clear old contents
+
+      selectedIds.forEach((id, idx) => {
+         const checkbox = document.getElementById(`discountCheck_${orderId}_${id}`);
+         if (!checkbox) return;
+
+         const discountName = checkbox.dataset.name;
+
+         // Create discount block
+         const block = document.createElement('div');
+         block.classList.add('mb-4', 'p-2', 'border', 'rounded');
+         block.innerHTML = `
+               <h6 class="fw-bold">${discountName}</h6>
+               <div class="form-group mb-2 d-flex align-items-center">
+                  <label class="me-2"># of Entries</label>
+                  <input type="number" 
+                        id="discountCount_${orderId}_${id}" 
+                        class="form-control" 
+                        style="width:100px" min="1" value="1"
+                        oninput="renderDiscountPersons(${orderId}, ${id})">
+               </div>
+               <div id="discountPersons_${orderId}_${id}">
+                  <div class="row mb-2">
+                     <div class="col-md-6">
+                           <input type="text" name="persons[${id}][0][name]" class="form-control" placeholder="Enter name here">
+                     </div>
+                     <div class="col-md-6">
+                           <input type="text" name="persons[${id}][0][id_number]" class="form-control" placeholder="Enter ID number here">
+                     </div>
+                  </div>
+               </div>
+         `;
+         container.appendChild(block);
+      });
+
+      // Toggle form display
+      form.style.display = form.style.display === 'block' ? 'none' : 'block';
+}
+
+   function renderDiscountPersons(orderId, discountId) {
+      const count = parseInt(document.getElementById(`discountCount_${orderId}_${discountId}`).value) || 0;
+      const container = document.getElementById(`discountPersons_${orderId}_${discountId}`);
+      container.innerHTML = "";
+
+      for (let i = 0; i < count; i++) {
+         const row = document.createElement('div');
+         row.classList.add('row', 'mb-2');
+         row.innerHTML = `
+               <div class="col-md-6">
+                  <input type="text" name="persons[${discountId}][${i}][name]" class="form-control" placeholder="Enter name here">
+               </div>
+               <div class="col-md-6">
+                  <input type="text" name="persons[${discountId}][${i}][id_number]" class="form-control" placeholder="Enter ID number here">
+               </div>
+         `;
+         container.appendChild(row);
+      }
+   }
+   </script>
+
+   <script>
+      function toggleDiscountDropdown(orderId) {
+      const dropdown = document.getElementById('discountDropdown_' + orderId);
+      dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+   }
+
+   function updateSelectedDiscounts(orderId) {
+      const dropdown = document.getElementById('discountDropdown_' + orderId);
+      const input = document.getElementById('selectedDiscountName_' + orderId);
+      const hidden = document.getElementById('discountIds_' + orderId);
+
+      // Get all checked options
+      const checked = dropdown.querySelectorAll('input[type="checkbox"]:checked');
+      const names = Array.from(checked).map(chk => chk.dataset.name);
+      const ids = Array.from(checked).map(chk => chk.value);
+
+      // Display selected names in input field
+      input.value = names.join(', ');
+
+      // Store selected IDs for backend submission
+      hidden.value = ids.join(',');
+   }
+   </script>
+
                </div>
                <!----> 
                <div class="vgt-wrap__footer vgt-clearfix">
@@ -338,198 +681,6 @@
       <!----><!---->
    </div>
 </div>
-<div tabindex="-1" class="b-sidebar-outer">
-   <!---->
-   <div id="sidebar-right" tabindex="-1" role="dialog" aria-modal="false" aria-hidden="true" aria-labelledby="sidebar-right___title__" class="b-sidebar shadow b-sidebar-right bg-white text-dark" style="display: none;">
-      <header class="b-sidebar-header">
-         <button type="button" aria-label="Close" class="close text-dark">
-            <svg viewBox="0 0 16 16" width="1em" height="1em" focusable="false" role="img" aria-label="x" xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi-x b-icon bi">
-               <g>
-                  <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"></path>
-               </g>
-            </svg>
-         </button>
-         <strong id="sidebar-right___title__">Filter</strong>
-      </header>
-      <div class="b-sidebar-body">
-         <div class="px-3 py-2">
-            <div class="row">
-               <div class="col-md-12">
-                  <fieldset class="form-group" id="__BVID__39">
-                     <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0" id="__BVID__39__BV_label_">Name</legend>
-                     <div>
-                        <input type="text" placeholder="Search by Name" class="form-control" label="Name" id="__BVID__40"><!----><!----><!---->
-                     </div>
-                  </fieldset>
-               </div>
-               <div class="col-md-12">
-                  <fieldset class="form-group" id="__BVID__41">
-                     <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0" id="__BVID__41__BV_label_">SKU(Product Code)</legend>
-                     <div>
-                        <input type="text" placeholder="Search SKU(Product Code)" class="form-control" label="SKUProductCode" id="__BVID__42"><!----><!----><!---->
-                     </div>
-                  </fieldset>
-               </div>
-               <div class="col-md-12">
-                  <fieldset class="form-group" id="__BVID__43">
-                     <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0" id="__BVID__43__BV_label_">Category</legend>
-                     <div>
-                        <div dir="auto" class="v-select vs--single vs--searchable">
-                           <div id="vs1__combobox" role="combobox" aria-expanded="false" aria-owns="vs1__listbox" aria-label="Search for option" class="vs__dropdown-toggle">
-                              <div class="vs__selected-options"> <input placeholder="Select Category" aria-autocomplete="list" aria-labelledby="vs1__combobox" aria-controls="vs1__listbox" type="search" autocomplete="off" class="vs__search"></div>
-                              <div class="vs__actions">
-                                 <button type="button" title="Clear Selected" aria-label="Clear Selected" class="vs__clear" style="display: none;">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10">
-                                       <path d="M6.895455 5l2.842897-2.842898c.348864-.348863.348864-.914488 0-1.263636L9.106534.261648c-.348864-.348864-.914489-.348864-1.263636 0L5 3.104545 2.157102.261648c-.348863-.348864-.914488-.348864-1.263636 0L.261648.893466c-.348864.348864-.348864.914489 0 1.263636L3.104545 5 .261648 7.842898c-.348864.348863-.348864.914488 0 1.263636l.631818.631818c.348864.348864.914773.348864 1.263636 0L5 6.895455l2.842898 2.842897c.348863.348864.914772.348864 1.263636 0l.631818-.631818c.348864-.348864.348864-.914489 0-1.263636L6.895455 5z"></path>
-                                    </svg>
-                                 </button>
-                                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="10" role="presentation" class="vs__open-indicator">
-                                    <path d="M9.211364 7.59931l4.48338-4.867229c.407008-.441854.407008-1.158247 0-1.60046l-.73712-.80023c-.407008-.441854-1.066904-.441854-1.474243 0L7 5.198617 2.51662.33139c-.407008-.441853-1.066904-.441853-1.474243 0l-.737121.80023c-.407008.441854-.407008 1.158248 0 1.600461l4.48338 4.867228L7 10l2.211364-2.40069z"></path>
-                                 </svg>
-                                 <div class="vs__spinner" style="display: none;">Loading...</div>
-                              </div>
-                           </div>
-                           <ul id="vs1__listbox" role="listbox" style="display: none; visibility: hidden;"></ul>
-                        </div>
-                        <!----><!----><!---->
-                     </div>
-                  </fieldset>
-               </div>
-               <div class="col-md-12">
-                  <fieldset class="form-group" id="__BVID__48">
-                     <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0" id="__BVID__48__BV_label_">Brand</legend>
-                     <div>
-                        <div dir="auto" class="v-select vs--single vs--searchable">
-                           <div id="vs2__combobox" role="combobox" aria-expanded="false" aria-owns="vs2__listbox" aria-label="Search for option" class="vs__dropdown-toggle">
-                              <div class="vs__selected-options"> <input placeholder="Select Brand" aria-autocomplete="list" aria-labelledby="vs2__combobox" aria-controls="vs2__listbox" type="search" autocomplete="off" class="vs__search"></div>
-                              <div class="vs__actions">
-                                 <button type="button" title="Clear Selected" aria-label="Clear Selected" class="vs__clear" style="display: none;">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10">
-                                       <path d="M6.895455 5l2.842897-2.842898c.348864-.348863.348864-.914488 0-1.263636L9.106534.261648c-.348864-.348864-.914489-.348864-1.263636 0L5 3.104545 2.157102.261648c-.348863-.348864-.914488-.348864-1.263636 0L.261648.893466c-.348864.348864-.348864.914489 0 1.263636L3.104545 5 .261648 7.842898c-.348864.348863-.348864.914488 0 1.263636l.631818.631818c.348864.348864.914773.348864 1.263636 0L5 6.895455l2.842898 2.842897c.348863.348864.914772.348864 1.263636 0l.631818-.631818c.348864-.348864.348864-.914489 0-1.263636L6.895455 5z"></path>
-                                    </svg>
-                                 </button>
-                                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="10" role="presentation" class="vs__open-indicator">
-                                    <path d="M9.211364 7.59931l4.48338-4.867229c.407008-.441854.407008-1.158247 0-1.60046l-.73712-.80023c-.407008-.441854-1.066904-.441854-1.474243 0L7 5.198617 2.51662.33139c-.407008-.441853-1.066904-.441853-1.474243 0l-.737121.80023c-.407008.441854-.407008 1.158248 0 1.600461l4.48338 4.867228L7 10l2.211364-2.40069z"></path>
-                                 </svg>
-                                 <div class="vs__spinner" style="display: none;">Loading...</div>
-                              </div>
-                           </div>
-                           <ul id="vs2__listbox" role="listbox" style="display: none; visibility: hidden;"></ul>
-                        </div>
-                        <!----><!----><!---->
-                     </div>
-                  </fieldset>
-               </div>
-               <div class="col-md-12">
-                  <fieldset class="form-group" id="__BVID__53">
-                     <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0" id="__BVID__53__BV_label_">Unit</legend>
-                     <div>
-                        <div dir="auto" class="v-select vs--single vs--searchable">
-                           <div id="vs3__combobox" role="combobox" aria-expanded="false" aria-owns="vs3__listbox" aria-label="Search for option" class="vs__dropdown-toggle">
-                              <div class="vs__selected-options"> <input placeholder="Select Unit" aria-autocomplete="list" aria-labelledby="vs3__combobox" aria-controls="vs3__listbox" type="search" autocomplete="off" class="vs__search"></div>
-                              <div class="vs__actions">
-                                 <button type="button" title="Clear Selected" aria-label="Clear Selected" class="vs__clear" style="display: none;">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10">
-                                       <path d="M6.895455 5l2.842897-2.842898c.348864-.348863.348864-.914488 0-1.263636L9.106534.261648c-.348864-.348864-.914489-.348864-1.263636 0L5 3.104545 2.157102.261648c-.348863-.348864-.914488-.348864-1.263636 0L.261648.893466c-.348864.348864-.348864.914489 0 1.263636L3.104545 5 .261648 7.842898c-.348864.348863-.348864.914488 0 1.263636l.631818.631818c.348864.348864.914773.348864 1.263636 0L5 6.895455l2.842898 2.842897c.348863.348864.914772.348864 1.263636 0l.631818-.631818c.348864-.348864.348864-.914489 0-1.263636L6.895455 5z"></path>
-                                    </svg>
-                                 </button>
-                                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="10" role="presentation" class="vs__open-indicator">
-                                    <path d="M9.211364 7.59931l4.48338-4.867229c.407008-.441854.407008-1.158247 0-1.60046l-.73712-.80023c-.407008-.441854-1.066904-.441854-1.474243 0L7 5.198617 2.51662.33139c-.407008-.441853-1.066904-.441853-1.474243 0l-.737121.80023c-.407008.441854-.407008 1.158248 0 1.600461l4.48338 4.867228L7 10l2.211364-2.40069z"></path>
-                                 </svg>
-                                 <div class="vs__spinner" style="display: none;">Loading...</div>
-                              </div>
-                           </div>
-                           <ul id="vs3__listbox" role="listbox" style="display: none; visibility: hidden;"></ul>
-                        </div>
-                        <!----><!----><!---->
-                     </div>
-                  </fieldset>
-               </div>
-               <div class="col-md-12">
-                  <fieldset class="form-group" id="__BVID__58">
-                     <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0" id="__BVID__58__BV_label_">Total Cost of Goods</legend>
-                     <div>
-                        <div role="group" class="input-group">
-                           <!----><input type="text" placeholder="Enter Amount (From)" class="form-control" aria-label="cost-from" id="__BVID__59"> 
-                           <div class="input-group-text" style="border-right: 0px; border-left: 0px; border-radius: 0px;">
-                              to
-                           </div>
-                           <input type="text" placeholder="Enter Amount (To)" class="form-control" aria-label="cost-to" id="__BVID__60"><!---->
-                        </div>
-                        <!----><!----><!---->
-                     </div>
-                  </fieldset>
-               </div>
-               <div class="col-md-12">
-                  <fieldset class="form-group" id="__BVID__61">
-                     <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0" id="__BVID__61__BV_label_">SRP</legend>
-                     <div>
-                        <div role="group" class="input-group">
-                           <!----><input type="text" placeholder="Enter Amount (From)" class="form-control" aria-label="price-from" id="__BVID__62"> 
-                           <div class="input-group-text" style="border-right: 0px; border-left: 0px; border-radius: 0px;">
-                              to
-                           </div>
-                           <input type="text" placeholder="Enter Amount (To)" class="form-control" aria-label="price-to" id="__BVID__63"><!---->
-                        </div>
-                        <!----><!----><!---->
-                     </div>
-                  </fieldset>
-               </div>
-               <div class="col-md-12">
-                  <fieldset class="form-group" id="__BVID__64">
-                     <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0" id="__BVID__64__BV_label_">Quantity</legend>
-                     <div>
-                        <div role="group" class="input-group">
-                           <!----><input type="text" placeholder="Enter Amount (From)" class="form-control" aria-label="quantity-from" id="__BVID__65"> 
-                           <div class="input-group-text" style="border-right: 0px; border-left: 0px; border-radius: 0px;">
-                              to
-                           </div>
-                           <input type="text" placeholder="Enter Amount (To)" class="form-control" aria-label="quantity-to" id="__BVID__66"><!---->
-                        </div>
-                        <!----><!----><!---->
-                     </div>
-                  </fieldset>
-               </div>
-               <div class="col-md-12">
-                  <fieldset class="form-group" id="__BVID__67">
-                     <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0" id="__BVID__67__BV_label_">Created By</legend>
-                     <div>
-                        <input type="text" placeholder="Filter by Created by" class="form-control" label="CreatedBy" id="__BVID__68"><!----><!----><!---->
-                     </div>
-                  </fieldset>
-               </div>
-               <div class="col-md-12">
-                  <fieldset class="form-group" id="__BVID__69">
-                     <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0" id="__BVID__69__BV_label_">Created Date</legend>
-                     <div>
-                        <div data-v-1ebd09d2="" class="vue-daterange-picker">
-                           <div data-v-1ebd09d2="" class="form-control reportrange-text"><i data-v-1ebd09d2="" class="glyphicon glyphicon-calendar fa fa-calendar"></i> <span data-v-1ebd09d2=""> - </span><b data-v-1ebd09d2="" class="caret"></b></div>
-                           <!---->
-                        </div>
-                        <button type="button" class="btn btn-danger btn-sm">
-                        Clear Created Date
-                        </button><!----><!----><!---->
-                     </div>
-                  </fieldset>
-               </div>
-               <div class="col-sm-12 col-md-6"><button type="button" class="btn btn-primary btn-sm btn-block"><i class="i-Filter-2"></i>
-                  Filter
-                  </button>
-               </div>
-               <div class="col-sm-12 col-md-6"><button type="button" class="btn btn-danger btn-sm btn-block"><i class="i-Power-2"></i>
-                  Reset
-                  </button>
-               </div>
-            </div>
-         </div>
-      </div>
-      <!---->
-   </div>
-   <!----><!---->
-</div>
-<span data-v-03022ced="">
-   <!---->
-</span>
 </div>
 @endsection
 

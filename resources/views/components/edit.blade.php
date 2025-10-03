@@ -273,31 +273,31 @@
                             </fieldset>
                             </div>
                         </div>
-                                        <span>
-                                        <fieldset class="form-group">
-                                            <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0">For Sale</legend>
-                                            <div class="form-check">
-                                                <input type="checkbox" class="form-check-input" id="for_sale" name="for_sale" value="1"
-                                                    {{ !empty($component['FOR_SALE']) && $component['FOR_SALE'] ? 'checked' : '' }}>
-                                                <label class="form-check-label" for="for_sale">Yes</label>
-                                            </div>
-                                        </fieldset>
-                                    </span>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <span>
-                                        <fieldset class="form-group">
-                                                <legend class="col-form-label pt-0">Component Name *</legend>
-                                                <input 
-                                                    type="text" 
-                                                    class="form-control" 
-                                                    id="name" 
-                                                    name="name" 
-                                                    value="{{ old('name', $component->name) }}" 
-                                                    placeholder="Enter Component Name">
-                                            </fieldset>
-                                        </span>
-                            <!-- Subcategory select + New button -->
+                    <span>
+                    <fieldset class="form-group">
+                        <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0">For Sale</legend>
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="for_sale" name="for_sale" value="1"
+                                {{ old('for_sale', $component->for_sale ? 'checked' : '') }}>
+                            <label class="form-check-label" for="for_sale">Yes</label>
+                        </div>
+                    </fieldset>
+                </span>
+                </div>
+                <div class="col-md-6">
+                    <span>
+                    <fieldset class="form-group">
+                            <legend class="col-form-label pt-0">Component Name *</legend>
+                            <input 
+                                type="text" 
+                                class="form-control" 
+                                id="name" 
+                                name="name" 
+                                value="{{ old('name', $component->name) }}" 
+                                placeholder="Enter Component Name">
+                        </fieldset>
+                    </span>
+                <!-- Subcategory select + New button -->
                 <div class="form-group">
                     <label for="subcategory_id">Subcategory</label>
                     <div class="d-flex">
