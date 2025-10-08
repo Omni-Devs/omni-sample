@@ -1,5 +1,6 @@
 @extends('layouts.app')
 @section('content')
+<div class="main-content">
 <style>
   .container {
     display: flex;
@@ -173,7 +174,7 @@ input[type=number] {
 }
 
 </style>
-<div id="app" class="main-content">
+<div id="app">
 <h2>Order Entry</h2>
 <form @submit.prevent="submitOrder">
 <!-- Order Header -->
@@ -207,15 +208,19 @@ input[type=number] {
 
             <!-- Waiter -->
             <div class="col-md-6">
-            <label class="fw-bold">Waiter:</label>
-            <v-select
+              <label class="fw-bold">Waiter:</label>
+              <v-select
+                class="waiter-select"
                 :options="waiters"
                 v-model="selectedWaiter"
                 label="name"
                 :reduce="user => user.id"
                 placeholder="Select Waiter"
-            ></v-select>
-            <small v-if="!selectedWaiter" class="text-danger">Required field</small>
+                ref="waiterSelect"
+              ></v-select>
+              <small v-if="!selectedWaiter && invalidWaiter" class="text-danger">
+                Required field
+              </small>
             </div>
 
             <!-- No. of Pax -->
@@ -441,6 +446,9 @@ input[type=number] {
     </button>
   </li>
 </ul>
+</div>
+</div>
+</div>
 <script>
    // Register vue-select globally
    Vue.component('v-select', VueSelect.VueSelect)
@@ -499,11 +507,16 @@ input[type=number] {
     this.invalidPax = false;
     this.invalidTable = false;
 
-    // Validation checks
+     // Validate waiter
     if (!this.selectedWaiter) {
       this.invalidWaiter = true;
       this.$nextTick(() => {
-        document.querySelector('.waiter-select input')?.focus();
+        // Auto focus + open dropdown
+        const waiterSelect = this.$refs.waiterSelect;
+        if (waiterSelect) {
+          waiterSelect.$el.querySelector('input')?.focus();
+          waiterSelect.toggleDropdown?.(); // open the dropdown
+        }
       });
       return;
     }
