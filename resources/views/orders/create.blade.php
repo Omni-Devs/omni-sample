@@ -389,20 +389,21 @@ input[type=number] {
   </div>
   <!-- Products -->
   <div class="products">
-    <div 
-      class="product-card" 
-      v-for="p in paginatedProducts" 
-      :key="p.type + '-' + p.id"
-      @click="addToOrder(p)"
-      style="cursor: pointer;"
-    >
-      <img :src="p.image" :alt="p.name">
-      <div class="product-body">
-        <h4>@{{ p.name }}</h4>
-        <p>@{{ p.description }}</p>
-      </div>
+  <div 
+    class="product-card" 
+    v-for="p in paginatedProducts" 
+    :key="p.type + '-' + p.id"
+    @click="addToOrder(p)"
+    style="cursor: pointer;"
+  >
+    <img :src="p.image" :alt="p.name">
+    <div class="product-body">
+      <h4>@{{ p.name }}</h4>
+      <p>@{{ p.description }}</p>
     </div>
   </div>
+</div>
+
 </div>
 
 <!-- Pagination -->
@@ -521,19 +522,25 @@ input[type=number] {
       return;
     }
 
-    // If all fields are valid → proceed
-    const existing = this.orderDetails.find(item => item.id === product.id);
-    if (existing) {
-      existing.qty++;
-    } else {
-      this.orderDetails.push({
-        id: product.id,
-        sku: product.sku,
-        name: product.name,
-        qty: 1,
-        price: parseFloat(product.price)
-      });
-    }
+    const key = product.type + '-' + product.id;
+
+  const existing = this.orderDetails.find(
+    item => item.key === key
+  );
+
+  if (existing) {
+    existing.qty++;
+  } else {
+    this.orderDetails.push({
+      key: key,                  // ✅ internal unique key
+      id: product.id,
+      type: product.type,        // "product" or "component"
+      sku: product.sku,
+      name: product.name,
+      qty: 1,
+      price: parseFloat(product.price)
+    });
+  }
   },
        goToPage(page) {
     if (page >= 1 && page <= this.totalPages) {
