@@ -20,6 +20,14 @@
         </li>
         @endisset
 
+        <!-- View User Profile -->
+        @if(isset($profileRoute))
+            <a href="{{ $profileRoute }}" target="_blank" class="dropdown-item">
+                <i class="nav-icon i-Eye font-weight-bold mr-2"></i> View User Profile
+            </a>
+        @endif
+
+
         <!-- View / Bill out -->
         @isset($viewRoute)
             <li role="presentation">

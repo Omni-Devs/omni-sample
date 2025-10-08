@@ -76,7 +76,7 @@
   @php
     $user = Auth::user();
   @endphp
-  @if($user && $user->role === 'admin')
+@if(Auth::user()->roles->contains('name', 'admin'))
     @include('layouts.header')
     @include('layouts.sidebar')
 
