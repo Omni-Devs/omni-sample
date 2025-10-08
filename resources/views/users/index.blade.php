@@ -49,7 +49,20 @@
                                             </div>
                                         </div>
                                         <!----> 
-                                        <div data-v-6ff5a0de=""><input data-v-6ff5a0de="" id="myIdUpload" name="" accept="image/gif,image/jpeg,image/png,image/bmp,image/jpg" type="file" class="display-none"> <input data-v-6ff5a0de="" id="image-edit" name="" accept="image/gif,image/jpeg,image/png,image/bmp,image/jpg" type="file" class="display-none"></div>
+                                        <div data-v-6ff5a0de=""><div data-v-6ff5a0de="">
+                                            <!-- Hidden File Input -->
+                                            <input
+                                                data-v-6ff5a0de=""
+                                                id="myIdUpload"
+                                                name="image"
+                                                accept="image/gif,image/jpeg,image/png,image/bmp,image/jpg"
+                                                type="file"
+                                                class="display-none"
+                                                onchange="previewUserImage(this)"
+                                            >
+                                            <!-- Image Preview will appear here -->
+                                        <div id="user-image-preview" class="mt-2"></div>
+                                        <input data-v-6ff5a0de="" id="image-edit" name="" accept="image/gif,image/jpeg,image/png,image/bmp,image/jpg" type="file" class="display-none"></div>
                                         <div data-v-3f78f595="" data-v-6ff5a0de="" class="modal-mask" style="display: none;">
                                             <div data-v-3f78f595="" class="modal-container">
                                                 <div data-v-3f78f595="" class="vue-lightbox-content">
@@ -252,21 +265,21 @@
                                 <div id="app">
                                     <v-select
                                         multiple
-                                        :options='@json($branches)'
+                                        :options='@json($roles)'
                                         label="name"
                                         :reduce="branch => branch.id"
-                                        v-model="selectedBranches"
-                                        placeholder="Select Branch"
+                                        v-model="selectedRoles"
+                                        placeholder="Select Role"
                                         clearable
                                     ></v-select>
 
                                     <!-- Hidden inputs so Laravel receives an array -->
-                                    <input v-for="id in selectedBranches"
+                                    <input v-for="id in selectedRoles"
                                         type="hidden"
-                                        name="branch_id[]"
+                                        name="roles[]"
                                         :value="id">
 
-                                    <div id="Branches-feedback" class="invalid-feedback"></div>
+                                    <div id="Roles-feedback" class="invalid-feedback"></div>
                                 </div>
                             </fieldset>
                             </span>
@@ -317,13 +330,16 @@
                 <div class="card card-icon-bg card-icon-bg-primary o-hidden mb-30 text-center">
                 <!----><!---->
                 <div class="card-body">
-                    <!----><!---->
                     <div class="content align-items-center">
+                        @php
+                            $currentStatus = request('status', 'active'); // default to active if not set
+                        @endphp
+
                         <p class="text-muted mt-2 mb-0 text-uppercase">
-                            Active Users
+                            {{ ucfirst($currentStatus) }} Users
                         </p>
                         <p class="text-primary text-24 line-height-1 mb-2">
-                            {{ $users->where('active', 1)->count() }}
+                            {{ $users->where('status', $currentStatus)->count() }}
                         </p>
                     </div>
                 </div>
@@ -335,14 +351,18 @@
             <!----><!---->
             <nav class="card-header">
                 <ul class="nav nav-tabs card-header-tabs">
-                <li class="nav-item"><a href="#" target="_self" class="nav-link active">
-                    Active
-                    </a>
-                </li>
-                <li class="nav-item"><a href="#" target="_self" class="nav-link">
-                    Archived
-                    </a>
-                </li>
+                <li class="nav-item">
+            <a href="{{ route('users.index', ['status' => 'active']) }}"
+               class="nav-link {{ request('status', 'active') === 'active' ? 'active' : '' }}">
+                Active
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="{{ route('users.index', ['status' => 'archived']) }}"
+               class="nav-link {{ request('status') === 'archived' ? 'active' : '' }}">
+                Archived
+            </a>
+        </li>
                 </ul>
             </nav>
             <div class="card-body">
@@ -517,7 +537,7 @@
                                     <span>
                                         <ul class="list-unstyled">
                                         <li>
-                                            {{ $user->role }}
+                                            {{ $user->roles()->pluck('name')->join(', ') }}
                                         </li>
                                         </ul>
                                     </span>
@@ -539,39 +559,18 @@
                                     </span>
                                 </td>
                                 <!----><!---->
-                                <td class="vgt-left-align text-right">
-                                    <span>
-                                        <div>
-                                        <div id="dropdown-right" class="dropdown b-dropdown btn-group">
-                                            <!---->
-                                            <button id="dropdown-right__BV_toggle_" aria-haspopup="menu" aria-expanded="false" type="button" class="btn dropdown-toggle btn-link btn-lg text-decoration-none dropdown-toggle-no-caret">
-                                                <span class="_dot _r_block-dot bg-dark"></span> <span class="_dot _r_block-dot bg-dark"></span> <span class="_dot _r_block-dot bg-dark"></span> <!---->
-                                            </button>
-                                            <ul role="menu" tabindex="-1" aria-labelledby="dropdown-right__BV_toggle_" class="dropdown-menu dropdown-menu-right">
-                                                <li role="presentation"><a role="menuitem" href="#" target="_self" class="dropdown-item"><i class="nav-icon i-Edit font-weight-bold mr-2"></i>
-                                                    Edit User Profile
-                                                    </a>
-                                                </li>
-                                                <li role="presentation"><a title="Print Profile" role="menuitem" href="#" target="_self" class="dropdown-item"><i class="nav-icon i-Eye font-weight-bold mr-2"></i>
-                                                    View User Profile
-                                                    </a>
-                                                </li>
-                                                <li role="presentation"><a role="menuitem" href="#" target="_self" class="dropdown-item" title="Delete"><i class="nav-icon i-Letter-Close font-weight-bold mr-2"></i>
-                                                    Move to Archive
-                                                    </a>
-                                                </li>
-                                                <li role="presentation"><a role="menuitem" href="#" target="_self" class="dropdown-item"><i class="nav-icon i-Computer-Secure font-weight-bold mr-2"></i>
-                                                    Logs
-                                                    </a>
-                                                </li>
-                                                <li role="presentation"><a role="menuitem" href="#" target="_self" class="dropdown-item"><i class="nav-icon i-Mail-Attachement font-weight-bold mr-2"></i>
-                                                    Remarks
-                                                    </a>
-                                                </li>
-                                            </ul>
-                                        </div>
-                                        </div>
-                                    </span>
+                                <td class="text-right">
+                                    @include('layouts.actions-dropdown', [
+                                        'id' => $user->id,
+                                        'editRoute' => '#',
+                                        'archiveRoute' => '#',
+                                        'logsRoute' => '#',
+                                        'profileRoute' => route('users.profile', $user->id),
+                                        'remarksRoute' => '#',
+                                        'status' => request('status', 'active'),
+                                        'archiveRoute' => route('users.archive', $user->id),
+                                        'restoreRoute' => route('users.restore', $user->id),
+                                    ])
                                 </td>
                             </tr>
                             <!---->
@@ -747,12 +746,49 @@
 @endsection
 @section('scripts')
 <script>
+function previewUserImage(input) {
+  const file = input.files[0];
+  const preview = document.getElementById('user-image-preview');
+  preview.innerHTML = '';
+
+  if (file && file.type.startsWith('image/')) {
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      const img = document.createElement('img');
+      img.src = e.target.result;
+      img.className = 'img-thumbnail mt-2';
+      img.style.maxWidth = '190px';
+      img.style.borderRadius = '10px';
+      img.style.margin = '0 auto';
+      img.style.position = 'absolute';
+      img.style.top = '0';
+      img.style.pointerEvents = 'none';
+      preview.appendChild(img);
+    };
+    reader.readAsDataURL(file);
+  }
+}
+
+function handleUserDrop(event) {
+    event.preventDefault();
+    document.getElementById('user-drop-area').classList.remove('border-primary');
+
+    const file = event.dataTransfer.files[0];
+    const input = document.getElementById('user_image');
+
+    if (file && file.type.startsWith('image/')) {
+        input.files = event.dataTransfer.files;
+        previewUserImage({ target: input });
+    } else {
+        alert('Please drop a valid image file.');
+    }
+}
 Vue.component('v-select', VueSelect.VueSelect);
 
 new Vue({
   el: '#app',
   data: {
-    selectedBranches: [], // will hold selected branch IDs
+    selectedRoles: [], // will hold selected branch IDs
   }
 });
 </script>

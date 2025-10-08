@@ -3,19 +3,23 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
-use App\Models\Branch;
+use App\Models\Role;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class UserController extends Controller
 {
     // Display a listing of users
-    public function index()
+    public function index(Request $request)
     {
-        $users = User::all();
+        $status = $request->get('status', 'active'); // default to active
+
+        $users = User::where('status', $status)->get();
         $nextUserId = User::max('id') + 1;
-        $branches = Branch::all();
-        return view('users.index', compact('users', 'nextUserId', 'branches'));
+        $roles = Role::all();
+
+        return view('users.index', compact('users', 'nextUserId', 'roles'));
     }
 
     public function create()
@@ -32,31 +36,44 @@ class UserController extends Controller
         'email' => 'required|string|email|max:255|unique:users,email',
         'password' => 'required|string|min:4',
         'mobile_number' => 'required|string|max:20',
-        'role' => 'required|string',
-        'branch_id' => 'required|array',
-        'branch_id.*' => 'exists:branches,id', // validate each branch id
+        'roles' => 'required|array',
+        'roles.*' => 'exists:roles,id', // validate each role ID
+        'image' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:2048',
+        'address' => 'nullable|string|max:255',
     ]);
+
+    // 🔹 Handle image upload (optional)
+    $imagePath = null;
+    if ($request->hasFile('image')) {
+        $imagePath = $request->file('image')->store('users', 'public');
+    }
+
+    // 🔹 Create user
     $user = User::create([
         'name' => $validated['name'],
         'username' => $validated['username'],
         'email' => $validated['email'],
         'password' => Hash::make($validated['password']),
         'mobile_number' => $validated['mobile_number'],
-        'role' => $validated['role'],
-        'address' => $request->input('address', ''),
+        'address' => $validated['address'] ?? '',
+        'image' => $imagePath,
+        'active' => true,
     ]);
 
-   // Attach multiple branches via pivot
-    $user->branches()->sync($validated['branch_id']);
+    // 🔹 Attach roles (pivot table)
+    $user->roles()->sync($validated['roles']);
 
-    return redirect()->route('users.index')->with('success', 'User created successfully!');
-}
+    return redirect()
+        ->route('users.index')
+        ->with('success', 'User created successfully!');
+    }
 
     // Display the specified user
     public function show($id)
     {
-        $user = User::findOrFail($id);
-        return response()->json($user);
+    $user = User::findOrFail($id);
+
+    return view('users.show', compact('user'));
     }
 
     // Update the specified user
@@ -82,4 +99,30 @@ class UserController extends Controller
         $user->delete();
         return response()->json(['message' => 'User deleted']);
     }
+
+    public function viewProfile($id)
+    {
+        $user = User::findOrFail($id);
+
+        // Load a Blade view and pass user data to it
+        $pdf = Pdf::loadView('users.profile-pdf', compact('user'));
+
+        // Download directly
+        return $pdf->download($user->name . '_profile.pdf');
+    }
+
+    public function archive(User $user)
+    {
+        $user->update(['status' => 'archived']);
+        return redirect()->route('users.index', ['status' => 'active'])
+                        ->with('success', 'User moved to archive.');
+    }
+
+    public function restore(User $user)
+    {
+        $user->update(['status' => 'active']);
+        return redirect()->route('users.index', ['status' => 'archived'])
+                        ->with('success', 'User restored successfully.');
+    }
+
 }

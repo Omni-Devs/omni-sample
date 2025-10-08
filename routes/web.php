@@ -37,6 +37,11 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
 Route::get('/users', [UserController::class, 'index'])->name('users.index');
 Route::post('/users', [UserController::class, 'store'])->name('users.store');
+Route::get('/users/{id}/profile', [UserController::class, 'viewProfile'])->name('users.profile');
+Route::put('/users/{user}/archive', [UserController::class, 'archive'])->name('users.archive');
+Route::put('/users/{user}/restore', [UserController::class, 'restore'])->name('users.restore');
+
+
 
 Route::get('/products', [ProductController::class, 'index'])->name('products.index');
 Route::get('/products/create', [ProductController::class, 'create'])->name('products.create');
