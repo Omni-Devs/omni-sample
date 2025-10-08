@@ -108,7 +108,7 @@ class UserController extends Controller
         $pdf = Pdf::loadView('users.profile-pdf', compact('user'));
 
         // Download directly
-        return $pdf->download($user->name . '_profile.pdf');
+        return $pdf->download($user->name . '.pdf');
     }
 
     public function archive(User $user)
