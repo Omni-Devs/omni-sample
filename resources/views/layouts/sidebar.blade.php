@@ -56,14 +56,21 @@
                <a href="/" class="nav-item-hold"><i class="nav-icon i-Bar-Chart"></i> <span class="nav-text">Menu</span></a> 
                <div class="triangle"></div>
             </li>
+             @if($user->hasRole('Administrator') || $user->can('view POS'))
             <li data-item="Sales" data-submenu="true" class="nav-item">
                <a href="#" class="nav-item-hold"><i class="nav-icon i-Full-Basket"></i> <span class="nav-text">POS</span></a> 
                <div class="triangle"></div>
             </li>
+            @endif
+
+            @if($user->hasRole('Administrator') || $user->can('view Inventory'))
             <li data-item="Inventory" data-submenu="true" class="nav-item">
                <a href="#" class="nav-item-hold"><i class="nav-icon i-Building"></i> <span class="nav-text">Inventory</span></a> 
                <div class="triangle"></div>
             </li>
+            @endif
+
+
             <li data-item="employee_dashboard" data-submenu="true" class="nav-item" style="display: none;">
                <a href="/employee/dashboard" class="nav-item-hold"><i class="nav-icon i-Bar-Chart"></i> <span class="nav-text">Dashboard</span></a> 
                <div class="triangle"></div>
@@ -72,27 +79,44 @@
                <a href="#" class="nav-item-hold"><i class="nav-icon i-ID-2"></i> <span class="nav-text">My Profile</span></a> 
                <div class="triangle"></div>
             </li>
+
+            @if($user->hasRole('Administrator') || $user->can('view People'))
             <li data-item="EmployeeSubordinates" data-submenu="true" class="nav-item" style="display: none;"><a href="#" class="nav-item-hold"><i class="nav-icon i-Business-Mens"></i> <span class="nav-text">My Subordinates</span></a></li>
             <li data-item="People" data-submenu="true" class="nav-item">
                <a href="#" class="nav-item-hold"><i class="nav-icon i-Business-Mens"></i> <span class="nav-text">People</span></a> 
                <div class="triangle"></div>
             </li>
+            @endif
+
+            @if($user->hasRole('Administrator') || $user->can('view Workforce'))
             <li data-item="Workforce" data-submenu="true" class="nav-item">
                <a href="#" class="nav-item-hold"><i class="nav-icon i-Library"></i> <span class="nav-text">Workforce</span></a> 
                <div class="triangle"></div>
             </li>
+            @endif
+
+            @if($user->hasRole('Administrator') || $user->can('view Accounting'))
             <li data-item="Accounting" data-submenu="true" class="nav-item">
                <a href="#" class="nav-item-hold"><i class="nav-icon i-Edit-Map"></i> <span class="nav-text">Accounting</span></a> 
                <div class="triangle"></div>
             </li>
+            @endif
+
+            @if($user->hasRole('Administrator') || $user->can('view Reports'))
             <li data-item="reports" data-submenu="true" class="nav-item">
                <a href="#" class="nav-item-hold"><i class="nav-icon i-Line-Chart"></i> <span class="nav-text">Reports</span></a> 
                <div class="triangle"></div>
             </li>
+            @endif
+
+            @if($user->hasRole('Administrator') || $user->can('view Settings'))
             <li data-item="settings" data-submenu="true" class="nav-item">
                <a href="#" class="nav-item-hold"><i class="nav-icon i-Data-Settings"></i> <span class="nav-text">Settings</span></a> 
                <div class="triangle"></div>
             </li>
+            @endif
+
+            
          </ul>
       </div>
       <div class="ps__rail-x" style="left: 0px; bottom: 0px;">
@@ -299,7 +323,7 @@
                </li>
                <li class="nav-item"><a href="{{ route('branches.index') }}" class=""><i class="nav-icon i-Location-2"></i> <span class="item-name">Branches</span></a></li>
                <li class="nav-item"><a href="/users" class=""><i class="nav-icon i-Administrator"></i> <span class="item-name">Users</span></a></li>
-               <li class="nav-item"><a href="/app/settings/general/sales" class=""><i class="nav-icon i-Key"></i> <span class="item-name">Permission</span></a></li>
+               <li class="nav-item"><a href="/permission" class=""><i class="nav-icon i-Key"></i> <span class="item-name">Permission</span></a></li>
                <li class="nav-item"><a href="/app/settings/general/accounting" class=""><i class="nav-icon i-Data-Backup"></i> <span class="item-name">Back-Up Database</span></a></li>
             </ul>
             <li class="nav-item dropdown-sidemenu">

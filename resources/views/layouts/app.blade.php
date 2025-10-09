@@ -76,7 +76,7 @@
   @php
     $user = Auth::user();
   @endphp
-@if(Auth::user()->roles->contains('name', 'admin'))
+{{-- @if(Auth::user()->roles->contains('name', 'Administrator')) --}}
     @include('layouts.header')
     @include('layouts.sidebar')
 
@@ -87,12 +87,12 @@
       </div>
     </main>
     @yield('scripts')
-  @else
+  {{-- @else
     <div style="text-align:center; margin-top:100px;">
       <h2>Access Denied</h2>
       <p>You do not have permission to view this page.</p>
     </div>
-  @endif
+  @endif --}}
 
   @stack('scripts')
 </body>

@@ -12,6 +12,7 @@ use App\Http\Controllers\LoginController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\UnitController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\PermissionController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -75,6 +76,13 @@ Route::get('/categories/{id}/subcategories', [SubcategoryController::class, 'byC
 Route::get('/settings', [SystemSettingController::class, 'index'])->name('settings.index');
 Route::get('/settings/create', [SystemSettingController::class, 'create'])->name('settings.create');
 Route::post('/settings', [SystemSettingController::class, 'store'])->name('settings.store');
+
+Route::get('/permission', [PermissionController::class, 'index'])->name('permissions.index');
+Route::get('/permission/create', [PermissionController::class, 'create'])->name('permissions.create');
+Route::post('/permission', [PermissionController::class, 'store'])->name('permissions.store');
+Route::get('/permission/{role}/edit', [PermissionController::class, 'edit'])->name('permissions.edit');
+Route::put('/permission/{role}', [PermissionController::class, 'update'])->name('permissions.update');
+Route::delete('/permissions/{role}', [PermissionController::class, 'destroy'])->name('permissions.delete');
 
 Route::get('/branches', [BranchesController::class, 'index'])->name('branches.index');
 Route::post('/branches', [BranchesController::class, 'store'])->name('branches.store');

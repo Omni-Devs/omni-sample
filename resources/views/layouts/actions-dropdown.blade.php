@@ -54,7 +54,7 @@
                 @csrf
                 @method('DELETE')
                 <button type="submit" class="dropdown-item">
-                    <i class="nav-icon i-Letter-Close font-weight-bold mr-2"></i> {{ $deleteLabel ?? 'Delete' }}
+                    <i class="nav-icon i-Letter-Close font-weight-bold mr-2"></i> {{ $deleteLabel ?? 'Permanently Delete' }}
                 </button>
             </form>
         </li>
