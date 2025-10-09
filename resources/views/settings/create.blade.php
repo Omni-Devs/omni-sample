@@ -5,7 +5,7 @@
    <div>
          <div>
       <div class="breadcrumb">
-         <h1 class="mr-3">Create Product</h1>
+         <h1 class="mr-3">Create System Settings</h1>
          <ul>
             <li><a href=""> Inventory </a></li>
             <!----> <!---->
