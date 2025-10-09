@@ -357,134 +357,134 @@
                </div>
             </div>
 
+            @php
+    // compute gross for this order explicitly (per-order, not a shared var)
+    $orderGross = $order->details->sum(fn($d) => ($d->price * $d->quantity) - ($d->discount ?? 0));
+@endphp
+
             {{-- Entries Section --}}
-            <hr>
-            <div class="card">
-               <div class="card-body">
-               <h6 class="fw-bold text-center">ENTRIES</h6>
+         <div class="col-md-5 position-relative">
+    <label class="form-label">Discount</label>
 
-               <form action="{{ route('orders.store') }}" method="POST">
-                  @csrf
-                  <input type="hidden" name="order_id" value="{{ $order->id }}">
+    <input type="text" id="selectedDiscountName_{{ $order->id }}"
+           class="form-control" placeholder="Select discounts..."
+           onclick="toggleDiscountDropdown({{ $order->id }})" readonly>
 
-   <div class="col-md-5 position-relative">
-      <label class="form-label">Discount</label>
+    <div id="discountDropdown_{{ $order->id }}"
+         class="border rounded p-2 position-absolute bg-white w-100"
+         style="display:none; max-height:200px; overflow-y:auto; z-index:100;">
+        @foreach($discounts as $discount)
+            <div class="form-check">
+                <input class="form-check-input discount-checkbox-single" type="checkbox"
+                       value="{{ $discount->id }}"
+                       data-name="{{ $discount->name }}"
+                       data-value="{{ $discount->value }}"
+                       onchange="updateSelectedDiscounts({{ $order->id }})"
+                       id="discountCheck_{{ $order->id }}_{{ $discount->id }}">
+                <label class="form-check-label" for="discountCheck_{{ $order->id }}_{{ $discount->id }}">
+                    {{ $discount->name }} ({{ $discount->value }}%)
+                </label>
+            </div>
+        @endforeach
+    </div>
 
-      <!-- Input that shows selected discounts -->
-      <input type="text" id="selectedDiscountName_{{ $order->id }}" 
-            class="form-control"  placeholder="Select discounts..."
-            onclick="toggleDiscountDropdown({{ $order->id }})">
+    <input type="hidden" name="discount_ids_{{ $order->id }}" id="discountIds_{{ $order->id }}">
 
-      <!-- Dropdown list -->
-      <div id="discountDropdown_{{ $order->id }}" 
-            class="border rounded p-2 position-absolute bg-white w-100"
-            style="display:none; max-height:200px; overflow-y:auto; z-index:100;">
-         @foreach($discounts as $discount)
-         <div class="form-check">
-               <input class="form-check-input" type="checkbox" 
-                     value="{{ $discount->id }}" 
-                     data-name="{{ $discount->name }}"
-                     onchange="updateSelectedDiscounts({{ $order->id }})" 
-                     id="discountCheck_{{ $order->id }}_{{ $discount->id }}">
-               <label class="form-check-label" for="discountCheck_{{ $order->id }}_{{ $discount->id }}">
-                  {{ $discount->name }}
-               </label>
-         </div>
-         @endforeach
-      </div>
-
-      <!-- Hidden input to store selected IDs for backend -->
-      <input type="hidden" name="discount_ids_{{ $order->id }}" id="discountIds_{{ $order->id }}">
-
-      <!-- Manage Button -->
-      <button type="button" class="btn btn-outline-primary btn-sm mt-2 manage-btn"
-               onclick="toggleDiscountForm({{ $order->id }})">
-         Manage
-      </button>
+    <!-- Manage toggles the Apply Discount box only (don't call calculate here) -->
+    <button type="button" class="btn btn-outline-primary btn-sm mt-2 manage-btn"
+            onclick="toggleDiscountForm({{ $order->id }})">
+        Manage
+    </button>
+</div>
 </div>
 
-      <!-- Inline Manage Discount Form (hidden by default) -->
-      <div id="discountForm_{{ $order->id }}" class="border rounded p-3 mt-3" style="display:none;">
-   <h6 class="text-center mb-3">Apply Discount</h6>
-
-   <!-- Container for selected discounts -->
-   <div id="selectedDiscountsContainer_{{ $order->id }}"></div>
-
-   <div class="d-flex justify-content-center mt-3">
-      <button type="button" class="btn btn-danger btn-sm px-3" onclick="toggleDiscountForm({{ $order->id }})">
+      <!-- Apply Discount form (rendered by toggle) -->
+<div id="discountForm_{{ $order->id }}" class="border rounded p-3 mt-3" style="display:none;">
+    <h6 class="text-center mb-3">Apply Discount</h6>
+    <div id="selectedDiscountsContainer_{{ $order->id }}"></div>
+    <div class="d-flex justify-content-center mt-3">
+        <button type="button" class="btn btn-danger btn-sm px-3" onclick="toggleDiscountForm({{ $order->id }})">
             Close
-      </button>
-   </div>
+        </button>
+    </div>
 </div>
 
-                  <div class="row mb-2">
-                     <div class="col-md-4">
-                     <label class="form-label">Other Charges</label>
-                     <input type="number" class="form-control" name="other_charges" placeholder="Enter amount">
-                     </div>
-                     <div class="col-md-4">
-                     <label class="form-label">Charges Description</label>
-                     <input type="text" class="form-control" name="charges_description" placeholder="Description">
-                     </div>
-                  </div>
+<!-- Other Charges / Calculate -->
+<div class="row mb-2">
+    <div class="col-md-4">
+        <label class="form-label">Other Charges</label>
+        <input type="number" class="form-control" id="otherCharges_{{ $order->id }}" name="other_charges" placeholder="Enter amount">
+    </div>
+    <div class="col-md-4">
+        <label class="form-label">Charges Description</label>
+        <input type="text" class="form-control" id="chargesDescription_{{ $order->id }}" name="charges_description" placeholder="Description">
+    </div>
+</div>
 
-                  <div class="row mb-3">
+<div class="row mb-3">
    <div class="col-md-12 text-center">
+      <!-- pass the computed per-order gross explicitly (no shared $grandTotal) -->
       <button type="button" class="btn btn-success"
-              onclick="calculateChargesAndDiscounts({{ $order->id }}, {{ $grandTotal }}, {{ $order->number_pax }})">
+              onclick="calculateChargesAndDiscounts({{ $order->id }}, {{ json_encode((float)$orderGross) }}, {{ $order->number_pax }})">
          Calculate Charges and Discounts
       </button>
    </div>
 </div>
 
-                  <!-- Charges and Discounts Section -->
-<hr>
-<h6 class="fw-bold text-center">CHARGES AND DISCOUNTS</h6>
-<div class="row">
-   <div class="col-md-4">
-      <label class="form-label">SR/PWD Bill</label>
-      <input type="text" id="srPwdBill_{{ $order->id }}" class="form-control" readonly>
+<form id="billOutForm_{{ $order->id }}" 
+      action="{{ route('orders.billout', $order->id) }}" 
+      method="POST">
+   @csrf
+   <input type="hidden" name="order_id" value="{{ $order->id }}">
+   
+   <!-- CHARGES AND DISCOUNTS fields (keep your IDs) -->
+   <hr>
+   <h6 class="fw-bold text-center">CHARGES AND DISCOUNTS</h6>
+   <div class="row">
+      <div class="col-md-4">
+         <label class="form-label">SR/PWD Bill</label>
+         <input type="text" id="srPwdBill_{{ $order->id }}" class="form-control" readonly>
+      </div>
+      <div class="col-md-4">
+         <label class="form-label">Reg Bill</label>
+         <input type="text" id="regBill_{{ $order->id }}" class="form-control" readonly>
+      </div>
+      <div class="col-md-4">
+         <label class="form-label">20% Discount</label>
+         <input type="text" id="discount20_{{ $order->id }}" class="form-control" readonly>
+      </div>
    </div>
-   <div class="col-md-4">
-      <label class="form-label">Reg Bill</label>
-      <input type="text" id="regBill_{{ $order->id }}" class="form-control" readonly>
-   </div>
-   <div class="col-md-4">
-      <label class="form-label">20% Discount</label>
-      <input type="text" id="discount20_{{ $order->id }}" class="form-control" readonly>
-   </div>
-</div>
 
-<div class="row mt-2">
-   <div class="col-md-4">
-      <label class="form-label">Vatable</label>
-      <input type="text" id="vatable_{{ $order->id }}" class="form-control" readonly>
+   <div class="row mt-2">
+      <div class="col-md-4">
+         <label class="form-label">Vatable</label>
+         <input type="text" id="vatable_{{ $order->id }}" class="form-control" readonly>
+      </div>
+      <div class="col-md-4">
+         <label class="form-label">VAT 12%</label>
+         <input type="text" id="vat12_{{ $order->id }}" class="form-control" readonly>
+      </div>
+      <div class="col-md-4">
+         <label class="form-label">Net Bill</label>
+         <input type="text" id="netBill_{{ $order->id }}" class="form-control" readonly>
+      </div>
    </div>
-   <div class="col-md-4">
-      <label class="form-label">VAT 12%</label>
-      <input type="text" id="vat12_{{ $order->id }}" class="form-control" readonly>
-   </div>
-   <div class="col-md-4">
-      <label class="form-label">Net Bill</label>
-      <input type="text" id="netBill_{{ $order->id }}" class="form-control" readonly>
-   </div>
-</div>
 
-<div class="row mt-2">
-   <div class="col-md-4">
-      <label class="form-label">Other Discount</label>
-      <input type="text" id="otherDiscount_{{ $order->id }}" class="form-control" readonly>
+   <div class="row mt-2">
+      <div class="col-md-4">
+         <label class="form-label">Other Discount</label>
+         <input type="text" id="otherDiscount_{{ $order->id }}" class="form-control" readonly>
+      </div>
+      <div class="col-md-8">
+         <label class="form-label fw-bold">TOTAL CHARGE</label>
+         <input type="text" id="totalCharge_{{ $order->id }}" class="form-control fw-bold text-success" readonly>
+      </div>
    </div>
-   <div class="col-md-8">
-      <label class="form-label fw-bold">TOTAL CHARGE</label>
-      <input type="text" id="totalCharge_{{ $order->id }}" class="form-control fw-bold text-success" readonly>
-   </div>
-</div>
 
                   {{-- Modal Footer (Submit inside form now) --}}
                   <div class="modal-footer">
                      <button type="button8" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                     <button type="submit" class="btn btn-primary">Confirm Bill Out</button>
+                     <button type="button" class="btn btn-primary" onclick="confirmBillOut({{ $order->id }})">Confirm Bill Out</button>
                   </div>
                </form>
 
@@ -499,121 +499,271 @@
 @endforeach
 
    <script>
-
-   // Function to calculate charges and discounts
-   function calculateChargesAndDiscounts(orderId, grossAmount, pax) {
+function calculateChargesAndDiscounts(orderId, grossAmount, pax) {
       const vatRate = 0.12;
-      let srPwdBill = 0, regBill = 0, discount20 = 0, vatable = 0, vat12 = 0, netBill = 0, totalCharge = 0;
 
-      // Check if PWD or Senior is selected
-      const selectedDiscounts = document.getElementById("discountIds_" + orderId).value.split(",");
-      const hasSrPwd = selectedDiscounts.some(id => {
+      // Safety/coerce
+      grossAmount = parseFloat(grossAmount) || 0;
+      pax = parseInt(pax) || 1;
+      if (pax <= 0) pax = 1;
+
+      // Selected discount IDs (guard empty values)
+      const hidden = document.getElementById("discountIds_" + orderId);
+      const selectedIds = hidden && hidden.value
+         ? hidden.value.split(',').map(s => s.trim()).filter(Boolean)
+         : [];
+
+      const perPaxGross = grossAmount / pax;                 // e.g. 500 / 2 = 250
+      const basePerPax = perPaxGross / (1 + vatRate);       // remove VAT e.g. 223.21
+
+      // Totals to compute
+      let qualifiedCount = 0;           // number of pax with SR/PWD
+      let totalDiscountAmount = 0;      // sum discount (money)
+      // If you support multiple different SR/PWD discounts, compute each individually
+      selectedIds.forEach(id => {
          const chk = document.getElementById(`discountCheck_${orderId}_${id}`);
-         return chk && (chk.dataset.name.toLowerCase().includes("pwd") || chk.dataset.name.toLowerCase().includes("senior"));
+         if (!chk) return;
+
+         const name = (chk.dataset.name || '').toLowerCase();
+         const valuePct = parseFloat(chk.dataset.value || 0); // e.g. 20
+
+         // Only treat 'senior' or 'pwd' as SR/PWD discounts
+         if (name.includes('senior') || name.includes('pwd')) {
+               // try to read the discount count input created in the Manage form
+               let count = 0;
+               const countInput = document.getElementById(`discountCount_${orderId}_${id}`);
+               if (countInput) {
+                  count = parseInt(countInput.value) || 0;
+               } else {
+                  // fallback: count person rows if the count control not present
+                  const personsContainer = document.getElementById(`discountPersons_${orderId}_${id}`);
+                  if (personsContainer) {
+                     // count rows (each person row is a direct .row child)
+                     count = personsContainer.querySelectorAll('.row').length || 0;
+                  }
+               }
+
+               if (count > 0) {
+                  qualifiedCount += count;
+                  // discount per pax for this discount id
+                  const discountPerPax = basePerPax * (valuePct / 100);
+                  totalDiscountAmount += discountPerPax * count;
+               }
+         }
       });
 
-      if (hasSrPwd) {
-         // If SR/PWD Discount applies
-         srPwdBill = (grossAmount / pax); // per pax bill
-         regBill = grossAmount - srPwdBill;
+      // Clamp qualifiedCount to pax (can't discount more pax than exist)
+      qualifiedCount = Math.min(qualifiedCount, pax);
 
-         discount20 = (regBill / 1.12) * 0.2;
-         netBill = (regBill / 1.12) - discount20;
+      // Vatable base for the whole order (sum of base per pax for all pax)
+      const totalVatable = basePerPax * pax;
+      const totalVat12 = grossAmount - totalVatable; // VAT portion of the original gross
 
-         vatable = regBill / 1.12;
-         vat12 = regBill - vatable;
-         totalCharge = netBill;
-      } else {
-         // No SR/PWD
-         regBill = grossAmount;
-         discount20 = grossAmount * 0.2; // Example if other discounts apply
-         vatable = grossAmount / 1.12;
-         vat12 = grossAmount - vatable;
-         netBill = vatable - discount20;
-         totalCharge = netBill;
+      // Compute final charges:
+      // - qualified pax pay (basePerPax - discountPerPax) each (no VAT added)
+      // - unqualified pax pay perPaxGross each (VAT-inclusive)
+      const qualifiedNetTotal = (basePerPax * qualifiedCount) - totalDiscountAmount;
+      const nonQualifiedCount = pax - qualifiedCount;
+      const nonQualifiedTotal = perPaxGross * nonQualifiedCount;
+      const totalCharge = qualifiedNetTotal + nonQualifiedTotal;
+
+      // Provide values to the UI (keep earlier field names)
+      // sr/pwd bill (per pax gross)
+      const srPwdBillValue = perPaxGross;
+      const regBillValue = grossAmount;
+      const discountValue = totalDiscountAmount;
+      const vatableValue = totalVatable;
+      const vat12Value = totalVat12;
+      const netBillValue = totalCharge; // final payable after discounts
+      const otherDiscountValue = 0.00; // placeholder (you can read any other inputs if present)
+
+      // Update the DOM safely (check element existence)
+      const setVal = (id, val) => {
+         const el = document.getElementById(id + '_' + orderId);
+         if (el) el.value = Number(val || 0).toFixed(2);
+      };
+
+      setVal('srPwdBill', srPwdBillValue);
+      setVal('regBill', regBillValue);
+      setVal('discount20', discountValue);
+      setVal('vatable', vatableValue);
+      setVal('vat12', vat12Value);
+      setVal('netBill', netBillValue);
+      setVal('otherDiscount', otherDiscountValue);
+      setVal('totalCharge', totalCharge);
+
+      // Optionally: display per-pax net when there are qualified entries
+      // e.g. "₱178.57 per pax (qualified) — total for qualified: ₱178.57 × q"
+      const perPaxNetEl = document.getElementById('perPaxNet_' + orderId);
+      if (perPaxNetEl) {
+         if (qualifiedCount > 0) {
+               const discountPerPax = totalDiscountAmount / qualifiedCount;
+               const netPerQualifiedPax = basePerPax - discountPerPax;
+               perPaxNetEl.textContent = `Qualified per pax: ₱${netPerQualifiedPax.toFixed(2)} (x${qualifiedCount})`;
+         } else {
+               perPaxNetEl.textContent = '';
+         }
       }
-
-      // Update UI
-      document.getElementById("srPwdBill_" + orderId).value = srPwdBill.toFixed(2);
-      document.getElementById("regBill_" + orderId).value = regBill.toFixed(2);
-      document.getElementById("discount20_" + orderId).value = discount20.toFixed(2);
-      document.getElementById("vatable_" + orderId).value = vatable.toFixed(2);
-      document.getElementById("vat12_" + orderId).value = vat12.toFixed(2);
-      document.getElementById("netBill_" + orderId).value = netBill.toFixed(2);
-      document.getElementById("otherDiscount_" + orderId).value = "0.00"; // placeholder
-      document.getElementById("totalCharge_" + orderId).value = totalCharge.toFixed(2);
    }
 
-
+/* toggleDiscountForm: builds the per-discount blocks with count inputs */
 function toggleDiscountForm(orderId) {
-      const form = document.getElementById('discountForm_' + orderId);
-      const hidden = document.getElementById('discountIds_' + orderId);
-      const selectedIds = hidden.value ? hidden.value.split(',') : [];
+    const hidden = document.getElementById('discountIds_' + orderId);
+    const selectedIds = hidden && hidden.value
+        ? hidden.value.split(',').map(s => s.trim()).filter(Boolean)
+        : [];
 
-      if (!selectedIds.length) {
-         alert('Please select at least one discount first.');
-         return;
-      }
+    if (!selectedIds.length) {
+        alert('Please select at least one discount first.');
+        return;
+    }
 
-      const container = document.getElementById('selectedDiscountsContainer_' + orderId);
-      container.innerHTML = ''; // clear old contents
+    const container = document.getElementById('selectedDiscountsContainer_' + orderId);
+    container.innerHTML = '';
 
-      selectedIds.forEach((id, idx) => {
-         const checkbox = document.getElementById(`discountCheck_${orderId}_${id}`);
-         if (!checkbox) return;
+    selectedIds.forEach(id => {
+        const chk = document.getElementById(`discountCheck_${orderId}_${id}`);
+        if (!chk) return;
+        const discountName = chk.dataset.name || 'Discount';
+        const valuePct = chk.dataset.value || '0';
 
-         const discountName = checkbox.dataset.name;
+        // Build block (count + person rows)
+        const block = document.createElement('div');
+        block.className = 'mb-4 p-2 border rounded';
+        block.innerHTML = `
+            <h6 class="fw-bold">${discountName} (${valuePct}%)</h6>
+            <div class="form-group mb-2 d-flex align-items-center">
+                <label class="me-2"># of Entries</label>
+                <input type="number"
+                       id="discountCount_${orderId}_${id}"
+                       class="form-control"
+                       style="width:100px" min="1" value="1"
+                       oninput="renderDiscountPersons(${orderId}, ${id})">
+            </div>
+            <div id="discountPersons_${orderId}_${id}">
+                <div class="row mb-2">
+                    <div class="col-md-6">
+                        <input type="text" name="persons[${id}][0][name]" class="form-control" placeholder="Enter name here">
+                    </div>
+                    <div class="col-md-6">
+                        <input type="text" name="persons[${id}][0][id_number]" class="form-control" placeholder="Enter ID number here">
+                    </div>
+                </div>
+            </div>
+        `;
+        container.appendChild(block);
+    });
 
-         // Create discount block
-         const block = document.createElement('div');
-         block.classList.add('mb-4', 'p-2', 'border', 'rounded');
-         block.innerHTML = `
-               <h6 class="fw-bold">${discountName}</h6>
-               <div class="form-group mb-2 d-flex align-items-center">
-                  <label class="me-2"># of Entries</label>
-                  <input type="number" 
-                        id="discountCount_${orderId}_${id}" 
-                        class="form-control" 
-                        style="width:100px" min="1" value="1"
-                        oninput="renderDiscountPersons(${orderId}, ${id})">
-               </div>
-               <div id="discountPersons_${orderId}_${id}">
-                  <div class="row mb-2">
-                     <div class="col-md-6">
-                           <input type="text" name="persons[${id}][0][name]" class="form-control" placeholder="Enter name here">
-                     </div>
-                     <div class="col-md-6">
-                           <input type="text" name="persons[${id}][0][id_number]" class="form-control" placeholder="Enter ID number here">
-                     </div>
-                  </div>
-               </div>
-         `;
-         container.appendChild(block);
-      });
+    const form = document.getElementById('discountForm_' + orderId);
+    form.style.display = form.style.display === 'block' ? 'none' : 'block';
+}
 
-      // Toggle form display
-      form.style.display = form.style.display === 'block' ? 'none' : 'block';
+   // function confirmBillOut(orderId) {
+   //    const form = document.getElementById('billOutForm_' + orderId);
+   //    const formData = new FormData(form);
+
+   //    // Include computed discount fields
+   //    const fields = [
+   //       'srPwdBill', 'discount20', 'otherDiscount',
+   //       'netBill', 'vatable', 'vat12', 'totalCharge'
+   //    ];
+
+   //    fields.forEach(f => {
+   //       const el = document.getElementById(f + '_' + orderId);
+   //       if (el) formData.append(f, el.value);
+   //    });
+
+   //    fetch(form.action, {
+   //       method: 'POST',
+   //       headers: {
+   //             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+   //       },
+   //       body: formData
+   //    })
+   //    .then(res => res.json())
+   //    .then(data => {
+   //       if (data.success) {
+   //             alert('✅ Bill saved successfully!');
+   //             document.getElementById('totalCharge_' + orderId).value = data.order.total_charge;
+   //       } else {
+   //             alert('⚠️ Failed to save bill: ' + (data.message || 'Unknown error'));
+   //       }
+   //    })
+   //    .catch(err => {
+   //       console.error(err);
+   //       alert('❌ Error saving bill.');
+   //    });
+   // }
+
+   function confirmBillOut(orderId) {
+    const form = document.getElementById('billOutForm_' + orderId);
+    const formData = new FormData(form);
+
+    // Include computed discount fields
+    const fields = [
+        'srPwdBill', 'discount20', 'otherDiscount',
+        'netBill', 'vatable', 'vat12', 'totalCharge'
+    ];
+    fields.forEach(f => {
+        const el = document.getElementById(f + '_' + orderId);
+        if (el) formData.append(f, el.value);
+    });
+
+    // Collect discount persons
+    const personsData = [];
+    document.querySelectorAll(`#selectedDiscountsContainer_${orderId} input[name^="persons"]`).forEach(input => {
+        const match = input.name.match(/persons\[(\d+)\]\[(\d+)\]\[(name|id_number)\]/);
+        if (match) {
+            const discountId = match[1];
+            const index = match[2];
+            const key = match[3];
+            if (!personsData[index]) personsData[index] = { discount_id: discountId };
+            personsData[index][key] = input.value;
+        }
+    });
+
+    formData.append('persons', JSON.stringify(personsData));
+
+    fetch(form.action, {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        },
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            alert('✅ Bill saved successfully!');
+            document.getElementById('totalCharge_' + orderId).value = data.order.total_charge;
+        } else {
+            alert('⚠️ Failed to save bill: ' + (data.message || 'Unknown error'));
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        alert('❌ Error saving bill.');
+    });
 }
 
    function renderDiscountPersons(orderId, discountId) {
-      const count = parseInt(document.getElementById(`discountCount_${orderId}_${discountId}`).value) || 0;
-      const container = document.getElementById(`discountPersons_${orderId}_${discountId}`);
-      container.innerHTML = "";
-
-      for (let i = 0; i < count; i++) {
-         const row = document.createElement('div');
-         row.classList.add('row', 'mb-2');
-         row.innerHTML = `
-               <div class="col-md-6">
-                  <input type="text" name="persons[${discountId}][${i}][name]" class="form-control" placeholder="Enter name here">
-               </div>
-               <div class="col-md-6">
-                  <input type="text" name="persons[${discountId}][${i}][id_number]" class="form-control" placeholder="Enter ID number here">
-               </div>
-         `;
-         container.appendChild(row);
-      }
-   }
+    const count = parseInt(document.getElementById(`discountCount_${orderId}_${discountId}`).value) || 0;
+    const container = document.getElementById(`discountPersons_${orderId}_${discountId}`);
+    container.innerHTML = '';
+    for (let i = 0; i < count; i++) {
+        const row = document.createElement('div');
+        row.className = 'row mb-2';
+        row.innerHTML = `
+            <div class="col-md-6">
+                <input type="text" name="persons[${discountId}][${i}][name]" class="form-control" placeholder="Enter name here">
+            </div>
+            <div class="col-md-6">
+                <input type="text" name="persons[${discountId}][${i}][id_number]" class="form-control" placeholder="Enter ID number here">
+            </div>
+        `;
+        container.appendChild(row);
+    }
+}
    </script>
 
    <script>
@@ -623,22 +773,18 @@ function toggleDiscountForm(orderId) {
    }
 
    function updateSelectedDiscounts(orderId) {
-      const dropdown = document.getElementById('discountDropdown_' + orderId);
-      const input = document.getElementById('selectedDiscountName_' + orderId);
-      const hidden = document.getElementById('discountIds_' + orderId);
+    const dropdown = document.getElementById('discountDropdown_' + orderId);
+    const input = document.getElementById('selectedDiscountName_' + orderId);
+    const hidden = document.getElementById('discountIds_' + orderId);
 
-      // Get all checked options
-      const checked = dropdown.querySelectorAll('input[type="checkbox"]:checked');
-      const names = Array.from(checked).map(chk => chk.dataset.name);
-      const ids = Array.from(checked).map(chk => chk.value);
+    const checked = dropdown.querySelectorAll('input[type="checkbox"]:checked');
+    const names = Array.from(checked).map(chk => chk.dataset.name);
+    const ids = Array.from(checked).map(chk => chk.value);
 
-      // Display selected names in input field
-      input.value = names.join(', ');
-
-      // Store selected IDs for backend submission
-      hidden.value = ids.join(',');
-   }
-   </script>
+    input.value = names.join(', ');
+    hidden.value = ids.join(',');
+}
+</script>
 
                </div>
                <!----> 

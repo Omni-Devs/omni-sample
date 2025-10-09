@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Component;
 use App\Models\Category;
 use App\Models\Discount;
+use App\Models\DiscountEntry;
 use App\Models\Product;
 use App\Models\Order;
 use App\Models\User;
@@ -173,5 +174,72 @@ class OrderController extends Controller
         'message'  => 'Order created successfully!',
         'redirect' => route('orders.index')
     ]);
+    }
+
+    public function billout(Request $request, $orderId)
+    {
+        // $order = Order::findOrFail($orderId);
+
+        // $validated = $request->validate([
+        //     'srPwdBill'      => 'nullable|numeric',
+        //     'discount20'     => 'nullable|numeric',
+        //     'otherDiscount'  => 'nullable|numeric',
+        //     'netBill'        => 'nullable|numeric',
+        //     'vatable'        => 'nullable|numeric',
+        //     'vat12'          => 'nullable|numeric',
+        //     'totalCharge'    => 'nullable|numeric',
+        // ]);
+
+        // // Save computed values into your actual database columns
+        // $order->update([
+        //     'sr_pwd_discount'  => $validated['discount20'] ?? 0,
+        //     'other_discounts'  => $validated['otherDiscount'] ?? 0,
+        //     'net_amount'       => $validated['netBill'] ?? 0,
+        //     'vatable'          => $validated['vatable'] ?? 0,
+        //     'vat_12'           => $validated['vat12'] ?? 0,
+        //     'total_charge'     => $validated['totalCharge'] ?? 0,
+        //     'discount_total'   => ($validated['discount20'] ?? 0) + ($validated['otherDiscount'] ?? 0),
+        //     'charges_description' => 'Auto-calculated billout data.',
+        // ]);
+
+        // return response()->json([
+        //     'success' => true,
+        //     'order' => $order,
+        // ]);
+
+        $order = Order::findOrFail($orderId);
+
+        // Update order with computed totals
+        $order->update([
+            'gross_amount' => $request->input('gross_amount', 0),
+            'sr_pwd_discount' => $request->input('discount20', 0),
+            'other_discounts' => $request->input('otherDiscount', 0),
+            'net_amount' => $request->input('netBill', 0),
+            'vatable' => $request->input('vatable', 0),
+            'vat_12' => $request->input('vat12', 0),
+            'total_charge' => $request->input('totalCharge', 0),
+            'charges_description' => $request->input('charges_description'),
+        ]);
+
+        // Save discount entries
+        if ($request->filled('persons')) {
+            $persons = json_decode($request->persons, true);
+
+            foreach ($persons as $person) {
+                if (!empty($person['discount_id']) && !empty($person['name'])) {
+                    DiscountEntry::create([
+                        'order_id' => $order->id,
+                        'discount_id' => $person['discount_id'],
+                        'person_name' => $person['name'] ?? null,
+                        'person_id_number' => $person['id_number'] ?? null,
+                    ]);
+                }
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'order' => $order
+        ]);
     }
 }

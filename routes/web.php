@@ -29,6 +29,7 @@ use App\Http\Controllers\OrderController;
 Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
 Route::get('/order/create', [OrderController::class, 'create'])->name('orders.create');
 Route::post('/orders/store', [OrderController::class, 'store'])->name('orders.store');
+Route::post('/orders/{order}/billout', [OrderController::class, 'billout'])->name('orders.billout');
 
 Route::get('/login', [LoginController::class, 'index'])->name('login');
 Route::post('/login', [LoginController::class, 'login'])->name('login.submit');
@@ -40,8 +41,6 @@ Route::post('/users', [UserController::class, 'store'])->name('users.store');
 Route::get('/users/{id}/profile', [UserController::class, 'viewProfile'])->name('users.profile');
 Route::put('/users/{user}/archive', [UserController::class, 'archive'])->name('users.archive');
 Route::put('/users/{user}/restore', [UserController::class, 'restore'])->name('users.restore');
-
-
 
 Route::get('/products', [ProductController::class, 'index'])->name('products.index');
 Route::get('/products/create', [ProductController::class, 'create'])->name('products.create');
