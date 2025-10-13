@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Component;
-use App\Models\Category;
 use App\Models\Discount;
 use App\Models\DiscountEntry;
 use App\Models\Product;
@@ -13,14 +12,29 @@ use Illuminate\Http\Request;
 
 class OrderController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        // Get all orders with details and user
-        $orders = Order::with(['details.product', 'user'])->get();
+        // Default to 'serving' tab
+        $status = $request->query('status', 'serving');
 
-        $discounts = Discount::where('status', 'active')->get();
+        // Allow only specific statuses
+        $allowedStatuses = ['serving', 'billout', 'payment'];
+        if (!in_array($status, $allowedStatuses)) {
+            $status = 'serving';
+        }
 
-        return view('orders.index', compact('orders', 'discounts'));
+        // Fetch orders filtered by status
+        $orders = Order::with(['details.product', 'user'])
+            ->when($status === 'serving', fn($q) => $q->where('status', 'serving'))
+            ->when($status === 'billout', fn($q) => $q->where('status', 'billout'))
+            ->when($status === 'payment', fn($q) => $q->where('status', 'payment'))
+            ->orderByDesc('created_at')
+            ->get();
+
+        // Load active discounts
+        $discounts = Discount::where('status', 'active')->orderBy('name')->get();
+
+        return view('orders.index', compact('orders', 'discounts', 'status'));
     }
 
     public function create()
@@ -219,6 +233,7 @@ class OrderController extends Controller
             'vat_12' => $request->input('vat12', 0),
             'total_charge' => $request->input('totalCharge', 0),
             'charges_description' => $request->input('charges_description'),
+            'status'           => 'billout', // ✅ change order status,
         ]);
 
         // Save discount entries

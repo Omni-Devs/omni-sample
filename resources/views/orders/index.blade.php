@@ -19,16 +19,24 @@
          <!----><!---->
          <nav class="card-header">
             <ul class="nav nav-tabs card-header-tabs">
-               <li class="nav-item"><a href="#" target="_self" class="nav-link active">
-                  Serving
+               <li class="nav-item">
+                  <a href="{{ route('orders.index', ['status' => 'serving']) }}" 
+                     class="nav-link {{ $status === 'serving' ? 'active' : '' }}">
+                     Serving
                   </a>
                </li>
-               <li class="nav-item"><a href="#" target="_self" class="nav-link">
-                  Bill-Out
+
+               <li class="nav-item">
+                  <a href="{{ route('orders.index', ['status' => 'billout']) }}" 
+                     class="nav-link {{ $status === 'billout' ? 'active' : '' }}">
+                     Bill Out
                   </a>
                </li>
-               <li class="nav-item"><a href="#" target="_self" class="nav-link">
-                 Payment
+
+               <li class="nav-item">
+                  <a href="{{ route('orders.index', ['status' => 'payment']) }}"
+                     class="nav-link {{ $status === 'payment' ? 'active' : '' }}">
+                     Payment
                   </a>
                </li>
             </ul>
@@ -64,62 +72,6 @@
                                  <li role="presentation" style="width: 220px;">
                                     <form tabindex="-1" class="b-dropdown-form p-0">
                                        <section class="ps-container ps">
-                                          <div class="px-4" style="max-height: 400px;">
-                                             <ul class="list-unstyled">
-                                                <li>
-                                                   <div class="my-1 custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" value="true" id="__BVID__248"><label class="custom-control-label" for="__BVID__248">Type</label></div>
-                                                </li>
-                                                <li>
-                                                   <div class="my-1 custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" value="true" id="__BVID__249"><label class="custom-control-label" for="__BVID__249">Sub-Type</label></div>
-                                                </li>
-                                                <li>
-                                                   <div class="my-1 custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" value="true" id="__BVID__250"><label class="custom-control-label" for="__BVID__250">Image</label></div>
-                                                </li>
-                                                <li>
-                                                   <div class="my-1 custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" value="true" id="__BVID__251"><label class="custom-control-label" for="__BVID__251">Date and Time Created</label></div>
-                                                </li>
-                                                <li>
-                                                   <div class="my-1 custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" value="true" id="__BVID__252"><label class="custom-control-label" for="__BVID__252">Created By</label></div>
-                                                </li>
-                                                <li>
-                                                   <div class="my-1 custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" value="true" id="__BVID__253"><label class="custom-control-label" for="__BVID__253">Product Name</label></div>
-                                                </li>
-                                                <li>
-                                                   <div class="my-1 custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" value="true" id="__BVID__254"><label class="custom-control-label" for="__BVID__254">SKU(Product Code)</label></div>
-                                                </li>
-                                                <li>
-                                                   <div class="my-1 custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" value="true" id="__BVID__255"><label class="custom-control-label" for="__BVID__255">Description</label></div>
-                                                </li>
-                                                <li>
-                                                   <div class="my-1 custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" value="true" id="__BVID__256"><label class="custom-control-label" for="__BVID__256">Abbreviation</label></div>
-                                                </li>
-                                                <li>
-                                                   <div class="my-1 custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" value="true" id="__BVID__257"><label class="custom-control-label" for="__BVID__257">Category</label></div>
-                                                </li>
-                                                <li>
-                                                   <div class="my-1 custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" value="true" id="__BVID__258"><label class="custom-control-label" for="__BVID__258">Brand</label></div>
-                                                </li>
-                                                <li>
-                                                   <div class="my-1 custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" value="true" id="__BVID__259"><label class="custom-control-label" for="__BVID__259">Average Cost per Unit</label></div>
-                                                </li>
-                                                <li>
-                                                   <div class="my-1 custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" value="true" id="__BVID__260"><label class="custom-control-label" for="__BVID__260">SRP</label></div>
-                                                </li>
-                                                <li>
-                                                   <div class="my-1 custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" value="true" id="__BVID__261"><label class="custom-control-label" for="__BVID__261">Unit</label></div>
-                                                </li>
-                                                <li>
-                                                   <div class="my-1 custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" value="true" id="__BVID__262"><label class="custom-control-label" for="__BVID__262">Quantity</label></div>
-                                                </li>
-                                                <li>
-                                                   <div class="my-1 custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" value="true" id="__BVID__263"><label class="custom-control-label" for="__BVID__263">Stock Alert</label></div>
-                                                </li>
-                                                <li>
-                                                   <div class="my-1 custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" value="true" id="__BVID__264"><label class="custom-control-label" for="__BVID__264">Action</label></div>
-                                                </li>
-                                                <li><button type="button" class="btn mt-2 mb-3 btn-primary btn-sm">Save</button></li>
-                                             </ul>
-                                          </div>
                                           <div class="ps__rail-x" style="left: 0px; bottom: 0px;">
                                              <div class="ps__thumb-x" tabindex="0" style="left: 0px; width: 0px;"></div>
                                           </div>
@@ -172,7 +124,7 @@
                         </colgroup>
                         <thead style="min-width: auto; width: auto;">
                            <tr>
-                            <th scope="col" class="vgt-left-align text-left sortable">
+                              <th scope="col" class="vgt-left-align text-left sortable">
                                  <span>Show Details</span>
                               </th>
                               <th scope="col" class="vgt-left-align text-left sortable">
@@ -218,20 +170,26 @@
       <td class="text-left">{{ $order->table_no }}</td>
       <td class="text-left">{{ $order->number_pax }}</td>
       <td class="text-left">{{ ucfirst($order->status) }}</td>
-      <td class="text-left">
+      <td class="text-left" id="amount_{{ $order->id }}">
+      <td class="text-left fw-bold {{ $order->status === 'billout' ? 'text-success' : '' }}">
          @php 
             $grandTotal = 0; 
             $totalItems = 0;
+
+            foreach ($order->details as $detail) {
+                  $lineTotal = $detail->quantity * $detail->price; 
+                  $grandTotal += $lineTotal; 
+                  $totalItems += $detail->quantity;
+            }
+
+            if ($order->status === 'billout') {
+                  $displayTotal = $order->total_charge ?? $grandTotal;
+            } else {
+                  $displayTotal = $grandTotal;
+            }
          @endphp
 
-         @foreach($order->details as $detail)
-            @php 
-               $lineTotal = $detail->quantity * $detail->price; 
-               $grandTotal += $lineTotal; 
-               $totalItems += $detail->quantity;
-            @endphp
-         @endforeach
-         ₱{{ number_format($grandTotal, 2) }}
+         ₱{{ number_format($displayTotal, 2) }}
       </td>
       {{-- Actions --}}
       <td class="text-right">
@@ -363,7 +321,7 @@
 @endphp
 
             {{-- Entries Section --}}
-         <div class="col-md-5 position-relative">
+   <div class="col-md-5 position-relative">
     <label class="form-label">Discount</label>
 
     <input type="text" id="selectedDiscountName_{{ $order->id }}"
@@ -411,11 +369,11 @@
 
 <!-- Other Charges / Calculate -->
 <div class="row mb-2">
-    <div class="col-md-4">
+    <div class="col-md-4 mt-3">
         <label class="form-label">Other Charges</label>
         <input type="number" class="form-control" id="otherCharges_{{ $order->id }}" name="other_charges" placeholder="Enter amount">
     </div>
-    <div class="col-md-4">
+    <div class="col-md-4 mt-3">
         <label class="form-label">Charges Description</label>
         <input type="text" class="form-control" id="chargesDescription_{{ $order->id }}" name="charges_description" placeholder="Description">
     </div>
@@ -499,114 +457,377 @@
 @endforeach
 
    <script>
+// function calculateChargesAndDiscounts(orderId, grossAmount, pax) {
+//     const vatRate = 0.12;
+
+//     // Safety/coerce
+//     grossAmount = parseFloat(grossAmount) || 0;
+//     pax = parseInt(pax) || 1;
+//     if (pax <= 0) pax = 1;
+
+//     // Selected discount IDs
+//     const hidden = document.getElementById("discountIds_" + orderId);
+//     const selectedIds = hidden && hidden.value
+//         ? hidden.value.split(',').map(s => s.trim()).filter(Boolean)
+//         : [];
+
+//     const perPaxGross = grossAmount / pax;           // e.g. 1000 / 5 = 200
+//     const basePerPax = perPaxGross / (1 + vatRate);  // remove VAT e.g. 178.57
+
+//     // Totals
+//     let qualifiedCount = 0;
+//     let totalDiscountAmount = 0;
+
+//     selectedIds.forEach(id => {
+//         const chk = document.getElementById(`discountCheck_${orderId}_${id}`);
+//         if (!chk) return;
+
+//         const name = (chk.dataset.name || '').toLowerCase();
+//         const valuePct = parseFloat(chk.dataset.value || 0); // e.g. 20
+
+//         if (name.includes('senior') || name.includes('pwd')) {
+//             // Try to read discount count input
+//             let count = 0;
+//             const countInput = document.getElementById(`discountCount_${orderId}_${id}`);
+//             if (countInput) {
+//                 count = parseInt(countInput.value) || 0;
+//             } else {
+//                 const personsContainer = document.getElementById(`discountPersons_${orderId}_${id}`);
+//                 if (personsContainer) {
+//                     count = personsContainer.querySelectorAll('.row').length || 0;
+//                 }
+//             }
+
+//             if (count > 0) {
+//                 qualifiedCount += count;
+//                 const discountPerPax = basePerPax * (valuePct / 100);
+//                 totalDiscountAmount += discountPerPax * count;
+//             }
+//         }
+//     });
+
+//     // Clamp qualifiedCount (cannot exceed pax)
+//     qualifiedCount = Math.min(qualifiedCount, pax);
+
+//     // Vatable / VAT portion
+//     const totalVatable = basePerPax * pax;
+//     const totalVat12 = grossAmount - totalVatable;
+
+//     // Compute total charge (net)
+//     const qualifiedNetTotal = (basePerPax * qualifiedCount) - totalDiscountAmount;
+//     const nonQualifiedCount = pax - qualifiedCount;
+//     const nonQualifiedTotal = perPaxGross * nonQualifiedCount;
+//     const totalCharge = qualifiedNetTotal + nonQualifiedTotal;
+
+//     // 🧮 Correct SR/PWD Bill — total for all discounted pax
+//     const srPwdBillValue = perPaxGross * qualifiedCount;
+
+//     // Others
+//     const regBillValue = grossAmount;
+//     const discountValue = totalDiscountAmount;
+//     const vatableValue = totalVatable;
+//     const vat12Value = totalVat12;
+//     const netBillValue = totalCharge;
+//     const otherDiscountValue = 0.00;
+
+//     // Update UI fields
+//     const setVal = (id, val) => {
+//         const el = document.getElementById(id + '_' + orderId);
+//         if (el) el.value = Number(val || 0).toFixed(2);
+//     };
+
+//     setVal('srPwdBill', srPwdBillValue);
+//     setVal('regBill', regBillValue);
+//     setVal('discount20', discountValue);
+//     setVal('vatable', vatableValue);
+//     setVal('vat12', vat12Value);
+//     setVal('netBill', netBillValue);
+//     setVal('otherDiscount', otherDiscountValue);
+//     setVal('totalCharge', totalCharge);
+
+//     // Optional display for per-pax info
+//     const perPaxNetEl = document.getElementById('perPaxNet_' + orderId);
+//     if (perPaxNetEl) {
+//         if (qualifiedCount > 0) {
+//             const discountPerPax = totalDiscountAmount / qualifiedCount;
+//             const netPerQualifiedPax = basePerPax - discountPerPax;
+//             perPaxNetEl.textContent = `Qualified per pax: ₱${netPerQualifiedPax.toFixed(2)} (x${qualifiedCount})`;
+//         } else {
+//             perPaxNetEl.textContent = '';
+//         }
+//     }
+// }
+
 function calculateChargesAndDiscounts(orderId, grossAmount, pax) {
-      const vatRate = 0.12;
+    const vatRate = 0.12;
 
-      // Safety/coerce
-      grossAmount = parseFloat(grossAmount) || 0;
-      pax = parseInt(pax) || 1;
-      if (pax <= 0) pax = 1;
+    // Safety/coerce
+    grossAmount = parseFloat(grossAmount) || 0;
+    pax = parseInt(pax) || 1;
+    if (pax <= 0) pax = 1;
 
-      // Selected discount IDs (guard empty values)
-      const hidden = document.getElementById("discountIds_" + orderId);
-      const selectedIds = hidden && hidden.value
-         ? hidden.value.split(',').map(s => s.trim()).filter(Boolean)
-         : [];
+    // Selected discounts
+    const hidden = document.getElementById("discountIds_" + orderId);
+    const selectedIds = hidden && hidden.value
+        ? hidden.value.split(',').map(s => s.trim()).filter(Boolean)
+        : [];
 
-      const perPaxGross = grossAmount / pax;                 // e.g. 500 / 2 = 250
-      const basePerPax = perPaxGross / (1 + vatRate);       // remove VAT e.g. 223.21
+    let qualifiedCount = 0;
+    let discountPercent = 0;
+    let otherDiscountTotal = 0;
 
-      // Totals to compute
-      let qualifiedCount = 0;           // number of pax with SR/PWD
-      let totalDiscountAmount = 0;      // sum discount (money)
-      // If you support multiple different SR/PWD discounts, compute each individually
-      selectedIds.forEach(id => {
-         const chk = document.getElementById(`discountCheck_${orderId}_${id}`);
-         if (!chk) return;
+    selectedIds.forEach(id => {
+        const chk = document.getElementById(`discountCheck_${orderId}_${id}`);
+        if (!chk) return;
 
-         const name = (chk.dataset.name || '').toLowerCase();
-         const valuePct = parseFloat(chk.dataset.value || 0); // e.g. 20
+        const name = (chk.dataset.name || '').toLowerCase();
+        const valuePct = parseFloat(chk.dataset.value || 0);
 
-         // Only treat 'senior' or 'pwd' as SR/PWD discounts
-         if (name.includes('senior') || name.includes('pwd')) {
-               // try to read the discount count input created in the Manage form
-               let count = 0;
-               const countInput = document.getElementById(`discountCount_${orderId}_${id}`);
-               if (countInput) {
-                  count = parseInt(countInput.value) || 0;
-               } else {
-                  // fallback: count person rows if the count control not present
-                  const personsContainer = document.getElementById(`discountPersons_${orderId}_${id}`);
-                  if (personsContainer) {
-                     // count rows (each person row is a direct .row child)
-                     count = personsContainer.querySelectorAll('.row').length || 0;
-                  }
-               }
+        // SR/PWD Discount logic
+        if (name.includes('senior') || name.includes('pwd')) {
+            const countInput = document.getElementById(`discountCount_${orderId}_${id}`);
+            const count = countInput ? parseInt(countInput.value) || 0 : 0;
 
-               if (count > 0) {
-                  qualifiedCount += count;
-                  // discount per pax for this discount id
-                  const discountPerPax = basePerPax * (valuePct / 100);
-                  totalDiscountAmount += discountPerPax * count;
-               }
-         }
-      });
+            if (count > 0) {
+                qualifiedCount += count;
+                discountPercent = valuePct;
+            }
+        } 
+        // Other discounts (VIP, Athlete, etc.)
+        else {
+            const countInput = document.getElementById(`discountCount_${orderId}_${id}`);
+            const count = countInput ? parseInt(countInput.value) || 1 : 1;
 
-      // Clamp qualifiedCount to pax (can't discount more pax than exist)
-      qualifiedCount = Math.min(qualifiedCount, pax);
+            const discountPerPerson = grossAmount * (valuePct / 100);
+            const totalDiscount = discountPerPerson * count;
+            otherDiscountTotal += totalDiscount;
+        }
+    });
 
-      // Vatable base for the whole order (sum of base per pax for all pax)
-      const totalVatable = basePerPax * pax;
-      const totalVat12 = grossAmount - totalVatable; // VAT portion of the original gross
+    qualifiedCount = Math.min(qualifiedCount, pax);
+    const perPax = grossAmount / pax;
 
-      // Compute final charges:
-      // - qualified pax pay (basePerPax - discountPerPax) each (no VAT added)
-      // - unqualified pax pay perPaxGross each (VAT-inclusive)
-      const qualifiedNetTotal = (basePerPax * qualifiedCount) - totalDiscountAmount;
-      const nonQualifiedCount = pax - qualifiedCount;
-      const nonQualifiedTotal = perPaxGross * nonQualifiedCount;
-      const totalCharge = qualifiedNetTotal + nonQualifiedTotal;
+    // ✅ SR/PWD BILL
+    const srPwdBill = perPax * qualifiedCount;
 
-      // Provide values to the UI (keep earlier field names)
-      // sr/pwd bill (per pax gross)
-      const srPwdBillValue = perPaxGross;
-      const regBillValue = grossAmount;
-      const discountValue = totalDiscountAmount;
-      const vatableValue = totalVatable;
-      const vat12Value = totalVat12;
-      const netBillValue = totalCharge; // final payable after discounts
-      const otherDiscountValue = 0.00; // placeholder (you can read any other inputs if present)
+    // ✅ REGULAR BILL (Non-SR/PWD)
+    const regBill = grossAmount - srPwdBill;
 
-      // Update the DOM safely (check element existence)
-      const setVal = (id, val) => {
-         const el = document.getElementById(id + '_' + orderId);
-         if (el) el.value = Number(val || 0).toFixed(2);
-      };
+    // ✅ VATABLE and VAT 12%
+    const vatable = regBill / (1 + vatRate);
+    const vat12 = regBill - vatable;
 
-      setVal('srPwdBill', srPwdBillValue);
-      setVal('regBill', regBillValue);
-      setVal('discount20', discountValue);
-      setVal('vatable', vatableValue);
-      setVal('vat12', vat12Value);
-      setVal('netBill', netBillValue);
-      setVal('otherDiscount', otherDiscountValue);
-      setVal('totalCharge', totalCharge);
+    // ✅ 20% DISCOUNT only applied to SR/PWD part
+    const discount20 = (srPwdBill / (1 + vatRate)) * (discountPercent / 100);
 
-      // Optionally: display per-pax net when there are qualified entries
-      // e.g. "₱178.57 per pax (qualified) — total for qualified: ₱178.57 × q"
-      const perPaxNetEl = document.getElementById('perPaxNet_' + orderId);
-      if (perPaxNetEl) {
-         if (qualifiedCount > 0) {
-               const discountPerPax = totalDiscountAmount / qualifiedCount;
-               const netPerQualifiedPax = basePerPax - discountPerPax;
-               perPaxNetEl.textContent = `Qualified per pax: ₱${netPerQualifiedPax.toFixed(2)} (x${qualifiedCount})`;
-         } else {
-               perPaxNetEl.textContent = '';
-         }
-      }
-   }
+    // ✅ NET BILL for SR/PWD (after discount)
+    const netBill = (srPwdBill / (1 + vatRate)) - discount20;
 
-/* toggleDiscountForm: builds the per-discount blocks with count inputs */
+    // ✅ TOTAL CHARGE (SR/PWD + Regular + Other Discounts)
+    const totalCharge = ((grossAmount - otherDiscountTotal) - ((srPwdBill / (1 + vatRate)) * vatRate) - ((srPwdBill / (1 + vatRate)) * (discountPercent / 100)));
+
+    // --- Update UI fields ---
+    const setVal = (id, val) => {
+        const el = document.getElementById(id + '_' + orderId);
+        if (el) el.value = Number(val || 0).toFixed(2);
+    };
+
+    setVal('srPwdBill', srPwdBill);
+    setVal('regBill', regBill);
+    setVal('vatable', vatable);
+    setVal('vat12', vat12);
+    setVal('discount20', discount20);
+    setVal('netBill', netBill);
+    setVal('otherDiscount', otherDiscountTotal);
+    setVal('totalCharge', totalCharge);
+}
+
+function confirmBillOut(orderId) {
+    const form = document.getElementById('billOutForm_' + orderId);
+    if (!form) {
+        alert("⚠️ Bill Out form not found.");
+        return;
+    }
+
+    const formData = new FormData(form);
+
+    // ✅ Include all billing and discount-related computed fields
+    const fields = [
+        'srPwdBill', 'discount20', 'otherDiscount',
+        'netBill', 'vatable', 'vat12', 'totalCharge'
+    ];
+
+    fields.forEach(f => {
+        const el = document.getElementById(f + '_' + orderId);
+        if (el && el.value !== '') {
+            formData.set(f, el.value); // ensure value overrides FormData correctly
+        } else {
+            console.warn(`Missing or empty field: ${f}_${orderId}`);
+        }
+    });
+
+    // ✅ Collect discount persons
+    const personsData = [];
+    document.querySelectorAll(`#selectedDiscountsContainer_${orderId} input[name^="persons"]`).forEach(input => {
+        const match = input.name.match(/persons\[(\d+)\]\[(\d+)\]\[(name|id_number)\]/);
+        if (match) {
+            const discountId = match[1];
+            const index = match[2];
+            const key = match[3];
+            if (!personsData[index]) personsData[index] = { discount_id: discountId };
+            personsData[index][key] = input.value;
+        }
+    });
+
+    formData.append('persons', JSON.stringify(personsData));
+
+    // ✅ Confirm action
+    if (!confirm('Are you sure you want to confirm this Bill Out?')) return;
+
+    fetch(form.action, {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        },
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+        console.log("Bill Out Response:", data);
+
+        if (data.success) {
+            // ✅ Update totalCharge input
+            const totalChargeInput = document.getElementById('totalCharge_' + orderId);
+            if (totalChargeInput) {
+                totalChargeInput.value = parseFloat(data.order.total_charge).toFixed(2);
+            }
+
+            // ✅ Update amount in the table
+            const amountCell = document.getElementById('amount_' + orderId);
+            if (amountCell) {
+                amountCell.textContent = `₱${Number(data.order.total_charge).toLocaleString('en-PH', {
+                    minimumFractionDigits: 2
+                })}`;
+            }
+
+            alert('✅ Bill saved successfully!');
+            
+            // ✅ Redirect to Bill Out page after 1 second
+            setTimeout(() => {
+                window.location.href = "/orders?status=billout";
+            }, 1000);
+
+        } else {
+            alert('⚠️ Failed to save bill: ' + (data.message || 'Unknown error'));
+        }
+    })
+    .catch(err => {
+        console.error("Bill Out Error:", err);
+        alert('❌ Error saving bill.');
+    });
+}
+
+const savedDiscountPersons = {}; 
+
+function saveDiscountPersons(orderId) {
+    const personsMap = {};
+
+    document.querySelectorAll(`#selectedDiscountsContainer_${orderId} [id^="discountPersons_"]`).forEach(container => {
+        const discountId = container.id.split('_').pop();
+        const rows = container.querySelectorAll('.row');
+
+        personsMap[discountId] = [];
+        rows.forEach((row, idx) => {
+            const nameInput = row.querySelector('input[name^="persons"][name$="[name]"]');
+            const idInput = row.querySelector('input[name^="persons"][name$="[id_number]"]');
+
+            personsMap[discountId].push({
+                name: nameInput ? nameInput.value : '',
+                id_number: idInput ? idInput.value : ''
+            });
+        });
+    });
+
+    savedDiscountPersons[orderId] = personsMap;
+}
+
+// function confirmBillOut(orderId) {
+//     const form = document.getElementById('billOutForm_' + orderId);
+//     if (!form) {
+//         alert("⚠️ Bill Out form not found.");
+//         return;
+//     }
+
+//     const formData = new FormData(form);
+
+//     // ✅ Include computed fields
+//     const fields = [
+//         'srPwdBill', 'discount20', 'otherDiscount',
+//         'netBill', 'vatable', 'vat12', 'totalCharge'
+//     ];
+//     fields.forEach(f => {
+//         const el = document.getElementById(f + '_' + orderId);
+//         if (el && el.value !== '') {
+//             formData.set(f, el.value);
+//         }
+//     });
+
+//     // ✅ Collect discount persons from saved memory
+//     const personsData = [];
+//     if (savedDiscountPersons[orderId]) {
+//         Object.entries(savedDiscountPersons[orderId]).forEach(([discountId, persons]) => {
+//             persons.forEach(p => {
+//                 personsData.push({
+//                     discount_id: discountId,
+//                     name: p.name || '',
+//                     id_number: p.id_number || ''
+//                 });
+//             });
+//         });
+//     }
+
+//     formData.append('persons', JSON.stringify(personsData));
+
+//     // ✅ Confirm action
+//     if (!confirm('Are you sure you want to confirm this Bill Out?')) return;
+
+//     fetch(form.action, {
+//         method: 'POST',
+//         headers: {
+//             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+//         },
+//         body: formData
+//     })
+//     .then(res => res.json())
+//     .then(data => {
+//         console.log("Bill Out Response:", data);
+
+//         if (data.success) {
+//             const totalChargeInput = document.getElementById('totalCharge_' + orderId);
+//             if (totalChargeInput) {
+//                 totalChargeInput.value = parseFloat(data.order.total_charge).toFixed(2);
+//             }
+
+//             const amountCell = document.getElementById('amount_' + orderId);
+//             if (amountCell) {
+//                 amountCell.textContent = `₱${Number(data.order.total_charge).toLocaleString('en-PH', {
+//                     minimumFractionDigits: 2
+//                 })}`;
+//             }
+
+//             alert('✅ Bill saved successfully!');
+//             setTimeout(() => window.location.href = "/orders?status=billout", 1000);
+//         } else {
+//             alert('⚠️ Failed to save bill: ' + (data.message || 'Unknown error'));
+//         }
+//     })
+//     .catch(err => {
+//         console.error("Bill Out Error:", err);
+//         alert('❌ Error saving bill.');
+//     });
+// }
+
+
 function toggleDiscountForm(orderId) {
     const hidden = document.getElementById('discountIds_' + orderId);
     const selectedIds = hidden && hidden.value
@@ -627,7 +848,15 @@ function toggleDiscountForm(orderId) {
         const discountName = chk.dataset.name || 'Discount';
         const valuePct = chk.dataset.value || '0';
 
-        // Build block (count + person rows)
+        // Initialize store if not exist
+        if (!savedDiscountPersons[orderId]) savedDiscountPersons[orderId] = {};
+        if (!savedDiscountPersons[orderId][id]) savedDiscountPersons[orderId][id] = [
+            { name: '', id_number: '' }
+        ];
+
+        const persons = savedDiscountPersons[orderId][id];
+
+        // Build discount block
         const block = document.createElement('div');
         block.className = 'mb-4 p-2 border rounded';
         block.innerHTML = `
@@ -637,133 +866,73 @@ function toggleDiscountForm(orderId) {
                 <input type="number"
                        id="discountCount_${orderId}_${id}"
                        class="form-control"
-                       style="width:100px" min="1" value="1"
+                       style="width:100px" min="1"
+                       value="${persons.length}"
                        oninput="renderDiscountPersons(${orderId}, ${id})">
             </div>
-            <div id="discountPersons_${orderId}_${id}">
-                <div class="row mb-2">
-                    <div class="col-md-6">
-                        <input type="text" name="persons[${id}][0][name]" class="form-control" placeholder="Enter name here">
-                    </div>
-                    <div class="col-md-6">
-                        <input type="text" name="persons[${id}][0][id_number]" class="form-control" placeholder="Enter ID number here">
-                    </div>
-                </div>
-            </div>
+            <div id="discountPersons_${orderId}_${id}"></div>
         `;
         container.appendChild(block);
+
+        renderDiscountPersons(orderId, id); // render saved data
     });
 
+    // Toggle visibility
     const form = document.getElementById('discountForm_' + orderId);
     form.style.display = form.style.display === 'block' ? 'none' : 'block';
 }
 
-   // function confirmBillOut(orderId) {
-   //    const form = document.getElementById('billOutForm_' + orderId);
-   //    const formData = new FormData(form);
+/**
+ * Render person rows and keep values synced to memory
+ */
+function renderDiscountPersons(orderId, discountId) {
+    const countInput = document.getElementById(`discountCount_${orderId}_${discountId}`);
+    const count = Math.max(parseInt(countInput.value) || 0, 1);
 
-   //    // Include computed discount fields
-   //    const fields = [
-   //       'srPwdBill', 'discount20', 'otherDiscount',
-   //       'netBill', 'vatable', 'vat12', 'totalCharge'
-   //    ];
+    if (!savedDiscountPersons[orderId]) savedDiscountPersons[orderId] = {};
+    if (!savedDiscountPersons[orderId][discountId]) savedDiscountPersons[orderId][discountId] = [];
 
-   //    fields.forEach(f => {
-   //       const el = document.getElementById(f + '_' + orderId);
-   //       if (el) formData.append(f, el.value);
-   //    });
+    const persons = savedDiscountPersons[orderId][discountId];
 
-   //    fetch(form.action, {
-   //       method: 'POST',
-   //       headers: {
-   //             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-   //       },
-   //       body: formData
-   //    })
-   //    .then(res => res.json())
-   //    .then(data => {
-   //       if (data.success) {
-   //             alert('✅ Bill saved successfully!');
-   //             document.getElementById('totalCharge_' + orderId).value = data.order.total_charge;
-   //       } else {
-   //             alert('⚠️ Failed to save bill: ' + (data.message || 'Unknown error'));
-   //       }
-   //    })
-   //    .catch(err => {
-   //       console.error(err);
-   //       alert('❌ Error saving bill.');
-   //    });
-   // }
+    // Adjust the array size
+    while (persons.length < count) persons.push({ name: '', id_number: '' });
+    while (persons.length > count) persons.pop();
 
-   function confirmBillOut(orderId) {
-    const form = document.getElementById('billOutForm_' + orderId);
-    const formData = new FormData(form);
-
-    // Include computed discount fields
-    const fields = [
-        'srPwdBill', 'discount20', 'otherDiscount',
-        'netBill', 'vatable', 'vat12', 'totalCharge'
-    ];
-    fields.forEach(f => {
-        const el = document.getElementById(f + '_' + orderId);
-        if (el) formData.append(f, el.value);
-    });
-
-    // Collect discount persons
-    const personsData = [];
-    document.querySelectorAll(`#selectedDiscountsContainer_${orderId} input[name^="persons"]`).forEach(input => {
-        const match = input.name.match(/persons\[(\d+)\]\[(\d+)\]\[(name|id_number)\]/);
-        if (match) {
-            const discountId = match[1];
-            const index = match[2];
-            const key = match[3];
-            if (!personsData[index]) personsData[index] = { discount_id: discountId };
-            personsData[index][key] = input.value;
-        }
-    });
-
-    formData.append('persons', JSON.stringify(personsData));
-
-    fetch(form.action, {
-        method: 'POST',
-        headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-        },
-        body: formData
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.success) {
-            alert('✅ Bill saved successfully!');
-            document.getElementById('totalCharge_' + orderId).value = data.order.total_charge;
-        } else {
-            alert('⚠️ Failed to save bill: ' + (data.message || 'Unknown error'));
-        }
-    })
-    .catch(err => {
-        console.error(err);
-        alert('❌ Error saving bill.');
-    });
-}
-
-   function renderDiscountPersons(orderId, discountId) {
-    const count = parseInt(document.getElementById(`discountCount_${orderId}_${discountId}`).value) || 0;
     const container = document.getElementById(`discountPersons_${orderId}_${discountId}`);
     container.innerHTML = '';
-    for (let i = 0; i < count; i++) {
+
+    persons.forEach((p, index) => {
         const row = document.createElement('div');
         row.className = 'row mb-2';
         row.innerHTML = `
             <div class="col-md-6">
-                <input type="text" name="persons[${discountId}][${i}][name]" class="form-control" placeholder="Enter name here">
+                <input type="text"
+                       class="form-control"
+                       placeholder="Enter name here"
+                       value="${p.name || ''}"
+                       oninput="updatePersonData(${orderId}, ${discountId}, ${index}, 'name', this.value)">
             </div>
             <div class="col-md-6">
-                <input type="text" name="persons[${discountId}][${i}][id_number]" class="form-control" placeholder="Enter ID number here">
+                <input type="text"
+                       class="form-control"
+                       placeholder="Enter ID number here"
+                       value="${p.id_number || ''}"
+                       oninput="updatePersonData(${orderId}, ${discountId}, ${index}, 'id_number', this.value)">
             </div>
         `;
         container.appendChild(row);
-    }
+    });
 }
+
+/**
+ * Update person data live when typing
+ */
+function updatePersonData(orderId, discountId, index, field, value) {
+    if (!savedDiscountPersons[orderId]) return;
+    if (!savedDiscountPersons[orderId][discountId]) return;
+    savedDiscountPersons[orderId][discountId][index][field] = value;
+}
+
    </script>
 
    <script>
