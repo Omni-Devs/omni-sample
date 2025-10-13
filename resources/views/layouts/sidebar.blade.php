@@ -374,7 +374,21 @@
                         </li>
                      </ul>
                   </li>
-                  <li class="nav-item"><a href="/app/settings/general/accounting" class=""><i class="nav-icon i-Edit-Map"></i> <span class="item-name">Accounting</span></a></li>
+                  <li class="nav-item dropdown-sidemenu">
+                     <a href="#">
+                        <i class="nav-icon i-Edit-Map"></i>
+                        <span class="item-name">Accounting</span>
+                        <i class="dd-arrow i-Arrow-Down"></i>
+                     </a>
+                     <ul class="submenu">
+                        <li class="nav-item">
+                           <a href="{{ route('cash_equivalents.index') }}">
+                              <i class="nav-icon i-Wallet"></i>
+                              <span class="item-name">Cash Equivalents</span>
+                           </a>
+                        </li>
+                     </ul>
+                  </li>
                </ul>
             </li>
          </ul>
