@@ -597,34 +597,37 @@ function calculateChargesAndDiscounts(orderId, grossAmount, pax) {
         else {
             const countInput = document.getElementById(`discountCount_${orderId}_${id}`);
             const count = countInput ? parseInt(countInput.value) || 1 : 1;
-
             const discountPerPerson = grossAmount * (valuePct / 100);
             const totalDiscount = discountPerPerson * count;
             otherDiscountTotal += totalDiscount;
         }
     });
 
+    // Prevent SR/PWD count exceeding total pax
     qualifiedCount = Math.min(qualifiedCount, pax);
+
+    // Compute SR/PWD and Regular shares
     const perPax = grossAmount / pax;
-
-    // ✅ SR/PWD BILL
     const srPwdBill = perPax * qualifiedCount;
-
-    // ✅ REGULAR BILL (Non-SR/PWD)
-    const regBill = grossAmount - srPwdBill;
+    const regBill = perPax * (pax - qualifiedCount);
 
     // ✅ VATABLE and VAT 12%
     const vatable = regBill / (1 + vatRate);
     const vat12 = regBill - vatable;
 
-    // ✅ 20% DISCOUNT only applied to SR/PWD part
-    const discount20 = (srPwdBill / (1 + vatRate)) * (discountPercent / 100);
+    // ✅ SR/PWD 20% discount (non-VAT portion)
+    const srPwdVatable = srPwdBill / (1 + vatRate);
+    const discount20 = srPwdVatable * (discountPercent / 100);
 
-    // ✅ NET BILL for SR/PWD (after discount)
-    const netBill = (srPwdBill / (1 + vatRate)) - discount20;
+    // ✅ NET BILL for SR/PWD
+    const netBill = srPwdVatable - discount20;
 
-    // ✅ TOTAL CHARGE (SR/PWD + Regular + Other Discounts)
-    const totalCharge = ((grossAmount - otherDiscountTotal) - ((srPwdBill / (1 + vatRate)) * vatRate) - ((srPwdBill / (1 + vatRate)) * (discountPercent / 100)));
+   // ✅ TOTAL CHARGE (Regular + SR/PWD discounted + Other discounts)
+   //  const totalCharge = (regBill + (netBill * (1 + vatRate))) - otherDiscountTotal;
+
+   // ✅ TOTAL CHARGE (SR/PWD + Regular + Other Discounts)
+   const totalCharge = ((grossAmount - otherDiscountTotal) - ((srPwdBill / (1 + vatRate)) * vatRate) - ((srPwdBill / (1 + vatRate)) * (discountPercent / 100)));
+
 
     // --- Update UI fields ---
     const setVal = (id, val) => {
@@ -642,90 +645,90 @@ function calculateChargesAndDiscounts(orderId, grossAmount, pax) {
     setVal('totalCharge', totalCharge);
 }
 
-function confirmBillOut(orderId) {
-    const form = document.getElementById('billOutForm_' + orderId);
-    if (!form) {
-        alert("⚠️ Bill Out form not found.");
-        return;
-    }
+// function confirmBillOut(orderId) {
+//     const form = document.getElementById('billOutForm_' + orderId);
+//     if (!form) {
+//         alert("⚠️ Bill Out form not found.");
+//         return;
+//     }
 
-    const formData = new FormData(form);
+//     const formData = new FormData(form);
 
-    // ✅ Include all billing and discount-related computed fields
-    const fields = [
-        'srPwdBill', 'discount20', 'otherDiscount',
-        'netBill', 'vatable', 'vat12', 'totalCharge'
-    ];
+//     // ✅ Include all billing and discount-related computed fields
+//     const fields = [
+//         'srPwdBill', 'discount20', 'otherDiscount',
+//         'netBill', 'vatable', 'vat12', 'totalCharge'
+//     ];
 
-    fields.forEach(f => {
-        const el = document.getElementById(f + '_' + orderId);
-        if (el && el.value !== '') {
-            formData.set(f, el.value); // ensure value overrides FormData correctly
-        } else {
-            console.warn(`Missing or empty field: ${f}_${orderId}`);
-        }
-    });
+//     fields.forEach(f => {
+//         const el = document.getElementById(f + '_' + orderId);
+//         if (el && el.value !== '') {
+//             formData.set(f, el.value); // ensure value overrides FormData correctly
+//         } else {
+//             console.warn(`Missing or empty field: ${f}_${orderId}`);
+//         }
+//     });
 
-    // ✅ Collect discount persons
-    const personsData = [];
-    document.querySelectorAll(`#selectedDiscountsContainer_${orderId} input[name^="persons"]`).forEach(input => {
-        const match = input.name.match(/persons\[(\d+)\]\[(\d+)\]\[(name|id_number)\]/);
-        if (match) {
-            const discountId = match[1];
-            const index = match[2];
-            const key = match[3];
-            if (!personsData[index]) personsData[index] = { discount_id: discountId };
-            personsData[index][key] = input.value;
-        }
-    });
+//     // ✅ Collect discount persons
+//     const personsData = [];
+//     document.querySelectorAll(`#selectedDiscountsContainer_${orderId} input[name^="persons"]`).forEach(input => {
+//         const match = input.name.match(/persons\[(\d+)\]\[(\d+)\]\[(name|id_number)\]/);
+//         if (match) {
+//             const discountId = match[1];
+//             const index = match[2];
+//             const key = match[3];
+//             if (!personsData[index]) personsData[index] = { discount_id: discountId };
+//             personsData[index][key] = input.value;
+//         }
+//     });
 
-    formData.append('persons', JSON.stringify(personsData));
+//     formData.append('persons', JSON.stringify(personsData));
 
-    // ✅ Confirm action
-    if (!confirm('Are you sure you want to confirm this Bill Out?')) return;
+//     // ✅ Confirm action
+//     if (!confirm('Are you sure you want to confirm this Bill Out?')) return;
 
-    fetch(form.action, {
-        method: 'POST',
-        headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-        },
-        body: formData
-    })
-    .then(res => res.json())
-    .then(data => {
-        console.log("Bill Out Response:", data);
+//     fetch(form.action, {
+//         method: 'POST',
+//         headers: {
+//             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+//         },
+//         body: formData
+//     })
+//     .then(res => res.json())
+//     .then(data => {
+//         console.log("Bill Out Response:", data);
 
-        if (data.success) {
-            // ✅ Update totalCharge input
-            const totalChargeInput = document.getElementById('totalCharge_' + orderId);
-            if (totalChargeInput) {
-                totalChargeInput.value = parseFloat(data.order.total_charge).toFixed(2);
-            }
+//         if (data.success) {
+//             // ✅ Update totalCharge input
+//             const totalChargeInput = document.getElementById('totalCharge_' + orderId);
+//             if (totalChargeInput) {
+//                 totalChargeInput.value = parseFloat(data.order.total_charge).toFixed(2);
+//             }
 
-            // ✅ Update amount in the table
-            const amountCell = document.getElementById('amount_' + orderId);
-            if (amountCell) {
-                amountCell.textContent = `₱${Number(data.order.total_charge).toLocaleString('en-PH', {
-                    minimumFractionDigits: 2
-                })}`;
-            }
+//             // ✅ Update amount in the table
+//             const amountCell = document.getElementById('amount_' + orderId);
+//             if (amountCell) {
+//                 amountCell.textContent = `₱${Number(data.order.total_charge).toLocaleString('en-PH', {
+//                     minimumFractionDigits: 2
+//                 })}`;
+//             }
 
-            alert('✅ Bill saved successfully!');
+//             alert('✅ Bill saved successfully!');
             
-            // ✅ Redirect to Bill Out page after 1 second
-            setTimeout(() => {
-                window.location.href = "/orders?status=billout";
-            }, 1000);
+//             // ✅ Redirect to Bill Out page after 1 second
+//             setTimeout(() => {
+//                 window.location.href = "/orders?status=billout";
+//             }, 1000);
 
-        } else {
-            alert('⚠️ Failed to save bill: ' + (data.message || 'Unknown error'));
-        }
-    })
-    .catch(err => {
-        console.error("Bill Out Error:", err);
-        alert('❌ Error saving bill.');
-    });
-}
+//         } else {
+//             alert('⚠️ Failed to save bill: ' + (data.message || 'Unknown error'));
+//         }
+//     })
+//     .catch(err => {
+//         console.error("Bill Out Error:", err);
+//         alert('❌ Error saving bill.');
+//     });
+// }
 
 const savedDiscountPersons = {}; 
 
@@ -751,81 +754,81 @@ function saveDiscountPersons(orderId) {
     savedDiscountPersons[orderId] = personsMap;
 }
 
-// function confirmBillOut(orderId) {
-//     const form = document.getElementById('billOutForm_' + orderId);
-//     if (!form) {
-//         alert("⚠️ Bill Out form not found.");
-//         return;
-//     }
+function confirmBillOut(orderId) {
+    const form = document.getElementById('billOutForm_' + orderId);
+    if (!form) {
+        alert("⚠️ Bill Out form not found.");
+        return;
+    }
 
-//     const formData = new FormData(form);
+    const formData = new FormData(form);
 
-//     // ✅ Include computed fields
-//     const fields = [
-//         'srPwdBill', 'discount20', 'otherDiscount',
-//         'netBill', 'vatable', 'vat12', 'totalCharge'
-//     ];
-//     fields.forEach(f => {
-//         const el = document.getElementById(f + '_' + orderId);
-//         if (el && el.value !== '') {
-//             formData.set(f, el.value);
-//         }
-//     });
+    // ✅ Include computed fields
+    const fields = [
+        'srPwdBill', 'discount20', 'otherDiscount',
+        'netBill', 'vatable', 'vat12', 'totalCharge'
+    ];
+    fields.forEach(f => {
+        const el = document.getElementById(f + '_' + orderId);
+        if (el && el.value !== '') {
+            formData.set(f, el.value);
+        }
+    });
 
-//     // ✅ Collect discount persons from saved memory
-//     const personsData = [];
-//     if (savedDiscountPersons[orderId]) {
-//         Object.entries(savedDiscountPersons[orderId]).forEach(([discountId, persons]) => {
-//             persons.forEach(p => {
-//                 personsData.push({
-//                     discount_id: discountId,
-//                     name: p.name || '',
-//                     id_number: p.id_number || ''
-//                 });
-//             });
-//         });
-//     }
+    // ✅ Collect discount persons from saved memory
+    const personsData = [];
+    if (savedDiscountPersons[orderId]) {
+        Object.entries(savedDiscountPersons[orderId]).forEach(([discountId, persons]) => {
+            persons.forEach(p => {
+                personsData.push({
+                    discount_id: discountId,
+                    name: p.name || '',
+                    id_number: p.id_number || ''
+                });
+            });
+        });
+    }
 
-//     formData.append('persons', JSON.stringify(personsData));
+    formData.append('persons', JSON.stringify(personsData));
 
-//     // ✅ Confirm action
-//     if (!confirm('Are you sure you want to confirm this Bill Out?')) return;
+    // ✅ Confirm action
+    if (!confirm('Are you sure you want to confirm this Bill Out?')) return;
 
-//     fetch(form.action, {
-//         method: 'POST',
-//         headers: {
-//             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-//         },
-//         body: formData
-//     })
-//     .then(res => res.json())
-//     .then(data => {
-//         console.log("Bill Out Response:", data);
+    fetch(form.action, {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        },
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+        console.log("Bill Out Response:", data);
 
-//         if (data.success) {
-//             const totalChargeInput = document.getElementById('totalCharge_' + orderId);
-//             if (totalChargeInput) {
-//                 totalChargeInput.value = parseFloat(data.order.total_charge).toFixed(2);
-//             }
+        if (data.success) {
+            const totalChargeInput = document.getElementById('totalCharge_' + orderId);
+            if (totalChargeInput) {
+                totalChargeInput.value = parseFloat(data.order.total_charge).toFixed(2);
+            }
 
-//             const amountCell = document.getElementById('amount_' + orderId);
-//             if (amountCell) {
-//                 amountCell.textContent = `₱${Number(data.order.total_charge).toLocaleString('en-PH', {
-//                     minimumFractionDigits: 2
-//                 })}`;
-//             }
+            const amountCell = document.getElementById('amount_' + orderId);
+            if (amountCell) {
+                amountCell.textContent = `₱${Number(data.order.total_charge).toLocaleString('en-PH', {
+                    minimumFractionDigits: 2
+                })}`;
+            }
 
-//             alert('✅ Bill saved successfully!');
-//             setTimeout(() => window.location.href = "/orders?status=billout", 1000);
-//         } else {
-//             alert('⚠️ Failed to save bill: ' + (data.message || 'Unknown error'));
-//         }
-//     })
-//     .catch(err => {
-//         console.error("Bill Out Error:", err);
-//         alert('❌ Error saving bill.');
-//     });
-// }
+            alert('✅ Bill saved successfully!');
+            setTimeout(() => window.location.href = "/orders?status=billout", 1000);
+        } else {
+            alert('⚠️ Failed to save bill: ' + (data.message || 'Unknown error'));
+        }
+    })
+    .catch(err => {
+        console.error("Bill Out Error:", err);
+        alert('❌ Error saving bill.');
+    });
+}
 
 
 function toggleDiscountForm(orderId) {
