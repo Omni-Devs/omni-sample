@@ -31,6 +31,7 @@ class CashEquivalentController extends Controller
             'name'           => 'required|string|max:255',
             'account_number' => 'nullable|string|max:255',
             'type_of_account'=> 'nullable|string|max:255',
+            'conversion_in_peso' => 'nullable|numeric|min:0',
             'created_at'     => 'nullable|date',
         ]);
 
@@ -74,6 +75,7 @@ class CashEquivalentController extends Controller
             'name'           => 'required|string|max:255',
             'account_number' => 'nullable|string|max:255',
             'type_of_account'=> 'nullable|string|max:255',
+            'conversion_in_peso' => 'nullable|numeric|min:0',
         ]);
 
         $cash_equivalent->update($validated);

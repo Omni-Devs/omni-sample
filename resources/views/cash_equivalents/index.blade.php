@@ -134,6 +134,18 @@
                         </select>
                     </div>
 
+                    <div class="col-md-12 mt-2">
+                        <label for="create-conversion-in-peso">Enter Conversion in Peso *</label>
+                        <input type="number" 
+                            name="conversion_in_peso" 
+                            id="create-conversion-in-peso" 
+                            class="form-control" 
+                            step="0.01" 
+                            min="0" 
+                            required 
+                            placeholder="Enter conversion in Peso">
+                    </div>
+
                     <div class="mt-3 col-md-12">
                         <div class="mr-2">
                         <div class="b-overlay-wrap position-relative d-inline-block btn-loader">
@@ -311,8 +323,21 @@
                                         <option value="Dollar Account" {{ $ce->type_of_account === 'Dollar Account' ? 'selected' : '' }}>Dollar Account</option>
                                     </select>
                                     </div>
+
+                                    <div class="form-group mb-3">
+                                    <label for="ce-conversion-{{ $ce->id }}">Enter Conversion in Peso *</label>
+                                    <input type="number"
+                                        name="conversion_in_peso"
+                                        id="ce-conversion-{{ $ce->id }}"
+                                        class="form-control"
+                                        step="0.01"
+                                        min="0"
+                                        value="{{ $ce->conversion_in_peso }}"
+                                        required>
+                                </div>
                                 </div>
 
+                            
                                 <div class="modal-footer">
                                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                                     <button type="submit" class="btn btn-primary">Update</button>

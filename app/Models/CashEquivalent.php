@@ -13,6 +13,7 @@ class CashEquivalent extends Model
         'name',
         'account_number',
         'type_of_account',
+        'conversion_in_peso',
         'created_by',
         'status',
     ];
