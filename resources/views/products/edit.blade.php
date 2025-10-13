@@ -481,7 +481,7 @@
                </tr>
          </thead>
          <tbody>
-                  @foreach($oldRecipes as $i => $recipe)
+                  @foreach(array_filter($oldRecipes, fn($r) => !empty($r['component_id']) && $r['quantity'] > 0) as $i => $recipe)
                      @php
                            $recipeId = $recipe['id'] ?? '';
                            $componentId = $recipe['component_id'] ?? null;
@@ -549,6 +549,7 @@
          </div>
       </div>
       </div>
+               </form>
 
       <script>
          // components must be passed from controller as $components
@@ -669,7 +670,6 @@
          });
       </script>
          <div class="row">
-         </form>
 
                <div class="col-md-10 mt-3 mt-md-0">
          <fieldset class="form-group">
