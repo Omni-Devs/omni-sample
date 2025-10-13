@@ -13,6 +13,7 @@ use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\UnitController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\PermissionController;
+use App\Http\Controllers\CashEquivalentController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -105,6 +106,14 @@ Route::put('/payments/{payment}', [PaymentController::class, 'update'])->name('p
 Route::delete('/payments/{id}', [PaymentController::class, 'destroy'])->name('payments.destroy');
 Route::put('/payments/{payment}/archive', [PaymentController::class, 'archive'])->name('payments.archive');
 Route::put('/payments/{payment}/restore', [PaymentController::class, 'restore'])->name('payments.restore');
+
+Route::get('/cash-equivalents', [CashEquivalentController::class, 'index'])->name('cash_equivalents.index');
+Route::post('/cash-equivalents', [CashEquivalentController::class, 'store'])->name('cash_equivalents.store');
+Route::get('/cash-equivalents/{id}/edit', [CashEquivalentController::class, 'edit'])->name('cash_equivalents.edit');
+Route::put('/cash-equivalents/{cash_equivalent}', [CashEquivalentController::class, 'update'])->name('cash_equivalents.update');
+Route::delete('/cash-equivalents/{id}', [CashEquivalentController::class, 'destroy'])->name('cash_equivalents.destroy');
+Route::put('/cash-equivalents/{cash_equivalent}/archive', [CashEquivalentController::class, 'archive'])->name('cash_equivalents.archive');
+Route::put('/cash-equivalents/{cash_equivalent}/restore', [CashEquivalentController::class, 'restore'])->name('cash_equivalents.restore');
 
 Route::get('/discounts', [DiscountController::class, 'index'])->name('discounts.index');
 Route::post('/discounts', [DiscountController::class, 'store'])->name('discounts.store');
