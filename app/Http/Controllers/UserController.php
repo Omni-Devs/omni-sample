@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\Role;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage; 
 use Barryvdh\DomPDF\Facade\Pdf;
 
 class UserController extends Controller
@@ -68,6 +69,12 @@ class UserController extends Controller
         ->with('success', 'User created successfully!');
     }
 
+    public function edit($id)
+    {
+        $user = User::with('roles')->findOrFail($id);
+        return response()->json($user);
+    }
+
     // Display the specified user
     public function show($id)
     {
@@ -77,27 +84,45 @@ class UserController extends Controller
     }
 
     // Update the specified user
-    public function update(Request $request, $id)
-    {
-        $user = User::findOrFail($id);
-        $validated = $request->validate([
-            'name' => 'sometimes|string|max:255',
-            'email' => 'sometimes|string|email|max:255|unique:users,email,' . $id,
-            'password' => 'sometimes|string|min:4',
-        ]);
-        if (isset($validated['password'])) {
-            $validated['password'] = Hash::make($validated['password']);
-        }
-        $user->update($validated);
-        return response()->json($user);
+public function update(Request $request, $id)
+{
+    $user = User::findOrFail($id);
+
+    $validated = $request->validate([
+        'name' => 'required|string|max:255',
+        'username' => 'required|string|max:255|unique:users,username,' . $id,
+        'email' => 'required|email|max:255|unique:users,email,' . $id,
+        'mobile_number' => 'nullable|string|max:20',
+        'address' => 'nullable|string|max:255',
+        'image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+    ]);
+
+    // Handle image upload if new one is uploaded
+    if ($request->hasFile('image')) {
+        $imagePath = $request->file('image')->store('users', 'public');
+        $validated['image'] = $imagePath;
     }
+
+    $user->update($validated);
+
+    // Update roles if using Spatie permissions
+    if ($request->filled('roles')) {
+        $user->syncRoles($request->roles);
+    }
+
+    return redirect()->back()->with('success', 'User updated successfully.');
+}
+
+
 
     // Remove the specified user
     public function destroy($id)
     {
         $user = User::findOrFail($id);
         $user->delete();
-        return response()->json(['message' => 'User deleted']);
+         return redirect()
+        ->route('users.index') 
+        ->with('success', 'User deleted successfully.');
     }
 
     public function viewProfile($id)
