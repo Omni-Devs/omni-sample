@@ -231,9 +231,12 @@
                                        @include('layouts.actions-dropdown', [
                                           'id' => $product->id,
                                           'editRoute' => route('products.edit', $product->id),
+                                          'stockCardRoute' => '#',
                                           'deleteRoute' => route('products.destroy', $product->id),
                                           'archiveRoute' => route('products.archive', $product->id),
                                           'restoreRoute' => route('products.restore', $product->id),
+                                          'logsRoute' => '#',
+                                          'remarksRoute' => '#',
                                           'status' => $product->status
                                        ])
                                     </td>

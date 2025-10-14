@@ -20,12 +20,39 @@
         </li>
         @endisset
 
+        <!-- Edit for Users-->
+        @isset($userEditRoute)
+        <li role="presentation">
+            <a class="dropdown-item" onclick="openEditUserModal({{ $user }})">
+                <i class="i-Pen-2 me-1"></i> Edit
+            </a>
+        </li>
+        @endisset
+
+        <!-- View Stock Card -->
+        @isset($stockCardRoute)
+            <li role="presentation">
+            <a class="dropdown-item" href="{{ $stockCardRoute }}">
+               <i class="nav-icon i-Receipt font-weight-bold mr-2"></i> {{ $stockCardLabel ?? 'View Stock Card' }}
+            </a>
+        </li>
+        @endisset
+
         <!-- View User Profile -->
-        @if(isset($profileRoute))
+        @if(isset($profileRoute) && $status !== 'archived')
             <a href="{{ $profileRoute }}" target="_blank" class="dropdown-item">
                 <i class="nav-icon i-Eye font-weight-bold mr-2"></i> View User Profile
             </a>
         @endif
+
+        <!-- Cancel Static-->
+        @isset($cancelRoute)
+            <li role="presentation">
+            <a class="dropdown-item" href="{{ $cancelRoute }}">
+              <i class="nav-icon i-Letter-Close font-weight-bold mr-2"></i> {{ $cancelLabel ?? 'Cancel' }}
+            </a>
+        </li>
+        @endisset
 
 
         <!-- View / Bill out -->
@@ -46,7 +73,7 @@
         @endisset
 
         <!-- Delete / Cancel -->
-        @isset($deleteRoute)
+        @if(isset($status) && $status === 'archived' && isset($deleteRoute))
         <li role="presentation">
             <form action="{{ $deleteRoute }}" method="POST"
                   onsubmit="return confirm('Are you sure?');"
@@ -58,7 +85,7 @@
                 </button>
             </form>
         </li>
-        @endisset
+        @endif
 
         <!-- Archive -->
         @if(isset($status) && $status === 'active' && isset($archiveRoute))

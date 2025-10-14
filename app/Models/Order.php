@@ -40,4 +40,9 @@ class Order extends Model
     {
         return $this->hasMany(DiscountEntry::class);
     }
+    
+    public function orderDetails()
+{
+    return $this->hasMany(OrderDetail::class, 'order_id');
+}
 }

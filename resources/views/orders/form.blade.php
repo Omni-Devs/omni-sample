@@ -80,34 +80,44 @@
 
 /* Products grid */
 .products {
-    flex: 1;
-    display: grid;
-    grid-template-columns: repeat(2, 1fr); /* Always 2 per row */
-    gap: 20px;
-    margin-top: 20px;
-    max-height: 700px;
-    overflow-y: auto;
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr); /* ✅ 3 items per row */
+  gap: 16px; /* balanced spacing between cards */
+  margin-top: 20px;
+  max-height: 700px;
+  overflow-y: auto;
+  padding: 10px;
+  box-sizing: border-box;
 }
 
+/* Product card layout */
 .product-card {
-    height: 250px;
-    background: #fff;
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    display: flex;
-    flex-direction: column;
-    transition: transform 0.3s;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  overflow: hidden;
+  height: 220px; /* ✅ consistent card height */
 }
 
+/* Hover effect */
 .product-card:hover {
-    transform: translateY(-5px);
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
+/* Image inside product card */
 .product-card img {
-    width: 100%;
-    height: 150px;
-    object-fit: cover;
+  width: 100%;
+  height: 120px;
+  object-fit: cover; /* ✅ prevent image distortion */
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
 }
 
 .product-body {
@@ -184,7 +194,6 @@ input[type=number] {
 </style>
 <div id="app">
 <h2>@{{ isEdit ? 'Edit Order' : 'Order Entry' }}</h2>
-<p>Debug: @{{ isEdit }}</p>
 <form @submit.prevent="submitOrder">
 <!-- Order Header -->
 <div style="display:flex; gap:10px;">
@@ -415,19 +424,21 @@ input[type=number] {
         v-if="expandedCategory === category.id" 
         class="ps-4 mt-2"
       >
-        <button
-          v-for="sub in category.subcategories"
-          :key="sub.id"
-          v-if="sub.products?.length > 0 || sub.components?.length > 0"
-          class="btn btn-sm w-100 text-start mb-1"
-          :class="{ 
-            'btn-secondary': selectedSubcategory?.id === sub.id, 
-            'btn-outline-secondary': selectedSubcategory?.id !== sub.id 
-          }"
-          @click.prevent="selectSubcategory(sub)"
-        >
-          @{{ sub.name }}
-        </button>
+<div class="subcategory-menu p-2">
+  <div class="d-flex flex-column">
+    <button
+      v-for="sub in category.subcategories"
+      :key="sub.id"
+      v-if="sub.products?.length > 0 || sub.components?.length > 0"
+      class="btn btn-outline-secondary btn-sm text-start mb-1"
+      :class="{ 'btn-secondary': selectedSubcategory?.id === sub.id }"
+      @click.prevent="selectSubcategory(sub)"
+    >
+      @{{ sub.name }}
+    </button>
+  </div>
+</div>
+
       </div>
     </transition>
   </div>
@@ -445,7 +456,7 @@ input[type=number] {
   >
     <img :src="p.image" :alt="p.name">
     <div class="product-body">
-      <h4>@{{ p.name }}</h4>
+      <p style="font-weight:800">@{{ p.name }}</p>
       <p>@{{ p.description }}</p>
     </div>
   </div>
@@ -476,8 +487,43 @@ input[type=number] {
        products: @json($products),
        orderDetails: [],
        searchQuery: "",
-       isEdit: @json($isEdit),
+       isEdit: {{ isset($order) ? 'true' : 'false' }},
+       order: @json($order ?? null),
    },
+mounted() {
+    console.log('edit mounted — raw order from blade/api:', this.order);
+
+    if (this.isEdit && this.order) {
+    this.orderNo = this.order.id;
+    this.date = new Date(this.order.created_at).toLocaleString();
+      // normalize waiter IDs
+      this.waiters = (this.waiters || []).map(w => ({ ...w, id: Number(w.id) }));
+
+      const waiterId = Number(this.order.user_id);
+      this.$nextTick(() => {
+        this.selectedWaiter = waiterId;
+        this.pax = this.order.number_pax;
+        this.tableNo = this.order.table_no;
+
+        this.orderDetails = this.order.details.map(d => ({
+          id: d.product_id ?? d.component_id,
+          type: d.product_id ? 'product' : 'component',
+          sku: d.product?.code ?? d.component?.code,
+          name: d.product?.name ?? d.component?.name,
+          price: parseFloat(d.price),
+          qty: d.quantity,
+        }));
+
+        console.log("✅ Fields prefilled:", {
+          selectedWaiter: this.selectedWaiter,
+          pax: this.pax,
+          tableNo: this.tableNo,
+          orderDetails: this.orderDetails
+        });
+      });
+    }
+},
+
    computed: {
     sortedCategories() {
     return [...this.categories].sort((a, b) => a.name.localeCompare(b.name));
@@ -612,11 +658,22 @@ toggleCategory(category) {
 
   console.log("Submitting order payload:", payload);
 
- axios.post('/orders/store', payload)
-  .then(res => {
-      console.log(res.data.message);
+  // ✅ Dynamic URL — depends on mode
+  const url = this.isEdit
+    ? `/orders/update/${this.order.id}`
+    : '/orders/store';
+
+  // ✅ Axios call
+  axios.post(url, payload)
+    .then(res => {
+      console.log("✅ Server response:", res.data);
+      alert(res.data.message);
       window.location.href = res.data.redirect;
-  });
+    })
+    .catch(err => {
+      console.error("❌ Error saving order:", err.response?.data || err);
+      alert("Error saving order. Check console for details.");
+    });
 },
    },
    watch: {

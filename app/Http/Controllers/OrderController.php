@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Category;
 use App\Models\Component;
 use App\Models\Discount;
 use App\Models\DiscountEntry;
@@ -37,71 +38,81 @@ class OrderController extends Controller
         return view('orders.index', compact('orders', 'discounts', 'status'));
     }
 
-    public function create()
-    {
-    // Get all products with their category
-    $products = Product::with('category')->get();
+   public function create()
+{
+    // ✅ Fetch categories with their subcategories (ASC order)
+    $categories = Category::with([
+    'subcategories' => function ($query) {
+        $query->with(['products', 'components']);
+    }
+])->get();
 
-    $components = Component::with('category')
+    // ✅ Fetch products with category + subcategory
+    $products = Product::with(['category', 'subcategory'])->get();
+
+    // ✅ Fetch components (for_sale only)
+    $components = Component::with(['category', 'subcategory'])
         ->where('for_sale', '!=', 0)
         ->get();
 
-    // Get list of waiters (users)
+    // ✅ Fetch waiters
     $waiters = User::select('id', 'name')->get();
 
-    // Transform products for Vue
+    // ✅ Transform products
     $productsTransformed = $products->map(function ($p) {
         return [
-            'id'          => $p->id,
-            'sku'         => $p->code,
-            'name'        => $p->name,
-            'description' => $p->description ?? '',
-            'price'       => $p->price,
-            'category'    => $p->category->name ?? '',
-            'image'       => $p->image
+            'id'             => $p->id,
+            'sku'            => $p->code,
+            'name'           => $p->name,
+            'description'    => $p->description ?? '',
+            'price'          => $p->price,
+            'category_id'    => $p->category_id,
+            'subcategory_id' => $p->subcategory_id,
+            'category'       => $p->category->name ?? '',
+            'subcategory'    => $p->subcategory->name ?? '',
+            'image'          => $p->image
                 ? asset('storage/' . $p->image)
                 : 'https://via.placeholder.com/300x200?text=No+Image',
-            'type'        => 'product', // 👈 tag it
+            'type'           => 'product',
         ];
     });
 
-    // Transform components for Vue
+    // ✅ Transform components
     $componentsTransformed = $components->map(function ($c) {
         return [
-            'id'          => $c->id,
-            'sku'         => $c->code,
-            'name'        => $c->name,
-            'description' => $c->description ?? '',
-            'price'       => $c->price,
-            'category'    => $c->category->name ?? '',
-            'image'       => $c->image
+            'id'             => $c->id,
+            'sku'            => $c->code,
+            'name'           => $c->name,
+            'description'    => $c->description ?? '',
+            'price'          => $c->price,
+            'category_id'    => $c->category_id,
+            'subcategory_id' => $c->subcategory_id,
+            'category'       => $c->category->name ?? '',
+            'subcategory'    => $c->subcategory->name ?? '',
+            'image'          => $c->image
                 ? asset('storage/' . $c->image)
                 : 'https://via.placeholder.com/300x200?text=No+Image',
-            'type'        => 'component', // 👈 tag it
+            'type'           => 'component',
         ];
     });
 
-    // Merge both collections
-    $allItems = $productsTransformed->merge($componentsTransformed)->values()->toArray();
+    // ✅ Merge both
+    $allItems = $productsTransformed->merge($componentsTransformed)->values();
 
-    // Extract unique categories (from both products + components)
-    $categories = collect($allItems)->pluck('category')
-        ->filter()
-        ->unique()
-        ->values()
-        ->toArray();
-
-    // Get latest order number
+    // ✅ Get latest order number
     $latestOrder = Order::latest('id')->first();
     $nextOrderNo = $latestOrder ? $latestOrder->id + 1 : 1;
 
-    return view('orders.create', [
-        'products'    => $allItems,
-        'categories'  => $categories,
-        'waiters'     => $waiters,
-        'nextOrderNo' => $nextOrderNo,
+    // ✅ Return to view
+    return view('orders.form', [
+        'isEdit'       => false,
+        'products'     => $allItems,
+        'categories'   => $categories,
+        'waiters'      => $waiters,
+        'nextOrderNo'  => $nextOrderNo,
     ]);
 }
+
 
     public function store(Request $request)
 {
@@ -257,4 +268,138 @@ class OrderController extends Controller
             'order' => $order
         ]);
     }
+
+    
+public function edit($id)
+{
+    // ✅ Fetch the order with its relations
+    $order = Order::with([
+        'details.product',
+        'details.component',
+        'user'
+    ])->findOrFail($id);
+
+    // ✅ Fetch categories (with subcategories → products + components)
+    $categories = Category::with([
+        'subcategories' => function ($query) {
+            $query->with(['products', 'components']);
+        }
+    ])->get();
+
+    // ✅ Fetch products with relations
+    $products = Product::with(['category', 'subcategory'])->get();
+
+    // ✅ Fetch components (for_sale only)
+    $components = Component::with(['category', 'subcategory'])
+        ->where('for_sale', '!=', 0)
+        ->get();
+
+    // ✅ Fetch waiters
+    $waiters = User::select('id', 'name')->get();
+
+    // ✅ Transform products
+    $productsTransformed = $products->map(function ($p) {
+        return [
+            'id'             => $p->id,
+            'sku'            => $p->code,
+            'name'           => $p->name,
+            'description'    => $p->description ?? '',
+            'price'          => $p->price,
+            'category_id'    => $p->category_id,
+            'subcategory_id' => $p->subcategory_id,
+            'category'       => $p->category->name ?? '',
+            'subcategory'    => $p->subcategory->name ?? '',
+            'image'          => $p->image
+                ? asset('storage/' . $p->image)
+                : 'https://via.placeholder.com/300x200?text=No+Image',
+            'type'           => 'product',
+        ];
+    });
+
+    // ✅ Transform components
+    $componentsTransformed = $components->map(function ($c) {
+        return [
+            'id'             => $c->id,
+            'sku'            => $c->code,
+            'name'           => $c->name,
+            'description'    => $c->description ?? '',
+            'price'          => $c->price,
+            'category_id'    => $c->category_id,
+            'subcategory_id' => $c->subcategory_id,
+            'category'       => $c->category->name ?? '',
+            'subcategory'    => $c->subcategory->name ?? '',
+            'image'          => $c->image
+                ? asset('storage/' . $c->image)
+                : 'https://via.placeholder.com/300x200?text=No+Image',
+            'type'           => 'component',
+        ];
+    });
+
+    // ✅ Merge both
+    $allItems = $productsTransformed->merge($componentsTransformed)->values();
+
+    // ✅ Return same view as create
+    return view('orders.form', [
+        'isEdit'       => true,
+        'order'        => $order,
+        'products'     => $allItems,
+        'categories'   => $categories,
+        'waiters'      => $waiters,
+    ]);
+}
+
+
+public function update(Request $request, $id)
+{
+    $order = Order::findOrFail($id);
+
+    $validated = $request->validate([
+        'user_id' => 'required|exists:users,id',
+        'table_no' => 'required|integer|min:1',
+        'number_pax' => 'required|integer|min:1',
+        'status' => 'required|in:serving,billout,payments,closed,cancelled',
+        'order_details' => 'required|array|min:1',
+        'order_details.*.product_id'   => 'nullable|exists:products,id',
+        'order_details.*.component_id' => 'nullable|exists:components,id',
+        'order_details.*.quantity' => 'required|integer|min:1',
+        'order_details.*.price' => 'required|numeric|min:0',
+    ]);
+
+    $order->update([
+        'user_id' => $validated['user_id'],
+        'table_no' => $validated['table_no'],
+        'number_pax' => $validated['number_pax'],
+        'status' => $validated['status'],
+    ]);
+
+    // Remove old details
+    $order->details()->delete();
+
+    // Recreate details
+    foreach ($validated['order_details'] as $detail) {
+        $order->details()->create([
+            'product_id' => $detail['product_id'] ?? null,
+            'component_id' => $detail['component_id'] ?? null,
+            'quantity' => $detail['quantity'],
+            'price' => $detail['price'],
+        ]);
+    }
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Order updated successfully!',
+        'redirect' => route('orders.index')
+    ]);
+}
+public function show($id)
+{
+    $order = Order::with([
+        'details.product',
+        'details.component',
+        'user'
+    ])->findOrFail($id);
+
+    return response()->json($order);
+}
+
 }

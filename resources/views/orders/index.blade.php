@@ -14,7 +14,6 @@
    </div>
    <!----> 
    <div class="wrapper">
-      
       <div class="card mt-4">
          <!----><!---->
          <nav class="card-header">
@@ -195,8 +194,9 @@
       <td class="text-right">
          @include('layouts.actions-dropdown', [
          'id' => $order->id,
-         'editRoute' => '#',
+         'editRoute' => route('orders.edit', $order->id),
          'viewRoute' => '#',
+         'cancelRoute' => '#',
          'deleteRoute' => '#',
          'remarksRoute' => '#',
          'status' => '#',
@@ -1001,37 +1001,35 @@ function updatePersonData(orderId, discountId, index, field, value) {
 </div>
 </div>
 @endsection
-
 @section('scripts')
-    <script>
-        window.currentPage = "{{ request()->is('components*') ? 'components' : 'products' }}";
-
-        document.addEventListener("DOMContentLoaded", function () {
-    const toggles = document.querySelectorAll(".toggle-details");
-
-    toggles.forEach(toggle => {
-        toggle.addEventListener("change", function () {
-            const orderId = this.dataset.id;
-
-            // Hide all detail rows
-            document.querySelectorAll(".order-details").forEach(row => {
-                row.style.display = "none";
-            });
-
-            // Uncheck all checkboxes
-            toggles.forEach(t => {
-                if (t !== this) t.checked = false;
-            });
-
-            // Show selected details if checked
-            const detailsRow = document.getElementById("details-" + orderId);
-            if (this.checked && detailsRow) {
-                detailsRow.style.display = "table-row";
-            }
-        });
-    });
-});
-    </script>
-
-    <script src="{{ asset('js/tableFunctions.js') }}"></script>
+<script>
+   window.currentPage = "{{ request()->is('components*') ? 'components' : 'products' }}";
+   
+   document.addEventListener("DOMContentLoaded", function () {
+   const toggles = document.querySelectorAll(".toggle-details");
+   
+   toggles.forEach(toggle => {
+   toggle.addEventListener("change", function () {
+       const orderId = this.dataset.id;
+   
+       // Hide all detail rows
+       document.querySelectorAll(".order-details").forEach(row => {
+           row.style.display = "none";
+       });
+   
+       // Uncheck all checkboxes
+       toggles.forEach(t => {
+           if (t !== this) t.checked = false;
+       });
+   
+       // Show selected details if checked
+       const detailsRow = document.getElementById("details-" + orderId);
+       if (this.checked && detailsRow) {
+           detailsRow.style.display = "table-row";
+       }
+   });
+   });
+   });
+</script>
+<script src="{{ asset('js/tableFunctions.js') }}"></script>
 @endsection
