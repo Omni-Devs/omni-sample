@@ -200,28 +200,53 @@ input[type=number] {
 <div class="order-header mb-3" style="flex:1;">
    <div class="card h-40">
         <div class="card-body">
-          <div class="d-flex justify-content-between mb-2">
-            <p class="mb-0">
-              <label class="fw-bold me-2">Order No:</label>
-              <span>@{{ orderNo }}</span>
-            </p>
-            <p class="mb-0">
-              <label class="fw-bold me-2">Date:</label>
-              <span>@{{ date }}</span>
-            </p>
-          </div>
-
-          <!-- Row 2: Status, Waiter, Pax, Table -->
           <div class="row g-3">
-            <!-- Status -->
+            <!-- Order No -->
             <div class="col-md-6">
-              <label class="fw-bold">Status:</label>
+              <label class="fw-bold">Order No:</label>
               <input
-                name="status"
                 type="text"
                 class="form-control form-control-sm"
-                value="serving"
+                :value="orderNo"
                 readonly
+              />
+            </div>
+
+            <!-- Date -->
+            <div class="col-md-6">
+              <label class="fw-bold">Date:</label>
+              <input
+                type="text"
+                class="form-control form-control-sm"
+                :value="date"
+                readonly
+              />
+            </div>
+
+            <!-- Table No. -->
+            <div class="col-md-6">
+              <label class="fw-bold">Table No:<span v-if="!tableNo" class="text-danger">*</span></label>
+              <input 
+                v-model="tableNo" 
+                name="table_no"
+                type="number" 
+                min="1"
+                class="form-control form-control-sm" 
+                :style="{ backgroundColor: tableNo ? '#e5e7eb' : '#fff' }"
+                required
+                >
+            </div>
+
+            <!-- No. of Pax -->
+            <div class="col-md-6">
+              <label class="fw-bold">No. of Pax:<span v-if="!pax" class="text-danger">*</span></label>
+              <input
+                type="number"
+                name="number_pax"
+                min="1"
+                v-model.number="pax"
+                class="form-control form-control-sm"
+                :style="{ backgroundColor: pax ? '#e5e7eb' : '#fff' }"
               />
             </div>
 
@@ -239,29 +264,18 @@ input[type=number] {
               ></v-select>
             </div>
 
-            <!-- No. of Pax -->
+            <!-- Status -->
             <div class="col-md-6">
-              <label class="fw-bold">No. of Pax:<span v-if="!pax" class="text-danger">*</span></label>
+              <label class="fw-bold">Status:</label>
               <input
-                type="number"
-                name="number_pax"
-                min="1"
-                v-model.number="pax"
+                name="status"
+                type="text"
                 class="form-control form-control-sm"
+                value="serving"
+                readonly
               />
             </div>
-
-            <!-- Table No. -->
-            <div class="col-md-6">
-              <label class="fw-bold">Table No:<span v-if="!tableNo" class="text-danger">*</span></label>
-              <input 
-                v-model="tableNo" 
-                name="table_no"
-                type="number" 
-                class="form-control" 
-                required
-                >
-            </div>
+            
           </div>
         </div>
       </div>

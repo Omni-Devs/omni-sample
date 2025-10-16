@@ -8,6 +8,7 @@ use App\Models\Discount;
 use App\Models\DiscountEntry;
 use App\Models\Product;
 use App\Models\Order;
+use Carbon\Carbon;
 use App\Models\User;
 use Illuminate\Http\Request;
 
@@ -40,14 +41,31 @@ class OrderController extends Controller
 
    public function create()
 {
-    // ✅ Fetch categories with their subcategories (ASC order)
+    // ✅ Fetch categories with subcategories (include all products, filter components)
     $categories = Category::with([
-    'subcategories' => function ($query) {
-        $query->with(['products', 'components']);
-    }
-])->get();
+        'subcategories' => function ($query) {
+            $query->with([
+                'products', // all products
+                'components' => function ($c) {
+                    $c->where('for_sale', '!=', 0); // only sellable components
+                },
+            ]);
+        },
+    ])->get();
 
-    // ✅ Fetch products with category + subcategory
+    // ✅ Filter out empty subcategories (no products AND no for_sale components)
+    $categories = $categories->filter(function ($category) {
+        $category->subcategories = $category->subcategories->filter(function ($sub) {
+            $hasProducts = $sub->products && $sub->products->count() > 0;
+            $hasComponents = $sub->components && $sub->components->count() > 0;
+            return $hasProducts || $hasComponents;
+        })->values();
+
+        // Keep category only if it has valid subcategories
+        return $category->subcategories->count() > 0;
+    })->values();
+
+    // ✅ Fetch all products (no for_sale column)
     $products = Product::with(['category', 'subcategory'])->get();
 
     // ✅ Fetch components (for_sale only)
@@ -113,9 +131,10 @@ class OrderController extends Controller
     ]);
 }
 
-
     public function store(Request $request)
 {
+    $localTime = Carbon::parse($request->created_at)->setTimezone('Asia/Manila');
+
     $validated = $request->validate([
         'user_id' => 'required|exists:users,id',
         'table_no' => 'required|integer|min:1',
@@ -156,6 +175,8 @@ class OrderController extends Controller
         'table_no'  => $validated['table_no'],
         'number_pax'=> $validated['number_pax'],
         'status'    => $validated['status'],
+        'created_at'=> $localTime,
+        'updated_at'=> $localTime,
     ]);
 
     // Attach order details
