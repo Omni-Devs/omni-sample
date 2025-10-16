@@ -20,6 +20,15 @@
         </li>
         @endisset
 
+        <!-- Update -->
+        @isset($updateRoute)
+        <li role="presentation">
+            <a class="dropdown-item" href="{{ $updateRoute }}">
+                <i class="nav-icon i-Edit font-weight-bold mr-2"></i> {{ $updateLabel ?? 'Update Status' }}
+            </a>
+        </li>
+        @endisset
+
         <!-- Edit for Users-->
         @isset($userEditRoute)
         <li role="presentation">

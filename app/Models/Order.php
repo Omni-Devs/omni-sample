@@ -9,6 +9,7 @@ class Order extends Model
 {
     use HasFactory;
 
+        protected $dates = ['created_at', 'updated_at'];
         protected $fillable = [
         'user_id',
         'table_no',
@@ -42,7 +43,11 @@ class Order extends Model
     }
     
     public function orderDetails()
-{
-    return $this->hasMany(OrderDetail::class, 'order_id');
-}
+    {
+        return $this->hasMany(OrderDetail::class, 'order_id');
+    }
+    public function setCreatedAt($value)
+    {
+        $this->attributes['created_at'] = \Carbon\Carbon::parse($value)->setTimezone('Asia/Manila');
+    }
 }

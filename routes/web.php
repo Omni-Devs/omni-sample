@@ -14,6 +14,8 @@ use App\Http\Controllers\UnitController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\CashEquivalentController;
+use App\Http\Controllers\KitchenController;
+use App\Http\Controllers\OrderController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -27,7 +29,7 @@ Route::get('/dashboard', function () {
     return view('dashboard');
 })->name('dashboard');
 
-use App\Http\Controllers\OrderController;
+
 Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
 Route::get('/order/create', [OrderController::class, 'create'])->name('orders.create');
 Route::post('/orders/store', [OrderController::class, 'store'])->name('orders.store');
@@ -35,6 +37,8 @@ Route::post('/orders/{order}/billout', [OrderController::class, 'billout'])->nam
 Route::get('/orders/{id}/show', [OrderController::class, 'show'])->name('orders.show');
 Route::get('/orders/{id}/edit', [OrderController::class, 'edit'])->name('orders.edit');
 Route::post('/orders/update/{id}', [OrderController::class, 'update'])->name('orders.update');
+
+Route::get('/kitchen', [KitchenController::class, 'index'])->name('kitchen.index');
 
 
 Route::get('/login', [LoginController::class, 'index'])->name('login');
