@@ -2,13 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CashEquivalent;
 use App\Models\Category;
 use App\Models\Component;
 use App\Models\Discount;
 use App\Models\DiscountEntry;
 use App\Models\Product;
 use App\Models\Order;
+use App\Models\Payment;
+use App\Models\PaymentDetail;
 use App\Models\User;
+use App\Models\Branch;
 use Illuminate\Http\Request;
 
 class OrderController extends Controller
@@ -19,7 +23,7 @@ class OrderController extends Controller
         $status = $request->query('status', 'serving');
 
         // Allow only specific statuses
-        $allowedStatuses = ['serving', 'billout', 'payment'];
+    $allowedStatuses = ['serving', 'billout', 'payments'];
         if (!in_array($status, $allowedStatuses)) {
             $status = 'serving';
         }
@@ -28,14 +32,21 @@ class OrderController extends Controller
         $orders = Order::with(['details.product', 'user'])
             ->when($status === 'serving', fn($q) => $q->where('status', 'serving'))
             ->when($status === 'billout', fn($q) => $q->where('status', 'billout'))
-            ->when($status === 'payment', fn($q) => $q->where('status', 'payment'))
+            ->when($status === 'payments', fn($q) => $q->where('status', 'payments'))
             ->orderByDesc('created_at')
             ->get();
 
         // Load active discounts
         $discounts = Discount::where('status', 'active')->orderBy('name')->get();
 
-        return view('orders.index', compact('orders', 'discounts', 'status'));
+        // Load payment methods and cash equivalents for Payment modal
+        $paymentMethods = Payment::where('status', 'active')->orderBy('name')->get();
+        $cashEquivalents = CashEquivalent::where('status', 'active')->orderBy('name')->get();
+
+        // Load branch information (for receipt header). Use first branch as default.
+        $branch = Branch::first();
+
+        return view('orders.index', compact('orders', 'discounts', 'status', 'paymentMethods', 'cashEquivalents', 'branch'));
     }
 
    public function create()
@@ -400,6 +411,135 @@ public function show($id)
     ])->findOrFail($id);
 
     return response()->json($order);
+}
+
+    // public function payment(Request $request, $orderId)
+    // {
+    //     $order = Order::findOrFail($orderId);
+
+    //     $validated = $request->validate([
+    //         'payments' => 'required|string', // JSON array
+    //     ]);
+
+    //     $decodedPayments = json_decode($validated['payments'], true);
+
+    //     if (empty($decodedPayments) || !is_array($decodedPayments)) {
+    //         return response()->json([
+    //             'success' => false,
+    //             'message' => 'Invalid or empty payment data.',
+    //         ], 422);
+    //     }
+
+    //     $totalPaid = 0;
+
+    //     foreach ($decodedPayments as $p) {
+    //         if (empty($p['payment_method_id']) || empty($p['cash_equivalent_id']) || empty($p['amount_paid'])) {
+    //             continue;
+    //         }
+
+    //         // ✅ Save each record in payment_details table
+    //         PaymentDetail::create([
+    //             'payment_id' => $p['payment_method_id'],
+    //             'cash_equivalent_id' => $p['cash_equivalent_id'],
+    //             'transaction_reference_no' => $p['reference_no'] ?? null,
+    //             'amount_paid' => $p['amount_paid'],
+    //         ]);
+
+    //         $totalPaid += $p['amount_paid'];
+    //     }
+
+    //     // ✅ Update order status
+    //     $order->update([
+    //         'status' => 'payment',
+    //         'charges_description' => ($order->charges_description ?? '') .
+    //             "\nPayments added on " . now()->toDateTimeString(),
+    //     ]);
+
+    //     return response()->json([
+    //         'success' => true,
+    //         'message' => 'Payment successfully recorded!',
+    //         'order' => $order,
+    //         'total_paid' => $totalPaid,
+    //     ]);
+    // }
+
+    public function payment(Request $request, $orderId)
+{
+    $order = Order::findOrFail($orderId);
+
+    $validated = $request->validate([
+        'payments' => 'required|string', // JSON array
+        'total_payment_rendered' => 'nullable|numeric|min:0',
+        'change_amount' => 'nullable|numeric|min:0',
+    ]);
+
+    $decodedPayments = json_decode($validated['payments'], true);
+
+    if (empty($decodedPayments) || !is_array($decodedPayments)) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Invalid or empty payment data.',
+        ], 422);
+    }
+
+    $totalPaid = 0;
+
+    foreach ($decodedPayments as $p) {
+        if (empty($p['payment_method_id']) || empty($p['cash_equivalent_id']) || empty($p['amount_paid'])) {
+            continue;
+        }
+
+        PaymentDetail::create([
+            'order_id' => $order->id,
+            'payment_id' => $p['payment_method_id'],
+            'cash_equivalent_id' => $p['cash_equivalent_id'],
+            'transaction_reference_no' => $p['reference_no'] ?? null,
+            'amount_paid' => $p['amount_paid'],
+            'total_rendered' => $request->total_payment_rendered ?? 0,
+            'change_amount' => $request->change_amount ?? 0,
+        ]);
+
+        $totalPaid += $p['amount_paid'];
+    }
+
+    // compute total rendered and change
+    $totalCharge = floatval($order->total_charge ?? 0);
+    $changeAmount = max(0, $totalPaid - $totalCharge);
+
+    // update order
+    $order->update([
+        'status' => 'payments',
+        'total_payment_rendered' => $totalPaid,
+        'change_amount' => $changeAmount,
+        'charges_description' => ($order->charges_description ?? '') . "\nPayments added on " . now()->toDateTimeString(),
+    ]);
+
+    // Optionally update last payment detail row with totals
+    $lastPayment = PaymentDetail::where('order_id', $order->id)->latest()->first();
+    if ($lastPayment) {
+        $lastPayment->update([
+            'total_rendered' => $totalPaid,
+            'change_amount' => $changeAmount,
+        ]);
+    }
+
+    // Reload order with relations for response (so view can render receipt)
+    $order = Order::with([
+        'details.product',
+        'details.component',
+        'user',
+        'discountEntries',
+        'paymentDetails.payment',
+        'paymentDetails.cashEquivalent'
+    ])->find($order->id);
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Payment successfully recorded!',
+        'order' => $order,
+        'total_paid' => $totalPaid,
+        'change' => $changeAmount,
+    ]);
 }
 
 }

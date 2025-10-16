@@ -17,6 +17,10 @@ class Branch extends Model
         'tin',
         'address',
         'contact_person',
+        'permit_number',
+        'dti_issued',
+        'pos_sn',
+        'min_number',
     ];
 
     public function users()

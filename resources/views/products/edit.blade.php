@@ -217,65 +217,59 @@
                                              </div>
                                           </fieldset>
                                           </span>
+                                          
                      <!-- Subcategory select + New button -->
                      <div class="form-group">
-                           <label for="subcategory_id">Subcategory</label>
-                           <div class="d-flex">
-                              <select name="subcategory_id" id="subcategory_id" class="form-control mr-2">
-                                 {{-- no default placeholder, will be filled dynamically --}}
-                              </select>
-                              <button type="button" id="toggleSubCategoryBtn" class="btn btn-outline-success btn-sm" onclick="toggleSubCategoryForm()">
-                                 <i class="i-Add"></i>
-                              </button>
-                           </div>
+                        <label for="subcategory_id">Subcategory</label>
+                        <div class="d-flex">
+                           <select name="subcategory_id" id="subcategory_id" class="form-control mr-2">
+                              @foreach ($subcategories as $subcategory)
+                                 <option value="{{ $subcategory->id }}" 
+                                    {{ old('subcategory_id', $product->subcategory_id) == $subcategory->id ? 'selected' : '' }}>
+                                    {{ $subcategory->name }}
+                                 </option>
+                              @endforeach
+                           </select>
+                           <button type="button" id="toggleSubCategoryBtn" class="btn btn-outline-success btn-sm" onclick="toggleSubCategoryForm()">
+                              <i class="i-Add"></i>
+                           </button>
+                        </div>
                      </div>
 
 
                      <script>
-                     document.getElementById('category_id').addEventListener('change', async function () {
-                           const categoryId = this.value;
+                        document.addEventListener('DOMContentLoaded', () => {
+                           const categorySelect = document.getElementById('category_id');
                            const subcategorySelect = document.getElementById('subcategory_id');
-                           
-                           // Clear options (no placeholder this time)
-                           subcategorySelect.innerHTML = '';
+                           const selectedSubcategoryId = "{{ old('subcategory_id', $product->subcategory_id) }}";
 
-                           if (!categoryId) return;
+                           // Fetch subcategories when category changes
+                           categorySelect.addEventListener('change', async function () {
+                              const categoryId = this.value;
+                              subcategorySelect.innerHTML = '';
 
-                           try {
-                              const res = await fetch(`/categories/${categoryId}/subcategories`);
-                              const subcategories = await res.json();
+                              if (!categoryId) return;
 
-                              // Get old value from Blade
-                              const oldSubcategoryId = "{{ old('subcategory_id') }}";
+                              try {
+                                 const res = await fetch(`/categories/${categoryId}/subcategories`);
+                                 const subcategories = await res.json();
 
-                              subcategories.forEach(sub => {
-                                 const option = new Option(sub.name, sub.id);
-
-                                 // Auto-select if matches old value
-                                 if (oldSubcategoryId && oldSubcategoryId == sub.id) {
-                                       option.selected = true;
-                                 }
-
-                                 subcategorySelect.add(option);
-                              });
-
-                              // If no old value, select the first subcategory by default
-                              if (!oldSubcategoryId && subcategories.length > 0) {
-                                 subcategorySelect.options[0].selected = true;
+                                 subcategories.forEach(sub => {
+                                    const option = new Option(sub.name, sub.id, false, sub.id == selectedSubcategoryId);
+                                    subcategorySelect.add(option);
+                                 });
+                              } catch (error) {
+                                 console.error('Failed to load subcategories:', error);
                               }
-                           } catch (err) {
-                              console.error('Failed to load subcategories:', err);
-                           }
-                     });
+                           });
 
-                     // Auto-load subcategories if category is pre-selected
-                     document.addEventListener('DOMContentLoaded', () => {
-                           const selectedCategory = document.getElementById('category_id').value;
-                           if (selectedCategory) {
-                              document.getElementById('category_id').dispatchEvent(new Event('change'));
+                           // ✅ Only auto-trigger if the category changed from original
+                           const currentCategory = "{{ $product->category_id }}";
+                           if (categorySelect.value && categorySelect.value != currentCategory) {
+                              categorySelect.dispatchEvent(new Event('change'));
                            }
-                     });
-                     </script>
+                        });
+                        </script>
 
 
                                  <!-- Inline new subcategory form (hidden) -->

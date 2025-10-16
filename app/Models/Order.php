@@ -45,4 +45,12 @@ class Order extends Model
 {
     return $this->hasMany(OrderDetail::class, 'order_id');
 }
+
+    /**
+     * Payment details associated with this order
+     */
+    public function paymentDetails()
+    {
+        return $this->hasMany(\App\Models\PaymentDetail::class, 'order_id');
+    }
 }

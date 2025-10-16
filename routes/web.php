@@ -36,6 +36,8 @@ Route::get('/orders/{id}/show', [OrderController::class, 'show'])->name('orders.
 Route::get('/orders/{id}/edit', [OrderController::class, 'edit'])->name('orders.edit');
 Route::post('/orders/update/{id}', [OrderController::class, 'update'])->name('orders.update');
 
+// Payment for order (POS)
+Route::post('/orders/{order}/payment', [OrderController::class, 'payment'])->name('orders.payment');
 
 Route::get('/login', [LoginController::class, 'index'])->name('login');
 Route::post('/login', [LoginController::class, 'login'])->name('login.submit');

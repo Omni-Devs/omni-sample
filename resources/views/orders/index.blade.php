@@ -15,7 +15,7 @@
    <!----> 
    <div class="wrapper">
       <div class="card mt-4">
-         <!----><!---->
+         
          <nav class="card-header">
             <ul class="nav nav-tabs card-header-tabs">
                <li class="nav-item">
@@ -28,13 +28,162 @@
                <li class="nav-item">
                   <a href="{{ route('orders.index', ['status' => 'billout']) }}" 
                      class="nav-link {{ $status === 'billout' ? 'active' : '' }}">
-                     Bill Out
+               Bill Out
+                  </a>
+
+               @foreach($orders as $order)
+               <!-- Payment Modal (moved here so it's outside nav links) -->
+               <div class="modal fade" id="paymentModal{{ $order->id }}" tabindex="-1" aria-labelledby="paymentLabel{{ $order->id }}" aria-hidden="true">
+                  <div class="modal-dialog modal-lg">
+                     <div class="modal-content">
+                        <div class="modal-header">
+                           <h5 class="modal-title">Payment - Order #{{ $order->id }}</h5>
+                           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                           <div class="container-fluid">
+                              <div class="row mb-2">
+                                 <div class="col-md-2">
+                                    <label class="form-label">Order No</label>
+                                    <input type="text" class="form-control" value="{{ $order->id }}" readonly>
+                                 </div>
+                                 <div class="col-md-2">
+                                    <label class="form-label">No of Pax</label>
+                                    <input type="text" class="form-control" value="{{ $order->number_pax }}" readonly>
+                                 </div>
+                                 <div class="col-md-3">
+                                    <label class="form-label">Date & Time</label>
+                                    <input type="text" class="form-control" value="{{ $order->created_at->format('Y-m-d H:i') }}" readonly>
+                                 </div>
+                              </div>
+
+                              <div class="row mb-2">
+                                 <div class="col-md-2">
+                                    <label class="form-label">Table No</label>
+                                    <input type="text" class="form-control" value="{{ $order->table_no }}" readonly>
+                                 </div>
+                                 <div class="col-md-3">
+                                    <label class="form-label">Waiter</label>
+                                    <input type="text" class="form-control" value="{{ $order->user?->name }}" readonly>
+                                 </div>
+                                 <div class="col-md-2">
+                                    <label class="form-label">Status</label>
+                                    <input type="text" class="form-control" value="{{ ucfirst($order->status) }}" readonly>
+                                 </div>
+                                 <div class="col-md-3">
+                                    <label class="form-label">Cashier</label>
+                                    <input type="text" class="form-control" value="{{ auth()->user()->name ?? '' }}" readonly>
+                                 </div>
+                              </div>
+
+                              <hr>
+                              <h6 class="fw-bold text-center">GROSS CHARGE</h6>
+                              <div class="row mb-3">
+                                 <div class="col-md-4 offset-md-4">
+                                    <input type="text" class="form-control text-center fw-bold" 
+                                           value="₱{{ number_format($order->details->sum(fn($d) => ($d->price * $d->quantity) - ($d->discount ?? 0)), 2) }}" readonly>
+                                 </div>
+                              </div>
+
+                              {{-- Charges and discounts: prefill from order if billout else blank --}}
+                              <div class="row mb-3">
+                                 <div class="col-md-3">
+                                    <label class="form-label">SR/PWD Bill</label>
+                                    <input type="text" id="pay_srPwdBill_{{ $order->id }}" class="form-control" value="{{ $order->sr_pwd_discount ?? '' }}" readonly>
+                                 </div>
+                                 <div class="col-md-3">
+                                    <label class="form-label">Net Bill</label>
+                                    <input type="text" id="pay_netBill_{{ $order->id }}" class="form-control" value="{{ $order->net_amount ?? '' }}" readonly>
+                                 </div>
+                                 <div class="col-md-3">
+                                    <label class="form-label">Reg Bill</label>
+                                    <input type="text" id="pay_regBill_{{ $order->id }}" class="form-control" value="{{ $order->vatable ?? '' }}" readonly>
+                                 </div>
+                                 <div class="col-md-3">
+                                    <label class="form-label">Other Discount</label>
+                                    <input type="text" id="pay_otherDiscount_{{ $order->id }}" class="form-control" value="{{ $order->other_discounts ?? '' }}" readonly>
+                                 </div>
+                              </div>
+
+                              <div class="row mb-3">
+                                 <div class="col-md-3">
+                                    <label class="form-label">Vatable</label>
+                                    <input type="text" id="pay_vatable_{{ $order->id }}" class="form-control" value="{{ $order->vatable ?? '' }}" readonly>
+                                 </div>
+                                 <div class="col-md-3">
+                                    <label class="form-label">VAT 12%</label>
+                                    <input type="text" id="pay_vat12_{{ $order->id }}" class="form-control" value="{{ $order->vat_12 ?? '' }}" readonly>
+                                 </div>
+                                 <div class="col-md-6">
+                                    <label class="form-label fw-bold">TOTAL CHARGE</label>
+                                    <input type="text" id="pay_totalCharge_{{ $order->id }}" class="form-control fw-bold text-success" value="{{ $order->total_charge ?? '' }}" readonly>
+                                 </div>
+                              </div>
+
+                              <hr>
+                              <div class="row mb-2">
+                                 <div class="col-md-12 d-flex justify-content-between align-items-center">
+                                    <div>
+                                       <strong>Mode of Payment</strong>
+                                    </div>
+                                    <div>
+                                       <button type="button" class="btn btn-sm btn-warning" onclick="addPaymentRow({{ $order->id }})">Add</button>
+                                    </div>
+                                 </div>
+                              </div>
+
+                              <!-- Payments table -->
+                              <div class="row mb-3">
+                                 <div class="col-md-12">
+                                    <div class="table-responsive">
+                                       <table class="table table-sm table-bordered">
+                                          <thead>
+                                             <tr>
+                                                <th>Payment Method</th>
+                                                <th>Transaction Reference #</th>
+                                                <th>Payment Destination</th>
+                                                <th class="text-end">Amount Paid</th>
+                                                <th>Action</th>
+                                             </tr>
+                                          </thead>
+                                          <tbody id="payments_table_body_{{ $order->id }}">
+                                             <!-- rows will be appended here -->
+                                          </tbody>
+                                          <tfoot>
+                                             <tr>
+                                                <td colspan="3" class="text-end"><strong>Total Payment Rendered</strong></td>
+                                                <td class="text-end"><strong id="payments_total_{{ $order->id }}">0.00</strong></td>
+                                                <td></td>
+                                             </tr>
+                                             <tr>
+                                                <td colspan="3" class="text-end"><strong>Change</strong></td>
+                                                <td class="text-end"><strong id="payments_change_{{ $order->id }}">0.00</strong></td>
+                                                <td></td>
+                                             </tr>
+                                          </tfoot>
+                                       </table>
+                                    </div>
+                                    <input type="hidden" id="payments_counter_{{ $order->id }}" value="0">
+                                 </div>
+                              </div>
+
+                           </div>
+                        </div>
+                        <div class="modal-footer">
+                           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                           <button type="button" class="btn btn-primary" data-bs-target="#paymentModal{{ $order->id }}" data-bs-toggle="modal" onclick="submitPayment({{ $order->id }})">Submit Payment</button>
+                        </div>
+                     </div>
+                  </div>
+               </div>
+               @endforeach
+               
                   </a>
                </li>
 
                <li class="nav-item">
-                  <a href="{{ route('orders.index', ['status' => 'payment']) }}"
-                     class="nav-link {{ $status === 'payment' ? 'active' : '' }}">
+                  <a href="{{ route('orders.index', ['status' => 'payments']) }}"
+                     class="nav-link {{ $status === 'payments' ? 'active' : '' }}">
                      Payment
                   </a>
                </li>
@@ -201,8 +350,10 @@
          'remarksRoute' => '#',
          'status' => '#',
 
-         // Custom labels
-         'viewLabel' => 'Bill out',
+         // Custom labels: if already billout, show Payment
+         'viewLabel' => $order->status === 'billout' ? 'Payment' : 'Bill out',
+         // target payment modal when status is billout
+         'viewModalId' => $order->status === 'billout' ? "paymentModal{$order->id}" : null,
          'deleteLabel' => 'Cancel',
       ])
       </td>
@@ -457,107 +608,6 @@
 @endforeach
 
    <script>
-// function calculateChargesAndDiscounts(orderId, grossAmount, pax) {
-//     const vatRate = 0.12;
-
-//     // Safety/coerce
-//     grossAmount = parseFloat(grossAmount) || 0;
-//     pax = parseInt(pax) || 1;
-//     if (pax <= 0) pax = 1;
-
-//     // Selected discount IDs
-//     const hidden = document.getElementById("discountIds_" + orderId);
-//     const selectedIds = hidden && hidden.value
-//         ? hidden.value.split(',').map(s => s.trim()).filter(Boolean)
-//         : [];
-
-//     const perPaxGross = grossAmount / pax;           // e.g. 1000 / 5 = 200
-//     const basePerPax = perPaxGross / (1 + vatRate);  // remove VAT e.g. 178.57
-
-//     // Totals
-//     let qualifiedCount = 0;
-//     let totalDiscountAmount = 0;
-
-//     selectedIds.forEach(id => {
-//         const chk = document.getElementById(`discountCheck_${orderId}_${id}`);
-//         if (!chk) return;
-
-//         const name = (chk.dataset.name || '').toLowerCase();
-//         const valuePct = parseFloat(chk.dataset.value || 0); // e.g. 20
-
-//         if (name.includes('senior') || name.includes('pwd')) {
-//             // Try to read discount count input
-//             let count = 0;
-//             const countInput = document.getElementById(`discountCount_${orderId}_${id}`);
-//             if (countInput) {
-//                 count = parseInt(countInput.value) || 0;
-//             } else {
-//                 const personsContainer = document.getElementById(`discountPersons_${orderId}_${id}`);
-//                 if (personsContainer) {
-//                     count = personsContainer.querySelectorAll('.row').length || 0;
-//                 }
-//             }
-
-//             if (count > 0) {
-//                 qualifiedCount += count;
-//                 const discountPerPax = basePerPax * (valuePct / 100);
-//                 totalDiscountAmount += discountPerPax * count;
-//             }
-//         }
-//     });
-
-//     // Clamp qualifiedCount (cannot exceed pax)
-//     qualifiedCount = Math.min(qualifiedCount, pax);
-
-//     // Vatable / VAT portion
-//     const totalVatable = basePerPax * pax;
-//     const totalVat12 = grossAmount - totalVatable;
-
-//     // Compute total charge (net)
-//     const qualifiedNetTotal = (basePerPax * qualifiedCount) - totalDiscountAmount;
-//     const nonQualifiedCount = pax - qualifiedCount;
-//     const nonQualifiedTotal = perPaxGross * nonQualifiedCount;
-//     const totalCharge = qualifiedNetTotal + nonQualifiedTotal;
-
-//     // 🧮 Correct SR/PWD Bill — total for all discounted pax
-//     const srPwdBillValue = perPaxGross * qualifiedCount;
-
-//     // Others
-//     const regBillValue = grossAmount;
-//     const discountValue = totalDiscountAmount;
-//     const vatableValue = totalVatable;
-//     const vat12Value = totalVat12;
-//     const netBillValue = totalCharge;
-//     const otherDiscountValue = 0.00;
-
-//     // Update UI fields
-//     const setVal = (id, val) => {
-//         const el = document.getElementById(id + '_' + orderId);
-//         if (el) el.value = Number(val || 0).toFixed(2);
-//     };
-
-//     setVal('srPwdBill', srPwdBillValue);
-//     setVal('regBill', regBillValue);
-//     setVal('discount20', discountValue);
-//     setVal('vatable', vatableValue);
-//     setVal('vat12', vat12Value);
-//     setVal('netBill', netBillValue);
-//     setVal('otherDiscount', otherDiscountValue);
-//     setVal('totalCharge', totalCharge);
-
-//     // Optional display for per-pax info
-//     const perPaxNetEl = document.getElementById('perPaxNet_' + orderId);
-//     if (perPaxNetEl) {
-//         if (qualifiedCount > 0) {
-//             const discountPerPax = totalDiscountAmount / qualifiedCount;
-//             const netPerQualifiedPax = basePerPax - discountPerPax;
-//             perPaxNetEl.textContent = `Qualified per pax: ₱${netPerQualifiedPax.toFixed(2)} (x${qualifiedCount})`;
-//         } else {
-//             perPaxNetEl.textContent = '';
-//         }
-//     }
-// }
-
 function calculateChargesAndDiscounts(orderId, grossAmount, pax) {
     const vatRate = 0.12;
 
@@ -645,91 +695,6 @@ function calculateChargesAndDiscounts(orderId, grossAmount, pax) {
     setVal('totalCharge', totalCharge);
 }
 
-// function confirmBillOut(orderId) {
-//     const form = document.getElementById('billOutForm_' + orderId);
-//     if (!form) {
-//         alert("⚠️ Bill Out form not found.");
-//         return;
-//     }
-
-//     const formData = new FormData(form);
-
-//     // ✅ Include all billing and discount-related computed fields
-//     const fields = [
-//         'srPwdBill', 'discount20', 'otherDiscount',
-//         'netBill', 'vatable', 'vat12', 'totalCharge'
-//     ];
-
-//     fields.forEach(f => {
-//         const el = document.getElementById(f + '_' + orderId);
-//         if (el && el.value !== '') {
-//             formData.set(f, el.value); // ensure value overrides FormData correctly
-//         } else {
-//             console.warn(`Missing or empty field: ${f}_${orderId}`);
-//         }
-//     });
-
-//     // ✅ Collect discount persons
-//     const personsData = [];
-//     document.querySelectorAll(`#selectedDiscountsContainer_${orderId} input[name^="persons"]`).forEach(input => {
-//         const match = input.name.match(/persons\[(\d+)\]\[(\d+)\]\[(name|id_number)\]/);
-//         if (match) {
-//             const discountId = match[1];
-//             const index = match[2];
-//             const key = match[3];
-//             if (!personsData[index]) personsData[index] = { discount_id: discountId };
-//             personsData[index][key] = input.value;
-//         }
-//     });
-
-//     formData.append('persons', JSON.stringify(personsData));
-
-//     // ✅ Confirm action
-//     if (!confirm('Are you sure you want to confirm this Bill Out?')) return;
-
-//     fetch(form.action, {
-//         method: 'POST',
-//         headers: {
-//             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-//         },
-//         body: formData
-//     })
-//     .then(res => res.json())
-//     .then(data => {
-//         console.log("Bill Out Response:", data);
-
-//         if (data.success) {
-//             // ✅ Update totalCharge input
-//             const totalChargeInput = document.getElementById('totalCharge_' + orderId);
-//             if (totalChargeInput) {
-//                 totalChargeInput.value = parseFloat(data.order.total_charge).toFixed(2);
-//             }
-
-//             // ✅ Update amount in the table
-//             const amountCell = document.getElementById('amount_' + orderId);
-//             if (amountCell) {
-//                 amountCell.textContent = `₱${Number(data.order.total_charge).toLocaleString('en-PH', {
-//                     minimumFractionDigits: 2
-//                 })}`;
-//             }
-
-//             alert('✅ Bill saved successfully!');
-            
-//             // ✅ Redirect to Bill Out page after 1 second
-//             setTimeout(() => {
-//                 window.location.href = "/orders?status=billout";
-//             }, 1000);
-
-//         } else {
-//             alert('⚠️ Failed to save bill: ' + (data.message || 'Unknown error'));
-//         }
-//     })
-//     .catch(err => {
-//         console.error("Bill Out Error:", err);
-//         alert('❌ Error saving bill.');
-//     });
-// }
-
 const savedDiscountPersons = {}; 
 
 function saveDiscountPersons(orderId) {
@@ -753,6 +718,65 @@ function saveDiscountPersons(orderId) {
 
     savedDiscountPersons[orderId] = personsMap;
 }
+
+// function confirmBillOut(orderId) {
+//       const form = document.getElementById('billOutForm_' + orderId);
+//       const formData = new FormData(form);
+
+//       // ✅ Include computed discount and billing fields
+//       const fields = [
+//          'srPwdBill', 'discount20', 'otherDiscount',
+//          'netBill', 'vatable', 'vat12', 'totalCharge'
+//       ];
+//       fields.forEach(f => {
+//          const el = document.getElementById(f + '_' + orderId);
+//          if (el) formData.append(f, el.value);
+//       });
+
+//          // ✅ Collect discount persons from saved memory
+//       const personsData = [];
+//       if (savedDiscountPersons[orderId]) {
+//          Object.entries(savedDiscountPersons[orderId]).forEach(([discountId, persons]) => {
+//                persons.forEach(p => {
+//                   personsData.push({
+//                      discount_id: discountId,
+//                      name: p.name || '',
+//                      id_number: p.id_number || ''
+//                   });
+//                });
+//          });
+//       }
+//       // ✅ Attach JSON string of all persons to form data
+//    formData.append('persons', JSON.stringify(personsData));
+
+//       // ✅ Confirm user action before submitting
+//       if (!confirm('Are you sure you want to confirm this Bill Out?')) return;
+
+//       // ✅ Submit request
+//       fetch(form.action, {
+//          method: 'POST',
+//          headers: {
+//                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+//          },
+//          body: formData
+//       })
+//       .then(res => res.json())
+//       .then(data => {
+//          if (data.success) {
+//                alert('✅ Bill saved successfully!');
+//                document.getElementById('totalCharge_' + orderId).value = data.order.total_charge;
+
+//                // Optional: reload or move order to Bill-Out section
+//                setTimeout(() => location.reload(), 1000);
+//          } else {
+//                alert('⚠️ Failed to save bill: ' + (data.message || 'Unknown error'));
+//          }
+//       })
+//       .catch(err => {
+//          console.error(err);
+//          alert('❌ Error saving bill.');
+//       });
+// }
 
 function confirmBillOut(orderId) {
     const form = document.getElementById('billOutForm_' + orderId);
@@ -799,7 +823,8 @@ function confirmBillOut(orderId) {
         headers: {
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
         },
-        body: formData
+      body: formData,
+      credentials: 'same-origin'
     })
     .then(res => res.json())
     .then(data => {
@@ -829,7 +854,6 @@ function confirmBillOut(orderId) {
         alert('❌ Error saving bill.');
     });
 }
-
 
 function toggleDiscountForm(orderId) {
     const hidden = document.getElementById('discountIds_' + orderId);
@@ -937,6 +961,383 @@ function updatePersonData(orderId, discountId, index, field, value) {
 }
 
    </script>
+   <script>
+       // helper to add a payment row in the modal table
+   function addPaymentRow(orderId) {
+      const counterEl = document.getElementById('payments_counter_' + orderId);
+      let counter = counterEl ? parseInt(counterEl.value || 0) : 0;
+      counter++;
+      if (counterEl) counterEl.value = counter;
+
+      const tbody = document.getElementById('payments_table_body_' + orderId);
+      if (!tbody) return;
+
+      // build select options for payment methods and cash equivalents
+      const paymentMethods = {!! json_encode($paymentMethods->map(fn($m) => [
+         'id' => $m->id,
+         'name' => $m->name
+      ])) !!};
+
+      // include account_number in mapping for display
+      const cashEquivalents = {!! json_encode($cashEquivalents->map(fn($c) => [
+         'id' => $c->id,
+         'name' => $c->name,
+         'account_number' => $c->account_number
+      ])) !!};
+
+      const tr = document.createElement('tr');
+      tr.dataset.rowId = counter;
+      tr.innerHTML = `
+         <td>
+            <select id="pm_${orderId}_${counter}" class="form-select form-select-sm">
+               <option value=""></option>
+               ${paymentMethods.map(m => `<option value="${m.id}">${m.name}</option>`).join('')}
+            </select>
+         </td>
+         <td>
+            <input type="text" id="pref_${orderId}_${counter}" class="form-control form-control-sm" />
+         </td>
+         <td>
+            <select id="pdest_${orderId}_${counter}" class="form-select form-select-sm">
+               <option value=""></option>
+               ${cashEquivalents.map(c => 
+                  `<option value="${c.id}">${c.name} | ${c.account_number ?? ''}</option>`
+               ).join('')}
+            </select>
+         </td>
+         <td class="text-end">
+            <input type="number" step="0.01" id="pamt_${orderId}_${counter}" class="form-control form-control-sm text-end" value="0.00" oninput="recalcPayments(${orderId})" />
+         </td>
+         <td>
+            <button type="button" class="btn btn-sm btn-danger" onclick="removePaymentRow(${orderId}, ${counter})">Remove</button>
+         </td>
+      `;
+
+      tbody.appendChild(tr);
+      recalcPayments(orderId);
+   }
+
+      function removePaymentRow(orderId, rowId) {
+         const tbody = document.getElementById('payments_table_body_' + orderId);
+         if (!tbody) return;
+         const tr = tbody.querySelector(`tr[data-row-id="${rowId}"]`);
+         if (tr) tr.remove();
+         recalcPayments(orderId);
+      }
+
+      function recalcPayments(orderId) {
+         const tbody = document.getElementById('payments_table_body_' + orderId);
+         let total = 0;
+         if (tbody) {
+            tbody.querySelectorAll('input[id^="pamt_"]').forEach(inp => {
+               const val = parseFloat(inp.value || 0) || 0;
+               total += val;
+            });
+         }
+
+         // display totals; total charge
+         const totalEl = document.getElementById('payments_total_' + orderId);
+         const changeEl = document.getElementById('payments_change_' + orderId);
+         const totalChargeStr = document.getElementById('pay_totalCharge_' + orderId)?.value || document.getElementById('totalCharge_' + orderId)?.value || 0;
+         const totalCharge = parseFloat(String(totalChargeStr).replace(/,/g, '')) || 0;
+         if (totalEl) totalEl.textContent = Number(total).toFixed(2);
+         if (changeEl) changeEl.textContent = Number(Math.max(0, total - totalCharge)).toFixed(2);
+      }
+   </script>
+<!-- Invoice / Receipt Modal Template -->
+@foreach($orders as $order)
+<div class="modal fade" id="invoiceModal{{ $order->id }}" tabindex="-1" aria-labelledby="invoiceLabel{{ $order->id }}" aria-hidden="true">
+   <div class="modal-dialog modal-sm modal-dialog-scrollable">
+      <div class="modal-content">
+         <div class="modal-header">
+            <h5 class="modal-title">POS Receipt</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+         </div>
+         <div class="modal-body">
+            <div id="pos-invoice-{{ $order->id }}">
+               <div style="max-width: 400px; margin: 0px auto; font-family: Arial, Helvetica, sans-serif;">
+                  <div class="info text-center">
+                     <div class="invoice_logo mb-2"><img src="/images/logo-default.png" alt="" width="60" height="60"></div>
+                     <div class="d-flex flex-column small">
+                        <span class="t-font-boldest">{{ $branch->name ?? 'Branch Name' }}</span>
+                        <span>{{ $branch->address ?? '' }}</span>
+                        <span>Permit #: {{ $branch->permit_number ?? '' }}</span>
+                        <span>DTI Issued: {{ $branch->dti_issued ?? '' }}</span>
+                        <span>POS SN: {{ $branch->pos_sn ?? '' }}</span>
+                        <span>MIN#: {{ $branch->min_number ?? '' }}</span>
+                     </div>
+
+                     <h6 class="t-font-boldest mt-3">SALES INVOICE</h6>
+                     <div class="mb-2">INV: {{ sprintf('%08d', $order->id) }}</div>
+                     <div class="mb-1">Date: {{ $order->created_at->format('Y-m-d H:i') }}</div>
+                     <div class="mb-1">TBL: {{ $order->table_no }}</div>
+                     <div class="mb-1"># of Pax: {{ $order->number_pax }}</div>
+                  </div>
+
+                  <table class="table table-invoice-items mt-2" style="width:100%; font-size:13px;">
+                     <thead>
+                        <tr>
+                           <th style="text-align:left; width:10%">QTY</th>
+                           <th style="text-align:left; width:60%">DESCRIPTION</th>
+                           <th style="text-align:right; width:30%">AMOUNT</th>
+                        </tr>
+                     </thead>
+                     <tbody>
+                        @foreach($order->details as $d)
+                        <tr>
+                           <td>{{ $d->quantity }}x</td>
+                           <td>
+                              <div class="d-flex flex-column">
+                                 <span>{{ $d->item_name }}</span>
+                                 <span style="font-size:11px; color:#666">@₱{{ number_format($d->price,2) }}</span>
+                              </div>
+                           </td>
+                           <td style="text-align:right;">₱{{ number_format($d->price * $d->quantity,2) }}</td>
+                        </tr>
+                        @endforeach
+                     </tbody>
+                  </table>
+
+                  <table class="table table-invoice-data" style="width:100%; font-size:13px;">
+                     <tbody>
+                        <tr>
+                           <td>Gross Charge</td>
+                           <td class="text-right">₱{{ number_format($order->details->sum(fn($d) => ($d->price * $d->quantity) - ($d->discount ?? 0)), 2) }}</td>
+                             {{-- value="₱{{ number_format($order->details->sum(fn($d) => ($d->price * $d->quantity) - ($d->discount ?? 0)), 2) }}" readonly> --}}
+                        </tr>
+                        <tr>
+                           <td>Less Discount</td>
+                           <td class="text-right">₱{{ number_format($order->sr_pwd_discount ?? 0,2) }}</td>
+                        </tr>
+                        <tr>
+                           <td>Vatable</td>
+                           <td class="text-right">₱{{ number_format($order->vatable ?? 0,2) }}</td>
+                        </tr>
+                        <tr>
+                           <td>Vat 12%</td>
+                           <td class="text-right">₱{{ number_format($order->vat_12 ?? 0,2) }}</td>
+                        </tr>
+                        <tr>
+                           <td>Reg Bill</td>
+                           <td class="text-right">₱{{ number_format($order->vatable ?? 0,2) }}</td>
+                        </tr>
+                        <tr>
+                           <td>SR/PWD Bill</td>
+                           <td class="text-right">₱{{ number_format($order->sr_pwd_discount ?? 0,2) }}</td>
+                        </tr>
+
+                        <tr>
+                           <td><strong>Total</strong></td>
+                           <td class="text-right"><strong>₱{{ number_format($order->total_charge ?? $order->net_amount ?? 0,2) }}</strong></td>
+                        </tr>
+                     </tbody>
+                  </table>
+
+                  <div class="mt-3">
+                     <p class="mb-0"><strong>Payment Method(s)</strong></p>
+                     @php
+                        $paymentDetails = $order->paymentDetails ?? [];
+                     @endphp
+                     @if(count($paymentDetails))
+                        @foreach($paymentDetails as $pd)
+                           <div class="d-flex justify-content-between small"><span>{{ $pd->payment?->name ?? 'Method' }}</span> <span>₱{{ number_format($pd->amount_paid,2) }}</span></div>
+                        @endforeach
+                     @else
+                        <div class="small">No payments recorded</div>
+                     @endif
+
+                     <div class="d-flex justify-content-between fw-bold mt-2"><span>Total Payment</span> <span>₱{{ number_format($order->total_payment_rendered ?? 0,2) }}</span></div>
+                     <div class="d-flex justify-content-between fw-bold"><span>Change</span> <span>₱{{ number_format($order->change_amount ?? 0,2) }}</span></div>
+                  </div>
+
+                  <p class="text-center mt-3 small"><strong>This is not an official receipt</strong></p>
+               </div>
+            </div>
+         </div>
+         <div class="modal-footer d-flex justify-content-center">
+            <button class="btn btn-outline-primary btn-sm me-2" onclick="window.print()">Print</button>
+            <button class="btn btn-primary btn-sm" data-bs-dismiss="modal">Close</button>
+         </div>
+      </div>
+   </div>
+</div>
+@endforeach
+
+<script>
+window.openInvoiceModalFromResponse = function(orderData) {
+    console.log('🧾 openInvoiceModalFromResponse called', orderData);
+
+    try {
+        if (!orderData || !orderData.id) {
+            console.error('❌ Invalid order data passed to invoice modal');
+            return;
+        }
+
+        const orderId = orderData.id;
+        const modalId = 'invoiceModal' + orderId;
+        let modalEl = document.getElementById(modalId);
+
+        // Build modal dynamically if it doesn't exist yet
+        if (!modalEl) {
+            const branch = window.appBranch || {};
+
+            modalEl = document.createElement('div');
+            modalEl.className = 'modal fade';
+            modalEl.id = modalId;
+            modalEl.tabIndex = -1;
+            modalEl.setAttribute('aria-hidden', 'true');
+
+            modalEl.innerHTML = `
+                <div class="modal-dialog modal-sm modal-dialog-scrollable">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">POS Receipt</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div style="max-width:400px;margin:0 auto;font-family:Arial,Helvetica,sans-serif; font-size:13px;">
+                                <div class="text-center mb-2">
+                                    <img src="/images/logo-default.png" width="60" height="60" alt="logo" />
+                                    <div><strong>${branch.name || 'Branch Name'}</strong></div>
+                                   2 <div>${branch.address || ''}</div>
+                                    <div>Permit #: ${branch.permit_number || ''}</div>
+                                    <div>DTI: ${branch.dti_issued || ''} | POS SN: ${branch.pos_sn || ''}</div>
+                                </div>
+                                <div class="mb-2 text-center"><strong>SALES INVOICE</strong></div>
+                                <div>Date: ${orderData.created_at || ''}</div>
+                                <div>INV: ${String(orderId).padStart(8, '0')}</div>
+                                <div>TBL: ${orderData.table_no || ''} | Pax: ${orderData.number_pax || ''}</div>
+                                <hr/>
+                                <div>
+                                    ${(orderData.details || []).map(d => `
+                                        <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+                                            <div style="width:55%">${(d.product?.name || d.component?.name || d.item_name || 'Item')}</div>
+                                            <div style="width:10%">${d.quantity}x</div>
+                                            <div style="width:35%;text-align:right">₱${((d.price || 0) * (d.quantity || 1)).toFixed(2)}</div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                                <hr/>
+                                <div style="display:flex;justify-content:space-between"><div>Gross</div><div>₱${Number(orderData.gross_amount || (orderData.details||[]).reduce((s,i)=>s+(i.price||0)*(i.quantity||0),0)).toFixed(2)}</div></div>
+                                <div style="display:flex;justify-content:space-between"><div>Discount</div><div>₱${Number(orderData.discount_total || orderData.sr_pwd_discount || 0).toFixed(2)}</div></div>
+                                <div style="display:flex;justify-content:space-between;font-weight:bold"><div>Total</div><div>₱${Number(orderData.total_charge || orderData.net_amount || 0).toFixed(2)}</div></div>
+                                <hr/>
+                                <div><strong>Payments</strong></div>
+                                ${(orderData.payment_details || orderData.paymentDetails || []).map(pd => `
+                                    <div style="display:flex;justify-content:space-between">
+                                        <div>${pd.payment?.name || pd.payment_name || 'Method'}</div>
+                                        <div>₱${Number(pd.amount_paid || 0).toFixed(2)}</div>
+                                    </div>
+                                `).join('')}
+                                <div style="display:flex;justify-content:space-between;margin-top:6px"><div>Total Paid</div><div>₱${Number(orderData.total_payment_rendered || 0).toFixed(2)}</div></div>
+                                <div style="display:flex;justify-content:space-between"><div>Change</div><div>₱${Number(orderData.change_amount || 0).toFixed(2)}</div></div>
+                                <p class="text-center small mt-3"><strong>This is not an official receipt</strong></p>
+                            </div>
+                        </div>
+                        <div class="modal-footer d-flex justify-content-center">
+                            <button class="btn btn-outline-primary btn-sm me-2" onclick="window.print()">Print</button>
+                            <button class="btn btn-primary btn-sm" data-bs-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(modalEl);
+            modalEl.addEventListener('hidden.bs.modal', () => modalEl.remove());
+        }
+
+        // Show the modal using Bootstrap
+        const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+        modal.show();
+
+    } catch (e) {
+        console.error('💥 openInvoiceModalFromResponse error', e);
+    }
+};
+
+// =====================================
+// Intercept submitPayment() function
+// =====================================
+window.submitPayment = function(orderId) {
+    console.log('💳 Submitting payment for order', orderId);
+
+    const payments = [];
+    const tbody = document.getElementById('payments_table_body_' + orderId);
+    if (tbody) {
+        tbody.querySelectorAll('tr[data-row-id]').forEach(tr => {
+            const rid = tr.dataset.rowId;
+            const method = document.getElementById(`pm_${orderId}_${rid}`)?.value || '';
+            const ref = document.getElementById(`pref_${orderId}_${rid}`)?.value || '';
+            const dest = document.getElementById(`pdest_${orderId}_${rid}`)?.value || '';
+            const amount = parseFloat(document.getElementById(`pamt_${orderId}_${rid}`)?.value || 0);
+            if (method && dest && amount > 0) {
+                payments.push({ payment_method_id: method, reference_no: ref, cash_equivalent_id: dest, amount_paid: amount });
+            }
+        });
+    }
+
+    if (payments.length === 0) {
+        alert('⚠️ No payments to submit. Please add at least one valid payment row.');
+        return;
+    }
+
+    const totalRendered = parseFloat(document.getElementById('payments_total_' + orderId)?.textContent?.replace(/[^\d.-]/g, '') || 0);
+    const changeAmount = parseFloat(document.getElementById('payments_change_' + orderId)?.textContent?.replace(/[^\d.-]/g, '') || 0);
+
+    const payload = new FormData();
+    payload.append('payments', JSON.stringify(payments));
+    payload.append('total_payment_rendered', totalRendered);
+    payload.append('change_amount', changeAmount);
+
+    const token = document.querySelector('meta[name="csrf-token"]').content;
+    if (!confirm('Confirm submit payment for order #' + orderId + '?')) return;
+
+    fetch('/orders/' + orderId + '/payment', {
+        method: 'POST',
+        headers: { 'X-CSRF-TOKEN': token },
+        body: payload,
+        credentials: 'same-origin'
+    })
+    .then(res => res.json())
+    .then(data => {
+        console.log('✅ Payment response:', data);
+
+        if (data.success) {
+            alert('Payment saved. Order marked as PAID.');
+
+            // Update UI
+            const row = document.querySelector(`.toggle-details[data-id="${orderId}"]`)?.closest('tr');
+            if (row) {
+                const statusCell = row.querySelectorAll('td')[5];
+                if (statusCell) statusCell.textContent = 'Paid';
+            }
+
+            // Close payment modal, then show invoice
+            const paymentModal = document.getElementById('paymentModal' + orderId);
+            if (paymentModal && typeof bootstrap !== 'undefined') {
+                const pm = bootstrap.Modal.getInstance(paymentModal) || new bootstrap.Modal(paymentModal);
+                paymentModal.addEventListener('hidden.bs.modal', function onHidden() {
+                    paymentModal.removeEventListener('hidden.bs.modal', onHidden);
+                    if (data.order) {
+                        window.openInvoiceModalFromResponse(data.order);
+                    }
+                });
+                pm.hide(); 
+            } else if (data.order) {
+                // fallback if no modal found
+                window.openInvoiceModalFromResponse(data.order);
+            }
+        } else {
+            alert('❌ Failed to save payment: ' + (data.message || 'Unknown error.'));
+        }
+    })
+    .catch(err => {
+        console.error('💥 Payment error', err);
+        alert('Error saving payment.');
+    });
+};
+</script>
+
 
    <script>
       function toggleDiscountDropdown(orderId) {
@@ -1032,4 +1433,221 @@ function updatePersonData(orderId, discountId, index, field, value) {
    });
 </script>
 <script src="{{ asset('js/tableFunctions.js') }}"></script>
+   <script>
+      // function submitPayment(orderId) {
+      //    // gather payments rows if any
+      //    const payments = [];
+      //    const tbody = document.getElementById('payments_table_body_' + orderId);
+      //    if (tbody) {
+      //       tbody.querySelectorAll('tr[data-row-id]').forEach(tr => {
+      //          const rid = tr.dataset.rowId;
+      //          const method = document.getElementById(`pm_${orderId}_${rid}`)?.value || '';
+      //          const ref = document.getElementById(`pref_${orderId}_${rid}`)?.value || '';
+      //          const dest = document.getElementById(`pdest_${orderId}_${rid}`)?.value || '';
+      //          const amount = parseFloat(document.getElementById(`pamt_${orderId}_${rid}`)?.value || 0) || 0;
+      //          if (method && dest && amount > 0) {
+      //             payments.push({ payment_method_id: method, reference_no: ref, cash_equivalent_id: dest, amount_paid: amount });
+      //          }
+      //       });
+      //    }
+
+      //    // Fallback: if no dynamic rows present, check for legacy single-field inputs
+      //    if (payments.length === 0) {
+      //       const method = document.getElementById('payment_method_id_' + orderId)?.value || '';
+      //       const dest = document.getElementById('cash_equivalent_id_' + orderId)?.value || '';
+      //       const ref = document.getElementById('reference_no_' + orderId)?.value || '';
+      //       const amt = parseFloat(document.getElementById('amount_paid_' + orderId)?.value || 0) || 0;
+      //       if (method && dest && amt > 0) {
+      //          payments.push({ payment_method_id: method, reference_no: ref, cash_equivalent_id: dest, amount_paid: amt });
+      //       }
+      //    }
+
+      //    if (payments.length === 0) {
+      //       alert('No payments to submit. Please add at least one payment row and enter valid amounts.');
+      //       return;
+      //    }
+
+      //    const payload = new FormData();
+      //    payload.append('payments', JSON.stringify(payments));
+
+      //    // include single fields for backward compat if they exist
+      //    const singleMethod = document.getElementById('payment_method_id_' + orderId);
+      //    if (singleMethod) payload.append('payment_method_id', singleMethod.value);
+      //    const singleDest = document.getElementById('cash_equivalent_id_' + orderId);
+      //    if (singleDest) payload.append('cash_equivalent_id', singleDest.value);
+      //    const singleRef = document.getElementById('reference_no_' + orderId);
+      //    if (singleRef) payload.append('reference_no', singleRef.value);
+      //    const singleAmt = document.getElementById('amount_paid_' + orderId);
+      //    if (singleAmt) payload.append('amount_paid', singleAmt.value || 0);
+         
+      //    // csrf
+      //    const token = document.querySelector('meta[name="csrf-token"]').content;
+
+      //    if (!confirm('Confirm submit payment for order #' + orderId + '?')) return;
+
+      //    fetch("/orders/" + orderId + "/payment", {
+      //       method: 'POST',
+      //       headers: {
+      //          'X-CSRF-TOKEN': token
+      //       },
+      //          body: payload,
+      //          credentials: 'same-origin'
+      //    })
+      //    .then(res => res.json())
+      //    .then(data => {
+      //       if (data.success) {
+      //          alert('Payment saved. Order marked as PAID');
+
+      //          // update status display in the row (find the row with checkbox data-id)
+      //          const checkbox = document.querySelector('.toggle-details[data-id="' + orderId + '"]');
+      //          if (checkbox) {
+      //             const row = checkbox.closest('tr');
+      //             if (row) {
+      //                const statusCell = row.querySelectorAll('td')[5];
+      //                if (statusCell) statusCell.textContent = 'Paid';
+
+      //                const amountCell = document.getElementById('amount_' + orderId);
+      //                if (amountCell) amountCell.textContent = '₱' + Number(data.order.total_charge || data.order.net_amount || 0).toLocaleString('en-PH', { minimumFractionDigits: 2 });
+      //             }
+      //          }
+
+      //          // close modal
+      //          const modalEl = document.getElementById('paymentModal' + orderId);
+      //          if (modalEl) {
+      //             const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+      //             modal.hide();
+      //          }
+      //       } else {
+      //          alert('Failed to save payment: ' + (data.message || 'Unknown'));
+      //       }
+      //    })
+      //    // .catch(err => {
+      //    //    console.error('Payment error', err);
+      //    //    alert('Error saving payment');
+      //    // });
+      // }
+
+   function submitPayment(orderId) {
+      // gather payments rows if any
+      const payments = [];
+      const tbody = document.getElementById('payments_table_body_' + orderId);
+      if (tbody) {
+         tbody.querySelectorAll('tr[data-row-id]').forEach(tr => {
+            const rid = tr.dataset.rowId;
+            const method = document.getElementById(`pm_${orderId}_${rid}`)?.value || '';
+            const ref = document.getElementById(`pref_${orderId}_${rid}`)?.value || '';
+            const dest = document.getElementById(`pdest_${orderId}_${rid}`)?.value || '';
+            const amount = parseFloat(document.getElementById(`pamt_${orderId}_${rid}`)?.value || 0) || 0;
+            if (method && dest && amount > 0) {
+               payments.push({
+                  payment_method_id: method,
+                  reference_no: ref,
+                  cash_equivalent_id: dest,
+                  amount_paid: amount
+               });
+            }
+         });
+      }
+
+      // Fallback: legacy single-field inputs
+      if (payments.length === 0) {
+         const method = document.getElementById('payment_method_id_' + orderId)?.value || '';
+         const dest = document.getElementById('cash_equivalent_id_' + orderId)?.value || '';
+         const ref = document.getElementById('reference_no_' + orderId)?.value || '';
+         const amt = parseFloat(document.getElementById('amount_paid_' + orderId)?.value || 0) || 0;
+         if (method && dest && amt > 0) {
+            payments.push({
+               payment_method_id: method,
+               reference_no: ref,
+               cash_equivalent_id: dest,
+               amount_paid: amt
+            });
+         }
+      }
+
+      if (payments.length === 0) {
+         alert('No payments to submit. Please add at least one payment row and enter valid amounts.');
+         return;
+      }
+
+      // ✅ Get totals from footer
+      const totalRendered = parseFloat(
+         document.getElementById('payments_total_' + orderId)?.textContent?.replace(/[^\d.-]/g, '') || 0
+      );
+      const changeAmount = parseFloat(
+         document.getElementById('payments_change_' + orderId)?.textContent?.replace(/[^\d.-]/g, '') || 0
+      );
+
+      const payload = new FormData();
+      payload.append('payments', JSON.stringify(payments));
+      payload.append('total_payment_rendered', totalRendered);
+      payload.append('change_amount', changeAmount);
+
+      // include single fields for backward compat if they exist
+      const singleMethod = document.getElementById('payment_method_id_' + orderId);
+      if (singleMethod) payload.append('payment_method_id', singleMethod.value);
+      const singleDest = document.getElementById('cash_equivalent_id_' + orderId);
+      if (singleDest) payload.append('cash_equivalent_id', singleDest.value);
+      const singleRef = document.getElementById('reference_no_' + orderId);
+      if (singleRef) payload.append('reference_no', singleRef.value);
+      const singleAmt = document.getElementById('amount_paid_' + orderId);
+      if (singleAmt) payload.append('amount_paid', singleAmt.value || 0);
+
+      // csrf
+      const token = document.querySelector('meta[name="csrf-token"]').content;
+
+      if (!confirm('Confirm submit payment for order #' + orderId + '?')) return;
+
+      fetch("/orders/" + orderId + "/payment", {
+         method: 'POST',
+         headers: { 'X-CSRF-TOKEN': token },
+         body: payload,
+         credentials: 'same-origin'
+      })
+         .then(res => res.json())
+         .then(data => {
+            if (data.success) {
+               console.log('Payment response', data);
+               alert('Payment saved. Order marked as PAID');
+
+               // update status display in the row
+               const checkbox = document.querySelector('.toggle-details[data-id="' + orderId + '"]');
+               if (checkbox) {
+                  const row = checkbox.closest('tr');
+                  if (row) {
+                     const statusCell = row.querySelectorAll('td')[5];
+                     if (statusCell) statusCell.textContent = 'Paid';
+
+                     const amountCell = document.getElementById('amount_' + orderId);
+                     if (amountCell)
+                        amountCell.textContent = '₱' +
+                           Number(data.order.total_charge || data.order.net_amount || 0)
+                              .toLocaleString('en-PH', { minimumFractionDigits: 2 });
+                  }
+               }
+
+               // close modal
+               const modalEl = document.getElementById('paymentModal' + orderId);
+               if (modalEl) {
+                  const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+                     // show invoice modal (if server returned order data)
+                     if (data.order) {
+                        console.log('Attempting to open invoice modal for order', data.order.id);
+                        try { openInvoiceModalFromResponse(data.order); } catch(e) { console.error(e); }
+                     } else {
+                        console.warn('No order returned in payment response');
+                     }
+                     modal.hide();
+               }
+            } else {
+               alert('Failed to save payment: ' + (data.message || 'Unknown'));
+            }
+         })
+         // .catch(err => {
+         //    console.error('Payment error', err);
+         //    alert('Error saving payment');
+         // });
+   }
+
+   </script>
 @endsection
