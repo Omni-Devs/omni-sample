@@ -68,9 +68,10 @@
         @isset($viewRoute)
             <li role="presentation">
                 @if($viewRoute === '#')
+                    @php $modalId = $viewModalId ?? "billOutModal{$id}"; @endphp
                     <a class="dropdown-item" href="javascript:void(0);"
                     data-bs-toggle="modal"
-                    data-bs-target="#billOutModal{{ $id }}">
+                    data-bs-target="#{{ $modalId }}">
                         <i class="nav-icon i-Receipt font-weight-bold mr-2"></i> {{ $viewLabel ?? 'Bill out' }}
                     </a>
                 @else

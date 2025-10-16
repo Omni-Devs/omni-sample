@@ -50,4 +50,12 @@ class Order extends Model
     {
         $this->attributes['created_at'] = \Carbon\Carbon::parse($value)->setTimezone('Asia/Manila');
     }
+
+    /**
+     * Payment details associated with this order
+     */
+    public function paymentDetails()
+    {
+        return $this->hasMany(\App\Models\PaymentDetail::class, 'order_id');
+    }
 }
