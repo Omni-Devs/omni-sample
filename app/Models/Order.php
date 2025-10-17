@@ -25,6 +25,8 @@ class Order extends Model
         'total_charge',
         'discount_total',
         'charges_description',
+        'total_payment_rendered',
+        'change_amount',
     ];
 
     public function user()
@@ -49,5 +51,13 @@ class Order extends Model
     public function setCreatedAt($value)
     {
         $this->attributes['created_at'] = \Carbon\Carbon::parse($value)->setTimezone('Asia/Manila');
+    }
+
+    /**
+     * Payment details associated with this order
+     */
+    public function paymentDetails()
+    {
+        return $this->hasMany(PaymentDetail::class, 'order_id');
     }
 }

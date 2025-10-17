@@ -28,6 +28,10 @@ class BranchesController extends Controller
             'tin'      => 'nullable|string|max:50',
             'address'  => 'nullable|string|max:500',
             'contact_person' => 'required|string|max:255',
+            'permit_number'   => 'nullable|string|max:100',
+            'dti_issued'      => 'nullable|string|max:100',
+            'pos_sn'          => 'nullable|string|max:100',
+            'min_number'      => 'nullable|string|max:100',
         ]);
 
         Branch::create($validated);

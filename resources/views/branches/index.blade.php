@@ -119,6 +119,22 @@
                 <label>Contact Person</label>
                 <input type="text" name="contact_person" class="form-control">
             </div>
+            <div class="col-md-6">
+                <label>Permit Number</label>
+                <input type="text" name="permit_number" class="form-control" value="{{ old('permit_number') }}">
+            </div>
+            <div class="col-md-6">
+                <label>DTI Issued</label>
+                <input type="text" name="dti_issued" class="form-control" value="{{ old('dti_issued') }}">
+            </div>
+            <div class="col-md-6">
+                <label>POS Serial Number</label>
+                <input type="text" name="pos_sn" class="form-control" value="{{ old('pos_sn') }}">
+            </div>
+            <div class="col-md-6">
+                <label>MIN Number</label>
+                <input type="text" name="min_number" class="form-control" value="{{ old('min_number') }}">
+            </div>
             <div class="col-md-12">
                 <label>Address</label>
                 <textarea name="address" class="form-control"></textarea>
@@ -165,24 +181,24 @@
                                 Sort table by Address in descending order
                                 </span></button>
                             </th>
-                            <th scope="col" aria-sort="descending" aria-controls="col-2" class="vgt-left-align text-left sortable" style="min-width: auto; width: auto;"><span>Phone #</span> <button><span class="sr-only">
-                                Sort table by Phone # in descending order
-                                </span></button>
-                            </th>
-                            <th scope="col" aria-sort="descending" aria-controls="col-3" class="vgt-left-align text-left sortable" style="min-width: auto; width: auto;"><span>Mobile #</span> <button><span class="sr-only">
-                                Sort table by Mobile # in descending order
-                                </span></button>
-                            </th>
                             <th scope="col" aria-sort="descending" aria-controls="col-4" class="vgt-left-align text-left sortable" style="min-width: auto; width: auto;"><span>Email</span> <button><span class="sr-only">
                                 Sort table by Email in descending order
                                 </span></button>
                             </th>
-                            <th scope="col" aria-sort="descending" aria-controls="col-5" class="vgt-left-align text-left sortable" style="min-width: auto; width: auto;"><span>TIN</span> <button><span class="sr-only">
-                                Sort table by TIN in descending order
+                            <th scope="col" aria-sort="descending" aria-controls="col-4" class="vgt-left-align text-left sortable" style="min-width: auto; width: auto;"><span>Permit #</span> <button><span class="sr-only">
+                                Sort table by Permit # in descending order
                                 </span></button>
                             </th>
-                            <th scope="col" aria-sort="descending" aria-controls="col-5" class="vgt-left-align text-left sortable" style="min-width: auto; width: auto;"><span>Contact Person</span> <button><span class="sr-only">
-                                Sort table by Contact Person in descending order
+                            <th scope="col" aria-sort="descending" aria-controls="col-4" class="vgt-left-align text-left sortable" style="min-width: auto; width: auto;"><span>DTI Issued</span> <button><span class="sr-only">
+                                Sort table by DTI Issued in descending order
+                                </span></button>
+                            </th>
+                            <th scope="col" aria-sort="descending" aria-controls="col-4" class="vgt-left-align text-left sortable" style="min-width: auto; width: auto;"><span>POS SN</span> <button><span class="sr-only">
+                                Sort table by POS SN in descending order
+                                </span></button>
+                            </th>
+                            <th scope="col" aria-sort="descending" aria-controls="col-4" class="vgt-left-align text-left sortable" style="min-width: auto; width: auto;"><span>Min #</span> <button><span class="sr-only">
+                                Sort table by Min # in descending order
                                 </span></button>
                             </th>
                             <th scope="col" aria-sort="descending" aria-controls="col-6" class="vgt-left-align text-right" style="min-width: auto; width: auto;">
@@ -196,11 +212,11 @@
                             <tr>
                                 <td>{{ $branch->name }}</td>
                                 <td>{{ $branch->address }}</td>
-                                <td>{{ $branch->phone_number }}</td>
-                                <td>{{ $branch->mobile_number }}</td>
                                 <td>{{ $branch->email }}</td>
-                                <td>{{ $branch->tin }}</td>
-                                <td>{{ $branch->contact_person  }}</td>
+                                <td>{{ $branch->permit_number }}</td>
+                                <td>{{ $branch->dti_issued }}</td>
+                                <td>{{ $branch->pos_sn }}</td>
+                                <td>{{ $branch->min_number }}</td>
                                 <td class="text-right">
                                         @include('layouts.actions-dropdown', [
                                             'id' => $branch->id, 
