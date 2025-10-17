@@ -140,8 +140,9 @@
                                           <thead>
                                              <tr>
                                                 <th>Payment Method</th>
-                                                <th>Transaction Reference #</th>
+                                                {{-- <th>Transaction Reference #</th> --}}
                                                 <th>Payment Destination</th>
+                                                <th>Transaction Reference #</th>
                                                 <th class="text-end">Amount Paid</th>
                                                 <th>Action</th>
                                              </tr>
@@ -350,10 +351,13 @@
          'remarksRoute' => '#',
          'status' => '#',
 
-         // Custom labels: if already billout, show Payment
-         'viewLabel' => $order->status === 'billout' ? 'Payment' : 'Bill out',
-         // target payment modal when status is billout
-         'viewModalId' => $order->status === 'billout' ? "paymentModal{$order->id}" : null,
+         // Show label/modal depending on current page tab ($status):
+         // serving => 'Bill out' (opens billOut modal)
+         // billout  => 'Payment' (opens payment modal)
+         // payments => 'View Receipt' (opens invoice modal)
+      'viewLabel' => ($status === 'serving') ? 'Bill out' : (($status === 'billout') ? 'Payment' : (($status === 'payments') ? 'View Receipt' : 'View')),
+         // target appropriate modal depending on page status
+         'viewModalId' => ($status === 'serving') ? "billOutModal{$order->id}" : (($status === 'billout') ? "paymentModal{$order->id}" : (($status === 'payments') ? "invoiceModal{$order->id}" : null)),
          'deleteLabel' => 'Cancel',
       ])
       </td>
@@ -719,141 +723,141 @@ function saveDiscountPersons(orderId) {
     savedDiscountPersons[orderId] = personsMap;
 }
 
-// function confirmBillOut(orderId) {
-//       const form = document.getElementById('billOutForm_' + orderId);
-//       const formData = new FormData(form);
-
-//       // ✅ Include computed discount and billing fields
-//       const fields = [
-//          'srPwdBill', 'discount20', 'otherDiscount',
-//          'netBill', 'vatable', 'vat12', 'totalCharge'
-//       ];
-//       fields.forEach(f => {
-//          const el = document.getElementById(f + '_' + orderId);
-//          if (el) formData.append(f, el.value);
-//       });
-
-//          // ✅ Collect discount persons from saved memory
-//       const personsData = [];
-//       if (savedDiscountPersons[orderId]) {
-//          Object.entries(savedDiscountPersons[orderId]).forEach(([discountId, persons]) => {
-//                persons.forEach(p => {
-//                   personsData.push({
-//                      discount_id: discountId,
-//                      name: p.name || '',
-//                      id_number: p.id_number || ''
-//                   });
-//                });
-//          });
-//       }
-//       // ✅ Attach JSON string of all persons to form data
-//    formData.append('persons', JSON.stringify(personsData));
-
-//       // ✅ Confirm user action before submitting
-//       if (!confirm('Are you sure you want to confirm this Bill Out?')) return;
-
-//       // ✅ Submit request
-//       fetch(form.action, {
-//          method: 'POST',
-//          headers: {
-//                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-//          },
-//          body: formData
-//       })
-//       .then(res => res.json())
-//       .then(data => {
-//          if (data.success) {
-//                alert('✅ Bill saved successfully!');
-//                document.getElementById('totalCharge_' + orderId).value = data.order.total_charge;
-
-//                // Optional: reload or move order to Bill-Out section
-//                setTimeout(() => location.reload(), 1000);
-//          } else {
-//                alert('⚠️ Failed to save bill: ' + (data.message || 'Unknown error'));
-//          }
-//       })
-//       .catch(err => {
-//          console.error(err);
-//          alert('❌ Error saving bill.');
-//       });
-// }
-
 function confirmBillOut(orderId) {
-    const form = document.getElementById('billOutForm_' + orderId);
-    if (!form) {
-        alert("⚠️ Bill Out form not found.");
-        return;
-    }
+      const form = document.getElementById('billOutForm_' + orderId);
+      const formData = new FormData(form);
 
-    const formData = new FormData(form);
+      // ✅ Include computed discount and billing fields
+      const fields = [
+         'srPwdBill', 'discount20', 'otherDiscount',
+         'netBill', 'vatable', 'vat12', 'totalCharge'
+      ];
+      fields.forEach(f => {
+         const el = document.getElementById(f + '_' + orderId);
+         if (el) formData.append(f, el.value);
+      });
 
-    // ✅ Include computed fields
-    const fields = [
-        'srPwdBill', 'discount20', 'otherDiscount',
-        'netBill', 'vatable', 'vat12', 'totalCharge'
-    ];
-    fields.forEach(f => {
-        const el = document.getElementById(f + '_' + orderId);
-        if (el && el.value !== '') {
-            formData.set(f, el.value);
-        }
-    });
+         // ✅ Collect discount persons from saved memory
+      const personsData = [];
+      if (savedDiscountPersons[orderId]) {
+         Object.entries(savedDiscountPersons[orderId]).forEach(([discountId, persons]) => {
+               persons.forEach(p => {
+                  personsData.push({
+                     discount_id: discountId,
+                     name: p.name || '',
+                     id_number: p.id_number || ''
+                  });
+               });
+         });
+      }
+      // ✅ Attach JSON string of all persons to form data
+   formData.append('persons', JSON.stringify(personsData));
 
-    // ✅ Collect discount persons from saved memory
-    const personsData = [];
-    if (savedDiscountPersons[orderId]) {
-        Object.entries(savedDiscountPersons[orderId]).forEach(([discountId, persons]) => {
-            persons.forEach(p => {
-                personsData.push({
-                    discount_id: discountId,
-                    name: p.name || '',
-                    id_number: p.id_number || ''
-                });
-            });
-        });
-    }
+      // ✅ Confirm user action before submitting
+      if (!confirm('Are you sure you want to confirm this Bill Out?')) return;
 
-    formData.append('persons', JSON.stringify(personsData));
+      // ✅ Submit request
+      fetch(form.action, {
+         method: 'POST',
+         headers: {
+               'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+         },
+         body: formData
+      })
+      .then(res => res.json())
+      .then(data => {
+         if (data.success) {
+               alert('✅ Bill saved successfully!');
+               document.getElementById('totalCharge_' + orderId).value = data.order.total_charge;
 
-    // ✅ Confirm action
-    if (!confirm('Are you sure you want to confirm this Bill Out?')) return;
-
-    fetch(form.action, {
-        method: 'POST',
-        headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-        },
-      body: formData,
-      credentials: 'same-origin'
-    })
-    .then(res => res.json())
-    .then(data => {
-        console.log("Bill Out Response:", data);
-
-        if (data.success) {
-            const totalChargeInput = document.getElementById('totalCharge_' + orderId);
-            if (totalChargeInput) {
-                totalChargeInput.value = parseFloat(data.order.total_charge).toFixed(2);
-            }
-
-            const amountCell = document.getElementById('amount_' + orderId);
-            if (amountCell) {
-                amountCell.textContent = `₱${Number(data.order.total_charge).toLocaleString('en-PH', {
-                    minimumFractionDigits: 2
-                })}`;
-            }
-
-            alert('✅ Bill saved successfully!');
-            setTimeout(() => window.location.href = "/orders?status=billout", 1000);
-        } else {
-            alert('⚠️ Failed to save bill: ' + (data.message || 'Unknown error'));
-        }
-    })
-    .catch(err => {
-        console.error("Bill Out Error:", err);
-        alert('❌ Error saving bill.');
-    });
+               // Optional: reload or move order to Bill-Out section
+               setTimeout(() => location.reload(), 1000);
+         } else {
+               alert('⚠️ Failed to save bill: ' + (data.message || 'Unknown error'));
+         }
+      })
+      .catch(err => {
+         console.error(err);
+         alert('❌ Error saving bill.');
+      });
 }
+
+// function confirmBillOut(orderId) {
+//     const form = document.getElementById('billOutForm_' + orderId);
+//     if (!form) {
+//         alert("⚠️ Bill Out form not found.");
+//         return;
+//     }
+
+//     const formData = new FormData(form);
+
+//     // ✅ Include computed fields
+//     const fields = [
+//         'srPwdBill', 'discount20', 'otherDiscount',
+//         'netBill', 'vatable', 'vat12', 'totalCharge'
+//     ];
+//     fields.forEach(f => {
+//         const el = document.getElementById(f + '_' + orderId);
+//         if (el && el.value !== '') {
+//             formData.set(f, el.value);
+//         }
+//     });
+
+//     // ✅ Collect discount persons from saved memory
+//     const personsData = [];
+//     if (savedDiscountPersons[orderId]) {
+//         Object.entries(savedDiscountPersons[orderId]).forEach(([discountId, persons]) => {
+//             persons.forEach(p => {
+//                 personsData.push({
+//                     discount_id: discountId,
+//                     name: p.name || '',
+//                     id_number: p.id_number || ''
+//                 });
+//             });
+//         });
+//     }
+
+//     formData.append('persons', JSON.stringify(personsData));
+
+//     // ✅ Confirm action
+//     if (!confirm('Are you sure you want to confirm this Bill Out?')) return;
+
+//     fetch(form.action, {
+//         method: 'POST',
+//         headers: {
+//             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+//         },
+//       body: formData,
+//       credentials: 'same-origin'
+//     })
+//     .then(res => res.json())
+//     .then(data => {
+//         console.log("Bill Out Response:", data);
+
+//         if (data.success) {
+//             const totalChargeInput = document.getElementById('totalCharge_' + orderId);
+//             if (totalChargeInput) {
+//                 totalChargeInput.value = parseFloat(data.order.total_charge).toFixed(2);
+//             }
+
+//             const amountCell = document.getElementById('amount_' + orderId);
+//             if (amountCell) {
+//                 amountCell.textContent = `₱${Number(data.order.total_charge).toLocaleString('en-PH', {
+//                     minimumFractionDigits: 2
+//                 })}`;
+//             }
+
+//             alert('✅ Bill saved successfully!');
+//             setTimeout(() => window.location.href = "/orders?status=billout", 1000);
+//         } else {
+//             alert('⚠️ Failed to save bill: ' + (data.message || 'Unknown error'));
+//         }
+//     })
+//     .catch(err => {
+//         console.error("Bill Out Error:", err);
+//         alert('❌ Error saving bill.');
+//     });
+// }
 
 function toggleDiscountForm(orderId) {
     const hidden = document.getElementById('discountIds_' + orderId);
@@ -962,7 +966,8 @@ function updatePersonData(orderId, discountId, index, field, value) {
 
    </script>
    <script>
-       // helper to add a payment row in the modal table
+
+   // helper to add a payment row in the modal table
    function addPaymentRow(orderId) {
       const counterEl = document.getElementById('payments_counter_' + orderId);
       let counter = counterEl ? parseInt(counterEl.value || 0) : 0;
@@ -989,33 +994,49 @@ function updatePersonData(orderId, discountId, index, field, value) {
       tr.dataset.rowId = counter;
       tr.innerHTML = `
          <td>
-            <select id="pm_${orderId}_${counter}" class="form-select form-select-sm">
-               <option value=""></option>
-               ${paymentMethods.map(m => `<option value="${m.id}">${m.name}</option>`).join('')}
-            </select>
+               <select id="pm_${orderId}_${counter}" class="form-select form-select-sm">
+                  <option value=""></option>
+                  ${paymentMethods.map(m => `<option value="${m.id}">${m.name}</option>`).join('')}
+               </select>
          </td>
          <td>
-            <input type="text" id="pref_${orderId}_${counter}" class="form-control form-control-sm" />
+               <select id="pdest_${orderId}_${counter}" class="form-select form-select-sm" onchange="toggleReferenceInput(${orderId}, ${counter})">
+                  <option value=""></option>
+                  ${cashEquivalents.map(c => 
+                     `<option value="${c.id}">${c.name} | ${c.account_number ?? ''}</option>`
+                  ).join('')}
+               </select>
          </td>
-         <td>
-            <select id="pdest_${orderId}_${counter}" class="form-select form-select-sm">
-               <option value=""></option>
-               ${cashEquivalents.map(c => 
-                  `<option value="${c.id}">${c.name} | ${c.account_number ?? ''}</option>`
-               ).join('')}
-            </select>
+         
+         <td id="pref_td_${orderId}_${counter}" style="display:none;">
+               <input type="text" id="pref_${orderId}_${counter}" class="form-control form-control-sm" placeholder="Ref. No." />
          </td>
          <td class="text-end">
-            <input type="number" step="0.01" id="pamt_${orderId}_${counter}" class="form-control form-control-sm text-end" value="0.00" oninput="recalcPayments(${orderId})" />
+               <input type="number" step="0.01" id="pamt_${orderId}_${counter}" class="form-control form-control-sm text-end" value="0.00" oninput="recalcPayments(${orderId})" />
          </td>
          <td>
-            <button type="button" class="btn btn-sm btn-danger" onclick="removePaymentRow(${orderId}, ${counter})">Remove</button>
+               <button type="button" class="btn btn-sm btn-danger" onclick="removePaymentRow(${orderId}, ${counter})">Remove</button>
          </td>
       `;
 
       tbody.appendChild(tr);
       recalcPayments(orderId);
    }
+
+      // ✅ new function: show/hide the reference input based on selection
+      function toggleReferenceInput(orderId, rowId) {
+         const select = document.getElementById(`pdest_${orderId}_${rowId}`);
+         const refTd = document.getElementById(`pref_td_${orderId}_${rowId}`);
+         if (select && refTd) {
+            if (select.value) {
+                  refTd.style.display = ''; // show
+            } else {
+                  refTd.style.display = 'none'; // hide
+                  const input = document.getElementById(`pref_${orderId}_${rowId}`);
+                  if (input) input.value = ''; // clear when hidden
+            }
+         }
+      }
 
       function removePaymentRow(orderId, rowId) {
          const tbody = document.getElementById('payments_table_body_' + orderId);
@@ -1125,7 +1146,6 @@ function updatePersonData(orderId, discountId, index, field, value) {
                            <td>SR/PWD Bill</td>
                            <td class="text-right">₱{{ number_format($order->sr_pwd_discount ?? 0,2) }}</td>
                         </tr>
-
                         <tr>
                            <td><strong>Total</strong></td>
                            <td class="text-right"><strong>₱{{ number_format($order->total_charge ?? $order->net_amount ?? 0,2) }}</strong></td>
@@ -1133,24 +1153,21 @@ function updatePersonData(orderId, discountId, index, field, value) {
                      </tbody>
                   </table>
 
-                  <div class="mt-3">
-                     <p class="mb-0"><strong>Payment Method(s)</strong></p>
-                     @php
-                        $paymentDetails = $order->paymentDetails ?? [];
-                     @endphp
-                     @if(count($paymentDetails))
-                        @foreach($paymentDetails as $pd)
-                           <div class="d-flex justify-content-between small"><span>{{ $pd->payment?->name ?? 'Method' }}</span> <span>₱{{ number_format($pd->amount_paid,2) }}</span></div>
-                        @endforeach
-                     @else
-                        <div class="small">No payments recorded</div>
-                     @endif
-
-                     <div class="d-flex justify-content-between fw-bold mt-2"><span>Total Payment</span> <span>₱{{ number_format($order->total_payment_rendered ?? 0,2) }}</span></div>
-                     <div class="d-flex justify-content-between fw-bold"><span>Change</span> <span>₱{{ number_format($order->change_amount ?? 0,2) }}</span></div>
+                     <div class="d-flex justify-content-between fw-bold mt-2"><span>Total Charge</span> <span>₱{{ number_format($order->total_charge ?? $order->net_amount ?? 0,2) }}</span></div>
+                     <div class="d-flex justify-content-between fw-bold">
+                     <span>Total Rendered</span>
+                     <span>{{ number_format($order->paymentDetails->last()?->total_rendered ?? 0, 2) }}</span>
                   </div>
-
-                  <p class="text-center mt-3 small"><strong>This is not an official receipt</strong></p>
+                  <div class="d-flex justify-content-between fw-bold">
+                     <span>Change</span>
+                     <span>{{ number_format($order->paymentDetails->last()?->change_amount ?? 0, 2) }}</span>
+                  </div>
+                              </div>
+                  <p class="d-flex justify-content-between fw-bold mt-2"><span>POS Provided by:</span> <span>OMNI Systems Solutions</span></p>
+                  <div class="d-flex flex-column small">
+                        <span class="t-font-boldest">TIN: {{ $branch->tin ?? '' }}</span>
+                        <span>OMNI Address: A. C. Cortes Ave, Mandaue, 6014 Cebu</span>
+                     </div>
                </div>
             </div>
          </div>
@@ -1165,94 +1182,94 @@ function updatePersonData(orderId, discountId, index, field, value) {
 
 <script>
 window.openInvoiceModalFromResponse = function(orderData) {
-    console.log('🧾 openInvoiceModalFromResponse called', orderData);
+         console.log('🧾 openInvoiceModalFromResponse called', orderData);
 
-    try {
-        if (!orderData || !orderData.id) {
-            console.error('❌ Invalid order data passed to invoice modal');
-            return;
-        }
+         try {
+            if (!orderData || !orderData.id) {
+                  console.error('❌ Invalid order data passed to invoice modal');
+                  return;
+            }
 
-        const orderId = orderData.id;
-        const modalId = 'invoiceModal' + orderId;
-        let modalEl = document.getElementById(modalId);
+            const orderId = orderData.id;
+            const modalId = 'invoiceModal' + orderId;
+            let modalEl = document.getElementById(modalId);
 
-        // Build modal dynamically if it doesn't exist yet
-        if (!modalEl) {
-            const branch = window.appBranch || {};
+            // Build modal dynamically if it doesn't exist yet
+            if (!modalEl) {
+                  const branch = window.appBranch || {};
 
-            modalEl = document.createElement('div');
-            modalEl.className = 'modal fade';
-            modalEl.id = modalId;
-            modalEl.tabIndex = -1;
-            modalEl.setAttribute('aria-hidden', 'true');
+                  modalEl = document.createElement('div');
+                  modalEl.className = 'modal fade';
+                  modalEl.id = modalId;
+                  modalEl.tabIndex = -1;
+                  modalEl.setAttribute('aria-hidden', 'true');
 
-            modalEl.innerHTML = `
-                <div class="modal-dialog modal-sm modal-dialog-scrollable">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title">POS Receipt</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                        </div>
-                        <div class="modal-body">
-                            <div style="max-width:400px;margin:0 auto;font-family:Arial,Helvetica,sans-serif; font-size:13px;">
-                                <div class="text-center mb-2">
-                                    <img src="/images/logo-default.png" width="60" height="60" alt="logo" />
-                                    <div><strong>${branch.name || 'Branch Name'}</strong></div>
-                                   2 <div>${branch.address || ''}</div>
-                                    <div>Permit #: ${branch.permit_number || ''}</div>
-                                    <div>DTI: ${branch.dti_issued || ''} | POS SN: ${branch.pos_sn || ''}</div>
-                                </div>
-                                <div class="mb-2 text-center"><strong>SALES INVOICE</strong></div>
-                                <div>Date: ${orderData.created_at || ''}</div>
-                                <div>INV: ${String(orderId).padStart(8, '0')}</div>
-                                <div>TBL: ${orderData.table_no || ''} | Pax: ${orderData.number_pax || ''}</div>
-                                <hr/>
-                                <div>
-                                    ${(orderData.details || []).map(d => `
-                                        <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
-                                            <div style="width:55%">${(d.product?.name || d.component?.name || d.item_name || 'Item')}</div>
-                                            <div style="width:10%">${d.quantity}x</div>
-                                            <div style="width:35%;text-align:right">₱${((d.price || 0) * (d.quantity || 1)).toFixed(2)}</div>
-                                        </div>
-                                    `).join('')}
-                                </div>
-                                <hr/>
-                                <div style="display:flex;justify-content:space-between"><div>Gross</div><div>₱${Number(orderData.gross_amount || (orderData.details||[]).reduce((s,i)=>s+(i.price||0)*(i.quantity||0),0)).toFixed(2)}</div></div>
-                                <div style="display:flex;justify-content:space-between"><div>Discount</div><div>₱${Number(orderData.discount_total || orderData.sr_pwd_discount || 0).toFixed(2)}</div></div>
-                                <div style="display:flex;justify-content:space-between;font-weight:bold"><div>Total</div><div>₱${Number(orderData.total_charge || orderData.net_amount || 0).toFixed(2)}</div></div>
-                                <hr/>
-                                <div><strong>Payments</strong></div>
-                                ${(orderData.payment_details || orderData.paymentDetails || []).map(pd => `
-                                    <div style="display:flex;justify-content:space-between">
-                                        <div>${pd.payment?.name || pd.payment_name || 'Method'}</div>
-                                        <div>₱${Number(pd.amount_paid || 0).toFixed(2)}</div>
+                  modalEl.innerHTML = `
+                     <div class="modal-dialog modal-sm modal-dialog-scrollable">
+                        <div class="modal-content">
+                              <div class="modal-header">
+                                 <h5 class="modal-title">POS Receipt</h5>
+                                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                              </div>
+                              <div class="modal-body">
+                                 <div style="max-width:400px;margin:0 auto;font-family:Arial,Helvetica,sans-serif; font-size:13px;">
+                                    <div class="text-center mb-2">
+                                          <img src="/images/logo-default.png" width="60" height="60" alt="logo" />
+                                          <div><strong>${branch.name || 'Branch Name'}</strong></div>
+                                       2 <div>${branch.address || ''}</div>
+                                          <div>Permit #: ${branch.permit_number || ''}</div>
+                                          <div>DTI: ${branch.dti_issued || ''} | POS SN: ${branch.pos_sn || ''}</div>
                                     </div>
-                                `).join('')}
-                                <div style="display:flex;justify-content:space-between;margin-top:6px"><div>Total Paid</div><div>₱${Number(orderData.total_payment_rendered || 0).toFixed(2)}</div></div>
-                                <div style="display:flex;justify-content:space-between"><div>Change</div><div>₱${Number(orderData.change_amount || 0).toFixed(2)}</div></div>
-                                <p class="text-center small mt-3"><strong>This is not an official receipt</strong></p>
-                            </div>
+                                    <div class="mb-2 text-center"><strong>SALES INVOICE</strong></div>
+                                    <div>Date: ${orderData.created_at || ''}</div>
+                                    <div>INV: ${String(orderId).padStart(8, '0')}</div>
+                                    <div>TBL: ${orderData.table_no || ''} | Pax: ${orderData.number_pax || ''}</div>
+                                    <hr/>
+                                    <div>
+                                          ${(orderData.details || []).map(d => `
+                                             <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+                                                <div style="width:55%">${(d.product?.name || d.component?.name || d.item_name || 'Item')}</div>
+                                                <div style="width:10%">${d.quantity}x</div>
+                                                <div style="width:35%;text-align:right">₱${((d.price || 0) * (d.quantity || 1)).toFixed(2)}</div>
+                                             </div>
+                                          `).join('')}
+                                    </div>
+                                    <hr/>
+                                    <div style="display:flex;justify-content:space-between"><div>Gross</div><div>₱${Number(orderData.gross_amount || (orderData.details||[]).reduce((s,i)=>s+(i.price||0)*(i.quantity||0),0)).toFixed(2)}</div></div>
+                                    <div style="display:flex;justify-content:space-between"><div>Discount</div><div>₱${Number(orderData.discount_total || orderData.sr_pwd_discount || 0).toFixed(2)}</div></div>
+                                    <div style="display:flex;justify-content:space-between;font-weight:bold"><div>Total</div><div>₱${Number(orderData.total_charge || orderData.net_amount || 0).toFixed(2)}</div></div>
+                                    <hr/>
+                                    <div><strong>Payments</strong></div>
+                                    ${(orderData.payment_details || orderData.paymentDetails || []).map(pd => `
+                                          <div style="display:flex;justify-content:space-between">
+                                             <div>${pd.payment?.name || pd.payment_name || 'Method'}</div>
+                                             <div>₱${Number(pd.amount_paid || 0).toFixed(2)}</div>
+                                          </div>
+                                    `).join('')}
+                                    <div style="display:flex;justify-content:space-between;margin-top:6px"><div>Total Paid</div><div>₱${Number(orderData.total_payment_rendered || 0).toFixed(2)}</div></div>
+                                    <div style="display:flex;justify-content:space-between"><div>Change</div><div>₱${Number(orderData.change_amount || 0).toFixed(2)}</div></div>
+                                    <p class="text-center small mt-3"><strong>This is not an official receipt</strong></p>
+                                 </div>
+                              </div>
+                              <div class="modal-footer d-flex justify-content-center">
+                                 <button class="btn btn-outline-primary btn-sm me-2" onclick="window.print()">Print</button>
+                                 <button class="btn btn-primary btn-sm" data-bs-dismiss="modal">Close</button>
+                              </div>
                         </div>
-                        <div class="modal-footer d-flex justify-content-center">
-                            <button class="btn btn-outline-primary btn-sm me-2" onclick="window.print()">Print</button>
-                            <button class="btn btn-primary btn-sm" data-bs-dismiss="modal">Close</button>
-                        </div>
-                    </div>
-                </div>
-            `;
+                     </div>
+                  `;
 
-            document.body.appendChild(modalEl);
-            modalEl.addEventListener('hidden.bs.modal', () => modalEl.remove());
-        }
+                  document.body.appendChild(modalEl);
+                  modalEl.addEventListener('hidden.bs.modal', () => modalEl.remove());
+            }
 
-        // Show the modal using Bootstrap
-        const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
-        modal.show();
+            // Show the modal using Bootstrap
+            const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+            modal.show();
 
-    } catch (e) {
-        console.error('💥 openInvoiceModalFromResponse error', e);
-    }
+         } catch (e) {
+            console.error('💥 openInvoiceModalFromResponse error', e);
+         }
 };
 
 // =====================================
@@ -1281,10 +1298,18 @@ window.submitPayment = function(orderId) {
         return;
     }
 
-    const totalRendered = parseFloat(document.getElementById('payments_total_' + orderId)?.textContent?.replace(/[^\d.-]/g, '') || 0);
-    const changeAmount = parseFloat(document.getElementById('payments_change_' + orderId)?.textContent?.replace(/[^\d.-]/g, '') || 0);
+   const totalRendered = parseFloat(document.getElementById('payments_total_' + orderId)?.textContent?.replace(/[^\d.-]/g, '') || 0);
+   const changeAmount = parseFloat(document.getElementById('payments_change_' + orderId)?.textContent?.replace(/[^\d.-]/g, '') || 0);
 
-    const payload = new FormData();
+   // Validate that rendered payment covers total charge
+   const totalChargeStr = document.getElementById('pay_totalCharge_' + orderId)?.value || document.getElementById('totalCharge_' + orderId)?.value || 0;
+   const totalCharge = parseFloat(String(totalChargeStr).replace(/,/g, '')) || 0;
+   if (totalRendered < totalCharge) {
+      alert('⚠️ Insufficient payment. Total rendered (' + Number(totalRendered).toFixed(2) + ') is less than total charge (' + Number(totalCharge).toFixed(2) + ').');
+      return;
+   }
+
+   const payload = new FormData();
     payload.append('payments', JSON.stringify(payments));
     payload.append('total_payment_rendered', totalRendered);
     payload.append('change_amount', changeAmount);
@@ -1577,6 +1602,14 @@ window.submitPayment = function(orderId) {
       const changeAmount = parseFloat(
          document.getElementById('payments_change_' + orderId)?.textContent?.replace(/[^\d.-]/g, '') || 0
       );
+
+      // Validate payment sufficiency against computed total charge
+      const totalChargeStr = document.getElementById('pay_totalCharge_' + orderId)?.value || document.getElementById('totalCharge_' + orderId)?.value || 0;
+      const totalCharge = parseFloat(String(totalChargeStr).replace(/,/g, '')) || 0;
+      if (totalRendered < totalCharge) {
+         alert('⚠️ Insufficient payment. Total rendered (' + Number(totalRendered).toFixed(2) + ') is less than total charge (' + Number(totalCharge).toFixed(2) + ').');
+         return;
+      }
 
       const payload = new FormData();
       payload.append('payments', JSON.stringify(payments));

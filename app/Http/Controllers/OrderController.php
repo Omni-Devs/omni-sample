@@ -30,7 +30,7 @@ class OrderController extends Controller
         }
 
         // Fetch orders filtered by status
-        $orders = Order::with(['details.product', 'user'])
+        $orders = Order::with(['details.product', 'user', 'paymentDetails'])
             ->when($status === 'serving', fn($q) => $q->where('status', 'serving'))
             ->when($status === 'billout', fn($q) => $q->where('status', 'billout'))
             ->when($status === 'payments', fn($q) => $q->where('status', 'payments'))
@@ -235,35 +235,6 @@ class OrderController extends Controller
 
     public function billout(Request $request, $orderId)
     {
-        // $order = Order::findOrFail($orderId);
-
-        // $validated = $request->validate([
-        //     'srPwdBill'      => 'nullable|numeric',
-        //     'discount20'     => 'nullable|numeric',
-        //     'otherDiscount'  => 'nullable|numeric',
-        //     'netBill'        => 'nullable|numeric',
-        //     'vatable'        => 'nullable|numeric',
-        //     'vat12'          => 'nullable|numeric',
-        //     'totalCharge'    => 'nullable|numeric',
-        // ]);
-
-        // // Save computed values into your actual database columns
-        // $order->update([
-        //     'sr_pwd_discount'  => $validated['discount20'] ?? 0,
-        //     'other_discounts'  => $validated['otherDiscount'] ?? 0,
-        //     'net_amount'       => $validated['netBill'] ?? 0,
-        //     'vatable'          => $validated['vatable'] ?? 0,
-        //     'vat_12'           => $validated['vat12'] ?? 0,
-        //     'total_charge'     => $validated['totalCharge'] ?? 0,
-        //     'discount_total'   => ($validated['discount20'] ?? 0) + ($validated['otherDiscount'] ?? 0),
-        //     'charges_description' => 'Auto-calculated billout data.',
-        // ]);
-
-        // return response()->json([
-        //     'success' => true,
-        //     'order' => $order,
-        // ]);
-
         $order = Order::findOrFail($orderId);
 
         // Update order with computed totals
@@ -434,133 +405,85 @@ public function show($id)
     return response()->json($order);
 }
 
-    // public function payment(Request $request, $orderId)
-    // {
-    //     $order = Order::findOrFail($orderId);
-
-    //     $validated = $request->validate([
-    //         'payments' => 'required|string', // JSON array
-    //     ]);
-
-    //     $decodedPayments = json_decode($validated['payments'], true);
-
-    //     if (empty($decodedPayments) || !is_array($decodedPayments)) {
-    //         return response()->json([
-    //             'success' => false,
-    //             'message' => 'Invalid or empty payment data.',
-    //         ], 422);
-    //     }
-
-    //     $totalPaid = 0;
-
-    //     foreach ($decodedPayments as $p) {
-    //         if (empty($p['payment_method_id']) || empty($p['cash_equivalent_id']) || empty($p['amount_paid'])) {
-    //             continue;
-    //         }
-
-    //         // ✅ Save each record in payment_details table
-    //         PaymentDetail::create([
-    //             'payment_id' => $p['payment_method_id'],
-    //             'cash_equivalent_id' => $p['cash_equivalent_id'],
-    //             'transaction_reference_no' => $p['reference_no'] ?? null,
-    //             'amount_paid' => $p['amount_paid'],
-    //         ]);
-
-    //         $totalPaid += $p['amount_paid'];
-    //     }
-
-    //     // ✅ Update order status
-    //     $order->update([
-    //         'status' => 'payment',
-    //         'charges_description' => ($order->charges_description ?? '') .
-    //             "\nPayments added on " . now()->toDateTimeString(),
-    //     ]);
-
-    //     return response()->json([
-    //         'success' => true,
-    //         'message' => 'Payment successfully recorded!',
-    //         'order' => $order,
-    //         'total_paid' => $totalPaid,
-    //     ]);
-    // }
-
     public function payment(Request $request, $orderId)
-{
-    $order = Order::findOrFail($orderId);
+    {
+        $order = Order::with('paymentDetails')->findOrFail($orderId);
 
-    $validated = $request->validate([
-        'payments' => 'required|string', // JSON array
-        'total_payment_rendered' => 'nullable|numeric|min:0',
-        'change_amount' => 'nullable|numeric|min:0',
-    ]);
+        $validated = $request->validate([
+            'payments' => 'required|string', // JSON array
+            'total_payment_rendered' => 'nullable|numeric|min:0',
+            'change_amount' => 'nullable|numeric|min:0',
+        ]);
 
-    $decodedPayments = json_decode($validated['payments'], true);
+        $decodedPayments = json_decode($validated['payments'], true);
 
-    if (empty($decodedPayments) || !is_array($decodedPayments)) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Invalid or empty payment data.',
-        ], 422);
-    }
-
-    $totalPaid = 0;
-
-    foreach ($decodedPayments as $p) {
-        if (empty($p['payment_method_id']) || empty($p['cash_equivalent_id']) || empty($p['amount_paid'])) {
-            continue;
+        if (empty($decodedPayments) || !is_array($decodedPayments)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid or empty payment data.',
+            ], 422);
         }
 
-        PaymentDetail::create([
-            'order_id' => $order->id,
-            'payment_id' => $p['payment_method_id'],
-            'cash_equivalent_id' => $p['cash_equivalent_id'],
-            'transaction_reference_no' => $p['reference_no'] ?? null,
-            'amount_paid' => $p['amount_paid'],
-            'total_rendered' => $request->total_payment_rendered ?? 0,
-            'change_amount' => $request->change_amount ?? 0,
-        ]);
+        $totalPaid = 0;
 
-        $totalPaid += $p['amount_paid'];
-    }
+        foreach ($decodedPayments as $p) {
+            if (empty($p['payment_method_id']) || empty($p['cash_equivalent_id']) || empty($p['amount_paid'])) {
+                continue;
+            }
 
-    // compute total rendered and change
-    $totalCharge = floatval($order->total_charge ?? 0);
-    $changeAmount = max(0, $totalPaid - $totalCharge);
+            PaymentDetail::create([
+                'order_id' => $order->id,
+                'payment_id' => $p['payment_method_id'],
+                'cash_equivalent_id' => $p['cash_equivalent_id'],
+                'transaction_reference_no' => $p['reference_no'] ?? null,
+                'amount_paid' => $p['amount_paid'],
+                'total_rendered' => $request->total_payment_rendered ?? 0,
+                'change_amount' => $request->change_amount ?? 0,
+            ]);
 
-    // update order
-    $order->update([
-        'status' => 'payments',
-        'total_payment_rendered' => $totalPaid,
-        'change_amount' => $changeAmount,
-        'charges_description' => ($order->charges_description ?? '') . "\nPayments added on " . now()->toDateTimeString(),
-    ]);
+            $totalPaid += $p['amount_paid'];
+        }
 
-    // Optionally update last payment detail row with totals
-    $lastPayment = PaymentDetail::where('order_id', $order->id)->latest()->first();
-    if ($lastPayment) {
-        $lastPayment->update([
-            'total_rendered' => $totalPaid,
+        // compute total rendered and change
+        $totalCharge = floatval($order->total_charge ?? 0);
+        $changeAmount = max(0, $totalPaid - $totalCharge);
+
+        // update order
+        $order->update([
+            'status' => 'payments',
+            'total_payment_rendered' => $totalPaid,
             'change_amount' => $changeAmount,
+            'charges_description' => ($order->charges_description ?? '') . "\nPayments added on " . now()->toDateTimeString(),
         ]);
+
+        // Optionally update last payment detail row with totals
+        $lastPayment = PaymentDetail::where('order_id', $order->id)->latest()->first();
+        if ($lastPayment) {
+            $lastPayment->update([
+                'total_rendered' => $totalPaid,
+                'change_amount' => $changeAmount,
+            ]);
+        }
+
+        // Reload order with relations for response (so view can render receipt)
+        $order = Order::with([
+            'details.product',
+            'details.component',
+            'user',
+            'discountEntries',
+            'paymentDetails.payment',
+            'paymentDetails.cashEquivalent'
+        ])->find($order->id);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Payment successfully recorded!',
+            'order' => $order,
+            'total_paid' => $totalPaid,
+            'change' => $changeAmount,
+        ]);
+
+        // dd($order->total_payment_rendered, $order->change_amount, $order->paymentDetails->pluck(['total_rendered', 'change_amount']));
     }
-
-    // Reload order with relations for response (so view can render receipt)
-    $order = Order::with([
-        'details.product',
-        'details.component',
-        'user',
-        'discountEntries',
-        'paymentDetails.payment',
-        'paymentDetails.cashEquivalent'
-    ])->find($order->id);
-
-    return response()->json([
-        'success' => true,
-        'message' => 'Payment successfully recorded!',
-        'order' => $order,
-        'total_paid' => $totalPaid,
-        'change' => $changeAmount,
-    ]);
-}
 
 }

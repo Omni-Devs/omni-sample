@@ -25,6 +25,8 @@ class Order extends Model
         'total_charge',
         'discount_total',
         'charges_description',
+        'total_payment_rendered',
+        'change_amount',
     ];
 
     public function user()
@@ -56,6 +58,6 @@ class Order extends Model
      */
     public function paymentDetails()
     {
-        return $this->hasMany(\App\Models\PaymentDetail::class, 'order_id');
+        return $this->hasMany(PaymentDetail::class, 'order_id');
     }
 }
