@@ -63,15 +63,24 @@
                   <!----> 
                   <div class="vgt-global-search vgt-clearfix">
                      <div class="vgt-global-search__input vgt-pull-left">
-                        <form role="search">
-                           <label for="vgt-search-352530096888">
-                              <span aria-hidden="true" class="input__icon">
-                                 <div class="magnifying-glass"></div>
-                              </span>
-                              <span class="sr-only">Search</span>
-                           </label>
-                           <input id="vgt-search-352530096888" type="text" placeholder="Search this table" class="vgt-input vgt-pull-left">
-                        </form>
+                     <span aria-hidden="true" class="input__icon">
+                        <div class="magnifying-glass"></div>
+                     </span>
+                  <form role="search" method="GET" action="{{ route('products.index') }}" class="mb-3" style="position: relative;">
+                     <label for="tableSearch" style="cursor: pointer;" onclick="this.closest('form').submit()">
+                  
+                        <span class="sr-only">Search</span>
+                     </label>
+                     <input 
+                        id="tableSearch" 
+                        name="search" 
+                        type="text" 
+                        value="{{ request('search') }}" 
+                        placeholder="Search this table" 
+                        class="vgt-input vgt-pull-left"
+                        onkeydown="if(event.key === 'Enter') this.form.submit()"
+                     >
+                  </form>
                      </div>
                      <div class="vgt-global-search__actions vgt-pull-right">
                         <div>
@@ -157,13 +166,27 @@
                            Filter
                            </button> <button type="button" class="btn mx-1 btn-outline-success ripple btn-sm"><i class="i-File-Copy"></i> PDF
                            </button> <button class="btn btn-sm btn-outline-danger ripple mx-1"><i class="i-File-Excel"></i> EXCEL
-                           </button> <button type="button" class="btn btn-info m-1 btn-sm"><i class="i-Upload"></i>
-                           Import
-                           </button> <button type="button" class="btn mx-1 btn-btn btn-primary btn-icon" onclick="window.location='{{ url('products/create') }}'"><i class="i-Add"></i>
-                           Add
-                           </button> <button type="button" class="btn mx-1 btn-btn btn-primary">
-                           Stock Alert Summary
-                           </button>
+                           {{-- Import button: hide if archived --}}
+                           @if ($status !== 'archived')
+                              <button type="button" class="btn btn-info m-1 btn-sm">
+                                    <i class="i-Upload"></i> Import
+                              </button>
+                           @endif
+
+                           {{-- Add button: hide if archived --}}
+                           @if ($status !== 'archived')
+                              <button type="button" class="btn mx-1 btn-btn btn-primary btn-icon"
+                                    onclick="window.location='{{ url('products/create') }}'">
+                                    <i class="i-Add"></i> Add
+                              </button>
+                           @endif
+
+                           {{-- Stock Alert Summary: show only if not active and not archived --}}
+                           @if ($status !== 'active' && $status !== 'archived')
+                              <button type="button" class="btn mx-1 btn-btn btn-primary">
+                                    Stock Alert Summary
+                              </button>
+                           @endif
                         </div>
                      </div>
                   </div>
@@ -251,6 +274,193 @@
                         </tbody>
                   </div>
                   </td></tr></tbody></table>
+
+<script>
+function openRemarksModal(productId) {
+    // Set the hidden input
+    document.getElementById('remarksItemId').value = productId;
+
+    // Clear previous remarks
+    document.getElementById('remarksText').value = '';
+
+    // Fetch existing remarks (from your existing remarks table)
+    fetch(`/products/${productId}/remarks`)
+        .then(res => res.json())
+        .then(data => {
+            const timeline = document.getElementById('remarksTimeline');
+            timeline.innerHTML = '';
+
+            if (data.length === 0) {
+                timeline.innerHTML = '<li>No remarks yet.</li>';
+            } else {
+                data.forEach(remark => {
+                    const li = document.createElement('li');
+                    li.textContent = `${remark.created_at}: ${remark.remarks}`;
+                    timeline.appendChild(li);
+                });
+            }
+        })
+        .catch(err => console.error(err));
+
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('remarksModal'));
+    modal.show();
+}
+
+// Handle form submission
+document.getElementById('remarksForm').addEventListener('submit', function (e) {
+   e.preventDefault();
+
+   const productId = document.getElementById('remarksItemId').value;
+   const remarks = document.getElementById('remarksText').value;
+
+   const submitBtn = this.querySelector('button[type="submit"]');
+   if (submitBtn) submitBtn.disabled = true;
+
+   function getCsrfToken() {
+      const meta = document.querySelector('meta[name="csrf-token"]');
+      if (meta) return meta.getAttribute('content');
+      const tokenInput = document.querySelector('input[name="_token"]');
+      return tokenInput ? tokenInput.value : null;
+   }
+
+   if (typeof axios !== 'undefined') {
+      axios.post(`/products/${productId}/remarks`, { remarks: remarks })
+         .then(function (response) {
+            if (response.data && response.data.success) {
+               openRemarksModal(productId);
+               document.getElementById('remarksText').value = '';
+            } else {
+               alert('Failed to save remark.');
+            }
+         })
+         .catch(function (error) {
+            console.error('Axios error saving remark:', error);
+            alert('Error saving remark. See console for details.');
+         })
+         .finally(function () { if (submitBtn) submitBtn.disabled = false; });
+      return;
+   }
+
+   // fallback to fetch
+   const csrfToken = getCsrfToken();
+   fetch(`/products/${productId}/remarks`, {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: {
+         'Content-Type': 'application/json',
+         'Accept': 'application/json',
+         'X-CSRF-TOKEN': csrfToken
+      },
+      body: JSON.stringify({ remarks: remarks })
+   })
+   .then(res => res.json())
+   .then(data => {
+      if (data && data.success) {
+         openRemarksModal(productId);
+         document.getElementById('remarksText').value = '';
+      } else {
+         console.error('Failed to save remark (fallback):', data);
+         alert('Failed to save remark.');
+      }
+   })
+   .catch(err => {
+      console.error('Fetch error saving remark:', err);
+      alert('Error saving remark. See console for details.');
+   })
+   .finally(() => { if (submitBtn) submitBtn.disabled = false; });
+});
+</script>
+
+                  <!-- Remarks Modal -->
+         <div class="modal fade" id="remarksModal" tabindex="-1" role="dialog" aria-labelledby="remarksModalLabel" aria-hidden="true">
+         <div class="modal-dialog" role="document">
+            <div class="modal-content">
+               <header class="modal-header">
+               <h5 class="modal-title" id="remarksModalLabel">Remarks</h5>
+               <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+               </button>
+               </header>
+
+               <div class="modal-body">
+               <form id="remarksForm">
+    @csrf
+    <input type="hidden" id="remarksItemId"> 
+    
+    <fieldset class="form-group">
+        <textarea 
+            name="remarks"             id="remarksText" 
+            class="form-control" 
+            rows="3" 
+            placeholder="Type your message" 
+            required
+        ></textarea>
+        <div class="invalid-feedback">This field is required</div>
+    </fieldset>
+
+                  <div class="d-flex justify-content-end">
+                     <button type="submit" class="btn btn-primary btn-icon btn-rounded">
+                     <i class="i-Yes me-2 font-weight-bold"></i> Submit
+                     </button>
+                  </div>
+               </form>
+
+               <hr>
+
+               <ul class="timeline" id="remarksTimeline"></ul>
+               </div>
+            </div>
+         </div>
+         </div>
+
+                  // Sortable table
+                  <script>
+                     document.addEventListener("DOMContentLoaded", function () {
+                     const table = document.querySelector("#vgt-table");
+                     if (!table) return;
+
+                     const headers = table.querySelectorAll("thead th");
+
+                     headers.forEach((header, index) => {
+                        // Make header visually clickable
+                        header.style.cursor = "pointer";
+
+                        header.addEventListener("click", function () {
+                              const tbody = table.querySelector("tbody");
+                              const rows = Array.from(tbody.querySelectorAll("tr"));
+                              const isAsc = header.classList.toggle("asc");
+
+                              // Remove sorting classes from other headers
+                              headers.forEach((h, i) => {
+                                 if (i !== index) h.classList.remove("asc", "desc");
+                              });
+                              header.classList.toggle("desc", !isAsc);
+
+                              rows.sort((a, b) => {
+                                 const aText = a.children[index].textContent.trim();
+                                 const bText = b.children[index].textContent.trim();
+
+                                 const aNum = parseFloat(aText.replace(/,/g, ""));
+                                 const bNum = parseFloat(bText.replace(/,/g, ""));
+                                 const bothNumbers = !isNaN(aNum) && !isNaN(bNum);
+
+                                 if (bothNumbers) {
+                                    return isAsc ? aNum - bNum : bNum - aNum;
+                                 } else {
+                                    return isAsc
+                                          ? aText.localeCompare(bText)
+                                          : bText.localeCompare(aText);
+                                 }
+                              });
+
+                              // Reattach sorted rows
+                              rows.forEach(row => tbody.appendChild(row));
+                        });
+                     });
+                  });
+                  </script>
+
                </div>
                <!----> 
                <div class="vgt-wrap__footer vgt-clearfix">
@@ -486,6 +696,7 @@
 </span>
 </div>
 @endsection
+
 
 @section('scripts')
     <script>

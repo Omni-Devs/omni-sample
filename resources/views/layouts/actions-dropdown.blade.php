@@ -135,10 +135,12 @@
         <!-- Remarks -->
         @isset($remarksRoute)
         <li role="presentation">
-            <a class="dropdown-item" href="{{ $remarksRoute }}">
-                <i class="nav-icon i-Mail-Attachement font-weight-bold mr-2"></i> {{ $remarksLabel ?? 'Remarks' }}
+            <a href="javascript:void(0);" 
+            class="dropdown-item" 
+            onclick="openRemarksModal({{ $id }})">
+                <i class="nav-icon i-Mail-Attachement font-weight-bold mr-2"></i> Remarks
             </a>
         </li>
         @endisset
-    </ul>
+            </ul>
 </div>
