@@ -80,21 +80,58 @@ function handleProductsTypeChange(value) {
   });
 
 // --- Searchbar ---
-document.addEventListener("DOMContentLoaded", function () {
-    const searchInput = document.querySelector("#vgt-search-352530096888");
-    const table = document.querySelector("#vgt-table");
-    if (!searchInput || !table) return;
+document.addEventListener('DOMContentLoaded', function () {
+    const searchInput = document.getElementById('tableSearch');
+    const table = document.getElementById('productsTable');
+    const rows = table.getElementsByTagName('tr');
 
-    const rows = table.querySelectorAll("tbody tr");
+    searchInput.addEventListener('keyup', function () {
+        const filter = this.value.toLowerCase().trim();
 
-    searchInput.addEventListener("keyup", function () {
-        const searchTerm = this.value.toLowerCase();
-        rows.forEach((row) => {
+        // loop through all table rows (skip header)
+        for (let i = 1; i < rows.length; i++) {
+            const row = rows[i];
             const text = row.textContent.toLowerCase();
-            row.style.display = text.includes(searchTerm) ? "" : "none";
-        });
+
+            // toggle row visibility based on match
+            row.style.display = text.includes(filter) ? '' : 'none';
+        }
     });
 });
+
+// --- Sortable Table ---
+// document.addEventListener("DOMContentLoaded", function () {
+//     const table = document.querySelector("#vgt-table");
+//     if (!table) return;
+
+//     const headers = table.querySelectorAll("thead th");
+
+//     headers.forEach((header, index) => {
+//         if (!header.classList.contains("sortable")) return;
+
+//         const button = header.querySelector("button");
+//         if (!button) return;
+
+//         let asc = true;
+//         button.addEventListener("click", function () {
+//             const tbody = table.querySelector("tbody");
+//             const rows = Array.from(tbody.querySelectorAll("tr"));
+
+//             rows.sort((a, b) => {
+//                 let aText = a.querySelectorAll("td")[index]?.textContent.trim() || "";
+//                 let bText = b.querySelectorAll("td")[index]?.textContent.trim() || "";
+
+//                 if (!isNaN(aText) && !isNaN(bText) && aText !== "" && bText !== "") {
+//                     return asc ? Number(aText) - Number(bText) : Number(bText) - Number(aText);
+//                 }
+//                 return asc ? aText.localeCompare(bText) : bText.localeCompare(aText);
+//             });
+
+//             rows.forEach((row) => tbody.appendChild(row));
+//             asc = !asc;
+//         });
+//     });
+// });
 
 // --- Sortable Table ---
 document.addEventListener("DOMContentLoaded", function () {
@@ -104,28 +141,39 @@ document.addEventListener("DOMContentLoaded", function () {
     const headers = table.querySelectorAll("thead th");
 
     headers.forEach((header, index) => {
-        if (!header.classList.contains("sortable")) return;
+        // Make header visually clickable
+        header.style.cursor = "pointer";
 
-        const button = header.querySelector("button");
-        if (!button) return;
-
-        let asc = true;
-        button.addEventListener("click", function () {
+        header.addEventListener("click", function () {
             const tbody = table.querySelector("tbody");
             const rows = Array.from(tbody.querySelectorAll("tr"));
+            const isAsc = header.classList.toggle("asc");
+
+            // Remove sorting classes from other headers
+            headers.forEach((h, i) => {
+                if (i !== index) h.classList.remove("asc", "desc");
+            });
+            header.classList.toggle("desc", !isAsc);
 
             rows.sort((a, b) => {
-                let aText = a.querySelectorAll("td")[index]?.textContent.trim() || "";
-                let bText = b.querySelectorAll("td")[index]?.textContent.trim() || "";
+                const aText = a.children[index].textContent.trim();
+                const bText = b.children[index].textContent.trim();
 
-                if (!isNaN(aText) && !isNaN(bText) && aText !== "" && bText !== "") {
-                    return asc ? Number(aText) - Number(bText) : Number(bText) - Number(aText);
+                const aNum = parseFloat(aText.replace(/,/g, ""));
+                const bNum = parseFloat(bText.replace(/,/g, ""));
+                const bothNumbers = !isNaN(aNum) && !isNaN(bNum);
+
+                if (bothNumbers) {
+                    return isAsc ? aNum - bNum : bNum - aNum;
+                } else {
+                    return isAsc
+                        ? aText.localeCompare(bText)
+                        : bText.localeCompare(aText);
                 }
-                return asc ? aText.localeCompare(bText) : bText.localeCompare(aText);
             });
 
-            rows.forEach((row) => tbody.appendChild(row));
-            asc = !asc;
+            // Reattach sorted rows
+            rows.forEach(row => tbody.appendChild(row));
         });
     });
 });

@@ -16,6 +16,7 @@ use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\CashEquivalentController;
 use App\Http\Controllers\KitchenController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\RemarkController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -138,3 +139,6 @@ Route::put('/discounts/{discount}', [DiscountController::class, 'update'])->name
 Route::delete('/discounts/{id}', [DiscountController::class, 'destroy'])->name('discounts.destroy');
 Route::put('/discounts/{discount}/archive', [DiscountController::class, 'archive'])->name('discounts.archive');
 Route::put('/discounts/{discount}/restore', [DiscountController::class, 'restore'])->name('discounts.restore');
+
+Route::get('/products/{product}/remarks', [ProductController::class, 'remarks']);
+Route::post('/products/{product}/remarks', [ProductController::class, 'storeRemark']);
