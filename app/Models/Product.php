@@ -24,4 +24,9 @@ class Product extends Model
     public function recipes() {
         return $this->hasMany(Recipe::class);
     }
+    public function orderItems()
+    {
+        return $this->hasMany(OrderItem::class);
+    }
+
 }
