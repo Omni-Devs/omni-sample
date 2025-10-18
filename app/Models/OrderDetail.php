@@ -17,7 +17,22 @@ class OrderDetail extends Model
         'price',
         'discount',
         'notes',
+        'status',
     ];
+
+     // 🔹 Automatically update parent order when detail status changes
+    protected static function booted()
+    {
+        static::saved(function ($detail) {
+            $order = $detail->order;
+            if ($order) $order->refreshStatusBasedOnDetails();
+        });
+
+        static::deleted(function ($detail) {
+            $order = $detail->order;
+            if ($order) $order->refreshStatusBasedOnDetails();
+        });
+    }
 
     public function order()
     {
@@ -38,4 +53,8 @@ class OrderDetail extends Model
     {
         return $this->product->name ?? $this->component->name ?? 'Unknown Item';
     }
+    public function orderItems()
+{
+    return $this->hasMany(OrderItem::class, 'order_detail_id');
+}
 }

@@ -1,4 +1,6 @@
 @extends('layouts.app')
+<script src="https://unpkg.com/timeago.js/dist/timeago.min.js"></script>
+
 <style>
 table {
     width: 100%;
@@ -47,19 +49,95 @@ tr:hover {
         </div>
         <div class="separator-breadcrumb border-top"></div>
     </div>
+   <!-- ✅ Update Status Modal -->
+<div class="modal fade" id="updateModal" tabindex="-1" aria-labelledby="updateStatusLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content" v-if="selectedOrder">
+
+      <!-- Header -->
+      <div class="modal-header">
+        <h5 class="modal-title">Update Status - Order #@{{ selectedOrder.order_no  }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal">x</button>
+      </div>
+
+      <!-- Body -->
+      <div class="modal-body">
+        <form @submit.prevent="submitUpdateStatus">
+          
+          <!-- Order Info -->
+          <div class="border rounded p-3 mb-3">
+            <div class="row g-2">
+              <div class="col-md-3">
+                <label class="form-label">Order No</label>
+                <input type="text" class="form-control" :value="selectedOrder.order_no" readonly>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">Time Ordered</label>
+                <input type="text" class="form-control" :value="formatTime(selectedOrder.time_submitted)" readonly>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">SKU</label>
+                <input type="text" class="form-control" :value="selectedOrder.code" readonly>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">Product Name</label>
+                <input type="text" class="form-control" :value="selectedOrder.name" readonly>
+              </div>
+            </div>
+          </div>
+
+          <!-- Update Fields -->
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Chef / Cook</label>
+              <select v-model="selectedOrder.cook_id" class="form-select">
+                <option value="">-- Select Cook --</option>
+                <option v-for="chef in chefs" :key="chef.id" :value="chef.id">
+                  @{{ chef.name }}
+                </option>
+              </select>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label">Status</label>
+              <select v-model="selectedOrder.status" class="form-select">
+                <option value="served">Served</option>
+                <option value="walked">Walked</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Buttons -->
+          <div class="text-center">
+            <button type="submit" class="btn btn-primary px-4 me-2">
+              <i class="bi bi-check-circle me-1"></i> Submit
+            </button>
+            <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
     <div class="wrapper">
         <div class="card mt-4">
             <nav class="card-header">
                 <ul class="nav nav-tabs card-header-tabs">
                     <li class="nav-item">
-                        <a href="#" 
+                        <a href="/kitchen" 
                             class="nav-link active">
                             Preparing
                         </a>
                     </li>
 
                     <li class="nav-item">
-                        <a href="#" 
+                        <a href="/kitchen/served" 
                             class="nav-link">
                             Served
                         </a>
@@ -146,51 +224,67 @@ tr:hover {
                             </tr>
                             </thead>
                              <tbody>
-                            @php
-                                $lastOrderId = null;
-                                $colors = [
-                                    '#f0f7ff', // light blue
-                                    '#fff5e6', // light orange
-                                    '#f3f9f1', // light green
-                                    '#f9f0ff', // light purple
-                                    '#fef7f1', // light beige
-                                ];
-                                $colorIndex = 0;
-                            @endphp
+  <tr v-for="(item, index) in orderItems" 
+      :key="index" 
+      :style="{ backgroundColor: getOrderColor(item.order_id) }">
+    <td class="text-left fw-bold text-primary">#@{{ item.order_no }}</td>
+    <td class="text-left">@{{ formatTime(item.time_submitted) }}</td>
+    <td class="text-left fw-semibold">@{{ item.code }}</td>
+    <td class="text-left">@{{ item.name }}</td>
+    <td class="text-end">@{{ item.qty }}</td>
+    <td class="text-end">@{{ item.station }}</td>
+    <td class="text-end fw-bold" 
+    :class="{'text-danger': (new Date(now) - new Date(item.time_submitted)) / 60000 >= 15}">
+  @{{ getRunningTime(item.time_submitted) }}
+</td>
 
-                            @foreach ($orderItems as $item)
-                                @php
-                                    // Change background color when order ID changes
-                                    if ($lastOrderId !== $item['order_id']) {
-                                        $colorIndex = ($colorIndex + 1) % count($colors);
-                                        $lastOrderId = $item['order_id'];
-                                    }
+    <td>
+  <button @click="item.showRecipe = !item.showRecipe">View Recipe</button>
+  <ul v-if="item.showRecipe">
+    <li v-for="r in item.recipe" :key="r.component_name">
+      @{{ r.component_name }} — @{{ r.quantity }}
+    </li>
+  </ul>
+</td>
+    <td class="text-right">
+        <div class="dropdown b-dropdown btn-group">
+    <button id="dropdownMenu{{ $id ?? uniqid() }}"
+        type="button"
+        class="btn dropdown-toggle btn-link btn-lg text-decoration-none dropdown-toggle-no-caret"
+        data-bs-toggle="dropdown"
+        aria-haspopup="true"
+        aria-expanded="false">
+        <span class="_dot _r_block-dot bg-dark"></span>
+        <span class="_dot _r_block-dot bg-dark"></span>
+        <span class="_dot _r_block-dot bg-dark"></span>
+    </button>
 
-                                    $runningTime = now()->diffInMinutes($item['created_at']);
-                                @endphp
+    <ul class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownMenu">
+        <!-- Update Status -->
+         <li role="presentation">
+        <a
+            class="dropdown-item"
+            href="#"
+            @click="openUpdateModal(item)"
+        >
+            <i class="nav-icon i-Edit font-weight-bold mr-2"></i>
+           Update Status
+        </a>
+        </li>
 
-                                <tr style="background-color: {{ $colors[$colorIndex] }};">
-                                    <td class="text-left fw-bold text-primary">#{{ $item['order_no'] }}</td>
-                                    <td class="text-left">{{ $item['created_at']->format('h:i A') }}</td>
-                                    <td class="text-left fw-semibold">{{ $item['code'] }}</td>
-                                    <td class="text-left">{{ $item['name'] }}</td>
-                                    <td class="text-end">{{ $item['qty'] }}</td>
-                                    <td class="text-end">{{ $item['station'] }}</td>
-                                    <td class="text-end">{{ $runningTime }} mins</td>
-                                    <td class="text-end">
-                                        <button class="btn btn-sm btn-outline-secondary">Recipe</button>
-                                    </td>
-                                    <td class="text-right">
-                                        @include('layouts.actions-dropdown', [
-                                        'id' => $item['order_id'],
-                                        'updateRoute' => '#',
-                                        'remarksRoute' => '#',
-                                        'status' => '#',
-                                    ])
-                                    </td>
-                                </tr>
-                            @endforeach
-                            </tbody>
+        <li role="presentation">
+            <a class="dropdown-item" href="#">
+                <i class="nav-icon i-Mail-Attachement font-weight-bold mr-2"></i> Remarks
+            </a>
+        </li>
+    </ul>
+        </div>
+
+
+      </td>
+  </tr>
+</tbody>
+
                         </table>
                     </div>
                 </div>
@@ -202,49 +296,135 @@ tr:hover {
 new Vue({
   el: "#app",
   data: {
-    order: {
-      // Example: server timestamp from database
-      created_at: "2025-10-14 17:04:45"
-    },
-    runningTime: "00:00",
-    timer: null,
-    stopped: false
+    orderItems: @json($orderItems),
+    colors: ['#e3f2fd', '#fff3e0', '#e8f5e9', '#f3e5f5', '#fef5e7'],
+    orderColorMap: {},
+    now: new Date(), // reactive timestamp that updates every second
+    selectedOrder: null,
+    selectedStatus: "",
+    chefs: @json($chefs),
   },
   mounted() {
-    this.startTimer();
+    this.assignColors();
+
+    // 🕒 update every second to make the timer live
+    setInterval(() => {
+      this.now = new Date();
+    }, 1000);
   },
   methods: {
-    // ✅ Convert MySQL timestamp → readable AM/PM
+    assignColors() {
+      let colorIndex = 0;
+      this.orderItems.forEach(item => {
+        if (!this.orderColorMap[item.order_id]) {
+          this.orderColorMap[item.order_id] = this.colors[colorIndex];
+          colorIndex = (colorIndex + 1) % this.colors.length;
+        }
+      });
+    },
+
+    // 🕐 Compute live running time in HH:MM:SS
+    getRunningTime(submitted) {
+      const diff = (new Date(this.now) - new Date(submitted)) / 1000;
+      const mins = Math.floor(diff / 60);
+      const secs = Math.floor(diff % 60);
+      return `${mins}m ${secs}s`;
+    },
+
     formatTime(datetime) {
-      if (!datetime) return "";
-      const date = new Date(datetime.replace(" ", "T"));
-      return date.toLocaleTimeString("en-US", {
-        hour: "2-digit",
-        minute: "2-digit",
+      const local = new Date(datetime + 'Z');
+      return local.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
         hour12: true
       });
     },
 
-    // ✅ Start counting live running time
-    startTimer() {
-      const start = new Date(this.order.created_at.replace(" ", "T"));
-      this.timer = setInterval(() => {
-        if (this.stopped) return;
-        const now = new Date();
-        const diff = Math.floor((now - start) / 1000);
-        const minutes = String(Math.floor(diff / 60)).padStart(2, "0");
-        const seconds = String(diff % 60).padStart(2, "0");
-        this.runningTime = `${minutes}:${seconds}`;
-        
-      }, 1000);
+    getOrderColor(orderId) {
+      return this.orderColorMap[orderId] || '#ffffff';
+    },
+    openUpdateModal(item) {
+      this.selectedOrder = item;
+      this.selectedStatus = item.status || "";
+      const modal = new bootstrap.Modal(document.getElementById("updateModal"));
+      modal.show();
     },
 
-    // ✅ Stop timer when clicked
-    stopTimer() {
-      this.stopped = true;
-      clearInterval(this.timer);
-    }
+    fetchOrders() {
+    axios.get(`/kitchen/served`)
+      .then(res => {
+        this.orderItems = res.data.orderItems;
+      })
+      .catch(err => console.error("❌ Failed to reload orders:", err));
+  },
+   submitUpdateStatus() {
+  const now = new Date();
+  const timeSubmitted =
+    now.getFullYear() + '-' +
+    String(now.getMonth() + 1).padStart(2, '0') + '-' +
+    String(now.getDate()).padStart(2, '0') + ' ' +
+    now.toLocaleTimeString('en-US', { hour12: false });
+
+  const payload = {
+    order_detail_id: this.selectedOrder.order_detail_id,
+    cook_id: this.selectedOrder.cook_id,
+    time_submitted: timeSubmitted,
+    status: this.selectedOrder.status,
+  };
+
+  console.log(payload);
+
+  axios.post(`/order-items/update-or-create`, payload)
+    .then(response => {
+      if (response.data.success) {
+        alert("✅ Order item updated successfully!");
+
+        const updatedDetail = response.data.data.order_detail;
+        const updatedOrderStatus = response.data.data.order_status;
+
+        // ✅ Safely find and update in local table
+        const index = this.orderItems.findIndex(
+          item => item.order_detail_id === updatedDetail.id
+        );
+
+        if (index !== -1) {
+          this.orderItems[index].status = updatedDetail.status;
+          this.orderItems[index].cook_id = this.selectedOrder.cook_id;
+          this.orderItems[index].time_submitted = timeSubmitted;
+        }
+
+        // ✅ Remove only if it’s no longer in serving
+        if (updatedDetail.status !== 'serving') {
+          this.orderItems = this.orderItems.filter(
+            i => i.order_detail_id !== updatedDetail.id
+          );
+        }
+
+        // ✅ Optional: if parent order becomes "served", refresh list automatically
+        if (updatedOrderStatus === 'served') {
+          console.log('Parent order served — refreshing list...');
+          this.fetchOrders(); // <-- Add this method if not already present
+        }
+
+        // ✅ Close modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById("updateModal"));
+        if (modal) modal.hide();
+      } else {
+        alert("⚠️ " + (response.data.message || "Something went wrong."));
+      }
+    })
+    .catch(error => {
+      console.error("❌ Update failed:", error.response || error);
+      alert("❌ Failed to update order item. Check console for details.");
+    });
+
+  
+},
   }
+
 });
 </script>
+
+
 @endsection

@@ -32,6 +32,7 @@ class OrderController extends Controller
         // Fetch orders filtered by status
         $orders = Order::with(['details.product', 'user', 'paymentDetails'])
             ->when($status === 'serving', fn($q) => $q->where('status', 'serving'))
+            ->when($status === 'served', fn($q) => $q->where('status', 'served'))
             ->when($status === 'billout', fn($q) => $q->where('status', 'billout'))
             ->when($status === 'payments', fn($q) => $q->where('status', 'payments'))
             ->orderByDesc('created_at')
@@ -144,7 +145,6 @@ class OrderController extends Controller
 
     public function store(Request $request)
 {
-    $localTime = Carbon::parse($request->created_at)->setTimezone('Asia/Manila');
 
     $validated = $request->validate([
         'user_id' => 'required|exists:users,id',
@@ -186,8 +186,7 @@ class OrderController extends Controller
         'table_no'  => $validated['table_no'],
         'number_pax'=> $validated['number_pax'],
         'status'    => $validated['status'],
-        'created_at'=> $localTime,
-        'updated_at'=> $localTime,
+        'time_submitted' => $request->input('time_submitted'),
     ]);
 
     // Attach order details
@@ -199,6 +198,7 @@ class OrderController extends Controller
             'price'        => $detail['price'],
             'discount'     => $detail['discount'] ?? 0,
             'notes'        => $detail['notes'] ?? null,
+            'status'       => 'serving', // 👈 default here
         ]);
     }
 
