@@ -10,7 +10,7 @@ class Product extends Model
     use HasFactory;
     
     protected $fillable = [
-        'code', 'name', 'price', 'status', 'image', 'category_id', 'subcategory_id'
+        'code', 'name', 'price', 'status', 'image', 'category_id', 'subcategory_id',
     ];
 
     public function category() {
@@ -29,4 +29,9 @@ class Product extends Model
         return $this->hasMany(OrderItem::class);
     }
 
+
+    public function remarks()
+    {
+        return $this->hasMany(Remark::class);
+    }
 }
