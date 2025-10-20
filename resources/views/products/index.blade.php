@@ -414,7 +414,6 @@ document.getElementById('remarksForm').addEventListener('submit', function (e) {
          </div>
          </div>
 
-                  // Sortable table
                   <script>
                      document.addEventListener("DOMContentLoaded", function () {
                      const table = document.querySelector("#vgt-table");

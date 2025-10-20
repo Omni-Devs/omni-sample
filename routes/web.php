@@ -142,3 +142,6 @@ Route::put('/discounts/{discount}/restore', [DiscountController::class, 'restore
 
 Route::get('/products/{product}/remarks', [ProductController::class, 'remarks']);
 Route::post('/products/{product}/remarks', [ProductController::class, 'storeRemark']);
+
+Route::get('/components/{component}/remarks', [ComponentController::class, 'remarks']);
+Route::post('/components/{component}/remarks', [ComponentController::class, 'storeRemark']);
