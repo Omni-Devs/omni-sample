@@ -144,7 +144,7 @@ tr:hover {
                     </li>
 
                     <li class="nav-item">
-                        <a href="#"
+                        <a href="/kitchen/walked"
                             class="nav-link">
                             Walked
                         </a>
@@ -223,68 +223,65 @@ tr:hover {
                                 </th>
                             </tr>
                             </thead>
-                             <tbody>
-  <tr v-for="(item, index) in orderItems" 
-      :key="index" 
-      :style="{ backgroundColor: getOrderColor(item.order_id) }">
-    <td class="text-left fw-bold text-primary">#@{{ item.order_no }}</td>
-    <td class="text-left">@{{ formatTime(item.time_submitted) }}</td>
-    <td class="text-left fw-semibold">@{{ item.code }}</td>
-    <td class="text-left">@{{ item.name }}</td>
-    <td class="text-end">@{{ item.qty }}</td>
-    <td class="text-end">@{{ item.station }}</td>
-    <td class="text-end fw-bold" 
-    :class="{'text-danger': (new Date(now) - new Date(item.time_submitted)) / 60000 >= 15}">
-  @{{ getRunningTime(item.time_submitted) }}
-</td>
+                            <tbody>
+                              <tr v-for="(item, index) in orderItems" 
+                                  :key="index" 
+                                  :style="{ backgroundColor: getOrderColor(item.time_submitted) }">
+                                <td class="text-left fw-bold text-primary">#@{{ item.order_no }}</td>
+                                <td class="text-left">@{{ formatTime(item.time_submitted) }}</td>
+                                <td class="text-left fw-semibold">@{{ item.code }}</td>
+                                <td class="text-left">@{{ item.name }}</td>
+                                <td class="text-end">@{{ item.qty }}</td>
+                                <td class="text-end">@{{ item.station }}</td>
+                                <td class="text-end fw-bold" 
+                                :class="{'text-danger': (new Date(now) - new Date(item.time_submitted)) / 60000 >= 15}">
+                                  @{{ getRunningTime(item.time_submitted) }}
+                                </td>
 
-    <td>
-  <button @click="item.showRecipe = !item.showRecipe">View Recipe</button>
-  <ul v-if="item.showRecipe">
-    <li v-for="r in item.recipe" :key="r.component_name">
-      @{{ r.component_name }} — @{{ r.quantity }}
-    </li>
-  </ul>
-</td>
-    <td class="text-right">
-        <div class="dropdown b-dropdown btn-group">
-    <button id="dropdownMenu{{ $id ?? uniqid() }}"
-        type="button"
-        class="btn dropdown-toggle btn-link btn-lg text-decoration-none dropdown-toggle-no-caret"
-        data-bs-toggle="dropdown"
-        aria-haspopup="true"
-        aria-expanded="false">
-        <span class="_dot _r_block-dot bg-dark"></span>
-        <span class="_dot _r_block-dot bg-dark"></span>
-        <span class="_dot _r_block-dot bg-dark"></span>
-    </button>
+                                <td>
+                                  <button @click="item.showRecipe = !item.showRecipe">View Recipe</button>
+                                  <ul v-if="item.showRecipe">
+                                    <li v-for="r in item.recipe" :key="r.component_name">
+                                      @{{ r.component_name }} — @{{ r.quantity }}
+                                    </li>
+                                  </ul>
+                                </td>
+                                <td class="text-right">
+                                  <div class="dropdown b-dropdown btn-group">
+                                    <button id="dropdownMenu{{ $id ?? uniqid() }}"
+                                        type="button"
+                                        class="btn dropdown-toggle btn-link btn-lg text-decoration-none dropdown-toggle-no-caret"
+                                        data-bs-toggle="dropdown"
+                                        aria-haspopup="true"
+                                        aria-expanded="false">
+                                        <span class="_dot _r_block-dot bg-dark"></span>
+                                        <span class="_dot _r_block-dot bg-dark"></span>
+                                        <span class="_dot _r_block-dot bg-dark"></span>
+                                    </button>
 
-    <ul class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownMenu">
-        <!-- Update Status -->
-         <li role="presentation">
-        <a
-            class="dropdown-item"
-            href="#"
-            @click="openUpdateModal(item)"
-        >
-            <i class="nav-icon i-Edit font-weight-bold mr-2"></i>
-           Update Status
-        </a>
-        </li>
+                                    <ul class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownMenu">
+                                      <!-- Update Status -->
+                                      <li role="presentation">
+                                      <a
+                                          class="dropdown-item"
+                                          href="#"
+                                          @click="openUpdateModal(item)"
+                                      >
+                                          <i class="nav-icon i-Edit font-weight-bold mr-2"></i>
+                                        Update Status
+                                      </a>
+                                      </li>
 
-        <li role="presentation">
-            <a class="dropdown-item" href="#">
-                <i class="nav-icon i-Mail-Attachement font-weight-bold mr-2"></i> Remarks
-            </a>
-        </li>
-    </ul>
-        </div>
-
-
-      </td>
-  </tr>
-</tbody>
-
+                                      <li role="presentation">
+                                          <a class="dropdown-item" href="#">
+                                              <i class="nav-icon i-Mail-Attachement font-weight-bold mr-2"></i> Remarks
+                                          </a>
+                                      </li>
+                                    </ul>
+                                  </div>
+                                </td>
+                              </tr>
+                            </tbody>
                         </table>
                     </div>
                 </div>
@@ -297,38 +294,42 @@ new Vue({
   el: "#app",
   data: {
     orderItems: @json($orderItems),
-    colors: ['#e3f2fd', '#fff3e0', '#e8f5e9', '#f3e5f5', '#fef5e7'],
-    orderColorMap: {},
     now: new Date(), // reactive timestamp that updates every second
     selectedOrder: null,
     selectedStatus: "",
     chefs: @json($chefs),
   },
   mounted() {
-    this.assignColors();
-
     // 🕒 update every second to make the timer live
     setInterval(() => {
       this.now = new Date();
     }, 1000);
   },
   methods: {
-    assignColors() {
-      let colorIndex = 0;
-      this.orderItems.forEach(item => {
-        if (!this.orderColorMap[item.order_id]) {
-          this.orderColorMap[item.order_id] = this.colors[colorIndex];
-          colorIndex = (colorIndex + 1) % this.colors.length;
-        }
-      });
+    // 🕐 Compute live running time in H:M:S format
+    getRunningTime(submitted) {
+      const diffInSeconds = Math.floor((new Date(this.now) - new Date(submitted)) / 1000);
+      if (diffInSeconds < 0) return "0s"; // safeguard
+
+      const hours = Math.floor(diffInSeconds / 3600);
+      const mins = Math.floor((diffInSeconds % 3600) / 60);
+      const secs = diffInSeconds % 60;
+
+      let timeStr = "";
+      if (hours > 0) timeStr += `${hours}h `;
+      if (mins > 0 || hours > 0) timeStr += `${mins}m `;
+      timeStr += `${secs}s`;
+      return timeStr.trim();
     },
 
-    // 🕐 Compute live running time in HH:MM:SS
-    getRunningTime(submitted) {
-      const diff = (new Date(this.now) - new Date(submitted)) / 1000;
-      const mins = Math.floor(diff / 60);
-      const secs = Math.floor(diff % 60);
-      return `${mins}m ${secs}s`;
+    // 🟩🟧🟥 Compute background color based on elapsed time
+    getOrderColor(submitted) {
+      const diffInMinutes = (new Date(this.now) - new Date(submitted)) / 1000 / 60;
+
+      if (diffInMinutes >= 15) return '#ffcccc'; // red
+      if (diffInMinutes >= 10) return '#ffe5b4'; // orange
+      if (diffInMinutes >= 5)  return '#e8f5e9'; // green
+      return '#ffffff'; // default white
     },
 
     formatTime(datetime) {
@@ -341,8 +342,19 @@ new Vue({
       });
     },
 
-    getOrderColor(orderId) {
-      return this.orderColorMap[orderId] || '#ffffff';
+    openUpdateModal(item) {
+      this.selectedOrder = item;
+      this.selectedStatus = item.status || "";
+      const modal = new bootstrap.Modal(document.getElementById("updateModal"));
+      modal.show();
+    },
+
+    fetchOrders() {
+      axios.get(`/kitchen/served`)
+        .then(res => {
+          this.orderItems = res.data.orderItems;
+        })
+        .catch(err => console.error("❌ Failed to reload orders:", err));
     },
     openUpdateModal(item) {
       this.selectedOrder = item;
@@ -375,56 +387,61 @@ new Vue({
 
   console.log(payload);
 
-  axios.post(`/order-items/update-or-create`, payload)
-    .then(response => {
-      if (response.data.success) {
-        alert("✅ Order item updated successfully!");
+    submitUpdateStatus() {
+      const now = new Date();
+      const timeSubmitted =
+        now.getFullYear() + '-' +
+        String(now.getMonth() + 1).padStart(2, '0') + '-' +
+        String(now.getDate()).padStart(2, '0') + ' ' +
+        now.toLocaleTimeString('en-US', { hour12: false });
 
-        const updatedDetail = response.data.data.order_detail;
-        const updatedOrderStatus = response.data.data.order_status;
+      const payload = {
+        order_detail_id: this.selectedOrder.order_detail_id,
+        cook_id: this.selectedOrder.cook_id,
+        time_submitted: timeSubmitted,
+        status: this.selectedOrder.status,
+      };
 
-        // ✅ Safely find and update in local table
-        const index = this.orderItems.findIndex(
-          item => item.order_detail_id === updatedDetail.id
-        );
+      axios.post(`/order-items/update-or-create`, payload)
+        .then(response => {
+          if (response.data.success) {
+            alert("✅ Order item updated successfully!");
+            const updatedDetail = response.data.data.order_detail;
+            const updatedOrderStatus = response.data.data.order_status;
 
-        if (index !== -1) {
-          this.orderItems[index].status = updatedDetail.status;
-          this.orderItems[index].cook_id = this.selectedOrder.cook_id;
-          this.orderItems[index].time_submitted = timeSubmitted;
-        }
+            const index = this.orderItems.findIndex(
+              item => item.order_detail_id === updatedDetail.id
+            );
+            if (index !== -1) {
+              this.orderItems[index].status = updatedDetail.status;
+              this.orderItems[index].cook_id = this.selectedOrder.cook_id;
+              this.orderItems[index].time_submitted = timeSubmitted;
+            }
 
-        // ✅ Remove only if it’s no longer in serving
-        if (updatedDetail.status !== 'serving') {
-          this.orderItems = this.orderItems.filter(
-            i => i.order_detail_id !== updatedDetail.id
-          );
-        }
+            if (updatedDetail.status !== 'serving') {
+              this.orderItems = this.orderItems.filter(
+                i => i.order_detail_id !== updatedDetail.id
+              );
+            }
 
-        // ✅ Optional: if parent order becomes "served", refresh list automatically
-        if (updatedOrderStatus === 'served') {
-          console.log('Parent order served — refreshing list...');
-          this.fetchOrders(); // <-- Add this method if not already present
-        }
+            if (updatedOrderStatus === 'served') {
+              this.fetchOrders();
+            }
 
-        // ✅ Close modal
-        const modal = bootstrap.Modal.getInstance(document.getElementById("updateModal"));
-        if (modal) modal.hide();
-      } else {
-        alert("⚠️ " + (response.data.message || "Something went wrong."));
-      }
-    })
-    .catch(error => {
-      console.error("❌ Update failed:", error.response || error);
-      alert("❌ Failed to update order item. Check console for details.");
-    });
-
-  
-},
+            const modal = bootstrap.Modal.getInstance(document.getElementById("updateModal"));
+            if (modal) modal.hide();
+          } else {
+            alert("⚠️ " + (response.data.message || "Something went wrong."));
+          }
+        })
+        .catch(error => {
+          console.error("❌ Update failed:", error.response || error);
+          alert("❌ Failed to update order item. Check console for details.");
+        });
+    },
   }
 
 });
 </script>
-
 
 @endsection

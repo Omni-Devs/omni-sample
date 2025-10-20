@@ -316,6 +316,9 @@ input[type=number] {
                                  <span>Total</span>
                               </th>
                               <th scope="col" class="vgt-left-align text-right sortable">
+                                 <span>Status</span>
+                              </th>
+                              <th scope="col" class="vgt-left-align text-right sortable">
                                  <span>Option</span>
                               </th>
                            </tr>
@@ -349,6 +352,8 @@ input[type=number] {
                                 >
 
                                 <td>@{{ (item.qty * item.price).toFixed(2) }}</td>
+
+                                <td>@{{ item.status }}</td>
                                 <!-- ✅ Remove Button Column -->
                                 <td class="text-center">
                                   <button 
@@ -361,7 +366,7 @@ input[type=number] {
                                 </td>
                                 </tr>
                            <tr v-if="orderDetails.length === 0">
-                              <td colspan="6" class="vgt-center-align vgt-text-disabled">
+                              <td colspan="7" class="vgt-center-align vgt-text-disabled">
                                  No order details available
                               </td>
                            </tr>
@@ -526,6 +531,7 @@ mounted() {
           name: d.product?.name ?? d.component?.name,
           price: parseFloat(d.price),
           qty: d.quantity,
+          status: d.status
         }));
 
         console.log("✅ Fields prefilled:", {
@@ -643,7 +649,8 @@ toggleCategory(category) {
       sku: product.sku,
       name: product.name,
       qty: 1,
-      price: parseFloat(product.price)
+      price: parseFloat(product.price),
+      status: 'serving'
     });
   }
   },
@@ -673,7 +680,8 @@ toggleCategory(category) {
     product_id: item.type === "product" ? item.id : null,
     component_id: item.type === "component" ? item.id : null,
     quantity: item.qty,
-    price: item.price
+    price: item.price,
+    status: item.status || 'serving'
   }))
 };
 

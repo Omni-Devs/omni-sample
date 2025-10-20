@@ -114,21 +114,12 @@ class KitchenController extends Controller
         // ✅ Update this order detail’s status
         $orderDetail->update(['status' => $request->status]);
 
-        // ✅ Check if all order details of this order are now "served"
-        $order = $orderDetail->order;
-        $allServed = $order->details()->where('status', '!=', 'served')->count() === 0;
-
-        if ($allServed) {
-            $order->update(['status' => 'served']);
-        }
-
         return response()->json([
             'success' => true,
             'message' => 'Order item and status updated successfully.',
             'data'    => [
                 'order_item'   => $item,
                 'order_detail' => $orderDetail,
-                'order_status' => $order->status,
             ],
         ], 200);
 
@@ -146,20 +137,31 @@ class KitchenController extends Controller
 }
 
    public function showServed()
-{
-    $servedDetails = OrderDetail::with([
-        'order:id,time_submitted',
-        'product.category',
-        'component.category',
-        'orderItems.cook' // each detail can have many items; we’ll take the latest one
-    ])
-    ->where('status', 'served')
-    ->orderBy('updated_at', 'desc')
-    ->get();
+    {
+        $servedDetails = OrderDetail::with([
+            'order:id,time_submitted',
+            'product.category',
+            'component.category',
+            'orderItems.cook' // each detail can have many items; we’ll take the latest one
+        ])
+        ->where('status', 'served')
+        ->orderBy('updated_at', 'desc')
+        ->get();
 
-    return view('kitchen.served', compact('servedDetails'));
-}
+        return view('kitchen.served', compact('servedDetails'));
+    }
+    public function showWalked()
+    {
+        $walkedDetails = OrderDetail::with([
+            'order:id,time_submitted',
+            'product.category',
+            'component.category',
+            'orderItems.cook' // each detail can have many items; we’ll take the latest one
+        ])
+        ->where('status', 'walked')
+        ->orderBy('updated_at', 'desc')
+        ->get();
 
-
-
+        return view('kitchen.walked', compact('walkedDetails'));
+    }
 }
