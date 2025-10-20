@@ -23,14 +23,14 @@
                </a>
             </li>
             <li class="nav-item">
-               <a href="served" 
-                  class="nav-link active">
+               <a href="/kitchen/served" 
+                  class="nav-link">
                Served
                </a>
             </li>
             <li class="nav-item">
                <a href="/kitchen/walked"
-                  class="nav-link">
+                  class="nav-link active">
                Walked
                </a>
             </li>
@@ -108,32 +108,32 @@
                         </tr>
                      </thead>
                      <tbody>
-                     @forelse($servedDetails as $detail)
+                    @forelse($walkedDetails as $detail)
                         <tr>
-                           <td>{{ $detail->order->id }}</td>
+                            <td>{{ $detail->order->id }}</td>
 
-                           {{-- 🕒 Time Ordered (from orders table) --}}
-                           <td>
-                              {{ $detail->order->time_submitted 
+                            {{-- 🕒 Time Ordered (from orders table) --}}
+                            <td>
+                                {{ $detail->order->time_submitted 
                                     ? \Carbon\Carbon::parse($detail->order->time_submitted)->format('Y-m-d H:i:s') 
                                     : 'N/A' }}
-                           </td>
+                            </td>
 
-                           <td>{{ $detail->product->code ?? $detail->component->code ?? 'N/A' }}</td>
-                           <td>{{ $detail->product->name ?? $detail->component->name ?? 'Unknown Item' }}</td>
-                           <td>{{ $detail->quantity }}</td>
-                           <td>{{ $detail->product->category->name ?? $detail->component->category->name ?? 'N/A' }}</td>
+                            <td>{{ $detail->product->code ?? $detail->component->code ?? 'N/A' }}</td>
+                            <td>{{ $detail->product->name ?? $detail->component->name ?? 'Unknown Item' }}</td>
+                            <td>{{ $detail->quantity }}</td>
+                            <td>{{ $detail->product->category->name ?? $detail->component->category->name ?? 'N/A' }}</td>
 
-                           {{-- 🕕 Time Served (from order_items table) --}}
-                           <td>
-                              {{ optional($detail->orderItems->first())->time_submitted 
+                            {{-- 🕕 Time Served (from order_items table) --}}
+                            <td>
+                                {{ optional($detail->orderItems->first())->time_submitted 
                                     ? \Carbon\Carbon::parse(optional($detail->orderItems->first())->time_submitted)->format('Y-m-d H:i:s')
                                     : 'N/A' }}
-                           </td>
+                            </td>
 
-                           {{-- 👨‍🍳 Cook Name (from order_items.cook) --}}
-                           <td>{{ optional(optional($detail->orderItems->first())->cook)->name ?? 'N/A' }}</td>
-                           <td class="text-right">
+                            {{-- 👨‍🍳 Cook Name (from order_items.cook) --}}
+                            <td>{{ optional(optional($detail->orderItems->first())->cook)->name ?? 'N/A' }}</td>
+                            <td class="text-right">
                               <div class="dropdown b-dropdown btn-group">
                                  <button id="dropdownMenu{{ $id ?? uniqid() }}"
                                     type="button"
@@ -169,9 +169,10 @@
                         </tr>
                         @empty
                         <tr>
-                           <td colspan="9" class="text-center">No served items found.</td>
+                            <td colspan="9" class="text-center">No served items found.</td>
                         </tr>
-                     @endforelse
+                    @endforelse
+
                      </tbody>
                   </table>
                </div>
