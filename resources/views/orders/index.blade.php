@@ -247,8 +247,6 @@
                            Import
                            </button> <button type="button" class="btn mx-1 btn-btn btn-primary btn-icon" onclick="window.location='{{ url('order/create') }}'"><i class="i-Add"></i>
                            Add
-                           </button> <button type="button" class="btn mx-1 btn-btn btn-primary">
-                           Stock Alert Summary
                            </button>
                         </div>
                      </div>
