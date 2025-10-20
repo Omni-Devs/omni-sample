@@ -175,13 +175,9 @@
                                     <i class="i-Add"></i> Add
                               </button>
                            @endif
-
-                           {{-- Stock Alert Summary: show only if not active and not archived --}}
-                           @if ($status !== 'active' && $status !== 'archived')
                               <button type="button" class="btn mx-1 btn-btn btn-primary">
                                     Stock Alert Summary
                               </button>
-                           @endif
                         </div>
                      </div>
                   </div>
