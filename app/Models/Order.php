@@ -27,6 +27,7 @@ class Order extends Model
         'charges_description',
         'total_payment_rendered',
         'change_amount',
+        'time_submitted',
     ];
 
     public function user()
@@ -48,9 +49,34 @@ class Order extends Model
     {
         return $this->hasMany(OrderDetail::class, 'order_id');
     }
-    public function setCreatedAt($value)
+
+    public function items()
     {
-        $this->attributes['created_at'] = \Carbon\Carbon::parse($value)->setTimezone('Asia/Manila');
+        return $this->hasMany(OrderItem::class);
+    }
+
+    public function refreshStatusBasedOnDetails()
+    {
+        $statuses = $this->details()->pluck('status')->unique();
+
+        // 🧠 Business logic:
+        if ($statuses->contains('cancelled') && $statuses->count() === 1) {
+            $this->status = 'cancelled';
+        }
+        elseif ($statuses->every(fn($s) => $s === 'served')) {
+            $this->status = 'served';
+        }
+        elseif ($statuses->contains('serving')) {
+            $this->status = 'serving';
+        }
+        elseif ($statuses->contains('walked')) {
+            $this->status = 'walked';
+        }
+        else {
+            $this->status = 'serving'; // default
+        }
+
+        $this->save();
     }
 
     /**

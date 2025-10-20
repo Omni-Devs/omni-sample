@@ -24,6 +24,13 @@
                      Serving
                   </a>
                </li>
+               
+               {{-- <li class="nav-item">
+                  <a href="{{ route('orders.index', ['status' => 'served']) }}" 
+                     class="nav-link {{ $status === 'served' ? 'active' : '' }}">
+                     Served
+                  </a>
+               </li> --}}
 
                <li class="nav-item">
                   <a href="{{ route('orders.index', ['status' => 'billout']) }}" 

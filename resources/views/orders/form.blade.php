@@ -657,11 +657,18 @@ toggleCategory(category) {
     this.orderDetails.splice(index, 1);
   },
   submitOrder() {
+  const now = new Date();
+  const timeSubmitted = now.getFullYear() + '-' +
+  String(now.getMonth() + 1).padStart(2, '0') + '-' +
+  String(now.getDate()).padStart(2, '0') + ' ' +
+  now.toLocaleTimeString('en-US', { hour12: false }); // 24-hour with seconds
+
   const payload = {
   user_id: this.selectedWaiter, // waiter ID
   table_no: parseInt(this.tableNo),
   number_pax: parseInt(this.pax),
   status: "serving",
+  time_submitted: timeSubmitted,
   order_details: this.orderDetails.map(item => ({
     product_id: item.type === "product" ? item.id : null,
     component_id: item.type === "component" ? item.id : null,

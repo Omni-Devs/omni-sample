@@ -1,3 +1,5 @@
+
+
 <?php
 
 use App\Http\Controllers\BranchesController;
@@ -18,6 +20,7 @@ use App\Http\Controllers\KitchenController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\RemarkController;
 
+
 Route::get('/', function () {
     return redirect()->route('login');
 })->middleware('redirect.auth');
@@ -31,6 +34,7 @@ Route::get('/dashboard', function () {
 })->name('dashboard');
 
 
+
 Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
 Route::get('/order/create', [OrderController::class, 'create'])->name('orders.create');
 Route::post('/orders/store', [OrderController::class, 'store'])->name('orders.store');
@@ -41,6 +45,10 @@ Route::post('/orders/update/{id}', [OrderController::class, 'update'])->name('or
 
 
 Route::get('/kitchen', [KitchenController::class, 'index'])->name('kitchen.index');
+Route::get('/kitchen/served', [KitchenController::class, 'showServed'])->name('kitchen.served');
+Route::post('/order-items/update-or-create', [KitchenController::class, 'updateOrCreate']);
+
+
 
 Route::post('/orders/{order}/payment', [OrderController::class, 'payment'])->name('orders.payment');
 
