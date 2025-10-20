@@ -59,15 +59,24 @@
                   <!----> 
                   <div class="vgt-global-search vgt-clearfix">
                      <div class="vgt-global-search__input vgt-pull-left">
-                        <form role="search">
-                           <label for="vgt-search-352530096888">
-                              <span aria-hidden="true" class="input__icon">
-                                 <div class="magnifying-glass"></div>
-                              </span>
-                              <span class="sr-only">Search</span>
-                           </label>
-                           <input id="vgt-search-352530096888" type="text" placeholder="Search this table" class="vgt-input vgt-pull-left">
-                        </form>
+                        <span aria-hidden="true" class="input__icon">
+                        <div class="magnifying-glass"></div>
+                     </span>
+                     <form role="search" method="GET" action="{{ route('components.index') }}" class="mb-3" style="position: relative;">
+                        <label for="tableSearch" style="cursor: pointer;" onclick="this.closest('form').submit()">
+
+                           <span class="sr-only">Search</span>
+                        </label>
+                        <input 
+                           id="tableSearch" 
+                           name="search" 
+                           type="text" 
+                           value="{{ request('search') }}" 
+                           placeholder="Search this table" 
+                           class="vgt-input vgt-pull-left"
+                           onkeydown="if(event.key === 'Enter') this.form.submit()"
+                        >
+                     </form>
                      </div>
                      <div class="vgt-global-search__actions vgt-pull-right">
                         <div>
@@ -152,13 +161,30 @@
                            Filter
                            </button> <button type="button" class="btn mx-1 btn-outline-success ripple btn-sm"><i class="i-File-Copy"></i> PDF
                            </button> <button class="btn btn-sm btn-outline-danger ripple mx-1"><i class="i-File-Excel"></i> EXCEL
-                           </button> <button type="button" class="btn btn-info m-1 btn-sm"><i class="i-Upload"></i>
-                           Import
-                           </button> <button type="button" class="btn mx-1 btn-btn btn-primary btn-icon" onclick="window.location='{{ url('components/create') }}'"><i class="i-Add"></i>
-                           Add
-                           </button> <button type="button" class="btn mx-1 btn-btn btn-primary">
-                           Stock Alert Summary
-                           </button>
+                          {{-- Import button: hide if archived --}}
+                           @if ($status !== 'archived')
+                              <button type="button" class="btn btn-info m-1 btn-sm">
+                                    <i class="i-Upload"></i> Import
+                              </button>
+                           @endif
+
+                           {{-- Add button: hide if archived --}}
+                           @if ($status !== 'archived')
+                              <button type="button" class="btn mx-1 btn-btn btn-primary btn-icon"
+                                    onclick="window.location='{{ url('components/create') }}'">
+                                    <i class="i-Add"></i> Add
+                              </button>
+                           @endif
+
+                           {{-- Stock Alert Summary: show only if not active and not archived --}}
+                           @if ($status !== 'active' && $status !== 'archived')
+                              <button type="button" class="btn mx-1 btn-btn btn-primary">
+                                    Stock Alert Summary
+                              </button>
+                           @endif
+                        </div>
+                     </div>
+                  </div>
                         </div>
                      </div>
                   </div>
@@ -247,6 +273,7 @@
                                     'deleteRoute' => route('components.destroy', $component->id),
                                     'archiveRoute' => route('components.archive', $component->id),
                                     'restoreRoute' => route('components.restore', $component->id),
+                                    'remarksRoute' => '#',
                                     'status' => $component->status
                                  ])
                               </td>
@@ -261,6 +288,173 @@
                         </tbody>
                   </div>
                   </td></tr></tbody></table>
+
+                  <script>
+function openRemarksModal(componentId) {
+    // Set the hidden input
+    document.getElementById('remarksItemId').value = componentId;
+    // Clear previous remarks
+    document.getElementById('remarksText').value = '';
+    // Fetch existing remarks (from your existing remarks table)
+    fetch(`/components/${componentId}/remarks`)
+        .then(res => res.json())
+        .then(data => {
+            const timeline = document.getElementById('remarksTimeline');
+            timeline.innerHTML = '';
+            if (data.length === 0) {
+                timeline.innerHTML = '<li>No remarks yet.</li>';
+            } else {
+                data.forEach(remark => {
+                    const li = document.createElement('li');
+                    li.textContent = `${remark.created_at}: ${remark.remarks}`;
+                    timeline.appendChild(li);
+                });
+            }
+        })
+        .catch(err => console.error(err));
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('remarksModal'));
+    modal.show();
+}
+// Handle form submission
+document.getElementById('remarksForm').addEventListener('submit', function (e) {
+   e.preventDefault();
+   const componentId = document.getElementById('remarksItemId').value;
+   const remarks = document.getElementById('remarksText').value;
+   const submitBtn = this.querySelector('button[type="submit"]');
+   if (submitBtn) submitBtn.disabled = true;
+   function getCsrfToken() {
+      const meta = document.querySelector('meta[name="csrf-token"]');
+      if (meta) return meta.getAttribute('content');
+      const tokenInput = document.querySelector('input[name="_token"]');
+      return tokenInput ? tokenInput.value : null;
+   }
+   if (typeof axios !== 'undefined') {
+      axios.post(`/components/${componentId}/remarks`, { remarks: remarks })
+         .then(function (response) {
+            if (response.data && response.data.success) {
+               openRemarksModal(componentId);
+               document.getElementById('remarksText').value = '';
+            } else {
+               alert('Failed to save remark.');
+            }
+         })
+         .catch(function (error) {
+            console.error('Axios error saving remark:', error);
+            alert('Error saving remark. See console for details.');
+         })
+         .finally(function () { if (submitBtn) submitBtn.disabled = false; });
+      return;
+   }
+   // fallback to fetch
+   const csrfToken = getCsrfToken();
+   fetch(`/components/${componentId}/remarks`, {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: {
+         'Content-Type': 'application/json',
+         'Accept': 'application/json',
+         'X-CSRF-TOKEN': csrfToken
+      },
+      body: JSON.stringify({ remarks: remarks })
+   })
+   .then(res => res.json())
+   .then(data => {
+      if (data && data.success) {
+         openRemarksModal(componentId);
+         document.getElementById('remarksText').value = '';
+      } else {
+         console.error('Failed to save remark (fallback):', data);
+         alert('Failed to save remark.');
+      }
+   })
+   .catch(err => {
+      console.error('Fetch error saving remark:', err);
+      alert('Error saving remark. See console for details.');
+   })
+   .finally(() => { if (submitBtn) submitBtn.disabled = false; });
+});
+</script>
+
+               <!-- Remarks Modal -->
+      <div class="modal fade" id="remarksModal" tabindex="-1" role="dialog" aria-labelledby="remarksModalLabel" aria-hidden="true">
+      <div class="modal-dialog" role="document">
+         <div class="modal-content">
+            <header class="modal-header">
+            <h5 class="modal-title" id="remarksModalLabel">Remarks</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+               <span aria-hidden="true">&times;</span>
+            </button>
+            </header>
+
+            <div class="modal-body">
+            <form id="remarksForm">
+    @csrf
+    <input type="hidden" id="remarksItemId"> 
+
+    <fieldset class="form-group">
+        <textarea 
+            name="remarks"             id="remarksText" 
+            class="form-control" 
+            rows="3" 
+            placeholder="Type your message" 
+            required
+        ></textarea>
+        <div class="invalid-feedback">This field is required</div>
+    </fieldset>
+
+                  <div class="d-flex justify-content-end">
+                     <button type="submit" class="btn btn-primary btn-icon btn-rounded">
+                     <i class="i-Yes me-2 font-weight-bold"></i> Submit
+                     </button>
+                  </div>
+               </form>
+
+               <hr>
+
+               <ul class="timeline" id="remarksTimeline"></ul>
+               </div>
+            </div>
+         </div>
+         </div>
+
+                  <script>
+                     document.addEventListener("DOMContentLoaded", function () {
+                     const table = document.querySelector("#vgt-table");
+                     if (!table) return;
+                     const headers = table.querySelectorAll("thead th");
+                     headers.forEach((header, index) => {
+                        // Make header visually clickable
+                        header.style.cursor = "pointer";
+                        header.addEventListener("click", function () {
+                              const tbody = table.querySelector("tbody");
+                              const rows = Array.from(tbody.querySelectorAll("tr"));
+                              const isAsc = header.classList.toggle("asc");
+                              // Remove sorting classes from other headers
+                              headers.forEach((h, i) => {
+                                 if (i !== index) h.classList.remove("asc", "desc");
+                              });
+                              header.classList.toggle("desc", !isAsc);
+                              rows.sort((a, b) => {
+                                 const aText = a.children[index].textContent.trim();
+                                 const bText = b.children[index].textContent.trim();
+                                 const aNum = parseFloat(aText.replace(/,/g, ""));
+                                 const bNum = parseFloat(bText.replace(/,/g, ""));
+                                 const bothNumbers = !isNaN(aNum) && !isNaN(bNum);
+                                 if (bothNumbers) {
+                                    return isAsc ? aNum - bNum : bNum - aNum;
+                                 } else {
+                                    return isAsc
+                                          ? aText.localeCompare(bText)
+                                          : bText.localeCompare(aText);
+                                 }
+                              });
+                              // Reattach sorted rows
+                              rows.forEach(row => tbody.appendChild(row));
+                        });
+                     });
+                  });
+                  </script>
                </div>
                <!----> 
                <div class="vgt-wrap__footer vgt-clearfix">
@@ -318,142 +512,6 @@
       <div class="b-sidebar-body">
          <div class="px-3 py-2">
             <div class="row">
-               <div class="col-md-12">
-                  <fieldset class="form-group" id="__BVID__39">
-                     <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0" id="__BVID__39__BV_label_">Name</legend>
-                     <div>
-                        <input type="text" placeholder="Search by Name" class="form-control" label="Name" id="__BVID__40"><!----><!----><!---->
-                     </div>
-                  </fieldset>
-               </div>
-               <div class="col-md-12">
-                  <fieldset class="form-group" id="__BVID__41">
-                     <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0" id="__BVID__41__BV_label_">SKU(Product Code)</legend>
-                     <div>
-                        <input type="text" placeholder="Search SKU(Product Code)" class="form-control" label="SKUProductCode" id="__BVID__42"><!----><!----><!---->
-                     </div>
-                  </fieldset>
-               </div>
-               <div class="col-md-12">
-                  <fieldset class="form-group" id="__BVID__43">
-                     <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0" id="__BVID__43__BV_label_">Category</legend>
-                     <div>
-                        <div dir="auto" class="v-select vs--single vs--searchable">
-                           <div id="vs1__combobox" role="combobox" aria-expanded="false" aria-owns="vs1__listbox" aria-label="Search for option" class="vs__dropdown-toggle">
-                              <div class="vs__selected-options"> <input placeholder="Select Category" aria-autocomplete="list" aria-labelledby="vs1__combobox" aria-controls="vs1__listbox" type="search" autocomplete="off" class="vs__search"></div>
-                              <div class="vs__actions">
-                                 <button type="button" title="Clear Selected" aria-label="Clear Selected" class="vs__clear" style="display: none;">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10">
-                                       <path d="M6.895455 5l2.842897-2.842898c.348864-.348863.348864-.914488 0-1.263636L9.106534.261648c-.348864-.348864-.914489-.348864-1.263636 0L5 3.104545 2.157102.261648c-.348863-.348864-.914488-.348864-1.263636 0L.261648.893466c-.348864.348864-.348864.914489 0 1.263636L3.104545 5 .261648 7.842898c-.348864.348863-.348864.914488 0 1.263636l.631818.631818c.348864.348864.914773.348864 1.263636 0L5 6.895455l2.842898 2.842897c.348863.348864.914772.348864 1.263636 0l.631818-.631818c.348864-.348864.348864-.914489 0-1.263636L6.895455 5z"></path>
-                                    </svg>
-                                 </button>
-                                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="10" role="presentation" class="vs__open-indicator">
-                                    <path d="M9.211364 7.59931l4.48338-4.867229c.407008-.441854.407008-1.158247 0-1.60046l-.73712-.80023c-.407008-.441854-1.066904-.441854-1.474243 0L7 5.198617 2.51662.33139c-.407008-.441853-1.066904-.441853-1.474243 0l-.737121.80023c-.407008.441854-.407008 1.158248 0 1.600461l4.48338 4.867228L7 10l2.211364-2.40069z"></path>
-                                 </svg>
-                                 <div class="vs__spinner" style="display: none;">Loading...</div>
-                              </div>
-                           </div>
-                           <ul id="vs1__listbox" role="listbox" style="display: none; visibility: hidden;"></ul>
-                        </div>
-                        <!----><!----><!---->
-                     </div>
-                  </fieldset>
-               </div>
-               <div class="col-md-12">
-                  <fieldset class="form-group" id="__BVID__48">
-                     <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0" id="__BVID__48__BV_label_">Brand</legend>
-                     <div>
-                        <div dir="auto" class="v-select vs--single vs--searchable">
-                           <div id="vs2__combobox" role="combobox" aria-expanded="false" aria-owns="vs2__listbox" aria-label="Search for option" class="vs__dropdown-toggle">
-                              <div class="vs__selected-options"> <input placeholder="Select Brand" aria-autocomplete="list" aria-labelledby="vs2__combobox" aria-controls="vs2__listbox" type="search" autocomplete="off" class="vs__search"></div>
-                              <div class="vs__actions">
-                                 <button type="button" title="Clear Selected" aria-label="Clear Selected" class="vs__clear" style="display: none;">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10">
-                                       <path d="M6.895455 5l2.842897-2.842898c.348864-.348863.348864-.914488 0-1.263636L9.106534.261648c-.348864-.348864-.914489-.348864-1.263636 0L5 3.104545 2.157102.261648c-.348863-.348864-.914488-.348864-1.263636 0L.261648.893466c-.348864.348864-.348864.914489 0 1.263636L3.104545 5 .261648 7.842898c-.348864.348863-.348864.914488 0 1.263636l.631818.631818c.348864.348864.914773.348864 1.263636 0L5 6.895455l2.842898 2.842897c.348863.348864.914772.348864 1.263636 0l.631818-.631818c.348864-.348864.348864-.914489 0-1.263636L6.895455 5z"></path>
-                                    </svg>
-                                 </button>
-                                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="10" role="presentation" class="vs__open-indicator">
-                                    <path d="M9.211364 7.59931l4.48338-4.867229c.407008-.441854.407008-1.158247 0-1.60046l-.73712-.80023c-.407008-.441854-1.066904-.441854-1.474243 0L7 5.198617 2.51662.33139c-.407008-.441853-1.066904-.441853-1.474243 0l-.737121.80023c-.407008.441854-.407008 1.158248 0 1.600461l4.48338 4.867228L7 10l2.211364-2.40069z"></path>
-                                 </svg>
-                                 <div class="vs__spinner" style="display: none;">Loading...</div>
-                              </div>
-                           </div>
-                           <ul id="vs2__listbox" role="listbox" style="display: none; visibility: hidden;"></ul>
-                        </div>
-                        <!----><!----><!---->
-                     </div>
-                  </fieldset>
-               </div>
-               <div class="col-md-12">
-                  <fieldset class="form-group" id="__BVID__53">
-                     <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0" id="__BVID__53__BV_label_">Unit</legend>
-                     <div>
-                        <div dir="auto" class="v-select vs--single vs--searchable">
-                           <div id="vs3__combobox" role="combobox" aria-expanded="false" aria-owns="vs3__listbox" aria-label="Search for option" class="vs__dropdown-toggle">
-                              <div class="vs__selected-options"> <input placeholder="Select Unit" aria-autocomplete="list" aria-labelledby="vs3__combobox" aria-controls="vs3__listbox" type="search" autocomplete="off" class="vs__search"></div>
-                              <div class="vs__actions">
-                                 <button type="button" title="Clear Selected" aria-label="Clear Selected" class="vs__clear" style="display: none;">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10">
-                                       <path d="M6.895455 5l2.842897-2.842898c.348864-.348863.348864-.914488 0-1.263636L9.106534.261648c-.348864-.348864-.914489-.348864-1.263636 0L5 3.104545 2.157102.261648c-.348863-.348864-.914488-.348864-1.263636 0L.261648.893466c-.348864.348864-.348864.914489 0 1.263636L3.104545 5 .261648 7.842898c-.348864.348863-.348864.914488 0 1.263636l.631818.631818c.348864.348864.914773.348864 1.263636 0L5 6.895455l2.842898 2.842897c.348863.348864.914772.348864 1.263636 0l.631818-.631818c.348864-.348864.348864-.914489 0-1.263636L6.895455 5z"></path>
-                                    </svg>
-                                 </button>
-                                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="10" role="presentation" class="vs__open-indicator">
-                                    <path d="M9.211364 7.59931l4.48338-4.867229c.407008-.441854.407008-1.158247 0-1.60046l-.73712-.80023c-.407008-.441854-1.066904-.441854-1.474243 0L7 5.198617 2.51662.33139c-.407008-.441853-1.066904-.441853-1.474243 0l-.737121.80023c-.407008.441854-.407008 1.158248 0 1.600461l4.48338 4.867228L7 10l2.211364-2.40069z"></path>
-                                 </svg>
-                                 <div class="vs__spinner" style="display: none;">Loading...</div>
-                              </div>
-                           </div>
-                           <ul id="vs3__listbox" role="listbox" style="display: none; visibility: hidden;"></ul>
-                        </div>
-                        <!----><!----><!---->
-                     </div>
-                  </fieldset>
-               </div>
-               <div class="col-md-12">
-                  <fieldset class="form-group" id="__BVID__58">
-                     <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0" id="__BVID__58__BV_label_">Total Cost of Goods</legend>
-                     <div>
-                        <div role="group" class="input-group">
-                           <!----><input type="text" placeholder="Enter Amount (From)" class="form-control" aria-label="cost-from" id="__BVID__59"> 
-                           <div class="input-group-text" style="border-right: 0px; border-left: 0px; border-radius: 0px;">
-                              to
-                           </div>
-                           <input type="text" placeholder="Enter Amount (To)" class="form-control" aria-label="cost-to" id="__BVID__60"><!---->
-                        </div>
-                        <!----><!----><!---->
-                     </div>
-                  </fieldset>
-               </div>
-               <div class="col-md-12">
-                  <fieldset class="form-group" id="__BVID__61">
-                     <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0" id="__BVID__61__BV_label_">SRP</legend>
-                     <div>
-                        <div role="group" class="input-group">
-                           <!----><input type="text" placeholder="Enter Amount (From)" class="form-control" aria-label="price-from" id="__BVID__62"> 
-                           <div class="input-group-text" style="border-right: 0px; border-left: 0px; border-radius: 0px;">
-                              to
-                           </div>
-                           <input type="text" placeholder="Enter Amount (To)" class="form-control" aria-label="price-to" id="__BVID__63"><!---->
-                        </div>
-                        <!----><!----><!---->
-                     </div>
-                  </fieldset>
-               </div>
-               <div class="col-md-12">
-                  <fieldset class="form-group" id="__BVID__64">
-                     <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0" id="__BVID__64__BV_label_">Quantity</legend>
-                     <div>
-                        <div role="group" class="input-group">
-                           <!----><input type="text" placeholder="Enter Amount (From)" class="form-control" aria-label="quantity-from" id="__BVID__65"> 
-                           <div class="input-group-text" style="border-right: 0px; border-left: 0px; border-radius: 0px;">
-                              to
-                           </div>
-                           <input type="text" placeholder="Enter Amount (To)" class="form-control" aria-label="quantity-to" id="__BVID__66"><!---->
-                        </div>
-                        <!----><!----><!---->
-                     </div>
-                  </fieldset>
-               </div>
                <div class="col-md-12">
                   <fieldset class="form-group" id="__BVID__67">
                      <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0" id="__BVID__67__BV_label_">Created By</legend>
