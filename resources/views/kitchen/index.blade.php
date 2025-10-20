@@ -356,6 +356,36 @@ new Vue({
         })
         .catch(err => console.error("❌ Failed to reload orders:", err));
     },
+    openUpdateModal(item) {
+      this.selectedOrder = item;
+      this.selectedStatus = item.status || "";
+      const modal = new bootstrap.Modal(document.getElementById("updateModal"));
+      modal.show();
+    },
+
+    fetchOrders() {
+    axios.get(`/kitchen/served`)
+      .then(res => {
+        this.orderItems = res.data.orderItems;
+      })
+      .catch(err => console.error("❌ Failed to reload orders:", err));
+  },
+   submitUpdateStatus() {
+  const now = new Date();
+  const timeSubmitted =
+    now.getFullYear() + '-' +
+    String(now.getMonth() + 1).padStart(2, '0') + '-' +
+    String(now.getDate()).padStart(2, '0') + ' ' +
+    now.toLocaleTimeString('en-US', { hour12: false });
+
+  const payload = {
+    order_detail_id: this.selectedOrder.order_detail_id,
+    cook_id: this.selectedOrder.cook_id,
+    time_submitted: timeSubmitted,
+    status: this.selectedOrder.status,
+  };
+
+  console.log(payload);
 
     submitUpdateStatus() {
       const now = new Date();
@@ -410,6 +440,7 @@ new Vue({
         });
     },
   }
+
 });
 </script>
 
