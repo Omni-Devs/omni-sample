@@ -19,7 +19,8 @@ use App\Http\Controllers\CashEquivalentController;
 use App\Http\Controllers\KitchenController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\RemarkController;
-use App\Http\Controllers\SalesJournalController;
+use App\Http\Controllers\SalesJournalController;use App\Http\Controllers\PosSessionController;
+
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -56,8 +57,16 @@ Route::post('/orders/{order}/payment', [OrderController::class, 'payment'])->nam
 
 Route::get('/login', [LoginController::class, 'index'])->name('login');
 Route::post('/login', [LoginController::class, 'login'])->name('login.submit');
-
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
+
+// routes/web.php
+Route::prefix('pos/session')->group(function () {
+    Route::get('/check', [PosSessionController::class, 'checkSession']);
+    Route::post('/open', [PosSessionController::class, 'openSession']);
+    Route::post('/close', [PosSessionController::class, 'closeSession']);
+});
+
+
 
 Route::get('/users', [UserController::class, 'index'])->name('users.index');
 Route::post('/users', [UserController::class, 'store'])->name('users.store');

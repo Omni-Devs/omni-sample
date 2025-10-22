@@ -1184,6 +1184,7 @@ function updatePersonData(orderId, discountId, index, field, value) {
 </div>
 @endforeach
 
+
 <script>
 window.openInvoiceModalFromResponse = function(orderData) {
          console.log('🧾 openInvoiceModalFromResponse called', orderData);

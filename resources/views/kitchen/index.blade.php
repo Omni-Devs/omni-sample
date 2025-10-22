@@ -158,8 +158,35 @@ tr:hover {
                     </li>
                 </ul>
             </nav>
-        <div class="card-body">
-            <div class="vgt-wrap ">
+            <div class="card-body">
+                <div class="vgt-wrap ">
+                  <div class="row mb-3 align-items-center">
+                  <div class="col-md-2">
+                    <label class="form-label fw-bold">Year</label>
+                    <select v-model="selectedYear" class="form-select">
+                      <option v-for="year in years" :value="year">@{{ year }}</option>
+                    </select>
+                  </div>
+
+                  <div class="col-md-2">
+                    <label class="form-label fw-bold">Month</label>
+                    <select v-model="selectedMonth" class="form-select">
+                      <option v-for="(m, i) in months" :value="i + 1">@{{ m }}</option>
+                    </select>
+                  </div>
+
+                  <div class="col-md-2">
+                    <label class="form-label fw-bold">Day</label>
+                    <select v-model="selectedDay" class="form-select">
+                      <option v-for="d in daysInMonth" :value="d">@{{ d }}</option>
+                    </select>
+                  </div>
+
+                  <div class="col-md-3 mt-3 mt-md-4">
+                    <button class="btn btn-primary w-100" @click="resetToToday">Today’s Orders</button>
+                  </div>
+                </div>
+
                 <div class="vgt-inner-wrap">
                     <div class="vgt-fixed-header">
                         <!---->
@@ -224,7 +251,7 @@ tr:hover {
                             </tr>
                             </thead>
                             <tbody>
-                              <tr v-for="(item, index) in orderItems" 
+                              <tr v-for="(item, index) in filteredOrders" 
                                   :key="index" 
                                   :style="{ backgroundColor: getOrderColor(item.time_submitted) }">
                                 <td class="text-left fw-bold text-primary">#@{{ item.order_no }}</td>
@@ -298,14 +325,61 @@ new Vue({
     selectedOrder: null,
     selectedStatus: "",
     chefs: @json($chefs),
+
+    // 🔹 Date filter state
+    selectedYear: new Date().getFullYear(),
+    selectedMonth: new Date().getMonth() + 1,
+    selectedDay: new Date().getDate(),
+    months: [
+      "January", "February", "March", "April", "May", "June",
+      "July", "August", "September", "October", "November", "December"
+    ],
   },
+
+  computed: {
+    // Generate list of last 5 years
+    years() {
+      const current = new Date().getFullYear();
+      return Array.from({ length: 5 }, (_, i) => current - i);
+    },
+
+    // Generate days for selected month/year
+    daysInMonth() {
+      return Array.from(
+        { length: new Date(this.selectedYear, this.selectedMonth, 0).getDate() },
+        (_, i) => i + 1
+      );
+    },
+
+    // 🔹 Filtered orders based on selected date
+    filteredOrders() {
+      return this.orderItems.filter(item => {
+        const date = new Date(item.time_submitted);
+        return (
+          date.getFullYear() === this.selectedYear &&
+          date.getMonth() + 1 === this.selectedMonth &&
+          date.getDate() === this.selectedDay
+        );
+      });
+    }
+  },
+
   mounted() {
-    // 🕒 update every second to make the timer live
+    // 🕒 Update timer every second
     setInterval(() => {
       this.now = new Date();
     }, 1000);
   },
+
   methods: {
+    // Reset dropdowns to today's date
+    resetToToday() {
+      const now = new Date();
+      this.selectedYear = now.getFullYear();
+      this.selectedMonth = now.getMonth() + 1;
+      this.selectedDay = now.getDate();
+    },
+
     // 🕐 Compute live running time in H:M:S format
     getRunningTime(submitted) {
       const diffInSeconds = Math.floor((new Date(this.now) - new Date(submitted)) / 1000);
@@ -412,6 +486,7 @@ new Vue({
   }
 });
 </script>
+
 
 
 @endsection

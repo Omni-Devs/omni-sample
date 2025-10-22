@@ -1,6 +1,6 @@
 @extends('layouts.app')
 @section('content')
-<div class="main-content" id="app">
+<div class="main-content" id="servedApp">
 <div>
     <div class="breadcrumb">
         <h1 class="mr-3">POS</h1>
@@ -43,6 +43,32 @@
          </ul>
       </nav>
       <div class="card-body">
+         <div class="row mb-3 align-items-center">
+               <div class="col-md-2">
+                  <label class="form-label fw-bold">Year</label>
+                  <select v-model="selectedYear" class="form-select">
+                     <option v-for="year in years" :value="year">@{{ year }}</option>
+                  </select>
+               </div>
+
+               <div class="col-md-2">
+                  <label class="form-label fw-bold">Month</label>
+                  <select v-model="selectedMonth" class="form-select">
+                     <option v-for="(m, i) in months" :value="i + 1">@{{ m }}</option>
+                  </select>
+               </div>
+
+               <div class="col-md-2">
+                  <label class="form-label fw-bold">Day</label>
+                  <select v-model="selectedDay" class="form-select">
+                     <option v-for="d in daysInMonth" :value="d">@{{ d }}</option>
+                  </select>
+               </div>
+
+               <div class="col-md-3 mt-3 mt-md-4">
+                  <button class="btn btn-primary w-100" @click="resetToToday">Today’s Orders</button>
+               </div>
+            </div>
          <div class="vgt-wrap ">
             <div class="vgt-inner-wrap">
                <div class="vgt-fixed-header">
@@ -108,31 +134,19 @@
                         </tr>
                      </thead>
                      <tbody>
-                     @forelse($servedDetails as $detail)
-                        <tr>
-                           <td>{{ $detail->order->id }}</td>
-
-                           {{-- 🕒 Time Ordered (from orders table) --}}
-                           <td>
-                              {{ $detail->order->time_submitted 
-                                    ? \Carbon\Carbon::parse($detail->order->time_submitted)->format('Y-m-d H:i:s') 
-                                    : 'N/A' }}
-                           </td>
-
-                           <td>{{ $detail->product->code ?? $detail->component->code ?? 'N/A' }}</td>
-                           <td>{{ $detail->product->name ?? $detail->component->name ?? 'Unknown Item' }}</td>
-                           <td>{{ $detail->quantity }}</td>
-                           <td>{{ $detail->product->category->name ?? $detail->component->category->name ?? 'N/A' }}</td>
+                        <tr v-for="detail in filteredDetails" :key="detail.id">
+                            <td>@{{ detail.order.id }}</td>
+                           <td>@{{ formatDate(detail.order.time_submitted) }}</td>
+                           <td>@{{ detail.product?.code || detail.component?.code || 'N/A' }}</td>
+                           <td>@{{ detail.product?.name || detail.component?.name || 'Unknown Item' }}</td>
+                           <td>@{{ detail.quantity }}</td>
+                           <td>@{{ detail.product?.category?.name || detail.component?.category?.name || 'N/A' }}</td>
 
                            {{-- 🕕 Time Served (from order_items table) --}}
-                           <td>
-                              {{ optional($detail->orderItems->first())->time_submitted 
-                                    ? \Carbon\Carbon::parse(optional($detail->orderItems->first())->time_submitted)->format('Y-m-d H:i:s')
-                                    : 'N/A' }}
-                           </td>
+                            <td>@{{ formatAMPM(detail.order_items?.[0]?.time_submitted) }}</td>
 
                            {{-- 👨‍🍳 Cook Name (from order_items.cook) --}}
-                           <td>{{ optional(optional($detail->orderItems->first())->cook)->name ?? 'N/A' }}</td>
+                           <td>@{{ detail.order_items?.[0]?.cook?.name || 'N/A' }}</td>
                            <td class="text-right">
                               <div class="dropdown b-dropdown btn-group">
                                  <button id="dropdownMenu{{ $id ?? uniqid() }}"
@@ -167,11 +181,9 @@
                               </div>
                            </td>
                         </tr>
-                        @empty
-                        <tr>
+                        <tr v-if="filteredDetails.length === 0">
                            <td colspan="9" class="text-center">No served items found.</td>
                         </tr>
-                     @endforelse
                      </tbody>
                   </table>
                </div>
@@ -181,3 +193,62 @@
    </div>
 </div>
 @endsection
+@push('scripts')
+<script>
+new Vue({
+   el: '#servedApp',
+   data: {
+      servedDetails: @json($servedDetails),
+      selectedYear: new Date().getFullYear(),
+      selectedMonth: new Date().getMonth() + 1,
+      selectedDay: new Date().getDate(),
+      months: [
+         'January', 'February', 'March', 'April', 'May', 'June',
+         'July', 'August', 'September', 'October', 'November', 'December'
+      ],
+   },
+   computed: {
+      years() {
+         const current = new Date().getFullYear();
+         return Array.from({ length: 5 }, (_, i) => current - i);
+      },
+      daysInMonth() {
+         return Array.from({ length: new Date(this.selectedYear, this.selectedMonth, 0).getDate() }, (_, i) => i + 1);
+      },
+      filteredDetails() {
+         return this.servedDetails.filter(detail => {
+            const date = new Date(detail.order.time_submitted);
+            return (
+               date.getFullYear() === this.selectedYear &&
+               date.getMonth() + 1 === this.selectedMonth &&
+               date.getDate() === this.selectedDay
+            );
+         });
+      }
+   },
+   methods: {
+      formatDate(dateString) {
+         if (!dateString) return 'N/A';
+         const date = new Date(dateString);
+         return date.toLocaleString();
+      },
+      resetToToday() {
+         const now = new Date();
+         this.selectedYear = now.getFullYear();
+         this.selectedMonth = now.getMonth() + 1;
+         this.selectedDay = now.getDate();
+      },
+      formatAMPM(time) {
+         if (!time) return 'N/A';
+         const date = new Date(time);
+         let hours = date.getUTCHours(); // ✅ use UTC hours
+         const minutes = date.getUTCMinutes();
+         const ampm = hours >= 12 ? 'PM' : 'AM';
+         hours = hours % 12 || 12;
+         const minutesStr = minutes.toString().padStart(2, '0');
+         return `${hours}:${minutesStr} ${ampm}`;
+      },
+   }
+});
+</script>
+@endpush
