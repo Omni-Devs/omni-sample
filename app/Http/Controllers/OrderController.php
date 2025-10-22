@@ -491,5 +491,4 @@ public function show($id)
 
         // dd($order->total_payment_rendered, $order->change_amount, $order->paymentDetails->pluck(['total_rendered', 'change_amount']));
     }
-
 }

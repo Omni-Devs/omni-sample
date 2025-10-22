@@ -19,7 +19,7 @@ use App\Http\Controllers\CashEquivalentController;
 use App\Http\Controllers\KitchenController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\RemarkController;
-
+use App\Http\Controllers\SalesJournalController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -42,13 +42,13 @@ Route::post('/orders/{order}/billout', [OrderController::class, 'billout'])->nam
 Route::get('/orders/{id}/show', [OrderController::class, 'show'])->name('orders.show');
 Route::get('/orders/{id}/edit', [OrderController::class, 'edit'])->name('orders.edit');
 Route::post('/orders/update/{id}', [OrderController::class, 'update'])->name('orders.update');
-
+Route::post('/orders/{order}/payment', [OrderController::class, 'payment'])->name('orders.payment');
+Route::get('/reports/sales-journal', [SalesJournalController::class, 'index'])->name('reports.sales-journal');
 
 Route::get('/kitchen', [KitchenController::class, 'index'])->name('kitchen.index');
 Route::get('/kitchen/served', [KitchenController::class, 'showServed'])->name('kitchen.served');
 Route::get('/kitchen/walked', [KitchenController::class, 'showWalked'])->name('kitchen.walked');
 Route::post('/order-items/update-or-create', [KitchenController::class, 'updateOrCreate']);
-
 
 
 Route::post('/orders/{order}/payment', [OrderController::class, 'payment'])->name('orders.payment');
