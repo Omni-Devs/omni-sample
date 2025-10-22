@@ -156,6 +156,8 @@ class OrderController extends Controller
         'number_pax' => 'required|integer|min:1',
         'status' => 'required|in:serving,billout,payments,closed,cancelled',
         'order_details' => 'required|array|min:1',
+        'order_type' => 'required|string|in:Dine-In,Take-Out,Delivery',
+        'gross_amount' => 'required|numeric|min:0',
 
         // allow either product_id OR component_id
         'order_details.*.product_id'   => 'nullable|exists:products,id',
@@ -191,6 +193,8 @@ class OrderController extends Controller
         'number_pax'=> $validated['number_pax'],
         'status'    => $validated['status'],
         'time_submitted' => $request->input('time_submitted'),
+        'order_type' => $validated['order_type'],
+        'gross_amount'   => $validated['gross_amount'],
     ]);
 
     // Attach order details

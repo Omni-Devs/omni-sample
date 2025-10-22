@@ -512,36 +512,42 @@ input[type=number] {
 mounted() {
     console.log('edit mounted — raw order from blade/api:', this.order);
 
-    if (this.isEdit && this.order) {
-    this.orderNo = this.order.id;
-    this.date = new Date(this.order.created_at).toLocaleString();
-      // normalize waiter IDs
-      this.waiters = (this.waiters || []).map(w => ({ ...w, id: Number(w.id) }));
-
-      const waiterId = Number(this.order.user_id);
-      this.$nextTick(() => {
-        this.selectedWaiter = waiterId;
-        this.pax = this.order.number_pax;
-        this.tableNo = this.order.table_no;
-
-        this.orderDetails = this.order.details.map(d => ({
-          id: d.product_id ?? d.component_id,
-          type: d.product_id ? 'product' : 'component',
-          sku: d.product?.code ?? d.component?.code,
-          name: d.product?.name ?? d.component?.name,
-          price: parseFloat(d.price),
-          qty: d.quantity,
-          status: d.status
-        }));
-
-        console.log("✅ Fields prefilled:", {
-          selectedWaiter: this.selectedWaiter,
-          pax: this.pax,
-          tableNo: this.tableNo,
-          orderDetails: this.orderDetails
-        });
-      });
+    const params = new URLSearchParams(window.location.search);
+    const typeFromUrl = params.get('type');
+    if (typeFromUrl) {
+      this.orderType = typeFromUrl;
     }
+
+    if (this.isEdit && this.order) {
+      this.orderNo = this.order.id;
+        this.date = new Date(this.order.created_at).toLocaleString();
+          // normalize waiter IDs
+          this.waiters = (this.waiters || []).map(w => ({ ...w, id: Number(w.id) }));
+
+          const waiterId = Number(this.order.user_id);
+          this.$nextTick(() => {
+            this.selectedWaiter = waiterId;
+            this.pax = this.order.number_pax;
+            this.tableNo = this.order.table_no;
+
+            this.orderDetails = this.order.details.map(d => ({
+              id: d.product_id ?? d.component_id,
+              type: d.product_id ? 'product' : 'component',
+              sku: d.product?.code ?? d.component?.code,
+              name: d.product?.name ?? d.component?.name,
+              price: parseFloat(d.price),
+              qty: d.quantity,
+              status: d.status
+            }));
+
+            console.log("✅ Fields prefilled:", {
+              selectedWaiter: this.selectedWaiter,
+              pax: this.pax,
+              tableNo: this.tableNo,
+              orderDetails: this.orderDetails
+            });
+          });
+      }
 },
 
    computed: {
@@ -670,12 +676,19 @@ toggleCategory(category) {
   String(now.getDate()).padStart(2, '0') + ' ' +
   now.toLocaleTimeString('en-US', { hour12: false }); // 24-hour with seconds
 
+  // 🧮 Compute Gross Amount
+  const grossAmount = this.orderDetails
+    .reduce((sum, item) => sum + (item.qty * item.price), 0)
+    .toFixed(2);
+
   const payload = {
   user_id: this.selectedWaiter, // waiter ID
   table_no: parseInt(this.tableNo),
   number_pax: parseInt(this.pax),
   status: "serving",
   time_submitted: timeSubmitted,
+  order_type: this.orderType,
+  gross_amount: parseFloat(grossAmount),
   order_details: this.orderDetails.map(item => ({
     product_id: item.type === "product" ? item.id : null,
     component_id: item.type === "component" ? item.id : null,
