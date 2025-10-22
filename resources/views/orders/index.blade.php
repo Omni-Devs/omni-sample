@@ -1129,7 +1129,6 @@ function updatePersonData(orderId, discountId, index, field, value) {
                         <tr>
                            <td>Gross Charge</td>
                            <td class="text-right">₱{{ number_format($order->details->sum(fn($d) => ($d->price * $d->quantity) - ($d->discount ?? 0)), 2) }}</td>
-                             {{-- value="₱{{ number_format($order->details->sum(fn($d) => ($d->price * $d->quantity) - ($d->discount ?? 0)), 2) }}" readonly> --}}
                         </tr>
                         <tr>
                            <td>Less Discount</td>
@@ -1464,98 +1463,6 @@ window.submitPayment = function(orderId) {
 </script>
 <script src="{{ asset('js/tableFunctions.js') }}"></script>
    <script>
-      // function submitPayment(orderId) {
-      //    // gather payments rows if any
-      //    const payments = [];
-      //    const tbody = document.getElementById('payments_table_body_' + orderId);
-      //    if (tbody) {
-      //       tbody.querySelectorAll('tr[data-row-id]').forEach(tr => {
-      //          const rid = tr.dataset.rowId;
-      //          const method = document.getElementById(`pm_${orderId}_${rid}`)?.value || '';
-      //          const ref = document.getElementById(`pref_${orderId}_${rid}`)?.value || '';
-      //          const dest = document.getElementById(`pdest_${orderId}_${rid}`)?.value || '';
-      //          const amount = parseFloat(document.getElementById(`pamt_${orderId}_${rid}`)?.value || 0) || 0;
-      //          if (method && dest && amount > 0) {
-      //             payments.push({ payment_method_id: method, reference_no: ref, cash_equivalent_id: dest, amount_paid: amount });
-      //          }
-      //       });
-      //    }
-
-      //    // Fallback: if no dynamic rows present, check for legacy single-field inputs
-      //    if (payments.length === 0) {
-      //       const method = document.getElementById('payment_method_id_' + orderId)?.value || '';
-      //       const dest = document.getElementById('cash_equivalent_id_' + orderId)?.value || '';
-      //       const ref = document.getElementById('reference_no_' + orderId)?.value || '';
-      //       const amt = parseFloat(document.getElementById('amount_paid_' + orderId)?.value || 0) || 0;
-      //       if (method && dest && amt > 0) {
-      //          payments.push({ payment_method_id: method, reference_no: ref, cash_equivalent_id: dest, amount_paid: amt });
-      //       }
-      //    }
-
-      //    if (payments.length === 0) {
-      //       alert('No payments to submit. Please add at least one payment row and enter valid amounts.');
-      //       return;
-      //    }
-
-      //    const payload = new FormData();
-      //    payload.append('payments', JSON.stringify(payments));
-
-      //    // include single fields for backward compat if they exist
-      //    const singleMethod = document.getElementById('payment_method_id_' + orderId);
-      //    if (singleMethod) payload.append('payment_method_id', singleMethod.value);
-      //    const singleDest = document.getElementById('cash_equivalent_id_' + orderId);
-      //    if (singleDest) payload.append('cash_equivalent_id', singleDest.value);
-      //    const singleRef = document.getElementById('reference_no_' + orderId);
-      //    if (singleRef) payload.append('reference_no', singleRef.value);
-      //    const singleAmt = document.getElementById('amount_paid_' + orderId);
-      //    if (singleAmt) payload.append('amount_paid', singleAmt.value || 0);
-         
-      //    // csrf
-      //    const token = document.querySelector('meta[name="csrf-token"]').content;
-
-      //    if (!confirm('Confirm submit payment for order #' + orderId + '?')) return;
-
-      //    fetch("/orders/" + orderId + "/payment", {
-      //       method: 'POST',
-      //       headers: {
-      //          'X-CSRF-TOKEN': token
-      //       },
-      //          body: payload,
-      //          credentials: 'same-origin'
-      //    })
-      //    .then(res => res.json())
-      //    .then(data => {
-      //       if (data.success) {
-      //          alert('Payment saved. Order marked as PAID');
-
-      //          // update status display in the row (find the row with checkbox data-id)
-      //          const checkbox = document.querySelector('.toggle-details[data-id="' + orderId + '"]');
-      //          if (checkbox) {
-      //             const row = checkbox.closest('tr');
-      //             if (row) {
-      //                const statusCell = row.querySelectorAll('td')[5];
-      //                if (statusCell) statusCell.textContent = 'Paid';
-
-      //                const amountCell = document.getElementById('amount_' + orderId);
-      //                if (amountCell) amountCell.textContent = '₱' + Number(data.order.total_charge || data.order.net_amount || 0).toLocaleString('en-PH', { minimumFractionDigits: 2 });
-      //             }
-      //          }
-
-      //          // close modal
-      //          const modalEl = document.getElementById('paymentModal' + orderId);
-      //          if (modalEl) {
-      //             const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
-      //             modal.hide();
-      //          }
-      //       } else {
-      //          alert('Failed to save payment: ' + (data.message || 'Unknown'));
-      //       }
-      //    })
-      //    // .catch(err => {
-      //    //    console.error('Payment error', err);
-      //    //    alert('Error saving payment');
-      //    // });
-      // }
 
    function submitPayment(orderId) {
       // gather payments rows if any

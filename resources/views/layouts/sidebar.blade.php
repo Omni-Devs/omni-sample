@@ -148,8 +148,25 @@
             <li class="nav-item"><a href="/app/dashboard/log-histories" class=""><i class="nav-icon i-Administrator"></i> <span class="item-name">Log History</span></a></li>
          </ul> --}}
          <ul data-parent="reports" class="childNav d-none">
-            <li class="nav-item"><a href="/app/reports/x-reading" class=""><i class="nav-icon i-Edit-Map"></i> <span class="item-name">X Reading</span></a> </li>
-            <li class="nav-item"><a href="/app/reports/y-reading" class=""><i class="nav-icon i-Receipt-3"></i> <span class="item-name">Y Reading</span></a> </li>
+            <li class="nav-item"><a href="/app/reports/x-reading" class=""><i class="nav-icon i-Full-Basket"></i> <span class="item-name">POS</span></a> </li>
+            <li class="nav-item dropdown-sidemenu">
+               <a href="#">
+                  <i class="nav-icon i-Full-Cart"></i>
+                  <span class="item-name">Sales</span>
+                  <i class="dd-arrow i-Arrow-Down"></i>
+               </a>
+               <ul class="submenu">
+                  <li class="nav-item">
+                     <a href="{{ route('reports.sales-journal') }}" class="">
+                        <i class="nav-icon i-Book"></i>
+                        <span class="item-name">Sales Journal</span>
+                     </a>
+                  </li>
+               </ul>
+            </li>
+            <li class="nav-item"><a href="/app/reports/y-reading" class=""><i class="nav-icon i-Building"></i> <span class="item-name">Inventory</span></a> </li>
+            <li class="nav-item"><a href="/app/reports/y-reading" class=""><i class="nav-icon i-Library"></i> <span class="item-name">Workforce</span></a> </li>
+            <li class="nav-item"><a href="/app/reports/y-reading" class=""><i class="nav-icon i-Receipt-3"></i> <span class="item-name">Accounting</span></a> </li>
                {{-- <a href="#"><i class="nav-icon i-Library"></i> <span class="item-name">Workforce</span> <i class="dd-arrow i-Arrow-Down"></i></a> 
                <ul class="submenu">
                   <li><a href="/app/reports/workforce/summary" class=""><i class="nav-icon i-ID-Card"></i> <span class="item-name">Summary</span></a></li>
