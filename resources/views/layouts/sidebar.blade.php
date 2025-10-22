@@ -1,3 +1,7 @@
+<!-- Vue -->
+<script src="https://unpkg.com/vue@2.7.14/dist/vue.js"></script>
+<!-- Include Axios -->
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <style>
    .sidebar-left {
   height: 100vh;           /* Full screen height */
@@ -48,7 +52,7 @@
 
 
 </style>
-<div class="side-content-wrap">
+<div class="side-content-wrap" id="startEndApp">
    <section class="ps-container sidebar-left rtl-ps-none ps scroll open ps--active-y">
       <div>
          <ul class="navigation-left">
@@ -58,7 +62,7 @@
             </li>
              @if($user->hasRole('Administrator') || $user->can('view POS'))
             <li data-item="Sales" data-submenu="true" class="nav-item">
-               <a href="#" class="nav-item-hold"><i class="nav-icon i-Full-Basket"></i> <span class="nav-text">POS</span></a> 
+               <a href="#" class="nav-item-hold"><i class="nav-icon i-Full-Basket"></i> <span class="nav-text">Sales</span></a> 
                <div class="triangle"></div>
             </li>
             @endif
@@ -296,13 +300,25 @@
             </li>
          </ul>
          <ul data-parent="Sales" class="childNav d-none">
-            <li class="nav-item"><a href="/orders" class=""><i class="nav-icon i-Clothing-Store"></i> <span class="item-name">Orders</span></a></li>
-            <li class="nav-item"><a href="/app/sales/sales-invoicing" class=""><i class="nav-icon i-Receipt"></i> <span class="item-name">Billing</span></a></li>
-            <li class="nav-item"><a href="/app/sales/orders" class=""><i class="nav-icon i-Full-Basket"></i> <span class="item-name">Payments</span></a></li>
-            <li class="nav-item"><a href="/kitchen" class=""><i class="nav-icon i-Remove-Bag"></i> <span class="item-name">Kitchen</span></a></li>
+            <li class="nav-item">
+               <a href="#" class="startEndTrigger">
+                  <i class="nav-icon i-Clothing-Store"></i>
+                  <span class="item-name">Start / End of the Day</span>
+               </a>
+            </li>
+            
+            <!-- POS link -->
+            <li class="nav-item">
+            <a href="/orders" class="posLink">
+               <i class="nav-icon i-Receipt"></i>
+               <span class="item-name">POS</span>
+            </a>
+            </li>
+            <li class="nav-item"><a href="#" class=""><i class="nav-icon i-Remove-Bag"></i> <span class="item-name">Sales Invoicing</span></a></li>
+            <li class="nav-item"><a href="/app/sales/manage-deliveries" class=""><i class="nav-icon i-Jeep"></i> <span class="item-name">Orders and Reservations</span></a></li>
+            <li class="nav-item"><a href="/app/sales/manage-pick-ups" class=""><i class="nav-icon i-Hand"></i> <span class="item-name">Closing</span></a></li>
+            <li class="nav-item"><a href="/kitchen" class=""><i class="nav-icon i-Full-Basket"></i> <span class="item-name">KDS</span></a></li>
             {{-- <li class="nav-item"><a href="/app/sales/quotations" class=""><i class="nav-icon i-Receipt-3"></i> <span class="item-name">Quotations</span></a></li> --}}
-            {{-- <li class="nav-item"><a href="/app/sales/manage-pick-ups" class=""><i class="nav-icon i-Hand"></i> <span class="item-name">Manage Pick-ups</span></a></li> --}}
-            {{-- <li class="nav-item"><a href="/app/sales/manage-deliveries" class=""><i class="nav-icon i-Jeep"></i> <span class="item-name">Manage Deliveries</span></a></li> --}}
             {{-- <li class="nav-item"><a href="/app/sales/manage-prospects" class=""><i class="nav-icon i-Checked-User"></i> <span class="item-name">Manage Prospects</span></a></li> --}}
             <li class="nav-item dropdown-sidemenu">
                {{-- <a href="#"><i class="nav-icon i-Gear"></i> <span class="item-name">Settings</span> <i class="dd-arrow i-Arrow-Down"></i></a>  --}}
@@ -418,7 +434,9 @@
       </div>
    </section>
    <div class="sidebar-overlay"></div>
+   @include('layouts.start_end_day_modal')
 </div>
+
 
 <script>
   document.addEventListener("DOMContentLoaded", function () {
@@ -430,6 +448,7 @@
       });
     }
   });
+  
 </script>
 
 <script>
@@ -441,6 +460,214 @@ document.addEventListener("DOMContentLoaded", function () {
     toggleBtn.addEventListener("click", function () {
       sidebar.classList.toggle("active");
     });
+  }
+});
+
+const now = new Date();
+
+// Format date as YYYY-MM-DD
+const currentDate = now.toISOString().split('T')[0];
+
+// Format time as HH:MM (24-hour format for input type="time")
+const currentTime = now.toTimeString().slice(0, 5); // e.g., "09:45"
+
+new Vue({
+  el: "#startEndApp",
+  data: {
+    // state
+    modalMode: 'open', // or 'close'
+    hasStartedPOS: localStorage.getItem('hasStartedPOS') === '1' ? 1 : 0,
+
+    // session details
+    sessionData: null,
+    branch_id: 1,
+    terminal_no: 'T1',
+
+    // open session fields
+    currentDate: '',
+    currentTime: '',
+    changeFund: '',
+
+    // close session fields
+    closingDate: '',
+    closingTime: '',
+    endCash: '',
+    remarks: '',
+
+    manualTimeEdit: false,
+  },
+
+  mounted() {
+    this.setInitialDateTime();
+    this.checkExistingSession();
+    this.startAutoTimeUpdate();
+
+    // 🧩 Attach sidebar handlers
+    document.querySelector('.startEndTrigger')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      this.promptStartEndModal();
+    });
+
+    document.querySelector('.posLink')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      this.handlePOSNavigation('/orders');
+    });
+
+    // 🧩 Handle direct URL access (if someone types /orders manually)
+    if (window.location.pathname === '/orders') {
+      this.handlePOSNavigation('/orders', true);
+    }
+  },
+
+  methods: {
+    // 🕒 Initialize current and closing datetime
+    setInitialDateTime() {
+      const now = new Date();
+      const date = now.toISOString().split('T')[0];
+      const time = now.toTimeString().slice(0, 5);
+      this.currentDate = date;
+      this.currentTime = time;
+      this.closingDate = date;
+      this.closingTime = time;
+    },
+
+    // ⏱ Auto update time
+    startAutoTimeUpdate() {
+      setInterval(() => {
+        if (!this.manualTimeEdit) {
+          const now = new Date();
+          const time = now.toTimeString().slice(0, 5);
+          this.currentTime = time;
+          this.closingTime = time;
+        }
+      }, 1000);
+    },
+
+    // 🔍 Check session state
+    async checkExistingSession() {
+      try {
+        const response = await axios.get('/pos/session/check', {
+          params: { terminal_no: this.terminal_no }
+        });
+
+        const session = response.data.session;
+        if (response.data.has_open_session && session.status === 'open') {
+          this.hasStartedPOS = 1;
+          this.sessionData = session;
+          localStorage.setItem('hasStartedPOS', '1');
+          this.modalMode = 'close';
+        } else {
+          this.hasStartedPOS = 0;
+          localStorage.removeItem('hasStartedPOS');
+          this.modalMode = 'open';
+        }
+      } catch (error) {
+        console.error('Error checking session:', error);
+      }
+    },
+
+    // 🧩 For “Start / End of the Day” manual menu click
+    promptStartEndModal() {
+      this.checkExistingSession().then(() => {
+        const modalEl = document.getElementById('startPOSModal');
+        if (modalEl) {
+          const modal = new bootstrap.Modal(modalEl);
+          modal.show();
+        }
+      });
+    },
+
+    // 🧭 Handle when clicking /orders or typing URL directly
+    async handlePOSNavigation(url, auto = false) {
+      try {
+        const response = await axios.get('/pos/session/check', {
+          params: { terminal_no: this.terminal_no }
+        });
+
+        const session = response.data.session;
+
+        if (response.data.has_open_session && session.status === 'open') {
+          // ✅ Allow access to POS
+          if (!auto) window.location.href = url;
+        } else {
+          // ❌ Show modal
+          this.hasStartedPOS = 0;
+          localStorage.removeItem('hasStartedPOS');
+          this.modalMode = 'open';
+
+          this.$nextTick(() => {
+            const modalEl = document.getElementById('startPOSModal');
+            if (modalEl && !bootstrap.Modal.getInstance(modalEl)) {
+              const modal = new bootstrap.Modal(modalEl);
+              modal.show();
+            }
+          });
+
+          if (auto) console.log('🔒 Session not started — showing modal.');
+        }
+      } catch (error) {
+        console.error('Error checking session before POS navigation:', error);
+      }
+    },
+
+    // ✅ Start POS session
+    async submitStartPOS() {
+      try {
+        const response = await axios.post('/pos/session/open', {
+          branch_id: this.branch_id,
+          terminal_no: this.terminal_no,
+          cash_fund: this.changeFund || 0,
+        });
+
+        if (response.status === 201) {
+          alert('POS session started successfully!');
+          this.hasStartedPOS = 1;
+          localStorage.setItem('hasStartedPOS', '1');
+          this.modalMode = 'close';
+
+          const modal = bootstrap.Modal.getInstance(document.getElementById('startPOSModal'));
+          if (modal) modal.hide();
+
+          // 🚀 Auto redirect to POS
+          window.location.href = '/orders';
+        }
+      } catch (error) {
+        console.error(error);
+        alert(error.response?.data?.message || 'Failed to start POS session.');
+      }
+    },
+
+    // 🔴 End POS session
+    async submitEndPOS() {
+      try {
+        const response = await axios.post('/pos/session/close', {
+          closing_date: this.closingDate,
+          closing_time: this.closingTime,
+          end_cash: this.endCash,
+          remarks: this.remarks,
+          terminal_no: this.terminal_no,
+        });
+
+        if (response.status === 200) {
+          alert('POS session closed successfully!');
+          this.hasStartedPOS = 0;
+          localStorage.removeItem('hasStartedPOS');
+          this.modalMode = 'open';
+
+          const modal = bootstrap.Modal.getInstance(document.getElementById('startPOSModal'));
+          if (modal) modal.hide();
+        }
+      } catch (error) {
+        console.error(error);
+        alert(error.response?.data?.message || 'Failed to close POS session.');
+      }
+    },
+  },
+
+  watch: {
+    currentTime(newVal, oldVal) {
+      if (newVal !== oldVal) this.manualTimeEdit = true;
+    },
   }
 });
 </script>
