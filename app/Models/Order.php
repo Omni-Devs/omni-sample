@@ -12,6 +12,7 @@ class Order extends Model
         protected $dates = ['created_at', 'updated_at'];
         protected $fillable = [
         'user_id',
+        'order_type',
         'table_no',
         'number_pax',
         'status',

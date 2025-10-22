@@ -1,6 +1,6 @@
 @extends('layouts.app')
 @section('content')
-<div class="main-content">
+<div class="main-content" id="orderTypeApp">
    <div>
       <div class="breadcrumb">
          <h1 class="mr-3">Orders</h1>
@@ -12,6 +12,38 @@
       </div>
       <div class="separator-breadcrumb border-top"></div>
    </div>
+   <!-- 🧾 ORDER TYPE MODAL -->
+<div class="modal fade" id="orderTypeModal" tabindex="-1" aria-labelledby="orderTypeModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" id="orderTypeApp">
+
+      <!-- Header -->
+      <div class="modal-header">
+        <h5 class="modal-title" id="orderTypeModalLabel">Select Order Type</h5>
+      </div>
+
+      <!-- Body -->
+      <div class="modal-body">
+        <div class="form-group mb-3">
+          <label for="orderType">Order Type</label>
+          <select class="form-control" v-model="orderType" id="orderType">
+            <option value="Dine-In">Dine-In</option>
+            <option value="Take-Out">Take-Out</option>
+            <option value="Delivery">Delivery</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn btn-primary" @click="submitOrderType">Continue</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
    <!----> 
    <div class="wrapper">
       <div class="card mt-4">
@@ -245,9 +277,16 @@
                            </button> <button class="btn btn-sm btn-outline-danger ripple mx-1"><i class="i-File-Excel"></i> EXCEL
                            </button> <button type="button" class="btn btn-info m-1 btn-sm"><i class="i-Upload"></i>
                            Import
-                           </button> <button type="button" class="btn mx-1 btn-btn btn-primary btn-icon" onclick="window.location='{{ url('order/create') }}'"><i class="i-Add"></i>
-                           Add
                            </button>
+                           <!-- ADD ORDER BUTTON -->
+                           <button
+                              type="button"
+                              class="btn mx-1 btn-btn btn-primary btn-icon"
+                              data-bs-toggle="modal"
+                              data-bs-target="#orderTypeModal">
+                                 <i class="i-Add"></i> Add
+                           </button>
+
                         </div>
                      </div>
                   </div>
@@ -285,6 +324,10 @@
                                  <span>Order No.</span>
                                  <button><span class="sr-only">Sort table by Product No in descending order</span></button>
                               </th>
+                               <th scope="col" class="vgt-left-align text-left sortable">
+                                 <span>Order Type</span>
+                                 <button><span class="sr-only">Sort table by Order Type in descending order</span></button>
+                              </th>
                               <th scope="col" class="vgt-left-align text-left sortable">
                                  <span>Waiter Name</span>
                                  <button><span class="sr-only">Sort table by Waiter Name in descending order</span></button>
@@ -320,6 +363,7 @@
 
       <!-- Order Data -->
       <td class="text-left">{{ $order->id }}</td>
+      <td class="text-left">{{ $order->order_type }}</td>
       <td class="text-left">{{ $order->user?->name ?? 'N/A' }}</td>
       <td class="text-left">{{ $order->table_no }}</td>
       <td class="text-left">{{ $order->number_pax }}</td>
@@ -1594,6 +1638,25 @@ window.submitPayment = function(orderId) {
          //    alert('Error saving payment');
          // });
    }
+
+new Vue({
+  el: '#orderTypeApp',
+  data: {
+    orderType: 'Dine-In', // default value
+  },
+  methods: {
+    submitOrderType() {
+      // Close modal manually
+      const modal = bootstrap.Modal.getInstance(document.getElementById('orderTypeModal'));
+      modal.hide();
+
+      // Redirect with order type as query parameter
+      const url = `{{ url('order/create') }}?type=${encodeURIComponent(this.orderType)}`;
+      window.location.href = url;
+    }
+  }
+});
+
 
    </script>
 @endsection
