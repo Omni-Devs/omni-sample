@@ -16,11 +16,12 @@ use App\Http\Controllers\UnitController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\CashEquivalentController;
+use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\KitchenController;
 use App\Http\Controllers\OrderController;
-use App\Http\Controllers\RemarkController;
-use App\Http\Controllers\SalesJournalController;use App\Http\Controllers\PosSessionController;
-
+use App\Http\Controllers\SalesJournalController;
+use App\Http\Controllers\PosSessionController;
+use App\Http\Controllers\SupplierController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -163,3 +164,25 @@ Route::post('/products/{product}/remarks', [ProductController::class, 'storeRema
 
 Route::get('/components/{component}/remarks', [ComponentController::class, 'remarks']);
 Route::post('/components/{component}/remarks', [ComponentController::class, 'storeRemark']);
+
+Route::get('/suppliers', [SupplierController::class, 'index'])->name('suppliers.index');
+Route::get('/suppliers/create', [SupplierController::class, 'create'])->name('suppliers.create');
+Route::post('/suppliers', [SupplierController::class, 'store'])->name('suppliers.store');
+Route::get('/suppliers/{supplier}/edit', [SupplierController::class, 'edit'])->name('suppliers.edit');
+Route::put('/suppliers/{supplier}', [SupplierController::class, 'update'])->name('suppliers.update');
+Route::delete('/suppliers/{id}', [SupplierController::class, 'destroy'])->name('suppliers.destroy');
+Route::put('/suppliers/{supplier}/archive', [SupplierController::class, 'archive'])->name('suppliers.archive');
+Route::put('/suppliers/{supplier}/restore', [SupplierController::class, 'restore'])->name('suppliers.restore');
+
+// CUSTOMER ROUTES
+Route::get('/customers', [CustomerController::class, 'index'])->name('customers.index');
+Route::get('/customers/create', [CustomerController::class, 'create'])->name('customers.create');
+Route::post('/customers', [CustomerController::class, 'store'])->name('customers.store');
+Route::get('/customers/{customer}/edit', [CustomerController::class, 'edit'])->name('customers.edit');
+Route::put('/customers/{customer}', [CustomerController::class, 'update'])->name('customers.update');
+Route::delete('/customers/{id}', [CustomerController::class, 'destroy'])->name('customers.destroy');
+
+// Optional if you plan to have soft delete / archive feature
+Route::put('/customers/{customer}/archive', [CustomerController::class, 'archive'])->name('customers.archive');
+Route::put('/customers/{customer}/restore', [CustomerController::class, 'restore'])->name('customers.restore');
+

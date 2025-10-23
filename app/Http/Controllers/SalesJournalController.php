@@ -327,7 +327,7 @@ public function index(Request $request)
     // 🧮 Z Reading Computations
     $discounts = $orders->sum('sr_pwd_discount') + $orders->sum('other_discounts');
 
-    $grossTotal = $orders->sum('total_charge') + $discounts;
+    $grossTotal = $orders->sum('total_charge');
     $lessDiscount = $discounts;
     $taxExempt = $orders->sum('sr_pwd_discount') - $orders->sum('vat_12');
     $total = $grossTotal - $lessDiscount - $taxExempt;
@@ -335,7 +335,7 @@ public function index(Request $request)
 
     $vat12 = $orders->sum('vat_12');
     $vatIncl = $orders->sum('vatable');
-    $vatExcl = $orders->sum('non_taxable');
+    $vatExcl = $orders->sum('total_charge');
 
     // 🍽 FOOD TOTAL (filtered by date)
     $foodQuery = OrderDetail::whereHas('order', function ($query) use ($from, $to) {

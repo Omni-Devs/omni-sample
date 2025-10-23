@@ -13,23 +13,13 @@ class ComponentController extends Controller
     public function index(Request $request)
     {
         $status = $request->get('status', 'active');
-        $search = $request->get('search');
 
-        $query = Component::with(['category', 'subcategory'])
-            ->where('status', $status);
+        // eager load category + subcategory for efficiency
+        $components = Component::with(['category', 'subcategory'])
+            ->where('status', $status)
+                        ->orderBy('created_at', 'desc')
+                        ->get();
 
-        if (!empty($search)) {
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                ->orWhere('code', 'like', "%{$search}%")
-                ->orWhereHas('category', function ($q) use ($search) {
-                    $q->where('name', 'like', "%{$search}%");
-                });
-            });
-        }
-
-        $components = $query->paginate(10);
-                        
         return view('components.index', compact('components', 'status'));
     }
 

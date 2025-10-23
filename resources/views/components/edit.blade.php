@@ -18,7 +18,7 @@
         <form action="{{ route('components.update', $component->id) }}" method="POST" enctype="multipart/form-data">
             @csrf
             @method('PUT')
-<div class="row">
+            <div class="row">
                 <div class="top-wrapper" style="display: none;">
                     <div class="col-md-4">
                         <span>
@@ -70,7 +70,7 @@
                                 <div class="row">
                                     <div class="col-md-6">
                                         <span>
-                                         <fieldset class="form-group">
+                                        <fieldset class="form-group">
                                                 <legend class="col-form-label pt-0"SKU> (Component Code) *</legend>
                                                 <input 
                                                     type="text" 
