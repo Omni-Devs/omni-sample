@@ -15,23 +15,14 @@ class ProductController extends Controller
 {
     public function index(Request $request)
     {
+        // Default to 'active'
         $status = $request->get('status', 'active');
-        $search = $request->get('search');
 
-        $query = Product::with(['category', 'subcategory'])
-            ->where('status', $status);
-
-        if (!empty($search)) {
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                ->orWhere('code', 'like', "%{$search}%")
-                ->orWhereHas('category', function ($q) use ($search) {
-                    $q->where('name', 'like', "%{$search}%");
-                });
-            });
-        }
-
-        $products = $query->paginate(10);
+        // Fetch only products with the given status
+        $products = Product::with(['category', 'subcategory'])
+            ->where('status', $status)
+            ->orderBy('created_at', 'desc')
+            ->get();
 
         return view('products.index', compact('products', 'status'));
     }

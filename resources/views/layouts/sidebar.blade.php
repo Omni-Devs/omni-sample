@@ -343,8 +343,8 @@
          <ul data-parent="People" class="childNav d-none">
             <li class="nav-item"><a href="/app/people/users" class=""><i class="nav-icon i-Administrator"></i> <span class="item-name">Users</span></a></li>
             <li class="nav-item"><a href="/app/people/employees" class=""><i class="nav-icon i-Engineering"></i> <span class="item-name">Employees</span></a></li>
-            <li class="nav-item"><a href="/app/people/customers" class=""><i class="nav-icon i-Business-ManWoman"></i> <span class="item-name">Customers</span></a></li>
-            <li class="nav-item"><a href="/app/people/suppliers" class=""><i class="nav-icon i-Business-Mens"></i> <span class="item-name">Suppliers</span></a></li>
+            <li class="nav-item"><a href="{{ route('customers.index') }}" class=""><i class="nav-icon i-Business-ManWoman"></i> <span class="item-name">Customers</span></a></li>
+            <li class="nav-item"><a href="{{ route('suppliers.index') }}" class=""><i class="nav-icon i-Business-Mens"></i> <span class="item-name">Suppliers</span></a></li>
          </ul>
          <ul data-parent="settings" class="childNav d-none">
             <ul class="submenu" style="text-align: left; padding-left: 0;">

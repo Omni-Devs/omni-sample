@@ -98,15 +98,17 @@
 
 <!-- Z Report Modal -->
 <div class="modal fade" id="ZReportModal" tabindex="-1" aria-labelledby="ZReportModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-sm modal-dialog-scrollable">
-    <div class="modal-content">
+  <div class="modal-dialog modal-sm modal-dialog-scrollable"> 
+    <div class="modal-content" style="max-height: 90vh;"> <!-- Limit modal height -->
+      
       <div class="modal-header">
         <h5 class="modal-title" id="ZReportModalLabel">Z READING REPORT</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
-      <div class="modal-body">
+
+      <!-- 🧾 Scrollable modal body -->
+      <div class="modal-body" style="overflow-y: auto; max-height: calc(90vh - 120px);">
         <div style="font-family: Arial, Helvetica, sans-serif; font-size: 13px;">
-          
           <p><strong>DATE (From):</strong> <span id="zFromDate"></span></p>
           <p><strong>DATE (To):</strong> <span id="zToDate"></span></p>
           <hr>
@@ -138,13 +140,16 @@
           <hr>
 
           <p><strong>TOTAL TRANSACTIONS:</strong> <span id="zTotalTransactions">0</span></p>
-
         </div>
       </div>
-       <div class="modal-footer d-flex justify-content-end" style="background-color: #f8f9fa; position: sticky; bottom: 0; z-index: 100;">
-        <button type="button" class="btn btn-outline-primary btn-sm me-2" onclick="window.print()">Print</button>
-        <button type="button" class="btn btn-primary btn-sm" data-bs-dismiss="modal">Close</button>
+
+      <!-- 📎 Sticky footer always visible -->
+      <div class="modal-footer d-flex justify-content-end" 
+           style="background-color: #f8f9fa; position: sticky; bottom: 0; z-index: 100;">
+        <button class="btn btn-outline-primary btn-sm me-2" onclick="window.print()">Print</button>
+        <button class="btn btn-primary btn-sm" data-bs-dismiss="modal">Close</button>
       </div>
+
     </div>
   </div>
 </div>
@@ -216,6 +221,7 @@ $(document).ready(function() {
                     parseFloat(response.food_and_drinks_discount_total || 0)
                         .toLocaleString('en-PH', { minimumFractionDigits: 2 })
                 );
+
                 // 💸 Collections
                 $('#zCash').text(
                     parseFloat(response.collections.cash || 0)
@@ -441,6 +447,12 @@ document.addEventListener('DOMContentLoaded', function () {
                         <td>₱{{ number_format($order->total_charge, 2) }}</td>
                         <td>₱{{ number_format($order->total_payment_rendered, 2) }}</td>
                         <td>{{ $order->id }}</td>
+                        {{-- <td>
+                            <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal"
+                                    data-bs-target="#invoiceModal{{ $order->id }}">
+                                View Sales Invoice
+                            </button>
+                        </td> --}}
 
                         <td class="text-right">
                         @include('layouts.actions-dropdown', [
