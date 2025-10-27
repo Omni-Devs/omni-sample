@@ -51,6 +51,8 @@ Route::get('/kitchen', [KitchenController::class, 'index'])->name('kitchen.index
 Route::get('/kitchen/served', [KitchenController::class, 'showServed'])->name('kitchen.served');
 Route::get('/kitchen/walked', [KitchenController::class, 'showWalked'])->name('kitchen.walked');
 Route::post('/order-items/update-or-create', [KitchenController::class, 'updateOrCreate']);
+// Route::post('/inventory/update-stock-bulk', [KitchenController::class, 'updateStockBulk']);
+
 
 
 Route::post('/orders/{order}/payment', [OrderController::class, 'payment'])->name('orders.payment');

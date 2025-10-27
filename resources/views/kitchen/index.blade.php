@@ -34,6 +34,14 @@ tr:hover {
     font-weight: 600;
 }
 
+.sortable {
+  cursor: pointer;
+  user-select: none;
+}
+.sortable:hover {
+  background-color: #f8f9fa;
+}
+
 
 </style>
 @section('content')
@@ -107,6 +115,55 @@ tr:hover {
               </select>
             </div>
           </div>
+
+            <div v-if="selectedOrder" class="mt-3">
+            <h5>Ingredients for @{{ selectedOrder.name }}</h5>
+
+            <div class="mb-2">
+              <input type="checkbox" v-model="selectedOrder.showLoss"> Wasted Ingredients
+            </div>
+
+            <table class="table table-bordered">
+              <thead>
+                <tr>
+                  <th>Component</th>
+                  <th>Quantity</th>
+                  <th v-if="selectedOrder.showLoss" colspan="3" class="text-center">Inventory Loss</th>
+                </tr>
+                <tr v-if="selectedOrder.showLoss">
+                  <th></th>
+                  <th></th>
+                  <th>Type</th>
+                  <th>Qty</th>
+                  <th>Unit</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(ingredient, index) in selectedOrder.recipe" :key="index">
+                  <td>@{{ ingredient.component_name }}</td>
+                  <td class="text-end">@{{ ingredient.quantity }}</td>
+
+                  <template v-if="selectedOrder.showLoss">
+                    <td>
+                      <select v-model="ingredient.loss_type" class="form-control">
+                        <option disabled value="" style="color: #aaa;">Select Type</option>
+                        <option value="wastage">Wastage</option>
+                        <option value="spoilage">Spoilage</option>
+                        <option value="theft">Theft</option>
+                      </select>
+                    </td>
+                    <td>
+                      <input type="number" v-model.number="ingredient.loss_qty" step="0.01" class="form-control text-end">
+                    </td>
+                    <td>@{{ ingredient.unit }}</td>
+                  </template>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+            
+          {{-- </div> --}}
 
           <!-- Buttons -->
           <div class="text-center">
@@ -214,41 +271,50 @@ tr:hover {
                             </colgroup>
                             <thead style="min-width: auto; width: auto;">
                             <tr>
-                                <th scope="col" class="vgt-left-align text-left sortable">
-                                    <span>Order No.</span>
-                                    <button><span class="sr-only">Sort table by Order No in descending order</span></button>
-                                </th>
-                                <th scope="col" class="vgt-left-align text-left sortable">
-                                    <span>Time Ordered</span>
-                                    <button><span class="sr-only">Sort table by Time Ordered in descending order</span></button>
-                                </th>
-                                <th scope="col" class="vgt-left-align text-left sortable">
-                                    <span>SKU</span>
-                                    <button><span class="sr-only">Sort table by SKU in descending order</span></button>
-                                </th>
-                                <th scope="col" class="vgt-left-align text-left sortable">
-                                    <span>Product Name</span>
-                                    <button><span class="sr-only">Sort table by Product Name in descending order</span></button>
-                                </th>
-                                <th scope="col" class="vgt-left-align text-right sortable">
-                                    <span>Qty</span>
-                                    <button><span class="sr-only">Sort table by Qty in descending order</span></button>
-                                </th>
-                                <th scope="col" class="vgt-left-align text-right sortable">
-                                    <span>Station</span>
-                                    <button><span class="sr-only">Sort table by Station in descending order</span></button>
-                                </th>
-                                <th scope="col" class="vgt-left-align text-right sortable">
-                                    <span>Running Time</span>
-                                    <button><span class="sr-only">Sort table by Running Time in descending order</span></button>
-                                </th>
-                                <th scope="col" class="vgt-left-align text-right sortable">
-                                    <span>Recipe</span>
-                                </th>
-                                <th scope="col" class="vgt-left-align text-right">
-                                    <span>Action</span>
-                                </th>
+                              <th scope="col" class="vgt-left-align text-left sortable" @click="sortTable('order_no')">
+                                <span>Order No.</span>
+                                <i :class="getSortIcon('order_no')" class="ms-1"></i>
+                              </th>
+
+                              <th scope="col" class="vgt-left-align text-left sortable" @click="sortTable('time_submitted')">
+                                <span>Time Ordered</span>
+                                <i :class="getSortIcon('time_submitted')" class="ms-1"></i>
+                              </th>
+
+                              <th scope="col" class="vgt-left-align text-left sortable" @click="sortTable('code')">
+                                <span>SKU</span>
+                                <i :class="getSortIcon('code')" class="ms-1"></i>
+                              </th>
+
+                              <th scope="col" class="vgt-left-align text-left sortable" @click="sortTable('name')">
+                                <span>Product Name</span>
+                                <i :class="getSortIcon('name')" class="ms-1"></i>
+                              </th>
+
+                              <th scope="col" class="vgt-left-align text-right sortable" @click="sortTable('qty')">
+                                <span>Qty</span>
+                                <i :class="getSortIcon('qty')" class="ms-1"></i>
+                              </th>
+
+                              <th scope="col" class="vgt-left-align text-right sortable" @click="sortTable('station')">
+                                <span>Station</span>
+                                <i :class="getSortIcon('station')" class="ms-1"></i>
+                              </th>
+
+                              <th scope="col" class="vgt-left-align text-right sortable" @click="sortTable('running_time')">
+                                <span>Running Time</span>
+                                <i :class="getSortIcon('running_time')" class="ms-1"></i>
+                              </th>
+
+                              <th scope="col" class="vgt-left-align text-right sortable">
+                                <span>Recipe</span>
+                              </th>
+
+                              <th scope="col" class="vgt-left-align text-right">
+                                <span>Action</span>
+                              </th>
                             </tr>
+
                             </thead>
                             <tbody>
                               <tr v-for="(item, index) in filteredOrders" 
@@ -334,6 +400,8 @@ new Vue({
       "January", "February", "March", "April", "May", "June",
       "July", "August", "September", "October", "November", "December"
     ],
+    sortKey: '',
+    sortAsc: true,
   },
 
   computed: {
@@ -351,17 +419,54 @@ new Vue({
       );
     },
 
-    // 🔹 Filtered orders based on selected date
-    filteredOrders() {
-      return this.orderItems.filter(item => {
-        const date = new Date(item.time_submitted);
-        return (
-          date.getFullYear() === this.selectedYear &&
-          date.getMonth() + 1 === this.selectedMonth &&
-          date.getDate() === this.selectedDay
-        );
-      });
+    // 🔹 Filtered + Sorted orders based on selected date
+filteredOrders() {
+  // Step 1: Filter by selected date
+  let data = this.orderItems.filter(item => {
+    const date = new Date(item.time_submitted);
+    return (
+      date.getFullYear() === this.selectedYear &&
+      date.getMonth() + 1 === this.selectedMonth &&
+      date.getDate() === this.selectedDay
+    );
+  });
+
+  // Step 2: Sort if a column is selected
+  if (this.sortKey) {
+  data = [...data].sort((a, b) => {
+    let valA = a[this.sortKey];
+    let valB = b[this.sortKey];
+
+    // 🕐 Special: sort running time based on difference from now
+    if (this.sortKey === 'running_time') {
+      const diffA = new Date(this.now) - new Date(a.time_submitted);
+      const diffB = new Date(this.now) - new Date(b.time_submitted);
+      return this.sortAsc ? diffA - diffB : diffB - diffA;
     }
+
+    // 🕐 Special: sort by actual submission time
+    if (this.sortKey === 'time_submitted') {
+      return this.sortAsc
+        ? new Date(valA) - new Date(valB)
+        : new Date(valB) - new Date(valA);
+    }
+
+    // Numeric comparison (qty, etc.)
+    if (!isNaN(valA) && !isNaN(valB)) {
+      return this.sortAsc ? valA - valB : valB - valA;
+    }
+
+    // Default string comparison
+    return this.sortAsc
+      ? String(valA).localeCompare(String(valB))
+      : String(valB).localeCompare(String(valA));
+  });
+}
+
+
+  return data;
+}
+
   },
 
   mounted() {
@@ -423,6 +528,19 @@ new Vue({
       modal.show();
     },
 
+    sortTable(key) {
+    if (this.sortKey === key) {
+      this.sortAsc = !this.sortAsc; // toggle ascending/descending
+    } else {
+      this.sortKey = key;
+      this.sortAsc = true; // default ascending
+    }
+  },
+  getSortIcon(key) {
+    if (this.sortKey !== key) return 'fa fa-sort text-muted';
+    return this.sortAsc ? 'fa fa-sort-up text-primary' : 'fa fa-sort-down text-primary';
+  },
+
     fetchOrders() {
       axios.get(`/kitchen/served`)
         .then(res => {
@@ -431,7 +549,8 @@ new Vue({
         .catch(err => console.error("❌ Failed to reload orders:", err));
     },
 
-    submitUpdateStatus() {
+    async submitUpdateStatus() {
+    try {
       const now = new Date();
       const timeSubmitted =
         now.getFullYear() + '-' +
@@ -439,50 +558,107 @@ new Vue({
         String(now.getDate()).padStart(2, '0') + ' ' +
         now.toLocaleTimeString('en-US', { hour12: false });
 
+      // ✅ Prepare deductions array first
+      const deductions = [];
+      if (['served', 'walked'].includes(this.selectedOrder.status)) {
+        const recipes = this.selectedOrder.recipe || [];
+
+        recipes.forEach(ingredient => {
+          const usedQty = ingredient.quantity || 0;
+          const lossQty = ingredient.loss_qty || 0;
+
+          // ✅ Main served deduction
+          if (usedQty > 0) {
+            deductions.push({
+              component_id: ingredient.component_id,
+              order_detail_id: this.selectedOrder.order_detail_id,
+              quantity_deducted: usedQty,
+              deduction_type: 'served',
+              notes: `Used for order (${this.selectedOrder.status}).`,
+            });
+          }
+
+          // ✅ Separate wastage/spoilage/theft deduction
+          if (lossQty > 0) {
+            const mappedType = ['wastage', 'spoilage', 'theft'].includes(
+              (ingredient.loss_type || '').toLowerCase()
+            )
+              ? ingredient.loss_type.toLowerCase()
+              : 'wastage';
+
+            deductions.push({
+              component_id: ingredient.component_id,
+              order_detail_id: this.selectedOrder.order_detail_id,
+              quantity_deducted: lossQty,
+              deduction_type: mappedType,
+              notes: `Wasted due to ${mappedType}.`,
+            });
+          }
+        });
+      }
+
+      // ✅ Combine deductions with main payload
       const payload = {
         order_detail_id: this.selectedOrder.order_detail_id,
         cook_id: this.selectedOrder.cook_id,
         time_submitted: timeSubmitted,
         status: this.selectedOrder.status,
+        recipe: (this.selectedOrder.recipe || []).map(r => ({
+          component_name: r.component_name,
+          quantity: r.quantity ?? 0,
+          loss_type: r.loss_type && r.loss_type !== '' ? r.loss_type : 'served',
+          loss_qty: r.loss_qty ?? 0,
+        })),
+        deductions, // 👈 clean separation, no double count
       };
 
-      axios.post(`/order-items/update-or-create`, payload)
-        .then(response => {
-          if (response.data.success) {
-            alert("✅ Order item updated successfully!");
-            const updatedDetail = response.data.data.order_detail;
-            const updatedOrderStatus = response.data.data.order_status;
+      console.log("🛰 Sending payload with deductions:", payload);
 
-            const index = this.orderItems.findIndex(
-              item => item.order_detail_id === updatedDetail.id
-            );
-            if (index !== -1) {
-              this.orderItems[index].status = updatedDetail.status;
-              this.orderItems[index].cook_id = this.selectedOrder.cook_id;
-              this.orderItems[index].time_submitted = timeSubmitted;
-            }
 
-            if (updatedDetail.status !== 'serving') {
-              this.orderItems = this.orderItems.filter(
-                i => i.order_detail_id !== updatedDetail.id
-              );
-            }
+      // ✅ Send to your controller (handles both order & inventory)
+      const response = await axios.post(`/order-items/update-or-create`, payload);
 
-            if (updatedOrderStatus === 'served') {
-              this.fetchOrders();
-            }
+      if (!response.data.success) {
+        alert("⚠️ " + (response.data.message || "Something went wrong."));
+        return;
+      }
 
-            const modal = bootstrap.Modal.getInstance(document.getElementById("updateModal"));
-            if (modal) modal.hide();
-          } else {
-            alert("⚠️ " + (response.data.message || "Something went wrong."));
-          }
-        })
-        .catch(error => {
-          console.error("❌ Update failed:", error.response || error);
-          alert("❌ Failed to update order item. Check console for details.");
-        });
-    },
+      alert("✅ Order item updated successfully!");
+
+      const updatedDetail = response.data.data.order_detail;
+      const updatedOrderStatus = updatedDetail?.status;
+
+      // ✅ Update local table
+      const index = this.orderItems.findIndex(
+        item => item.order_detail_id === updatedDetail.id
+      );
+
+      if (index !== -1) {
+        this.orderItems[index].status = updatedDetail.status;
+        this.orderItems[index].cook_id = this.selectedOrder.cook_id;
+        this.orderItems[index].time_submitted = timeSubmitted;
+      }
+
+      // ✅ Refresh list or remove if done
+      if (['served', 'walked'].includes(updatedOrderStatus)) {
+        this.fetchOrders();
+      }
+
+      if (updatedDetail.status !== 'serving') {
+        this.orderItems = this.orderItems.filter(
+          i => i.order_detail_id !== updatedDetail.id
+        );
+      }
+
+      const modal = bootstrap.Modal.getInstance(document.getElementById("updateModal"));
+      if (modal) modal.hide();
+
+  } catch (error) {
+    console.error("❌ Update failed:", error.response || error);
+    alert("❌ Failed to update order item. Check console for details.");
+  }
+}
+
   }
 });
 </script>
