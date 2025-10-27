@@ -165,6 +165,19 @@
 </div>
 
 <script>
+Vue.component('v-select', VueSelect.VueSelect);
+
+// ✅ Mount Vue app for role selection
+window.editRoleApp = new Vue({
+    el: '#editRoleApp',
+    data() {
+        return {
+            selectedRoles: [],
+        };
+    },
+});
+
+
 function previewEditUserImage(input) {
     if (input.files && input.files[0]) {
         const reader = new FileReader();
@@ -175,31 +188,38 @@ function previewEditUserImage(input) {
     }
 }
 
-// Fill modal data dynamically
+// ✅ Open modal for editing user
 window.openEditUserModal = function (user) {
-    // Set form action dynamically
-    const form = document.getElementById('editUserForm');
-    form.action = `/users/${user.id}`;
+    try {
+        // Set form action dynamically
+        const form = document.getElementById('editUserForm');
+        form.action = `/users/${user.id}`;
 
-    // Fill fields
-    document.getElementById('editUserId').value = user.id;
-    document.getElementById('editUserName').value = user.name;
-    document.getElementById('editUserUsername').value = user.username;
-    document.getElementById('editUserEmail').value = user.email;
-    document.getElementById('editUserMobile').value = user.mobile_number ?? '';
-    document.getElementById('editUserAddress').value = user.address ?? '';
+        // Fill fields
+        document.getElementById('editUserId').value = user.id;
+        document.getElementById('editUserName').value = user.name;
+        document.getElementById('editUserUsername').value = user.username;
+        document.getElementById('editUserEmail').value = user.email;
+        document.getElementById('editUserMobile').value = user.mobile_number ?? '';
+        document.getElementById('editUserAddress').value = user.address ?? '';
 
-    // Image preview
-    document.getElementById('editUserImagePreview').src =
-        user.image ? `/storage/${user.image}` : `/images/avatar/no-avatar.png`;
+        // Image preview
+        document.getElementById('editUserImagePreview').src =
+            user.image ? `/storage/${user.image}` : `/images/avatar/no-avatar.png`;
 
-    // // Roles (Vue)
-    // if (window.editRoleApp) {
-    //     editRoleApp.selectedRoles = user.roles.map(role => role.id);
-    // }
+        // ✅ Safely handle roles
+        if (window.editRoleApp) {
+            editRoleApp.selectedRoles = Array.isArray(user.roles)
+                ? user.roles.map(role => role.id)
+                : [];
+        }
 
-    // Show modal
-    const modal = new bootstrap.Modal(document.getElementById('UserEditModal'));
-    modal.show();
-}
+        // ✅ Show modal
+        const modal = new bootstrap.Modal(document.getElementById('UserEditModal'));
+        modal.show();
+    } catch (error) {
+        console.error('Error opening edit modal:', error);
+    }
+};
 </script>
+

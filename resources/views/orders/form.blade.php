@@ -335,14 +335,38 @@ input[type=number] {
                                 >
 
                                 <td>
-                                    <input
-                                    type="number"
-                                    v-model.number="item.qty"
-                                    :name="`order_details[${index}][quantity]`"
-                                    min="1"
-                                    class="form-control form-control-sm"
-                                    >
-                                </td>
+  <div class="input-group input-group-sm" style="width: 120px;">
+    <div class="input-group-prepend">
+      <button
+        type="button"
+        class="btn btn-primary"
+        @click="item.qty = Math.max(1, item.qty - 1)"
+      >
+        -
+      </button>
+    </div>
+
+    <input
+      type="number"
+      step="0.01"
+      min="1"
+      class="form-control form-control-sm text-center"
+      v-model.number="item.qty"
+      :name="`order_details[${index}][quantity]`"
+    >
+
+    <div class="input-group-append">
+      <button
+        type="button"
+        class="btn btn-primary"
+        @click="item.qty++"
+      >
+        +
+      </button>
+    </div>
+  </div>
+</td>
+
 
                                 <td>@{{ item.price.toFixed(2) }}</td>
                                 <input 

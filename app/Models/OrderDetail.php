@@ -54,7 +54,12 @@ class OrderDetail extends Model
         return $this->product->name ?? $this->component->name ?? 'Unknown Item';
     }
     public function orderItems()
-{
-    return $this->hasMany(OrderItem::class, 'order_detail_id');
-}
+    {
+        return $this->hasMany(OrderItem::class, 'order_detail_id');
+    }
+    public function inventoryDeductions()
+    {
+        return $this->hasMany(InventoryDeduction::class);
+    }
+
 }

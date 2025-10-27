@@ -16,7 +16,11 @@ class UserController extends Controller
     {
         $status = $request->get('status', 'active'); // default to active
 
-        $users = User::where('status', $status)->get();
+        // ✅ Include roles relationship here
+        $users = User::with('roles:id,name')
+            ->where('status', $status)
+            ->get();
+
         $nextUserId = User::max('id') + 1;
         $roles = Role::all();
 

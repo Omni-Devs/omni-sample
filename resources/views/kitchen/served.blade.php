@@ -1,4 +1,13 @@
 @extends('layouts.app')
+<style>
+   .sortable {
+  cursor: pointer;
+  user-select: none;
+}
+.sortable:hover {
+  background-color: #f8f9fa;
+}
+</style>
 @section('content')
 <div class="main-content" id="servedApp">
 <div>
@@ -97,41 +106,51 @@
                      </colgroup>
                      <thead style="min-width: auto; width: auto;">
                         <tr>
-                           <th scope="col" class="vgt-left-align text-left sortable">
-                              <span>Order No.</span>
-                              <button><span class="sr-only">Sort table by Order No in descending order</span></button>
-                           </th>
-                           <th scope="col" class="vgt-left-align text-left sortable">
-                              <span>Time Ordered</span>
-                              <button><span class="sr-only">Sort table by Time Ordered in descending order</span></button>
-                           </th>
-                           <th scope="col" class="vgt-left-align text-left sortable">
-                              <span>SKU</span>
-                              <button><span class="sr-only">Sort table by SKU in descending order</span></button>
-                           </th>
-                           <th scope="col" class="vgt-left-align text-left sortable">
-                              <span>Product Name</span>
-                              <button><span class="sr-only">Sort table by Product Name in descending order</span></button>
-                           </th>
-                           <th scope="col" class="vgt-left-align text-right sortable">
-                              <span>Qty</span>
-                              <button><span class="sr-only">Sort table by Qty in descending order</span></button>
-                           </th>
-                           <th scope="col" class="vgt-left-align text-right sortable">
-                              <span>Station</span>
-                              <button><span class="sr-only">Sort table by Station in descending order</span></button>
-                           </th>
-                           <th scope="col" class="vgt-left-align text-right sortable">
-                              <span>Time Served</span>
-                              <button><span class="sr-only">Sort table by Running Time in descending order</span></button>
-                           </th>
-                           <th scope="col" class="vgt-left-align text-right sortable">
-                              <span>Chef, Cook</span>
-                           </th>
-                           <th scope="col" class="vgt-left-align text-right">
-                              <span>Action</span>
-                           </th>
-                        </tr>
+  <th scope="col" class="vgt-left-align text-left sortable" @click="sortTable('order_no')">
+    <span>Order No.</span>
+    <i :class="getSortIcon('order_no')" class="ms-1"></i>
+  </th>
+
+  <th scope="col" class="vgt-left-align text-left sortable" @click="sortTable('time_submitted')">
+    <span>Time Ordered</span>
+    <i :class="getSortIcon('time_submitted')" class="ms-1"></i>
+  </th>
+
+  <th scope="col" class="vgt-left-align text-left sortable" @click="sortTable('code')">
+    <span>SKU</span>
+    <i :class="getSortIcon('code')" class="ms-1"></i>
+  </th>
+
+  <th scope="col" class="vgt-left-align text-left sortable" @click="sortTable('name')">
+    <span>Product Name</span>
+    <i :class="getSortIcon('name')" class="ms-1"></i>
+  </th>
+
+  <th scope="col" class="vgt-left-align text-right sortable" @click="sortTable('qty')">
+    <span>Qty</span>
+    <i :class="getSortIcon('qty')" class="ms-1"></i>
+  </th>
+
+  <th scope="col" class="vgt-left-align text-right sortable" @click="sortTable('station')">
+    <span>Station</span>
+    <i :class="getSortIcon('station')" class="ms-1"></i>
+  </th>
+
+  <th scope="col" class="vgt-left-align text-right sortable" @click="sortTable('time_submitted')">
+    <span>Time Served</span>
+    <i :class="getSortIcon('time_submitted')" class="ms-1"></i>
+  </th>
+
+  <th scope="col" class="vgt-left-align text-right sortable" @click="sortTable('cook_name')">
+    <span>Chef, Cook</span>
+    <i :class="getSortIcon('cook_name')" class="ms-1"></i>
+  </th>
+
+  <th scope="col" class="vgt-left-align text-right">
+    <span>Action</span>
+  </th>
+</tr>
+
                      </thead>
                      <tbody>
                         <tr v-for="detail in filteredDetails" :key="detail.id">
@@ -206,6 +225,8 @@ new Vue({
          'January', 'February', 'March', 'April', 'May', 'June',
          'July', 'August', 'September', 'October', 'November', 'December'
       ],
+    sortKey: '',
+    sortAsc: true,
    },
    computed: {
       years() {
@@ -215,15 +236,81 @@ new Vue({
       daysInMonth() {
          return Array.from({ length: new Date(this.selectedYear, this.selectedMonth, 0).getDate() }, (_, i) => i + 1);
       },
+      // 🔹 Filtered + Sorted served details
       filteredDetails() {
-         return this.servedDetails.filter(detail => {
-            const date = new Date(detail.order.time_submitted);
-            return (
-               date.getFullYear() === this.selectedYear &&
-               date.getMonth() + 1 === this.selectedMonth &&
-               date.getDate() === this.selectedDay
-            );
+      // Step 1: Filter by selected date
+      let data = this.servedDetails.filter(detail => {
+         const date = new Date(detail.order.time_submitted);
+         return (
+            date.getFullYear() === this.selectedYear &&
+            date.getMonth() + 1 === this.selectedMonth &&
+            date.getDate() === this.selectedDay
+         );
+      });
+
+      // Step 2: Sort (if a column is selected)
+      if (this.sortKey) {
+         data = [...data].sort((a, b) => {
+            let valA, valB;
+
+            // 🧩 Map your sort keys to actual data fields
+            switch (this.sortKey) {
+            case 'order_no':
+               valA = a.order.id;
+               valB = b.order.id;
+               break;
+            case 'time_submitted':
+               valA = a.order.time_submitted;
+               valB = b.order.time_submitted;
+               break;
+            case 'time_served':
+               valA = a.time_served;
+               valB = b.time_served;
+               break;
+            case 'code':
+               valA = a.product?.code || '';
+               valB = b.product?.code || '';
+               break;
+            case 'name':
+               valA = a.product?.name || '';
+               valB = b.product?.name || '';
+               break;
+            case 'qty':
+               valA = a.qty;
+               valB = b.qty;
+               break;
+            case 'station':
+               valA = a.product?.category?.name || '';
+               valB = b.product?.category?.name || '';
+               break;
+            case 'cook_name':
+               valA = a.order_items?.cook?.name || '';
+               valB = b.order_items?.cook?.name || '';
+               break;
+            default:
+               return 0;
+            }
+
+            // 🕐 Handle dates
+            if (this.sortKey === 'time_submitted' || this.sortKey === 'time_served') {
+            return this.sortAsc
+               ? new Date(valA) - new Date(valB)
+               : new Date(valB) - new Date(valA);
+            }
+
+            // 🧮 Handle numeric
+            if (!isNaN(valA) && !isNaN(valB)) {
+            return this.sortAsc ? valA - valB : valB - valA;
+            }
+
+            // 🔤 Default string compare
+            return this.sortAsc
+            ? String(valA).localeCompare(String(valB))
+            : String(valB).localeCompare(String(valA));
          });
+      }
+
+      return data;
       }
    },
    methods: {
@@ -247,6 +334,18 @@ new Vue({
          hours = hours % 12 || 12;
          const minutesStr = minutes.toString().padStart(2, '0');
          return `${hours}:${minutesStr} ${ampm}`;
+      },
+      sortTable(key) {
+         if (this.sortKey === key) {
+            this.sortAsc = !this.sortAsc; // toggle sort direction
+         } else {
+            this.sortKey = key;
+            this.sortAsc = true;
+         }
+      },
+      getSortIcon(key) {
+         if (this.sortKey !== key) return 'fa fa-sort text-muted'; // neutral icon
+         return this.sortAsc ? 'fa fa-sort-up text-primary' : 'fa fa-sort-down text-primary';
       },
    }
 });
