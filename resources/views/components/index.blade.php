@@ -282,122 +282,234 @@
                            </tr>
                            @endforelse
                         </tbody>
-                  </div>
+                </div>
                   </td></tr></tbody></table>
 
-                  <script>
+               <script>
 function openRemarksModal(componentId) {
     // Set the hidden input
     document.getElementById('remarksItemId').value = componentId;
+
     // Clear previous remarks
     document.getElementById('remarksText').value = '';
-    // Fetch existing remarks (from your existing remarks table)
-    fetch(`/components/${componentId}/remarks`)
+
+    // Fetch existing remarks via /remarks?component_id=ID
+    fetch(`/remarks?component_id=${componentId}`)
         .then(res => res.json())
         .then(data => {
             const timeline = document.getElementById('remarksTimeline');
             timeline.innerHTML = '';
-            if (data.length === 0) {
-                timeline.innerHTML = '<li>No remarks yet.</li>';
+
+            const filteredRemarks = data.filter(remark => remark.component_id == componentId);
+
+            if (filteredRemarks.length === 0) {
+                timeline.innerHTML = '<li>No remarks yet for this component.</li>';
             } else {
-                data.forEach(remark => {
+                filteredRemarks.forEach(remark => {
                     const li = document.createElement('li');
-                    li.textContent = `${remark.created_at}: ${remark.remarks}`;
+                    li.classList.add('mb-3', 'p-2', 'border-start', 'border-3', 'border-primary');
+
+                    // Format timestamp
+                    const date = new Date(remark.created_at);
+                    const formattedDate = date.toLocaleString('en-US', {
+                        month: '2-digit',
+                        day: '2-digit',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit',
+                        hour12: true
+                    });
+
+                    // HTML layout
+                    li.innerHTML = `
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="fw-bold text-primary">
+                            </span>
+                            <small class="text-muted">${formattedDate}</small>
+                        </div>
+                        <p class="mb-2">${remark.remarks}</p>
+                        <div>
+                            <button class="btn btn-sm btn-outline-primary me-1"
+                              onclick="markAsRead(${remark.id}, ${componentId})">Mark as Read</button>
+                           <button class="btn btn-sm btn-primary"
+                              onclick="markAsUnread(${remark.id}, ${componentId})">Mark as Unread</button>
+                        </div>
+                    `;
+
                     timeline.appendChild(li);
                 });
             }
         })
         .catch(err => console.error(err));
+
     // Show modal
     const modal = new bootstrap.Modal(document.getElementById('remarksModal'));
     modal.show();
 }
+
+        function showRemarksBadge(componentId) {
+    const badge = document.getElementById(`remarksBadge-${componentId}`);
+    if (badge) badge.classList.remove('d-none');
+}
+
+function hideRemarksBadge(componentId) {
+    const badge = document.getElementById(`remarksBadge-${componentId}`);
+    if (badge) badge.classList.add('d-none');
+}
+
+function markAsRead(remarkId, componentId) {
+    fetch(`/component-remarks/${remarkId}/mark-read`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        }
+    })
+    .then(res => res.json())
+    .then(() => {
+        hideRemarksBadge(componentId);
+        alert('✅ Marked as Read');
+    })
+    .catch(err => console.error('Error marking as read:', err));
+}
+
+function markAsUnread(remarkId, componentId) {
+    fetch(`/component-remarks/${remarkId}/mark-unread`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        }
+    })
+    .then(res => res.json())
+    .then(() => {
+        showRemarksBadge(componentId);
+        alert('🔔 Marked as Unread');
+    })
+    .catch(err => console.error('Error marking as unread:', err));
+}
 // Handle form submission
-document.getElementById('remarksForm').addEventListener('submit', function (e) {
-   e.preventDefault();
-   const componentId = document.getElementById('remarksItemId').value;
-   const remarks = document.getElementById('remarksText').value;
-   const submitBtn = this.querySelector('button[type="submit"]');
-   if (submitBtn) submitBtn.disabled = true;
-   function getCsrfToken() {
-      const meta = document.querySelector('meta[name="csrf-token"]');
-      if (meta) return meta.getAttribute('content');
-      const tokenInput = document.querySelector('input[name="_token"]');
-      return tokenInput ? tokenInput.value : null;
-   }
-   if (typeof axios !== 'undefined') {
-      axios.post(`/components/${componentId}/remarks`, { remarks: remarks })
-         .then(function (response) {
-            if (response.data && response.data.success) {
-               openRemarksModal(componentId);
-               document.getElementById('remarksText').value = '';
-            } else {
-               alert('Failed to save remark.');
-            }
+   document.addEventListener('DOMContentLoaded', function () {
+      const remarksForm = document.getElementById('remarksForm');
+      const remarksText = document.getElementById('remarksText');
+      const timeline = document.getElementById('remarksTimeline');
+
+      // Create success alert element
+      const alertBox = document.createElement('div');
+      alertBox.className = 'alert alert-success mt-2 d-none';
+      alertBox.textContent = '✅ Remark added successfully!';
+      remarksForm.appendChild(alertBox);
+
+      remarksForm.addEventListener('submit', function (e) {
+         e.preventDefault();
+
+         const remarks = remarksText.value.trim();
+         const componentId = document.getElementById('remarksItemId').value;
+
+         if (!remarks || !componentId) {
+               alert('Please enter a remark.');
+               return;
+         }
+
+         fetch(`/component-remarks/store`, {
+               method: 'POST',
+               headers: {
+                  'Content-Type': 'application/json',
+                  'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+               },
+               body: JSON.stringify({
+                  component_id: componentId,
+                  remarks: remarks
+               })
          })
-         .catch(function (error) {
-            console.error('Axios error saving remark:', error);
-            alert('Error saving remark. See console for details.');
+         .then(res => res.json())
+         .then(data => {
+               // Show success message
+               alertBox.classList.remove('d-none');
+
+               // Clear input field
+               remarksText.value = '';
+
+               // Refresh remarks list
+               fetch(`/remarks?component_id=${componentId}`)
+                  .then(res => res.json())
+                  .then(updatedData => {
+                     timeline.innerHTML = '';
+                     const filteredRemarks = updatedData.filter(r => r.component_id == componentId);
+
+                     if (filteredRemarks.length === 0) {
+                           timeline.innerHTML = '<li>No remarks yet for this component.</li>';
+                     } else {
+                           filteredRemarks.forEach(r => {
+                              const li = document.createElement('li');
+                              li.textContent = `${r.remarks}`;
+                              timeline.appendChild(li);
+                           });
+                     }
+
+                     // Show badge for component
+                     showRemarksBadge(componentId);
+
+                     // Hide alert after 2s
+                     setTimeout(() => alertBox.classList.add('d-none'), 2000);
+                  });
          })
-         .finally(function () { if (submitBtn) submitBtn.disabled = false; });
-      return;
-   }
-   // fallback to fetch
-   const csrfToken = getCsrfToken();
-   fetch(`/components/${componentId}/remarks`, {
-      method: 'POST',
-      credentials: 'same-origin',
-      headers: {
-         'Content-Type': 'application/json',
-         'Accept': 'application/json',
-         'X-CSRF-TOKEN': csrfToken
-      },
-      body: JSON.stringify({ remarks: remarks })
-   })
-   .then(res => res.json())
-   .then(data => {
-      if (data && data.success) {
-         openRemarksModal(componentId);
-         document.getElementById('remarksText').value = '';
-      } else {
-         console.error('Failed to save remark (fallback):', data);
-         alert('Failed to save remark.');
-      }
-   })
-   .catch(err => {
-      console.error('Fetch error saving remark:', err);
-      alert('Error saving remark. See console for details.');
-   })
-   .finally(() => { if (submitBtn) submitBtn.disabled = false; });
-});
+         .catch(err => {
+               console.error('Error:', err);
+               alert('❌ Failed to add remark');
+         });
+      });
+   });
 </script>
 
-               <!-- Remarks Modal -->
-      <div class="modal fade" id="remarksModal" tabindex="-1" role="dialog" aria-labelledby="remarksModalLabel" aria-hidden="true">
-      <div class="modal-dialog" role="document">
-         <div class="modal-content">
-            <header class="modal-header">
-            <h5 class="modal-title" id="remarksModalLabel">Remarks</h5>
-            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-               <span aria-hidden="true">&times;</span>
-            </button>
-            </header>
+<script>
+   document.addEventListener('DOMContentLoaded', function () {
+         fetch('/component-remarks')
+            .then(res => res.json())
+            .then(data => {
+                  // Filter only unread remarks
+                  const unreadRemarks = data.filter(r => r.status === 'unread');
+
+                  // Get unique component IDs with unread remarks
+                  const componentIdsWithUnread = [...new Set(
+                     unreadRemarks.map(r => r.component_id)
+                  )];
+
+                  // Loop through badges and show only those with unread remarks
+                  componentIdsWithUnread.forEach(componentId => {
+                     const badge = document.getElementById(`remarksBadge-${componentId}`);
+                     if (badge) {
+                        badge.classList.remove('d-none'); // show static badge
+                     }
+                  });
+            })
+            .catch(err => console.error('Error fetching remarks:', err));
+   });
+</script>
+
+         <!-- Remarks Modal -->
+         <div class="modal fade" id="remarksModal" tabindex="-1" role="dialog" aria-labelledby="remarksModalLabel" aria-hidden="true">
+         <div class="modal-dialog" role="document">
+            <div class="modal-content">
+               <header class="modal-header">
+               <h5 class="modal-title" id="remarksModalLabel">Remarks</h5>
+               <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+               </button>
+               </header>
 
             <div class="modal-body">
             <form id="remarksForm">
-    @csrf
-    <input type="hidden" id="remarksItemId"> 
-
-    <fieldset class="form-group">
-        <textarea 
-            name="remarks"             id="remarksText" 
-            class="form-control" 
-            rows="3" 
-            placeholder="Type your message" 
-            required
-        ></textarea>
-        <div class="invalid-feedback">This field is required</div>
-    </fieldset>
+         @csrf
+         <input type="hidden" id="remarksItemId" value="{{ $component->id ?? '' }}">
+         
+         <fieldset class="form-group">
+            <textarea 
+               name="remarks" placeholder="Type your message" rows="3" wrap="soft" class="form-control" cols="30" aria-describedby="Message-feedback" label="Message" id="remarksText">
+            </textarea>   
+            <div class="invalid-feedback">This field is required</div>
+         </fieldset>
 
                   <div class="d-flex justify-content-end">
                      <button type="submit" class="btn btn-primary btn-icon btn-rounded">
@@ -408,12 +520,27 @@ document.getElementById('remarksForm').addEventListener('submit', function (e) {
 
                <hr>
 
-               <ul class="timeline" id="remarksTimeline"></ul>
+               
+               <div class="modal-body">
+            <!-- Form -->
+            <form id="remarksForm">
+               @csrf
+               <input type="hidden" id="remarksItemId" value="{{ $component->id ?? '' }}">
+
+               <div class="mb-3">
+                  <div class="d-flex align-items-center">
+                     <i class="i-User me-2"></i>
+                     <span class="text-primary fw-bold">
+                        {{ Auth::check() ? Auth::user()->name : 'Guest User' }}
+                     </span>
+                  </div>
+               </div>
+                           <ul class="timeline" id="remarksTimeline"></ul>
+               
                </div>
             </div>
          </div>
          </div>
-
                   <script>
                      document.addEventListener("DOMContentLoaded", function () {
                      const table = document.querySelector("#vgt-table");
@@ -455,36 +582,49 @@ document.getElementById('remarksForm').addEventListener('submit', function (e) {
                <!----> 
                <div class="vgt-wrap__footer vgt-clearfix">
                   <div class="footer__row-count vgt-pull-left">
-                     <form>
-                        <label for="vgt-select-rpp-1724262253017" class="footer__row-count__label">Rows per page:</label> 
-                        <select id="vgt-select-rpp-1724262253017" autocomplete="off" name="perPageSelect" aria-controls="vgt-table" class="footer__row-count__select">
-                           <option value="10">
-                              10
-                           </option>
-                           <option value="20">
-                              20
-                           </option>
-                           <option value="30">
-                              30
-                           </option>
-                           <option value="40">
-                              40
-                           </option>
-                           <option value="50">
-                              50
-                           </option>
-                           <!---->
-                        </select>
-                     </form>
+         <div class="vgt-wrap__footer vgt-clearfix mt-3">
+            <div class="footer__row-count vgt-pull-left">
+               <form method="GET" id="perPageForm" class="d-inline">
+                     <label for="vgt-select-rpp" class="footer__row-count__label">
+                        Rows per page:
+                     </label>
+                     <select name="perPage" id="perPage" onchange="this.form.submit()">
+                        @foreach([10, 20, 30, 40, 50] as $size)
+                              <option value="{{ $size }}" {{ request('perPage', 10) == $size ? 'selected' : '' }}>
+                                 {{ $size }}
+                              </option>
+                        @endforeach
+                     </select>
+               </form>
+            </div>
+         </div>
+
                   </div>
                   <div class="footer__navigation vgt-pull-right">
-                     <div data-v-347cbcfa="" class="footer__navigation__page-info">
-                        <div data-v-347cbcfa="">
-                           0 - 0 of 0
-                        </div>
-                     </div>
-                     <!----> <button type="button" aria-controls="vgt-table" class="footer__navigation__page-btn disabled"><span aria-hidden="true" class="chevron left"></span> <span>prev</span></button> <button type="button" aria-controls="vgt-table" class="footer__navigation__page-btn disabled"><span>next</span> <span aria-hidden="true" class="chevron right"></span></button> <!---->
-                  </div>
+                     <div class="footer__navigation__page-info me-3">
+               @php
+                  $from = ($components->currentPage() - 1) * $components->perPage() + 1;
+                  $to = min($from + $components->count() - 1, $components->total());
+               @endphp
+               <div>
+                  {{ $components->total() > 0 ? "$from - $to of {$components->total()}" : '0 - 0 of 0' }}
+               </div>
+         </div>
+
+         {{-- Prev button --}}
+         <a href="{{ $components->previousPageUrl() ?: '#' }}"
+            class="footer__navigation__page-btn {{ $components->onFirstPage() ? 'disabled' : '' }}">
+               <span aria-hidden="true" class="chevron left"></span> 
+               <span>prev</span>
+         </a>
+
+         {{-- Next button --}}
+         <a href="{{ $components->nextPageUrl() ?: '#' }}"
+            class="footer__navigation__page-btn {{ !$components->hasMorePages() ? 'disabled' : '' }}">
+               <span>next</span> 
+               <span aria-hidden="true" class="chevron right"></span>
+         </a>
+      </div>
                </div>
             </div>
          </div>

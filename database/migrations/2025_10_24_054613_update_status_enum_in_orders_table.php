@@ -3,29 +3,39 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
     /**
      * Run the migrations.
      */
-    public function up(): void
+    public function up()
     {
-        DB::statement("
-            ALTER TABLE orders 
-            MODIFY COLUMN status ENUM('serving', 'served', 'walked', 'cancelled') 
-            DEFAULT 'serving'
-        ");
+        Schema::table('orders', function (Blueprint $table) {
+            // Drop old status column
+            $table->dropColumn('status');
+        });
+
+        Schema::table('orders', function (Blueprint $table) {
+            // Add new status column with additional values
+            $table->enum('status', ['walked','served','serving','billout','payments','closed','cancelled',])->default('serving');
+        });
     }
 
-    public function down(): void
+    /**
+     * Reverse the migrations.
+     */
+    public function down()
     {
-        // Rollback to previous enum (without 'walked')
-        DB::statement("
-            ALTER TABLE orders 
-            MODIFY COLUMN status ENUM('serving', 'served', 'cancelled') 
-            DEFAULT 'serving'
-        ");
+        Schema::table('orders', function (Blueprint $table) {
+            // Drop the new status column
+            $table->dropColumn('status');
+        });
+
+        Schema::table('orders', function (Blueprint $table) {
+            // Re-add the old version
+            $table->enum('status', ['serving', 'billout', 'payments', 'closed', 'cancelled'])
+                    ->default('serving');
+        });
     }
 };

@@ -8,6 +8,13 @@
         <span class="_dot _r_block-dot bg-dark"></span>
         <span class="_dot _r_block-dot bg-dark"></span>
         <span class="_dot _r_block-dot bg-dark"></span>
+
+        {{-- 🔴 Badge indicator for remarks --}}
+    <span id="remarksBadge-{{ $id }}"
+        class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger text-white fw-bold d-none"
+        style="font-size: 0.55rem; transform: translate(40%, -40%) !important;">
+        1
+    </span>
     </button>
 
     <ul class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownMenu{{ $id ?? uniqid() }}">
@@ -140,9 +147,7 @@
         <!-- Remarks -->
         @isset($remarksRoute)
         <li role="presentation">
-            <a href="javascript:void(0);" 
-            class="dropdown-item" 
-            onclick="openRemarksModal({{ $id }})">
+            <a href="javascript:void(0);" class="dropdown-item" onclick="openRemarksModal({{ $id }})">
                 <i class="nav-icon i-Mail-Attachement font-weight-bold mr-2"></i> Remarks
             </a>
         </li>

@@ -275,7 +275,7 @@
                   </div>
                   </td></tr></tbody></table>
 
-<script>
+                  <script>
 function openRemarksModal(productId) {
     // Set the hidden input
     document.getElementById('remarksItemId').value = productId;
@@ -283,19 +283,50 @@ function openRemarksModal(productId) {
     // Clear previous remarks
     document.getElementById('remarksText').value = '';
 
-    // Fetch existing remarks (from your existing remarks table)
-    fetch(`/products/${productId}/remarks`)
+    // Fetch existing remarks via /remarks?product_id=ID
+    fetch(`/remarks?product_id=${productId}`)
         .then(res => res.json())
         .then(data => {
             const timeline = document.getElementById('remarksTimeline');
             timeline.innerHTML = '';
 
-            if (data.length === 0) {
-                timeline.innerHTML = '<li>No remarks yet.</li>';
+            const filteredRemarks = data.filter(remark => remark.product_id == productId);
+
+            if (filteredRemarks.length === 0) {
+                timeline.innerHTML = '<li>No remarks yet for this product.</li>';
             } else {
-                data.forEach(remark => {
+                filteredRemarks.forEach(remark => {
                     const li = document.createElement('li');
-                    li.textContent = `${remark.created_at}: ${remark.remarks}`;
+                    li.classList.add('mb-3', 'p-2', 'border-start', 'border-3', 'border-primary');
+
+                    // Format timestamp
+                    const date = new Date(remark.created_at);
+                    const formattedDate = date.toLocaleString('en-US', {
+                        month: '2-digit',
+                        day: '2-digit',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit',
+                        hour12: true
+                    });
+
+                    // HTML layout
+                    li.innerHTML = `
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="fw-bold text-primary">
+                            </span>
+                            <small class="text-muted">${formattedDate}</small>
+                        </div>
+                        <p class="mb-2">${remark.remarks}</p>
+                        <div>
+                             <button class="btn btn-sm btn-outline-primary me-1"
+                                 onclick="markAsRead(${remark.id}, ${productId})">Mark as Read</button>
+                              <button class="btn btn-sm btn-primary"
+                                 onclick="markAsUnread(${remark.id}, ${productId})">Mark as Unread</button>
+                        </div>
+                    `;
+
                     timeline.appendChild(li);
                 });
             }
@@ -307,72 +338,138 @@ function openRemarksModal(productId) {
     modal.show();
 }
 
+        function showRemarksBadge(productId) {
+    const badge = document.getElementById(`remarksBadge-${productId}`);
+    if (badge) badge.classList.remove('d-none');
+}
+
+function hideRemarksBadge(productId) {
+    const badge = document.getElementById(`remarksBadge-${productId}`);
+    if (badge) badge.classList.add('d-none');
+}
+
+function markAsRead(remarkId, productId) {
+    fetch(`/remarks/${remarkId}/mark-read`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        }
+    })
+    .then(res => res.json())
+    .then(() => {
+        hideRemarksBadge(productId);
+        alert('✅ Marked as Read');
+    })
+    .catch(err => console.error('Error marking as read:', err));
+}
+
+function markAsUnread(remarkId, productId) {
+    fetch(`/remarks/${remarkId}/mark-unread`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        }
+    })
+    .then(res => res.json())
+    .then(() => {
+        showRemarksBadge(productId);
+        alert('🔔 Marked as Unread');
+    })
+    .catch(err => console.error('Error marking as unread:', err));
+}
+
+         document.addEventListener('DOMContentLoaded', () => {
+            fetch('/remarks')
+               .then(res => res.json())
+               .then(data => {
+                     // only show badge for products that have UNREAD remarks
+                     const unreadRemarks = data.filter(r => r.status === 'unread');
+                     unreadRemarks.forEach(remark => {
+                        if (remark.product_id) {
+                           showRemarksBadge(remark.product_id);
+                        }
+                     });
+               })
+               .catch(err => console.error('Error fetching remarks:', err));
+         });
+
 // Handle form submission
-document.getElementById('remarksForm').addEventListener('submit', function (e) {
-   e.preventDefault();
+   document.addEventListener('DOMContentLoaded', function () {
+      const remarksForm = document.getElementById('remarksForm');
+      const remarksText = document.getElementById('remarksText');
+      const timeline = document.getElementById('remarksTimeline');
 
-   const productId = document.getElementById('remarksItemId').value;
-   const remarks = document.getElementById('remarksText').value;
+      // Create success alert element
+      const alertBox = document.createElement('div');
+      alertBox.className = 'alert alert-success mt-2 d-none';
+      alertBox.textContent = '✅ Remark added successfully!';
+      remarksForm.appendChild(alertBox);
 
-   const submitBtn = this.querySelector('button[type="submit"]');
-   if (submitBtn) submitBtn.disabled = true;
+      remarksForm.addEventListener('submit', function (e) {
+         e.preventDefault();
 
-   function getCsrfToken() {
-      const meta = document.querySelector('meta[name="csrf-token"]');
-      if (meta) return meta.getAttribute('content');
-      const tokenInput = document.querySelector('input[name="_token"]');
-      return tokenInput ? tokenInput.value : null;
-   }
+         const remarks = remarksText.value.trim();
+         const productId = document.getElementById('remarksItemId').value;
 
-   if (typeof axios !== 'undefined') {
-      axios.post(`/products/${productId}/remarks`, { remarks: remarks })
-         .then(function (response) {
-            if (response.data && response.data.success) {
-               openRemarksModal(productId);
-               document.getElementById('remarksText').value = '';
-            } else {
-               alert('Failed to save remark.');
-            }
+         if (!remarks || !productId) {
+               alert('Please enter a remark.');
+               return;
+         }
+
+         fetch(`/remarks/store`, {
+               method: 'POST',
+               headers: {
+                  'Content-Type': 'application/json',
+                  'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+               },
+               body: JSON.stringify({
+                  product_id: productId,
+                  remarks: remarks
+               })
          })
-         .catch(function (error) {
-            console.error('Axios error saving remark:', error);
-            alert('Error saving remark. See console for details.');
-         })
-         .finally(function () { if (submitBtn) submitBtn.disabled = false; });
-      return;
-   }
+         .then(res => res.json())
+         .then(data => {
+               // Show success message
+               alertBox.classList.remove('d-none');
 
-   // fallback to fetch
-   const csrfToken = getCsrfToken();
-   fetch(`/products/${productId}/remarks`, {
-      method: 'POST',
-      credentials: 'same-origin',
-      headers: {
-         'Content-Type': 'application/json',
-         'Accept': 'application/json',
-         'X-CSRF-TOKEN': csrfToken
-      },
-      body: JSON.stringify({ remarks: remarks })
-   })
-   .then(res => res.json())
-   .then(data => {
-      if (data && data.success) {
-         openRemarksModal(productId);
-         document.getElementById('remarksText').value = '';
-      } else {
-         console.error('Failed to save remark (fallback):', data);
-         alert('Failed to save remark.');
-      }
-   })
-   .catch(err => {
-      console.error('Fetch error saving remark:', err);
-      alert('Error saving remark. See console for details.');
-   })
-   .finally(() => { if (submitBtn) submitBtn.disabled = false; });
-});
+               // Clear input field
+               remarksText.value = '';
+
+               // Refresh remarks list
+               fetch(`/remarks?product_id=${productId}`)
+                  .then(res => res.json())
+                  .then(updatedData => {
+                     timeline.innerHTML = '';
+                     const filteredRemarks = updatedData.filter(r => r.product_id == productId);
+
+                     if (filteredRemarks.length === 0) {
+                           timeline.innerHTML = '<li>No remarks yet for this product.</li>';
+                     } else {
+                           filteredRemarks.forEach(r => {
+                              const li = document.createElement('li');
+                              li.textContent = `${r.remarks}`;
+                              timeline.appendChild(li);
+                           });
+                     }
+
+                     // Show badge for product
+                     showRemarksBadge(productId);
+
+                     // Hide alert after 2s
+                     setTimeout(() => alertBox.classList.add('d-none'), 2000);
+                  });
+         })
+         .catch(err => {
+               console.error('Error:', err);
+               alert('❌ Failed to add remark');
+         });
+      });
+   });
 </script>
 
-                  <!-- Remarks Modal -->
+         <!-- Remarks Modal -->
          <div class="modal fade" id="remarksModal" tabindex="-1" role="dialog" aria-labelledby="remarksModalLabel" aria-hidden="true">
          <div class="modal-dialog" role="document">
             <div class="modal-content">
@@ -383,21 +480,17 @@ document.getElementById('remarksForm').addEventListener('submit', function (e) {
                </button>
                </header>
 
-               <div class="modal-body">
-               <form id="remarksForm">
-    @csrf
-    <input type="hidden" id="remarksItemId"> 
-    
-    <fieldset class="form-group">
-        <textarea 
-            name="remarks"             id="remarksText" 
-            class="form-control" 
-            rows="3" 
-            placeholder="Type your message" 
-            required
-        ></textarea>
-        <div class="invalid-feedback">This field is required</div>
-    </fieldset>
+            <div class="modal-body">
+            <form id="remarksForm">
+         @csrf
+         <input type="hidden" id="remarksItemId" value="{{ $product->id ?? '' }}">
+         
+         <fieldset class="form-group">
+            <textarea 
+               name="remarks" placeholder="Type your message" rows="3" wrap="soft" class="form-control" cols="30" aria-describedby="Message-feedback" label="Message" id="remarksText">
+            </textarea>   
+            <div class="invalid-feedback">This field is required</div>
+         </fieldset>
 
                   <div class="d-flex justify-content-end">
                      <button type="submit" class="btn btn-primary btn-icon btn-rounded">
@@ -408,7 +501,23 @@ document.getElementById('remarksForm').addEventListener('submit', function (e) {
 
                <hr>
 
-               <ul class="timeline" id="remarksTimeline"></ul>
+               
+               <div class="modal-body">
+            <!-- Form -->
+            <form id="remarksForm">
+               @csrf
+               <input type="hidden" id="remarksItemId" value="{{ $product->id ?? '' }}">
+
+               <div class="mb-3">
+                  <div class="d-flex align-items-center">
+                     <i class="i-User me-2"></i>
+                     <span class="text-primary fw-bold">
+                        {{ Auth::check() ? Auth::user()->name : 'Guest User' }}
+                     </span>
+                  </div>
+               </div>
+                           <ul class="timeline" id="remarksTimeline"></ul>
+               
                </div>
             </div>
          </div>
@@ -464,35 +573,49 @@ document.getElementById('remarksForm').addEventListener('submit', function (e) {
                <!----> 
                <div class="vgt-wrap__footer vgt-clearfix">
                   <div class="footer__row-count vgt-pull-left">
-                     <form>
-                        <label for="vgt-select-rpp-1724262253017" class="footer__row-count__label">Rows per page:</label> 
-                        <select id="vgt-select-rpp-1724262253017" autocomplete="off" name="perPageSelect" aria-controls="vgt-table" class="footer__row-count__select">
-                           <option value="10">
-                              10
-                           </option>
-                           <option value="20">
-                              20
-                           </option>
-                           <option value="30">
-                              30x1
-                           </option>
-                           <option value="40">
-                              40
-                           </option>
-                           <option value="50">
-                              50
-                           </option>
-                           <!---->
-                        </select>
-                     </form>
+                              <div class="vgt-wrap__footer vgt-clearfix mt-3">
+            <div class="footer__row-count vgt-pull-left">
+               <form method="GET" id="perPageForm" class="d-inline">
+                     <label for="vgt-select-rpp" class="footer__row-count__label">
+                        Rows per page:
+                     </label>
+                     <select name="perPage" id="perPage" onchange="this.form.submit()">
+                        @foreach([10, 20, 30, 40, 50] as $size)
+                              <option value="{{ $size }}" {{ request('perPage', 10) == $size ? 'selected' : '' }}>
+                                 {{ $size }}
+                              </option>
+                        @endforeach
+                     </select>
+               </form>
+            </div>
+         </div>
                   </div>
+
+                  
                   <div class="footer__navigation vgt-pull-right">
-                     <div data-v-347cbcfa="" class="footer__navigation__page-info">
-                        <div data-v-347cbcfa="">
-                           0 - 0 of 0
-                        </div>
-                     </div>
-                     <!----> <button type="button" aria-controls="vgt-table" class="footer__navigation__page-btn disabled"><span aria-hidden="true" class="chevron left"></span> <span>prev</span></button> <button type="button" aria-controls="vgt-table" class="footer__navigation__page-btn disabled"><span>next</span> <span aria-hidden="true" class="chevron right"></span></button> <!---->
+                        <div class="footer__navigation__page-info me-3">
+               @php
+                  $from = ($products->currentPage() - 1) * $products->perPage() + 1;
+                  $to = min($from + $products->count() - 1, $products->total());
+               @endphp
+               <div>
+                  {{ $products->total() > 0 ? "$from - $to of {$products->total()}" : '0 - 0 of 0' }}
+               </div>
+         </div>
+
+         {{-- Prev button --}}
+         <a href="{{ $products->previousPageUrl() ?: '#' }}"
+            class="footer__navigation__page-btn {{ $products->onFirstPage() ? 'disabled' : '' }}">
+               <span aria-hidden="true" class="chevron left"></span> 
+               <span>prev</span>
+         </a>
+
+         {{-- Next button --}}
+         <a href="{{ $products->nextPageUrl() ?: '#' }}"
+            class="footer__navigation__page-btn {{ !$products->hasMorePages() ? 'disabled' : '' }}">
+               <span>next</span> 
+               <span aria-hidden="true" class="chevron right"></span>
+         </a>
                   </div>
                </div>
             </div>
