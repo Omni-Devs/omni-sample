@@ -15,16 +15,35 @@ class ProductController extends Controller
 {
     public function index(Request $request)
     {
-        // Default to 'active'
+         // Defaults
         $status = $request->get('status', 'active');
+        $perPage = $request->get('perPage', 10);
+        $search = $request->get('search'); // ✅ added for search
 
-        // Fetch only products with the given status
+        // Fetch products with optional search
         $products = Product::with(['category', 'subcategory'])
             ->where('status', $status)
+            ->when($search, function ($query, $search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                        ->orWhere('code', 'like', "%{$search}%")
+                        ->orWhereHas('category', function ($q) use ($search) {
+                            $q->where('name', 'like', "%{$search}%");
+                        })
+                        ->orWhereHas('subcategory', function ($q) use ($search) {
+                            $q->where('name', 'like', "%{$search}%");
+                        });
+                });
+            })
             ->orderBy('created_at', 'desc')
-            ->get();
+            ->paginate($perPage)
+            ->appends([
+                'perPage' => $perPage,
+                'status' => $status,
+                'search' => $search, // ✅ keep search on pagination
+            ]);
 
-        return view('products.index', compact('products', 'status'));
+        return view('products.index', compact('products', 'status', 'search'));
     }
 
     public function create()
