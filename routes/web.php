@@ -16,11 +16,13 @@ use App\Http\Controllers\UnitController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\CashEquivalentController;
+use App\Http\Controllers\ComponentRemarkController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\KitchenController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\SalesJournalController;
 use App\Http\Controllers\PosSessionController;
+use App\Http\Controllers\RemarkController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\UserSessionController;
 use App\Models\User;
@@ -46,7 +48,22 @@ View::composer('layouts.sidebar', function ($view) {
     $view->with('managers', $managers);
 });
 
+Route::get('/remarks', [RemarkController::class, 'index'])->name('remarks.index');
+Route::get('/remarks/create', [RemarkController::class, 'create'])->name('remarks.create');
+Route::post('/remarks/store', [RemarkController::class, 'store'])->name('remarks.store');
+Route::put('/remarks/{id}/mark-read', [RemarkController::class, 'markRead']);
+Route::put('/remarks/{id}/mark-unread', [RemarkController::class, 'markUnread']);
 
+
+Route::get('/component-remarks', [ComponentRemarkController::class, 'index'])->name('component-remarks.index');
+Route::get('/component-remarks/create', [ComponentRemarkController::class, 'create'])->name('component-remarks.create'); 
+Route::post('/component-remarks/store', [ComponentRemarkController::class, 'store'])->name('component-remarks.store');
+Route::put('/component-remarks/{id}/mark-read', [ComponentRemarkController::class, 'markRead']);
+Route::put('/component-remarks/{id}/mark-unread', [ComponentRemarkController::class, 'markUnread']);
+
+// Route::get('/components/{component}/remarks', [ComponentRemarkController::class, 'index']);
+// Route::post('/components/{component}/remarks', [ComponentRemarkController::class, 'store']);
+// Route::post('/components/{component}/remarks/mark-read', [ComponentRemarkController::class, 'markRead']);
 
 Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
 Route::get('/order/create', [OrderController::class, 'create'])->name('orders.create');
@@ -171,9 +188,6 @@ Route::put('/discounts/{discount}', [DiscountController::class, 'update'])->name
 Route::delete('/discounts/{id}', [DiscountController::class, 'destroy'])->name('discounts.destroy');
 Route::put('/discounts/{discount}/archive', [DiscountController::class, 'archive'])->name('discounts.archive');
 Route::put('/discounts/{discount}/restore', [DiscountController::class, 'restore'])->name('discounts.restore');
-
-Route::get('/products/{product}/remarks', [ProductController::class, 'remarks']);
-Route::post('/products/{product}/remarks', [ProductController::class, 'storeRemark']);
 
 Route::get('/components/{component}/remarks', [ComponentController::class, 'remarks']);
 Route::post('/components/{component}/remarks', [ComponentController::class, 'storeRemark']);

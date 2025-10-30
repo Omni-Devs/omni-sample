@@ -802,9 +802,6 @@ function confirmBillOut(orderId) {
       // ✅ Attach JSON string of all persons to form data
    formData.append('persons', JSON.stringify(personsData));
 
-      // ✅ Confirm user action before submitting
-      if (!confirm('Are you sure you want to confirm this Bill Out?')) return;
-
       // ✅ Submit request
       fetch(form.action, {
          method: 'POST',

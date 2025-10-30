@@ -12,15 +12,28 @@ class ComponentController extends Controller
 {
     public function index(Request $request)
     {
-        $status = $request->get('status', 'active');
+  $status = $request->get('status', 'active');
+    $perPage = $request->get('perPage', 10);
+    $search = $request->get('search'); // ✅ get the search input
 
-        // eager load category + subcategory for efficiency
-        $components = Component::with(['category', 'subcategory'])
-            ->where('status', $status)
-                        ->orderBy('created_at', 'desc')
-                        ->get();
+    $components = Component::with(['category', 'subcategory'])
+        ->where('status', $status)
+        ->when($search, function ($query, $search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhereHas('category', function ($q) use ($search) {
+                      $q->where('name', 'like', "%{$search}%");
+                  })
+                  ->orWhereHas('subcategory', function ($q) use ($search) {
+                      $q->where('name', 'like', "%{$search}%");
+                  });
+            });
+        })
+        ->orderBy('created_at', 'desc')
+        ->paginate($perPage)
+        ->appends(['search' => $search, 'perPage' => $perPage]); // ✅ keep search and perPage on pagination links
 
-        return view('components.index', compact('components', 'status'));
+    return view('components.index', compact('components', 'status', 'search'));
     }
 
     public function create()

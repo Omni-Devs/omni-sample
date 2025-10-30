@@ -14,6 +14,7 @@ class Remark extends Model
         'component_id',
         'user_id',
         'remarks',
+        'status',
     ];
 
     public function product()

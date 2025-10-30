@@ -100,40 +100,6 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 // --- Sortable Table ---
-// document.addEventListener("DOMContentLoaded", function () {
-//     const table = document.querySelector("#vgt-table");
-//     if (!table) return;
-
-//     const headers = table.querySelectorAll("thead th");
-
-//     headers.forEach((header, index) => {
-//         if (!header.classList.contains("sortable")) return;
-
-//         const button = header.querySelector("button");
-//         if (!button) return;
-
-//         let asc = true;
-//         button.addEventListener("click", function () {
-//             const tbody = table.querySelector("tbody");
-//             const rows = Array.from(tbody.querySelectorAll("tr"));
-
-//             rows.sort((a, b) => {
-//                 let aText = a.querySelectorAll("td")[index]?.textContent.trim() || "";
-//                 let bText = b.querySelectorAll("td")[index]?.textContent.trim() || "";
-
-//                 if (!isNaN(aText) && !isNaN(bText) && aText !== "" && bText !== "") {
-//                     return asc ? Number(aText) - Number(bText) : Number(bText) - Number(aText);
-//                 }
-//                 return asc ? aText.localeCompare(bText) : bText.localeCompare(aText);
-//             });
-
-//             rows.forEach((row) => tbody.appendChild(row));
-//             asc = !asc;
-//         });
-//     });
-// });
-
-// --- Sortable Table ---
 document.addEventListener("DOMContentLoaded", function () {
     const table = document.querySelector("#vgt-table");
     if (!table) return;
