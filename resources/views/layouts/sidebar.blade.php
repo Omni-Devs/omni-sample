@@ -474,33 +474,75 @@ const currentTime = now.toTimeString().slice(0, 5); // e.g., "09:45"
 new Vue({
   el: "#startEndApp",
   data: {
-    // state
-    modalMode: 'open', // or 'close'
-    hasStartedPOS: localStorage.getItem('hasStartedPOS') === '1' ? 1 : 0,
-
-    // session details
+    modalMode: 'open',
     sessionData: null,
     branch_id: 1,
     terminal_no: 'T1',
+    startingFund: 0,
+    cash_sales: 0,
+    total_denomination: 0,
+    tip: 0,
 
-    // open session fields
     currentDate: '',
     currentTime: '',
-    changeFund: '',
-
-    // close session fields
     closingDate: '',
     closingTime: '',
     endCash: '',
     remarks: '',
 
-    manualTimeEdit: false,
-  },
+    hasStartedPOS: localStorage.getItem('hasStartedPOS') === '1' ? 1 : 0,
+
+    // 💵 Individual denomination fields (now match DB columns)
+    denom_1000: 0,
+    denom_500: 0,
+    denom_200: 0,
+    denom_100: 0,
+    denom_50: 0,
+    denom_20: 0,
+    denom_10: 0,
+    denom_5: 0,
+    denom_1: 0,
+    denom_050: 0,
+    denom_025: 0,
+    denom_010: 0,
+    denom_005: 0,
+
+    cashSales: 0,
+    gcashSales: 0,
+    bdoSales: 0,
+    bpiSales: 0,
+    receivableBPI: 0,
+    tip: 0,
+    transferTo: '',
+    transferAmount: 0,
+
+   manualTimeEdit: false,
+   },
 
   mounted() {
     this.setInitialDateTime();
     this.checkExistingSession();
     this.startAutoTimeUpdate();
+
+    // Attach after mount just in case
+  this.$nextTick(() => {
+    this.attachDenominationListeners();
+  });
+  // Run once Vue is mounted
+  this.initDenominationWatcher();
+
+  // Attach again when modal is shown
+  const modalEl = document.getElementById('startPOSModal');
+  if (modalEl) {
+    modalEl.addEventListener('shown.bs.modal', () => {
+      console.log('Modal shown — attaching listeners');
+      this.attachDenominationListeners();
+    });
+  }
+  setTimeout(() => {
+    this.attachDenominationListeners();
+  }, 300); // wait 0.3s to let modal/table render
+    
 
     // 🧩 Attach sidebar handlers
     document.querySelector('.startEndTrigger')?.addEventListener('click', (e) => {
@@ -518,6 +560,59 @@ new Vue({
       this.handlePOSNavigation('/orders', true);
     }
   },
+
+  
+  computed: {
+    // 🔹 Total from denomination inputs
+  denominationTotal() {
+    const total =
+      (this.denom_1000 * 1000) +
+      (this.denom_500 * 500) +
+      (this.denom_200 * 200) +
+      (this.denom_100 * 100) +
+      (this.denom_50 * 50) +
+      (this.denom_20 * 20) +
+      (this.denom_10 * 10) +
+      (this.denom_5 * 5) +
+      (this.denom_1 * 1) +
+      (this.denom_050 * 0.5) +
+      (this.denom_025 * 0.25) +
+      (this.denom_010 * 0.1) +
+      (this.denom_005 * 0.05);
+
+    return isNaN(total) ? 0 : parseFloat(total.toFixed(2));
+  },
+
+  // 🔹 POS cash sales + starting fund
+  posCashSalesTotal() {
+    const total =
+      (parseFloat(this.cash_sales) || 0) +
+      (parseFloat(this.startingFund) || 0);
+    return parseFloat(total.toFixed(2));
+  },
+
+  // 🔹 Expected cash = sales + fund
+  expectedCash() {
+    return this.posCashSalesTotal;
+  },
+
+  // 🔹 Actual cash counted (denominations + tips)
+  actualCashCounted() {
+    return this.denominationTotal;
+  },
+
+  // 🔹 Shortage (if actual < expected)
+  shortage() {
+    const diff = this.actualCashCounted - this.expectedCash;
+    return diff < 0 ? Math.abs(diff).toFixed(2) : 0;
+  },
+
+  // 🔹 Overage (if actual > expected)
+  overage() {
+    const diff = this.actualCashCounted - this.expectedCash;
+    return diff > 0 ? diff.toFixed(2) : 0;
+  },
+},
 
   methods: {
     // 🕒 Initialize current and closing datetime
@@ -542,27 +637,78 @@ new Vue({
         }
       }, 1000);
     },
+    async fetchOpenSession() {
+  try {
+    const response = await axios.get('/pos/session/check', {
+      params: { terminal_no: this.terminal_no }
+    });
+
+    const session = response.data.session;
+    if (response.data.has_open_session && session) {
+      // 🧾 Set your data
+      this.startingFund = session.starting_fund || 0;
+
+      // 🪣 Also store it in localStorage for persistence (optional)
+      localStorage.setItem('startingFund', this.startingFund);
+
+    } else {
+      console.warn('No open session found for terminal', this.terminal_no);
+    }
+  } catch (error) {
+    console.error('Error fetching session info:', error);
+  }
+},
+
+
+    initDenominationWatcher() {
+    const modal = document.getElementById('endOfDayModal');
+    if (modal) {
+      // Bootstrap event: fires when modal is fully shown
+      modal.addEventListener('shown.bs.modal', () => {
+        console.log('✅ Modal shown — attaching denomination listeners');
+        this.attachDenominationListeners();
+      });
+    }
+  },
+
+//     // 🧮 Attach event listeners once DOM is ready
+//   attachDenominationListeners() {
+//   this.$nextTick(() => {
+//     const denominationInputs = document.querySelectorAll('.denomination-input');
+//     denominationInputs.forEach(input => {
+//       input.addEventListener('input', this.computeDenominationTotal);
+//       input.addEventListener('change', this.computeDenominationTotal);
+//     });
+
+//     // 🧩 Include all related fields for live recalculation
+//     document.querySelectorAll(
+//       'input[name="coins"], input[name="tip"], #starting_fund, input[name^="sales["]'
+//     ).forEach(input => {
+//       input.addEventListener('input', this.computeDenominationTotal);
+//     });
+//   });
+// },
 
     // 🔍 Check session state
     async checkExistingSession() {
       try {
-        const response = await axios.get('/pos/session/check', {
+        const { data } = await axios.get('/pos/session/check', {
           params: { terminal_no: this.terminal_no }
         });
 
-        const session = response.data.session;
-        if (response.data.has_open_session && session.status === 'open') {
+        if (data.has_open_session && data.session.status === 'open') {
           this.hasStartedPOS = 1;
-          this.sessionData = session;
+          this.sessionData = data.session;
           localStorage.setItem('hasStartedPOS', '1');
           this.modalMode = 'close';
+          this.startingFund = data.session.starting_fund;
         } else {
           this.hasStartedPOS = 0;
           localStorage.removeItem('hasStartedPOS');
           this.modalMode = 'open';
         }
-      } catch (error) {
-        console.error('Error checking session:', error);
+      } catch (err) {
+        console.error(err);
       }
     },
 
@@ -572,6 +718,7 @@ new Vue({
         const modalEl = document.getElementById('startPOSModal');
         if (modalEl) {
           const modal = new bootstrap.Modal(modalEl);
+          this.fetchOpenSession();
           modal.show();
         }
       });
@@ -599,6 +746,7 @@ new Vue({
             const modalEl = document.getElementById('startPOSModal');
             if (modalEl && !bootstrap.Modal.getInstance(modalEl)) {
               const modal = new bootstrap.Modal(modalEl);
+              this.fetchOpenSession();
               modal.show();
             }
           });
@@ -613,57 +761,109 @@ new Vue({
     // ✅ Start POS session
     async submitStartPOS() {
       try {
-        const response = await axios.post('/pos/session/open', {
+        const res = await axios.post('/pos/session/open', {
           branch_id: this.branch_id,
           terminal_no: this.terminal_no,
-          cash_fund: this.changeFund || 0,
+          cash_fund: this.startingFund,
         });
 
-        if (response.status === 201) {
+        if (res.status === 201) {
           alert('POS session started successfully!');
           this.hasStartedPOS = 1;
           localStorage.setItem('hasStartedPOS', '1');
           this.modalMode = 'close';
-
-          const modal = bootstrap.Modal.getInstance(document.getElementById('startPOSModal'));
-          if (modal) modal.hide();
-
-          // 🚀 Auto redirect to POS
           window.location.href = '/orders';
         }
-      } catch (error) {
-        console.error(error);
-        alert(error.response?.data?.message || 'Failed to start POS session.');
+      } catch (err) {
+        alert(err.response?.data?.message || 'Failed to start session.');
       }
     },
 
-    // 🔴 End POS session
+   // / 🔴 End POS session (save to user_sessions)
     async submitEndPOS() {
       try {
-        const response = await axios.post('/pos/session/close', {
-          closing_date: this.closingDate,
-          closing_time: this.closingTime,
-          end_cash: this.endCash,
-          remarks: this.remarks,
-          terminal_no: this.terminal_no,
-        });
+        // Compute total denomination value
+        const totalCashCounted =
+          (this.denom_1000 * 1000) +
+          (this.denom_500 * 500) +
+          (this.denom_200 * 200) +
+          (this.denom_100 * 100) +
+          (this.denom_50 * 50) +
+          (this.denom_20 * 20) +
+          (this.denom_10 * 10) +
+          (this.denom_5 * 5) +
+          (this.denom_1 * 1) +
+          (this.denom_050 * 0.5) +
+          (this.denom_025 * 0.25) +
+          (this.denom_010 * 0.10) +
+          (this.denom_005 * 0.05);
 
-        if (response.status === 200) {
+        this.endCash = totalCashCounted;
+
+        const shortage = totalCashCounted < this.cashSales
+          ? this.cashSales - totalCashCounted
+          : 0;
+
+        const overage = totalCashCounted > this.cashSales
+          ? totalCashCounted - this.cashSales
+          : 0;
+
+        const payload = {
+  branch_id: this.branch_id,
+  terminal_no: this.terminal_no,
+  transaction_date: this.closingDate,
+  transaction_time: this.closingTime,
+  starting_fund: this.startingFund,
+  cash_sales: this.cash_sales, // ensure consistent naming with v-model
+  gcash_sales: this.gcash_sales,
+  bdo_sales: this.bdo_sales,
+  bpi_sales: this.bpi_sales,
+  tip: this.tip,
+
+  // 💰 Automatically computed totals
+  total_cash_counted: this.actualCashCounted,
+  shortage: this.shortage,
+  overage: this.overage,
+
+  transfer_to: this.transferTo,
+  transfer_amount: this.transferAmount,
+  remarks: this.remarks,
+
+  // 🔹 Include all denomination fields (for backend saving)
+  d_1000: this.denom_1000,
+  d_500: this.denom_500,
+  d_200: this.denom_200,
+  d_100: this.denom_100,
+  d_50: this.denom_50,
+  d_20: this.denom_20,
+  d_10: this.denom_10,
+  d_5: this.denom_5,
+  d_1: this.denom_1,
+  d_050: this.denom_050,
+  d_025: this.denom_025,
+  d_010: this.denom_010,
+  d_005: this.denom_005,
+};
+
+
+        console.log('Payload:', payload);
+
+        const response = await axios.post('/pos/session/close', payload);
+
+        if (response.data.success) {
           alert('POS session closed successfully!');
           this.hasStartedPOS = 0;
           localStorage.removeItem('hasStartedPOS');
           this.modalMode = 'open';
-
-          const modal = bootstrap.Modal.getInstance(document.getElementById('startPOSModal'));
-          if (modal) modal.hide();
+        } else {
+          alert(response.data.message || 'Failed to close session.');
         }
-      } catch (error) {
-        console.error(error);
-        alert(error.response?.data?.message || 'Failed to close POS session.');
+      } catch (err) {
+        console.error(err);
+        alert(err.response?.data?.message || 'Error closing session.');
       }
-    },
+},
   },
-
   watch: {
     currentTime(newVal, oldVal) {
       if (newVal !== oldVal) this.manualTimeEdit = true;

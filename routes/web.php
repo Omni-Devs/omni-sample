@@ -24,6 +24,10 @@ use App\Http\Controllers\SalesJournalController;
 use App\Http\Controllers\PosSessionController;
 use App\Http\Controllers\RemarkController;
 use App\Http\Controllers\SupplierController;
+use App\Http\Controllers\UserSessionController;
+use App\Models\User;
+use Illuminate\Support\Facades\View;
+
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -36,6 +40,13 @@ Route::get('/pos', function () {
 Route::get('/dashboard', function () {
     return view('dashboard');
 })->name('dashboard');
+
+// No new route needed!
+View::composer('layouts.sidebar', function ($view) {
+    $managers = User::whereHas('roles', fn($q) => $q->where('name', 'Manager'))
+                    ->get(['id', 'name']);
+    $view->with('managers', $managers);
+});
 
 Route::get('/remarks', [RemarkController::class, 'index'])->name('remarks.index');
 Route::get('/remarks/create', [RemarkController::class, 'create'])->name('remarks.create');
