@@ -10,7 +10,7 @@ class Component extends Model
     use HasFactory;
     
     protected $fillable = [
-        'name', 'code', 'cost', 'price', 'unit', 'onhand', 'status', 'image', 'for_sale', 'category_id', 'subcategory_id',
+        'name', 'code', 'cost', 'price', 'unit', 'onhand', 'status', 'image', 'for_sale', 'category_id', 'subcategory_id', 'supplier_id'
     ];
 
     public function category() {
@@ -29,6 +29,11 @@ class Component extends Model
     public function remarks()
     {
         return $this->hasMany(Remark::class);
+    }
+
+    public function supplier()
+    {
+        return $this->belongsTo(Supplier::class, 'supplier_id');
     }
 
 }

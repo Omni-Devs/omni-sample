@@ -17,6 +17,10 @@
     </span>
     </button>
 
+    @php
+        $currentRoute = Route::currentRouteName();
+    @endphp
+
     <ul class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownMenu{{ $id ?? uniqid() }}">
         <!-- Edit -->
         @isset($editRoute)
@@ -26,6 +30,46 @@
             </a>
         </li>
         @endisset
+
+        @if ($currentRoute === 'inventory_purchase_orders.index')
+        <li><hr class="dropdown-divider"></li>
+
+        <li role="presentation">
+            <a href="javascript:void(0);" class="dropdown-item" onclick="viewPOInvoice({{ $po->id }})">
+                <i class="nav-icon i-Receipt-3 font-weight-bold mr-2"></i> View PO Invoice
+            </a>
+        </li>
+
+        <!-- 📎 Add Attachment -->
+        <li role="presentation">
+            <a href="javascript:void(0);" class="dropdown-item" onclick="openAttachmentModal({{ $id }})">
+                <i class="nav-icon i-Add-File font-weight-bold mr-2"></i> Add Attachment
+            </a>
+        </li>
+
+        <li role="presentation">
+            <a href="javascript:void(0);" class="dropdown-item" onclick="openViewAttachmentsModal({{ $id }})">
+                <i class="nav-icon i-Files font-weight-bold mr-2"></i> View Attached File
+            </a>
+        </li>
+
+        <li><hr class="dropdown-divider"></li>
+
+        <!-- ✅ Approve -->
+        <li role="presentation">
+            <a href="javascript:void(0);" class="dropdown-item text-success" onclick="approvePO({{ $id }})">
+                <i class="nav-icon i-Like font-weight-bold mr-2"></i> Approve
+            </a>
+        </li>
+
+        <!-- ❌ Disapprove -->
+        <li role="presentation">
+            <a href="javascript:void(0);" class="dropdown-item text-danger" onclick="disapprovePO({{ $id }})">
+                <i class="nav-icon i-Unlike-2 font-weight-bold mr-2"></i> Disapprove
+            </a>
+        </li>
+        <li><hr class="dropdown-divider"></li>
+        @endif
 
         <!-- Update -->
         @isset($updateRoute)
@@ -112,7 +156,6 @@
         <!-- Archive -->
         @if(isset($status) && $status === 'active' && isset($archiveRoute))
             <form action="{{ $archiveRoute }}" method="POST"
-                  onsubmit="return confirm('Move to archive?');"
                   style="display:inline;">
                 @csrf
                 @method('PUT')
@@ -125,7 +168,6 @@
         <!-- Restore -->
         @if(isset($status) && $status === 'archived' && isset($restoreRoute))
             <form action="{{ $restoreRoute }}" method="POST"
-                  onsubmit="return confirm('Restore to active?');"
                   style="display:inline;">
                 @csrf
                 @method('PUT')
@@ -153,4 +195,5 @@
         </li>
         @endisset
         </ul>
+        
 </div>
