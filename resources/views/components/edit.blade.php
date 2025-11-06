@@ -83,7 +83,7 @@
                                             </fieldset>
                                         </span>
                                         
-                        <!-- Category select + New button -->
+                            <!-- Category select + New button -->
                             <div class="form-group">
                                 <label for="category_id">Category</label>
                                 <div class="d-flex">
@@ -273,6 +273,24 @@
                             </fieldset>
                             </div>
                         </div>
+
+                        <div class="col-md-5">
+                            <fieldset class="form-group">
+                                <legend class="col-form-label pt-0">Supplier *</legend>
+                                <select class="form-control" id="supplier_id" name="supplier_id" required>
+                                    <option value="">Select Supplier</option>
+                                    @foreach ($suppliers as $supplier)
+                                        <option value="{{ $supplier->id }}"
+                                            {{ (old('supplier_id', $component->supplier_id ?? '') == $supplier->id) ? 'selected' : '' }}>
+                                            {{ $supplier->fullname }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <div class="invalid-feedback">Please select a supplier.</div>
+                            </fieldset>
+                        </div>
+
+
                     <span>
                     <fieldset class="form-group">
                         <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0">For Sale</legend>

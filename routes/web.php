@@ -18,6 +18,7 @@ use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\CashEquivalentController;
 use App\Http\Controllers\ComponentRemarkController;
 use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\InventoryPurchaseOrderController;
 use App\Http\Controllers\KitchenController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\SalesJournalController;
@@ -212,4 +213,20 @@ Route::delete('/customers/{id}', [CustomerController::class, 'destroy'])->name('
 // Optional if you plan to have soft delete / archive feature
 Route::put('/customers/{customer}/archive', [CustomerController::class, 'archive'])->name('customers.archive');
 Route::put('/customers/{customer}/restore', [CustomerController::class, 'restore'])->name('customers.restore');
+
+Route::get('/inventory-purchase-orders', [InventoryPurchaseOrderController::class, 'index'])->name('inventory_purchase_orders.index');
+Route::get('/inventory-purchase-orders/create', [InventoryPurchaseOrderController::class, 'create'])->name('inventory_purchase_orders.create');
+Route::post('/inventory-purchase-orders', [InventoryPurchaseOrderController::class, 'store'])->name('inventory_purchase_orders.store');
+Route::get('/inventory-purchase-orders/{purchaseOrder}/edit', [InventoryPurchaseOrderController::class, 'edit'])->name('inventory_purchase_orders.edit');
+Route::put('/inventory-purchase-orders/{purchaseOrder}', [InventoryPurchaseOrderController::class, 'update'])->name('inventory_purchase_orders.update');
+Route::delete('/inventory-purchase-orders/{id}', [InventoryPurchaseOrderController::class, 'destroy'])->name('inventory_purchase_orders.destroy');
+Route::get('/inventory/purchase-orders/{id}/details', [InventoryPurchaseOrderController::class, 'getDetails']);
+Route::post('/inventory/purchase-orders/attachments', [InventoryPurchaseOrderController::class, 'uploadAttachments'])
+    ->name('inventory.purchase_orders.attachments');
+Route::get('/inventory_purchase_orders/{id}/attachments', [InventoryPurchaseOrderController::class, 'getAttachments']);
+Route::put('/inventory/purchase-orders/{id}/approve', [InventoryPurchaseOrderController::class, 'approve'])
+    ->name('inventory_purchase_orders.approve');
+Route::put('/inventory/purchase-orders/{id}/disapprove', [InventoryPurchaseOrderController::class, 'disapprove'])
+    ->name('inventory_purchase_orders.disapprove');
+Route::get('/inventory/purchase-orders/{id}/invoice', [InventoryPurchaseOrderController::class, 'getInvoiceData']);
 

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Category;
 use App\Models\Component;
 use App\Models\Subcategory;
+use App\Models\Supplier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -12,7 +13,7 @@ class ComponentController extends Controller
 {
     public function index(Request $request)
     {
-  $status = $request->get('status', 'active');
+    $status = $request->get('status', 'active');
     $perPage = $request->get('perPage', 10);
     $search = $request->get('search'); // ✅ get the search input
 
@@ -40,7 +41,9 @@ class ComponentController extends Controller
     {
         $categories = Category::where('status', 'active')->get();
         $subcategories = Subcategory::all();
-        return view('components.create', compact('categories', 'subcategories'));
+        $suppliers = Supplier::where('status', 'active')->get();
+
+        return view('components.create', compact('categories', 'subcategories', 'suppliers'));
     }
     public function store(Request $request)
     {
@@ -49,6 +52,7 @@ class ComponentController extends Controller
             'code'          => 'required|string|unique:components,code',
             'category_id'   => 'required|integer|exists:categories,id',
             'subcategory_id'=> 'nullable|integer|exists:subcategories,id',
+            'supplier_id'   => 'nullable|integer|exists:suppliers,id',
             'cost'          => 'required|numeric',
             'price'         => 'required|numeric',
             'unit'          => 'required|string',
@@ -78,8 +82,9 @@ class ComponentController extends Controller
         $categories = Category::where('status', 'active')->get();
         $subcategories = Subcategory::all();
         $components = Component::all();
+        $suppliers = Supplier::where('status', 'active')->get();
 
-        return view('components.edit', compact('component', 'categories', 'subcategories', 'components'));
+        return view('components.edit', compact('component', 'categories', 'subcategories', 'components', 'suppliers'));
     }
 
     public function update(Request $request, Component $component)
@@ -89,6 +94,7 @@ class ComponentController extends Controller
             'name'        => 'required|string',
             'category_id' => 'required|integer|exists:categories,id',
             'subcategory_id' => 'nullable|integer|exists:subcategories,id',
+            'supplier_id'     => 'nullable|integer|exists:suppliers,id',
             'cost'        => 'required|numeric',
             'price'       => 'required|numeric',
             'unit'        => 'required|string',
