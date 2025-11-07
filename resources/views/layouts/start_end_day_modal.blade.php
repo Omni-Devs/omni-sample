@@ -1,7 +1,6 @@
 <!-- POS Start / End Modal -->
-
-      <div class="modal fade" id="startPOSModal" tabindex="-1" aria-labelledby="startPOSModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable"><!-- 🔹 use modal-lg or custom width -->
+<div class="modal fade" id="startPOSModal" tabindex="-1" aria-labelledby="startPOSModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg"><!-- 🔹 use modal-lg or custom width -->
     <div class="modal-content" style="max-width: 800px; margin: auto;"> <!-- 🔹 manually limit width -->
       <!-- Header -->
       <div class="modal-header bg-primary text-white py-2">
@@ -12,7 +11,7 @@
       </div>
 
       <!-- Body -->
-      <div class="modal-body">
+      <div class="modal-body" style="max-height: 80vh; overflow-y: auto; overscroll-behavior: contain;">
         <!-- 🟢 START SESSION FORM -->
         <div v-if="modalMode === 'open'">
           <div class="form-group mb-3">
@@ -32,7 +31,29 @@
         </div>
 
         <!-- 🔴 END SESSION FORM -->
+
         <div v-else>
+          <!-- Step 1: Confirmation -->
+          <div v-if="endStep === 'confirm'" class="text-center">
+            <p>Are you sure you want to <strong>End the Day</strong>?</p>
+            <div class="mt-3">
+              <button class="btn btn-secondary me-2" data-bs-dismiss="modal">Cancel</button>
+              <button class="btn btn-primary" @click="handleConfirmEndDay">Yes, End Day</button>
+            </div>
+          </div>
+
+          <!-- Step 2: Unpaid Orders Detected -->
+          <div v-else-if="endStep === 'unpaid'" class="text-center">
+            <p>⚠️ Unpaid Orders Detected.<br>
+              Please settle all pending transactions before proceeding with end-of-day closing.</p>
+            <div class="mt-3">
+              <button class="btn btn-warning" @click="handleUnpaidOk">OK</button>
+            </div>
+          </div>
+
+
+          <!-- Step 3: End of Day Form -->
+        <div v-else-if="endStep === 'form'">
           <div class="modal-body p-3">
 
           <!-- ROW 1: DENOMINATIONS -->
@@ -196,16 +217,16 @@
                 <div class="mb-2">
                   <label>Transfer To:</label>
                   <select name="transfer_to" id="transfer_to" v-model="transferTo" class="form-select form-select-sm">
-                    <option value="">-- Select Manager --</option>
-                    @foreach($managers as $manager)
-                      <option value="{{ $manager->id }}">{{ $manager->name }}</option>
+                    <option value="">-- Select Transfer --</option>
+                    @foreach($cashEquivalentNames as $transfer)
+                      <option value="{{ $transfer->id }}">{{ $transfer->name }}</option>
                     @endforeach
                   </select>
                 </div>
 
                 <div class="mb-2">
                   <label>Amount:</label>
-                  <input type="number" step="0.01" name="transfer_amount" v-model="transferAmount" class="form-control form-control-sm">
+                  <input type="number" step="0.01" name="transfer_amount" v-model="transferAmount" placeholder="0" class="form-control form-control-sm">
                 </div>
               </div>
             </div>
@@ -215,23 +236,27 @@
           <div class="border-top pt-3">
             <h6><strong>Sales</strong></h6>
             <div class="row">
-                <!-- 🟢 CHANGED: replaced name[] with v-models -->
-                <div class="col-md-3 mb-2"><label>Cash:</label><input 
+              <div 
+                class="col-md-3 mb-2" 
+                v-for="p in allPayments" 
+                :key="p.payment_name"
+              >
+                <label>@{{ p.payment_name }}:</label>
+                <input 
                   type="number" 
                   step="0.01"
-                  v-model.number="cash_sales"
                   class="form-control form-control-sm"
-                ></div>
-                <div class="col-md-3 mb-2"><label>GCash:</label><input type="number" step="0.01" v-model="gcash_sales" class="form-control form-control-sm"></div>
-                <div class="col-md-3 mb-2"><label>BDO:</label><input type="number" step="0.01" v-model="bdo_sales" class="form-control form-control-sm"></div>
-                <div class="col-md-3 mb-2"><label>BPI:</label><input type="number" step="0.01" v-model="bpi_sales" class="form-control form-control-sm"></div>
+                  v-model.number="p.total_amount"
+                  readonly
+                >
               </div>
+            </div>
 
             <h6 class="mt-3"><strong>Receivables</strong></h6>
               <div class="row">
                 <div class="col-md-3 mb-2">
                   <label>BPI:</label>
-                  <input type="number" step="0.01" v-model="receivable_bpi" class="form-control form-control-sm">
+                  <input type="number" step="0.01" v-model="receivableBPI" class="form-control form-control-sm">
                 </div>
               </div>
             </div>
@@ -240,8 +265,10 @@
       </form>
     </div>
   </div>
+</div>
       <!-- Footer -->
-      <div class="modal-footer">
+      <div class="modal-footer"
+          v-if="(modalMode === 'open') || (modalMode === 'close' && endStep === 'form')">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
 
         <button v-if="modalMode === 'open'" class="btn btn-primary" @click="submitStartPOS">

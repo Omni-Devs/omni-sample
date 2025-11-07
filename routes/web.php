@@ -49,6 +49,11 @@ View::composer('layouts.sidebar', function ($view) {
     $view->with('managers', $managers);
 });
 
+View::composer('layouts.sidebar', function ($view) {
+    $cashEquivalentNames = \App\Models\CashEquivalent::select('id', 'name')->get();
+    $view->with('cashEquivalentNames', $cashEquivalentNames);
+});
+
 Route::get('/remarks', [RemarkController::class, 'index'])->name('remarks.index');
 Route::get('/remarks/create', [RemarkController::class, 'create'])->name('remarks.create');
 Route::post('/remarks/store', [RemarkController::class, 'store'])->name('remarks.store');
@@ -85,6 +90,8 @@ Route::post('/order-items/update-or-create', [KitchenController::class, 'updateO
 
 
 Route::post('/orders/{order}/payment', [OrderController::class, 'payment'])->name('orders.payment');
+Route::get('/get-all-payments', [OrderController::class, 'getAllStatusPayments'])->name('orders.getAllPayments');
+Route::get('/check-unpaid-orders', [OrderController::class, 'checkUnpaidOrders'])->name('orders.checkUnpaidOrders');
 
 
 Route::get('/login', [LoginController::class, 'index'])->name('login');
