@@ -502,7 +502,7 @@ public function show($id)
     {
         $cashierId = Auth::id();
 
-        // Find the active (open) CashAudit session for this cashier
+        // 🔍 Find the active (open) CashAudit session for this cashier
         $session = CashAudit::where('cashier_id', $cashierId)
             ->where('status', 'open')
             ->first();
@@ -516,31 +516,36 @@ public function show($id)
             ]);
         }
 
-        // Define the timeframe: from session start to close (or now if still open)
+        // 🕒 Define timeframe (session start → now or closed_at)
         $sessionStart = Carbon::parse($session->created_at);
         $sessionEnd = $session->closed_at ? Carbon::parse($session->closed_at) : Carbon::now();
 
-        // ✅ Get all orders within the session’s timeframe (no cashier filter)
-        $orders = Order::with('paymentDetails.payment', 'paymentDetails.cashEquivalent')
+        // 🧾 Get all orders within timeframe (no cashier filter)
+        $orders = Order::with('paymentDetails.payment')
             ->whereBetween('created_at', [$sessionStart, $sessionEnd])
             ->get();
 
-        // Flatten all payment details from these orders
-        $allPaymentDetails = $orders->flatMap(fn($o) => $o->paymentDetails);
+        // 🔹 Map each order to its payment name and total charge
+        $ordersWithPayments = $orders->map(function ($order) {
+            $paymentName = optional(optional($order->paymentDetails->first())->payment)->name ?? 'Unknown';
+            return [
+                'payment_name' => $paymentName,
+                'total_charge' => $order->total_charge ?? 0,
+            ];
+        });
 
-        // Group by payment type and sum the totals
-        $totalsByPayment = $allPaymentDetails
-            ->groupBy('payment_id')
-            ->map(function ($items) {
-                $payment = optional($items->first()->payment)->name ?? 'Unknown';
+        // 🔸 Group by payment name and sum total_charge
+        $totalsByPayment = $ordersWithPayments
+            ->groupBy('payment_name')
+            ->map(function ($items, $key) {
                 return [
-                    'payment_name' => $payment,
-                    'total_amount' => $items->sum('amount_paid'),
+                    'payment_name' => $key,
+                    'total_amount' => $items->sum('total_charge'),
                 ];
             })
             ->values();
 
-        // Return grouped totals + session info
+        // ✅ Return results
         return response()->json([
             'order' => [
                 'totals_by_payment' => $totalsByPayment,
