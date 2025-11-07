@@ -625,15 +625,15 @@ new Vue({
 
       // safely get the total amount (or 0 if not found)
       const cashSales = parseFloat(cashPayment?.total_amount || 0);
-      const startingFund = parseFloat(this.startingFund || 0);
 
-      const total = cashSales + startingFund;
+      const total = cashSales;
       return parseFloat(total.toFixed(2));
   },
 
   // 🔹 Expected cash = sales + fund
   expectedCash() {
-    return this.posCashSalesTotal;
+   const value = parseFloat(this.startingFund) + parseFloat(this.posCashSalesTotal);
+   return isNaN(value) ? 0 : parseFloat(value.toFixed(2));
   },
 
   // 🔹 Actual cash counted (denominations + tips)

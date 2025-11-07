@@ -25,7 +25,7 @@ use App\Http\Controllers\SalesJournalController;
 use App\Http\Controllers\PosSessionController;
 use App\Http\Controllers\RemarkController;
 use App\Http\Controllers\SupplierController;
-use App\Http\Controllers\UserSessionController;
+use App\Models\CashEquivalent;
 use App\Models\User;
 use Illuminate\Support\Facades\View;
 
@@ -50,8 +50,11 @@ View::composer('layouts.sidebar', function ($view) {
 });
 
 View::composer('layouts.sidebar', function ($view) {
-    $cashEquivalentNames = \App\Models\CashEquivalent::select('id', 'name')->get();
-    $view->with('cashEquivalentNames', $cashEquivalentNames);
+    $cashEquivalent = CashEquivalent::select('id', 'account_number')
+        ->where('name', 'Cash On Hand')
+        ->get();
+
+    $view->with('cashEquivalentNames', $cashEquivalent);
 });
 
 Route::get('/remarks', [RemarkController::class, 'index'])->name('remarks.index');
