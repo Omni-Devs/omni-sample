@@ -14,6 +14,8 @@ use App\Models\Payment;
 use App\Models\PaymentDetail;
 use App\Models\User;
 use App\Models\Branch;
+use App\Models\CashAudit;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 
 class OrderController extends Controller
@@ -495,4 +497,90 @@ public function show($id)
 
         // dd($order->total_payment_rendered, $order->change_amount, $order->paymentDetails->pluck(['total_rendered', 'change_amount']));
     }
+
+   public function getAllStatusPayments(Request $request)
+    {
+        $cashierId = Auth::id();
+
+        // Find the active (open) CashAudit session for this cashier
+        $session = CashAudit::where('cashier_id', $cashierId)
+            ->where('status', 'open')
+            ->first();
+
+        if (!$session) {
+            return response()->json([
+                'order' => [
+                    'totals_by_payment' => [],
+                ],
+                'message' => 'No active POS session found.',
+            ]);
+        }
+
+        // Define the timeframe: from session start to close (or now if still open)
+        $sessionStart = Carbon::parse($session->created_at);
+        $sessionEnd = $session->closed_at ? Carbon::parse($session->closed_at) : Carbon::now();
+
+        // ✅ Get all orders within the session’s timeframe (no cashier filter)
+        $orders = Order::with('paymentDetails.payment', 'paymentDetails.cashEquivalent')
+            ->whereBetween('created_at', [$sessionStart, $sessionEnd])
+            ->get();
+
+        // Flatten all payment details from these orders
+        $allPaymentDetails = $orders->flatMap(fn($o) => $o->paymentDetails);
+
+        // Group by payment type and sum the totals
+        $totalsByPayment = $allPaymentDetails
+            ->groupBy('payment_id')
+            ->map(function ($items) {
+                $payment = optional($items->first()->payment)->name ?? 'Unknown';
+                return [
+                    'payment_name' => $payment,
+                    'total_amount' => $items->sum('amount_paid'),
+                ];
+            })
+            ->values();
+
+        // Return grouped totals + session info
+        return response()->json([
+            'order' => [
+                'totals_by_payment' => $totalsByPayment,
+            ],
+            'session_start' => $sessionStart->toDateTimeString(),
+            'session_end' => $sessionEnd->toDateTimeString(),
+        ]);
+    }
+
+   public function checkUnpaidOrders(Request $request)
+    {
+         // Get the currently logged-in cashier
+        $cashierId = Auth::id();
+
+        // Find the active (open) cash audit session for this cashier
+        $session = CashAudit::where('cashier_id', $cashierId)
+            ->where('status', 'open')
+            ->first();
+
+        if (!$session) {
+            return response()->json([
+                'has_unpaid_orders' => false,
+                'message' => 'No active POS session found.'
+            ]);
+        }
+
+        // Define the session timeframe
+        $sessionStart = Carbon::parse($session->created_at);
+        $sessionEnd = $session->closed_at ? Carbon::parse($session->closed_at) : Carbon::now();
+
+        // Query orders within the cashier’s session timeframe that are unpaid
+        $hasUnpaidOrders = Order::whereBetween('created_at', [$sessionStart, $sessionEnd])
+            ->where('status', '!=', 'payments')
+            ->exists();
+
+        return response()->json([
+            'has_unpaid_orders' => $hasUnpaidOrders,
+            'session_start' => $sessionStart->toDateTimeString(),
+            'session_end' => $sessionEnd->toDateTimeString(),
+        ]);
+    }
+
 }

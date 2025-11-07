@@ -466,6 +466,32 @@ document.addEventListener("DOMContentLoaded", function () {
       sidebar.classList.toggle("active");
     });
   }
+  const modal = document.getElementById('startPOSModal');
+  if (!modal) return;
+
+  const body = modal.querySelector('.modal-body');
+
+  // If mouse wheel isn't scrolling, forward wheel events to the modal body.
+  modal.addEventListener('wheel', function(e) {
+    if (!body) return;
+
+    const maxScrollTop = body.scrollHeight - body.clientHeight;
+    const current = body.scrollTop;
+    const delta = e.deltaY;
+
+    // Determine if the body can scroll in the requested direction
+    const scrollingDown = delta > 0;
+    const canScrollDown = current < maxScrollTop;
+    const canScrollUp = current > 0;
+
+    // If the body can scroll in the wheel direction, scroll it and prevent the event bubbling to parent
+    if ((scrollingDown && canScrollDown) || (!scrollingDown && canScrollUp)) {
+      body.scrollTop = Math.min(Math.max(0, current + delta), maxScrollTop);
+      e.preventDefault(); // stop outer scrolling
+    }
+    // else allow it to bubble (optional) so page/backdrop could handle it
+  }, { passive: false }); // must be non-passive to call preventDefault()
+
 });
 
 const now = new Date();
@@ -480,6 +506,7 @@ new Vue({
   el: "#startEndApp",
   data: {
     modalMode: 'open',
+    endStep: 'confirm',
     sessionData: null,
     branch_id: 1,
     terminal_no: 'T1',
@@ -498,36 +525,39 @@ new Vue({
     hasStartedPOS: localStorage.getItem('hasStartedPOS') === '1' ? 1 : 0,
 
     // 💵 Individual denomination fields (now match DB columns)
-    denom_1000: 0,
-    denom_500: 0,
-    denom_200: 0,
-    denom_100: 0,
-    denom_50: 0,
-    denom_20: 0,
-    denom_10: 0,
-    denom_5: 0,
-    denom_1: 0,
-    denom_050: 0,
-    denom_025: 0,
-    denom_010: 0,
-    denom_005: 0,
+    denom_1000: '',
+   denom_500: '',
+   denom_200: '',
+   denom_100: '',
+   denom_50: '',
+   denom_20: '',
+   denom_10: '',
+   denom_5: '',
+   denom_1: '',
+   denom_050: '',
+   denom_025: '',
+   denom_010: '',
+   denom_005: '',
 
     cashSales: 0,
     gcashSales: 0,
     bdoSales: 0,
     bpiSales: 0,
     receivableBPI: 0,
-    tip: 0,
-    transferTo: '',
-    transferAmount: 0,
+    tip: '',
+   transferTo: '',
+   cashEquivalents: [],
+   transferAmount: '',
 
    manualTimeEdit: false,
+   allPayments: [],
    },
 
   mounted() {
     this.setInitialDateTime();
     this.checkExistingSession();
     this.startAutoTimeUpdate();
+    this.fetchAllPayments();
 
     // Attach after mount just in case
   this.$nextTick(() => {
@@ -590,10 +620,15 @@ new Vue({
 
   // 🔹 POS cash sales + starting fund
   posCashSalesTotal() {
-    const total =
-      (parseFloat(this.cash_sales) || 0) +
-      (parseFloat(this.startingFund) || 0);
-    return parseFloat(total.toFixed(2));
+      // find the payment record for Cash
+      const cashPayment = this.allPayments.find(p => p.payment_name === 'Cash');
+
+      // safely get the total amount (or 0 if not found)
+      const cashSales = parseFloat(cashPayment?.total_amount || 0);
+      const startingFund = parseFloat(this.startingFund || 0);
+
+      const total = cashSales + startingFund;
+      return parseFloat(total.toFixed(2));
   },
 
   // 🔹 Expected cash = sales + fund
@@ -649,6 +684,8 @@ new Vue({
     });
 
     const session = response.data.session;
+    console.log('Fetched session data:', cashEquivalents);
+    
     if (response.data.has_open_session && session) {
       // 🧾 Set your data
       this.startingFund = session.starting_fund || 0;
@@ -675,24 +712,6 @@ new Vue({
       });
     }
   },
-
-//     // 🧮 Attach event listeners once DOM is ready
-//   attachDenominationListeners() {
-//   this.$nextTick(() => {
-//     const denominationInputs = document.querySelectorAll('.denomination-input');
-//     denominationInputs.forEach(input => {
-//       input.addEventListener('input', this.computeDenominationTotal);
-//       input.addEventListener('change', this.computeDenominationTotal);
-//     });
-
-//     // 🧩 Include all related fields for live recalculation
-//     document.querySelectorAll(
-//       'input[name="coins"], input[name="tip"], #starting_fund, input[name^="sales["]'
-//     ).forEach(input => {
-//       input.addEventListener('input', this.computeDenominationTotal);
-//     });
-//   });
-// },
 
     // 🔍 Check session state
     async checkExistingSession() {
@@ -763,6 +782,52 @@ new Vue({
       }
     },
 
+    async handleConfirmEndDay() {
+      // 🧠 simulate unpaid order check
+      const unpaidOrders = await this.checkUnpaidOrders();
+
+      if (unpaidOrders) {
+        this.endStep = 'unpaid';
+      } else {
+        this.endStep = 'form'; // move to actual end form
+      }
+    },
+
+    handleUnpaidOk() {
+    // Close the modal
+    const modalEl = document.getElementById('startPOSModal');
+    const modalInstance = bootstrap.Modal.getInstance(modalEl);
+    modalInstance.hide();
+
+    // Reset for next open
+    this.endStep = 'confirm';
+  },
+
+async checkUnpaidOrders() {
+   try {
+      const res = await axios.get('/check-unpaid-orders', {
+         params: { cashier_id: this.cashier_id }
+      });
+      return res.data.has_unpaid_orders;
+   } catch (error) {
+      console.error('Error checking unpaid orders:', error);
+      return false;
+   }
+},
+
+
+    resetEndStep() {
+      this.endStep = 'confirm';
+    },
+
+    fetchAllPayments() {
+      axios.get('/get-all-payments')
+        .then(response => {
+          const order = response.data.order;
+          this.allPayments = order.totals_by_payment || [];
+        })
+      },
+
     // ✅ Start POS session
     async submitStartPOS() {
       try {
@@ -783,6 +848,11 @@ new Vue({
         alert(err.response?.data?.message || 'Failed to start session.');
       }
     },
+
+    getPaymentTotal(name) {
+      const payment = this.allPayments.find(p => p.payment_name === name);
+      return parseFloat(payment?.total_amount || 0);
+   },
 
    // / 🔴 End POS session (save to user_sessions)
     async submitEndPOS() {
@@ -814,41 +884,42 @@ new Vue({
           : 0;
 
         const payload = {
-  branch_id: this.branch_id,
-  terminal_no: this.terminal_no,
-  transaction_date: this.closingDate,
-  transaction_time: this.closingTime,
-  starting_fund: this.startingFund,
-  cash_sales: this.cash_sales, // ensure consistent naming with v-model
-  gcash_sales: this.gcash_sales,
-  bdo_sales: this.bdo_sales,
-  bpi_sales: this.bpi_sales,
-  tip: this.tip,
+            branch_id: this.branch_id,
+            terminal_no: this.terminal_no,
+            transaction_date: this.closingDate,
+            transaction_time: this.closingTime,
+            starting_fund: this.startingFund,
+            cash_sales: this.getPaymentTotal('Cash'),
+            gcash_sales: this.getPaymentTotal('GCash'),
+            bdo_sales: this.getPaymentTotal('BDO'),
+            bpi_sales: this.getPaymentTotal('BPI'),
+            receivable_bpi: this.receivableBPI,
+            tip: this.tip,
 
-  // 💰 Automatically computed totals
-  total_cash_counted: this.actualCashCounted,
-  shortage: this.shortage,
-  overage: this.overage,
+            // 💰 Automatically computed totals
+            total_cash_counted: this.actualCashCounted,
+            shortage: this.shortage,
+            overage: this.overage,
 
-  transfer_to: this.transferTo,
-  transfer_amount: this.transferAmount,
-  remarks: this.remarks,
+            transfer_to: this.transferTo,
+            transfer_amount: this.transferAmount,
+            remarks: this.remarks,
 
-  // 🔹 Include all denomination fields (for backend saving)
-  d_1000: this.denom_1000,
-  d_500: this.denom_500,
-  d_200: this.denom_200,
-  d_100: this.denom_100,
-  d_50: this.denom_50,
-  d_20: this.denom_20,
-  d_10: this.denom_10,
-  d_5: this.denom_5,
-  d_1: this.denom_1,
-  d_050: this.denom_050,
-  d_025: this.denom_025,
-  d_010: this.denom_010,
-  d_005: this.denom_005,
-};
+            // 🔹 Include all denomination fields (for backend saving)
+            d_1000: this.denom_1000,
+            d_500: this.denom_500,
+            d_200: this.denom_200,
+            d_100: this.denom_100,
+            d_50: this.denom_50,
+            d_20: this.denom_20,
+            d_10: this.denom_10,
+            d_5: this.denom_5,
+            d_1: this.denom_1,
+            d_050: this.denom_050,
+            d_025: this.denom_025,
+            d_010: this.denom_010,
+            d_005: this.denom_005,
+            };
 
 
         console.log('Payload:', payload);
