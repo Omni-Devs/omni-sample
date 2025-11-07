@@ -219,7 +219,7 @@
                   <select name="transfer_to" id="transfer_to" v-model="transferTo" class="form-select form-select-sm">
                     <option value="">-- Select Transfer --</option>
                     @foreach($cashEquivalentNames as $transfer)
-                      <option value="{{ $transfer->id }}">{{ $transfer->name }}</option>
+                      <option value="{{ $transfer->id }}">{{ $transfer->account_number }}</option>
                     @endforeach
                   </select>
                 </div>
