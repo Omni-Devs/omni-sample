@@ -287,7 +287,7 @@
             {{-- <li class="nav-item"><a href="/app/inventory/send-out-stocks" class=""><i class="nav-icon i-Mail-Outbox"></i> <span class="item-name">Branch to Branch (Outbound)</span></a></li> --}}
             {{-- <li class="nav-item"><a href="/app/inventory/disbursements" class=""><i class="nav-icon i-Split-Vertical"></i> <span class="item-name">Inventory Request</span></a></li> --}}
             {{-- <li class="nav-item"><a href="/app/inventory/processed-goods" class=""><i class="nav-icon i-Recycling-2"></i> <span class="item-name">Log Processed Goods</span></a></li> --}}
-            {{-- <li class="nav-item"><a href="/app/inventory/audits" class=""><i class="nav-icon i-Approved-Window"></i> <span class="item-name">Audits</span></a></li> --}}
+            <li class="nav-item"><a href="/inventory/audits" class=""><i class="nav-icon i-Approved-Window"></i> <span class="item-name">Audits</span></a></li>
             {{-- <li class="nav-item"><a href="/app/inventory/print-labels" class=""><i class="nav-icon i-Tag-4"></i> <span class="item-name">Generate and Print Labels</span></a></li> --}}
             <li class="nav-item dropdown-sidemenu">
                {{-- <a href="#"><i class="nav-icon i-Gear"></i> <span class="item-name">Settings</span> <i class="dd-arrow i-Arrow-Down"></i></a>  --}}
@@ -618,17 +618,44 @@ new Vue({
     return isNaN(total) ? 0 : parseFloat(total.toFixed(2));
   },
 
+  totalCashSales() {
+    if (!Array.isArray(this.allPayments)) return 0;
+
+    return this.allPayments
+      .filter(p => p.payment_name === 'Cash On Hand' || p.payment_name === 'Cash')
+      .reduce((sum, p) => sum + parseFloat(p.total_amount || 0), 0);
+  },
+  
+  totalGCashSales() {
+    return this.allPayments
+      .filter(p => p.payment_name === 'GCash')
+      .reduce((sum, p) => sum + parseFloat(p.total_amount || 0), 0);
+  },
+
   // 🔹 POS cash sales + starting fund
   posCashSalesTotal() {
-      // find the payment record for Cash
-      const cashPayment = this.allPayments.find(p => p.payment_name === 'Cash');
+      const total = this.totalCashSales;
 
-      // safely get the total amount (or 0 if not found)
-      const cashSales = parseFloat(cashPayment?.total_amount || 0);
-
-      const total = cashSales;
       return parseFloat(total.toFixed(2));
   },
+  
+  totalBDOSales() {
+    return this.allPayments
+      .filter(p => p.payment_name === 'BDO')
+      .reduce((sum, p) => sum + parseFloat(p.total_amount || 0), 0);
+  },
+  
+  totalBPISales() {
+    return this.allPayments
+      .filter(p => p.payment_name === 'BPI')
+      .reduce((sum, p) => sum + parseFloat(p.total_amount || 0), 0);
+  },
+  
+  totalSales() {
+    // Total of all payment types
+    return this.totalCashSales + this.totalGCashSales + this.totalBDOSales + this.totalBPISales;
+  },
+  
 
   // 🔹 Expected cash = sales + fund
   expectedCash() {
@@ -652,6 +679,8 @@ new Vue({
     const diff = this.actualCashCounted - this.expectedCash;
     return diff > 0 ? diff.toFixed(2) : 0;
   },
+
+  
 },
 
   methods: {
@@ -889,10 +918,10 @@ async checkUnpaidOrders() {
             transaction_date: this.closingDate,
             transaction_time: this.closingTime,
             starting_fund: this.startingFund,
-            cash_sales: this.getPaymentTotal('Cash'),
-            gcash_sales: this.getPaymentTotal('GCash'),
-            bdo_sales: this.getPaymentTotal('BDO'),
-            bpi_sales: this.getPaymentTotal('BPI'),
+           cash_sales: this.totalCashSales, // automatically updated
+            gcash_sales: this.totalGCashSales,
+            bdo_sales: this.totalBDOSales,
+            bpi_sales: this.totalBPISales,
             receivable_bpi: this.receivableBPI,
             tip: this.tip,
 
