@@ -437,23 +437,26 @@ public function show($id)
         }
 
         $totalPaid = 0;
+        $createdPaymentDetailIds = [];
 
+        // Create payment detail rows with zeroed totals/change for now.
         foreach ($decodedPayments as $p) {
             if (empty($p['payment_method_id']) || empty($p['cash_equivalent_id']) || empty($p['amount_paid'])) {
                 continue;
             }
 
-            PaymentDetail::create([
+            $pd = PaymentDetail::create([
                 'order_id' => $order->id,
                 'payment_id' => $p['payment_method_id'],
                 'cash_equivalent_id' => $p['cash_equivalent_id'],
                 'transaction_reference_no' => $p['reference_no'] ?? null,
                 'amount_paid' => $p['amount_paid'],
-                'total_rendered' => $request->total_payment_rendered ?? 0,
-                'change_amount' => $request->change_amount ?? 0,
+                'total_rendered' => 0, // fill in after computing totals
+                'change_amount' => 0,  // only cash will receive change_amount later
             ]);
 
-            $totalPaid += $p['amount_paid'];
+            $createdPaymentDetailIds[] = $pd->id;
+            $totalPaid += floatval($p['amount_paid']);
         }
 
         // compute total rendered and change
@@ -468,13 +471,26 @@ public function show($id)
             'charges_description' => ($order->charges_description ?? '') . "\nPayments added on " . now()->toDateTimeString(),
         ]);
 
-        // Optionally update last payment detail row with totals
-        $lastPayment = PaymentDetail::where('order_id', $order->id)->latest()->first();
-        if ($lastPayment) {
-            $lastPayment->update([
-                'total_rendered' => $totalPaid,
-                'change_amount' => $changeAmount,
-            ]);
+        // update all payment details for this order: set total_rendered and clear change_amount
+        PaymentDetail::where('order_id', $order->id)->update([
+            'total_rendered' => $totalPaid,
+            'change_amount' => 0,
+        ]);
+
+        // Assign change_amount only to the Cash payment detail (case-insensitive match on Payment.name)
+        $cashPayment = Payment::whereRaw('LOWER(name) = ?', [strtolower('cash')])->first();
+        if ($cashPayment) {
+            $cashPaymentDetail = PaymentDetail::where('order_id', $order->id)
+                ->where('payment_id', $cashPayment->id)
+                ->latest()
+                ->first();
+
+            if ($cashPaymentDetail) {
+                $cashPaymentDetail->update([
+                    'total_rendered' => $totalPaid,
+                    'change_amount' => $changeAmount,
+                ]);
+            }
         }
 
         // Reload order with relations for response (so view can render receipt)

@@ -82,7 +82,18 @@
                             <th>Origin</th>
                             <th>Supplier</th>
                             <th>PO Details</th>
+                            @if($status === 'approved')
+                                <th>Approved By</th>
+                                <th>Date & Time Approved</th>
+                            @endif
+
                             <th>Status</th>
+
+                            @if($status === 'archived')
+                                <th>Archived By</th>
+                                <th>Date & Time Archived</th>
+                            @endif
+
                             <th class="text-right">Action</th>
                         </tr>
                     </thead>
@@ -104,6 +115,19 @@
                                         <i class="i-Eye"></i> View
                                     </button>
                                 </td>
+
+                            </td>
+                            {{-- ✅ Approved Tab Columns --}}
+                            @if($status === 'approved')
+                                <td>
+                                    {{ $po->approvedBy?->name ?? 'NA' }}
+                                </td>
+                                <td>
+                                    {{ $po->approved_at ? \Carbon\Carbon::parse($po->approved_at)->format('Y-m-d H:i A') : '' }}
+                                </td>
+                            @endif
+                                
+                                
                                 <td>
                                     <span class="badge 
                                         {{ $po->status === 'pending' ? 'badge-warning' : 
@@ -113,11 +137,30 @@
                                         {{ ucfirst($po->status) }}
                                     </span>
                                 </td>
+
+                    {{-- ✅ Archived Info (only visible in archived tab) --}}
+                        {{-- @if($status === 'archived')
+                            <td>{{ $po->archivedBy?->name ?? '—' }}</td>
+                            <td>{{ $po->archived_at ? \Carbon\Carbon::parse($po->archived_at)->format('Y-m-d H:i A') : '—' }}</td>
+                        @endif --}}
+
+                         {{-- ✅ Archived Tab Columns --}}
+                    @if($status === 'archived')
+                        <td>{{ $po->archivedBy?->name ?? '' }}</td>
+                        <td>
+                            {{ $po->archived_at ? \Carbon\Carbon::parse($po->archived_at)->format('Y-m-d H:i A') : '' }}
+                        </td>
+                    @endif
+
+
+
+                        {{-- ✅ Actions --}}
                             <td class="text-right">
                                     @include('layouts.actions-dropdown', [
                                         'id' => $po->id,
                                         'editRoute' => route('inventory_purchase_orders.edit', $po->id),
                                         'deleteRoute' => route('inventory_purchase_orders.destroy', $po->id),
+                                        'archiveRoute' => route('inventory_purchase_orders.archive', $po->id),
                                     ])
                                 </td>
                             </tr>
@@ -132,6 +175,266 @@
         </div>
     </div>
 </div>
+
+{{-- Log Stocks in Inventory Modal --}}
+<!-- Log Stocks in Inventory Modal -->
+<div class="modal fade" id="logStocksModal" tabindex="-1" aria-labelledby="logStocksModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Log Stocks in Inventory</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+        <form id="logStocksForm">
+          @csrf
+          <input type="hidden" name="po_id" id="log_po_id">
+
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label fw-bold">Purchase Order #</label>
+              <!-- dynamic PO number -->
+              <p id="log_po_number" class="form-control-plaintext text-primary fw-semibold" style="font-size:1rem;">—</p>
+            </div>
+
+            <div class="col-md-6 text-end">
+              <label class="form-label fw-bold">Date of PO Request</label>
+              <!-- dynamic created_at -->
+              <p id="log_po_date" class="form-control-plaintext">—</p>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label for="date_of_receipt" class="form-label fw-bold">Date and Time of Receipt</label>
+            <div class="d-flex align-items-center gap-2">
+              <!-- default to current local datetime (JS will set) -->
+              <input type="datetime-local" class="form-control" id="date_of_receipt" name="date_of_receipt">
+              <button type="button" class="btn btn-outline-secondary btn-sm" onclick="resetReceiptDate()">Clear</button>
+            </div>
+            <small class="text-muted">Edit the Date/Time if you want to backdate this transaction. Leave blank to record real time.</small>
+          </div>
+
+          <div class="mb-3">
+            <label for="delivery_dr" class="form-label fw-bold">Delivery DR #</label>
+            <!-- editable DR field prefilled by JS -->
+            <input type="text" class="form-control" id="delivery_dr" name="delivery_dr" placeholder="DR + Branch_ID + 000001">
+          </div>
+
+          <h6 class="fw-bold mt-4 mb-2">Receive Items</h6>
+          <div class="table-responsive">
+            <table class="table table-bordered align-middle">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>SKU</th>
+                  <th>Supplier</th>
+                  <th>Category</th>
+                  <th>Brand</th>
+                  <th>Unit</th>
+                  <th>Total Qty Requested</th>
+                  <th>Qty to Receive</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="log_items_table">
+                <tr><td colspan="9" class="text-center text-muted">Loading items...</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="mt-4 text-end">
+            <button type="submit" class="btn btn-orange btn-primary px-4">
+              <i class="i-Yes mr-2"></i> Submit
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+    <!-- Small client-side helpers -->
+    <script>
+    // Escape HTML to prevent XSS and to safely insert values into template literals
+    function escapeHtml(str) {
+        if (str === null || str === undefined) return '';
+        return String(str).replace(/[&<>"']/g, function (s) {
+            return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]);
+        });
+    }
+    </script>
+
+    <script>
+function openLogStocksModal(poId) {
+    // show the modal and populate with PO data (matches provided UI design)
+    const modalEl = document.getElementById('logStocksModal');
+    const modal = new bootstrap.Modal(modalEl);
+    modal.show();
+
+    const poIdInput = document.getElementById('log_po_id');
+    const poNumberEl = document.getElementById('log_po_number');
+    const poDateEl = document.getElementById('log_po_date');
+    const dateOfReceiptEl = document.getElementById('date_of_receipt');
+    const deliveryDrEl = document.getElementById('delivery_dr');
+    const itemsTbody = document.getElementById('log_items_table');
+    const form = document.getElementById('logStocksForm');
+    
+
+    poIdInput.value = poId;
+    poNumberEl.textContent = '—';
+    poDateEl.textContent = '—';
+    dateOfReceiptEl.value = new Date().toISOString().slice(0,16);
+    deliveryDrEl.value = '';
+    itemsTbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted">Loading items...</td></tr>';
+
+    // Use Laravel-generated URL so fetch works when app is served from a subdirectory
+    console.debug('Fetching PO details:', "{{ url('inventory/purchase-orders') }}" + '/' + poId + '/details');
+    fetch(`/inventory/purchase-orders/${poId}/details`)
+        .then(r => {
+            if (!r.ok) {
+                return r.text().then(txt => {
+                    console.error('Failed to fetch PO details', r.status, txt);
+                    throw new Error('Server returned ' + r.status);
+                });
+            }
+            return r.json();
+        })
+        .then(data => {
+            if (!data) throw new Error('PO not found');
+
+            console.log(data.po_number);
+            console.log(new Date(data.created_at).toLocaleString());
+            
+            // assign PO number to the visible element using multiple properties (defensive)
+            const poNum = data.po_number ?? '—';
+            try {
+                poNumberEl.textContent = poNum;
+                poNumberEl.innerText = poNum;
+                poNumberEl.dataset.poNumber = poNum;
+                // ensure it's visible and not impacted by styling
+                poNumberEl.style.visibility = 'visible';
+            } catch (e) {
+                console.error('Failed to assign PO number to element', e);
+            }
+            console.log('Assigned PO number to UI element:', poNumberEl.textContent);
+            poDateEl.textContent = data.created_at ? new Date(data.created_at).toLocaleString() : '—';
+
+            const branchId = data.branch_id ?? 'BR';
+            deliveryDrEl.value = `DR-${branchId}-000001`;
+
+            const details = Array.isArray(data.details) ? data.details : [];
+            if (details.length === 0) {
+                itemsTbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted">No items found.</td></tr>';
+                return;
+            }
+
+            itemsTbody.innerHTML = '';
+            details.forEach(d => {
+                const comp = d.component ?? {};
+                const totalRequested = Number(d.qty ?? 0);
+                const totalReceived = Number(d.total_received ?? 0);
+
+                const supplierName = (data && data.supplier && data.supplier.fullname)
+                    ? data.supplier.fullname
+                    : (comp.fullname ?? comp.supplier ?? '—');
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="text-start">${escapeHtml(comp.name ?? '—')}</td>
+                    <td>${escapeHtml(comp.code ?? '—')}</td>
+                    <td>${escapeHtml(supplierName)}</td>
+                    <td>${escapeHtml(comp.category ?? '—')}</td>
+                    <td>${escapeHtml(comp.brand ?? '—')}</td>
+                    <td>${escapeHtml(comp.unit ?? '—')}</td>
+                    <td class="text-end">${totalRequested}</td>
+                    <td class="text-center">
+                        <div class="input-group input-group-sm" style="width:140px;margin:0 auto;">
+                            <button type="button" class="btn btn-outline-secondary" onclick="decrementQty(this)">-</button>
+                            <input type="number" min="0" max="${totalRequested}" value="0" data-detail-id="${d.id}" class="form-control text-end" />
+                            <button type="button" class="btn btn-outline-secondary" onclick="incrementQty(this)">+</button>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="btn-group btn-group-sm">
+                            <button type="button" class="btn btn-primary" onclick="editItem(${d.id})">Edit Details</button>
+                            <button type="button" class="btn btn-danger" onclick="removeItemRow(this)">Remove</button>
+                        </div>
+                    </td>
+                `;
+                itemsTbody.appendChild(tr);
+            });
+
+            form.onsubmit = function(ev) {
+                ev.preventDefault();
+                submitLogStocks(poId, modal);
+            };
+        })
+        .catch(err => {
+            console.error(err);
+            itemsTbody.innerHTML = '<tr><td colspan="9" class="text-center text-danger">Error loading items.</td></tr>';
+        });
+}
+
+function submitLogStocks(poId, modalInstance) {
+    const form = document.getElementById('logStocksForm');
+    const tokenInput = form.querySelector('input[name="_token"]');
+    const token = tokenInput ? tokenInput.value : document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+    const dateOfReceipt = document.getElementById('date_of_receipt').value;
+    const deliveryDr = document.getElementById('delivery_dr').value;
+
+    const items = [];
+    document.querySelectorAll('#log_items_table input[type="number"]').forEach(input => {
+        const qty = Number(input.value || 0);
+        const detailId = input.dataset.detailId;
+        if (qty > 0) items.push({ detail_id: detailId, qty_received: qty });
+    });
+
+    if (items.length === 0) {
+        alert('Please enter at least one received quantity before submitting.');
+        return;
+    }
+
+    const payload = { po_id: poId, date_of_receipt: dateOfReceipt, delivery_dr: deliveryDr, items };
+
+    fetch(`/inventory/purchase-orders/${poId}/log-stocks`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': token,
+        },
+        body: JSON.stringify(payload),
+    })
+    .then(r => r.json())
+    .then(resp => {
+        if (resp && resp.success) {
+            if (modalInstance && typeof modalInstance.hide === 'function') modalInstance.hide();
+            window.location.reload();
+        } else {
+            alert(resp.message || 'Failed to log stocks.');
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        alert('Failed to log stocks. See console for details.');
+    });
+}
+
+function incrementQty(btn) {
+    const input = btn.parentElement.querySelector('input[type="number"]');
+    if (!input) return;
+    input.value = Math.max(0, Number(input.value || 0) + 1);
+}
+function decrementQty(btn) {
+    const input = btn.parentElement.querySelector('input[type="number"]');
+    if (!input) return;
+    input.value = Math.max(0, Number(input.value || 0) - 1);
+}
+
+function resetReceiptDate() {
+    document.getElementById('date_of_receipt').value = '';
+}
+</script>
+
 
 <!-- 📁 View Attached Files Modal -->
 <div class="modal fade" id="viewAttachmentsModal" tabindex="-1" aria-labelledby="viewAttachmentsLabel" aria-hidden="true">
@@ -340,7 +643,8 @@ function viewPOInvoice(poId) {
     const modal = new bootstrap.Modal(document.getElementById('poDetailsModal'));
     modal.show();
 
-    fetch(`/inventory/purchase-orders/${poId}/details`)
+    // Use Laravel-generated URL to avoid absolute-root path issues
+    fetch("{{ url('inventory/purchase-orders') }}" + '/' + poId + '/details')
         .then(response => response.json())
         .then(data => {
             if (!data || !data.details || data.details.length === 0) {
@@ -383,8 +687,8 @@ function viewPOInvoice(poId) {
                 <div class="row mb-4">
                     <div class="col-md-6">
                         <p><strong>NO.:</strong> ${data.po_number}</p>
-           <p class="mb-0"><strong>Requested by:</strong> ${data.user && data.user.name ? data.user.name : '—'}</p>
-      <p class="mb-0"><strong>Department:</strong> ${data.department ? data.department : '—'}</p>
+                        <p class="mb-0"><strong>Requested by:</strong> ${data.user && data.user.name ? data.user.name : '—'}</p>
+                        <p class="mb-0"><strong>Department:</strong> ${data.department ? data.department : '—'}</p>
                         <p><strong>PO Addressed to (Supplier):</strong> ${data.supplier?.fullname ?? '—'}</p>
                         <p><strong>Address:</strong> ${data.supplier?.address ?? '—'}</p>
                     </div>
@@ -424,7 +728,14 @@ function viewPOInvoice(poId) {
 
                 <div class="mt-5">
                     <p class="fw-semibold mb-0">Prepared By:</p>
-        <p class="mb-0">${"{{ auth()->user()->name }}"}</p>
+                <p class="mb-0">{{ auth()->user()->name }}</p>
+                </div>
+
+                <div class="mt-5>
+                    @if($status === 'approved')
+                        <p class="fw-semibold mb-0">Approved By:</p>
+                        <p class="mb-0">{{ auth()->user()->name }}</p>
+                    @endif
                 </div>
             `;
         })
@@ -477,7 +788,8 @@ function openViewAttachmentsModal(poId) {
     container.innerHTML = `<p class="text-muted mb-0">Loading attachments...</p>`;
     modal.show();
 
-    fetch(`/inventory_purchase_orders/${poId}/attachments`)
+    // Use Laravel-generated URL (route uses underscore) so path includes any base folder
+    fetch("{{ url('inventory_purchase_orders') }}" + '/' + poId + '/attachments')
         .then(response => response.json())
         .then(data => {
             if (!data.attachments || data.attachments.length === 0) {
