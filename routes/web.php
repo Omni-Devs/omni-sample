@@ -239,4 +239,7 @@ Route::put('/inventory/purchase-orders/{id}/approve', [InventoryPurchaseOrderCon
 Route::put('/inventory/purchase-orders/{id}/disapprove', [InventoryPurchaseOrderController::class, 'disapprove'])
     ->name('inventory_purchase_orders.disapprove');
 Route::get('/inventory/purchase-orders/{id}/invoice', [InventoryPurchaseOrderController::class, 'getInvoiceData']);
+Route::put('/inventory/purchase-orders/{id}/archive', [InventoryPurchaseOrderController::class, 'archive'])
+    ->name('inventory_purchase_orders.archive');
+Route::get('/inventory/purchase-orders/{id}/log-stocks', [InventoryPurchaseOrderController::class, 'logStocks']);
 

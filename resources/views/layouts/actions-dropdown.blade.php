@@ -56,19 +56,38 @@
         <li><hr class="dropdown-divider"></li>
 
         <!-- ✅ Approve -->
+        @if($status === 'pending')
         <li role="presentation">
             <a href="javascript:void(0);" class="dropdown-item text-success" onclick="approvePO({{ $id }})">
                 <i class="nav-icon i-Like font-weight-bold mr-2"></i> Approve
             </a>
         </li>
+        @endif
+        
 
         <!-- ❌ Disapprove -->
-        <li role="presentation">
-            <a href="javascript:void(0);" class="dropdown-item text-danger" onclick="disapprovePO({{ $id }})">
-                <i class="nav-icon i-Unlike-2 font-weight-bold mr-2"></i> Disapprove
-            </a>
-        </li>
-        <li><hr class="dropdown-divider"></li>
+        @if($status === 'pending')
+            <li role="presentation">
+                <a href="javascript:void(0);" class="dropdown-item text-danger" onclick="disapprovePO({{ $id }})">
+                    <i class="nav-icon i-Unlike-2 font-weight-bold mr-2"></i> Disapprove
+                </a>
+            </li>
+            <li><hr class="dropdown-divider"></li>
+        @endif
+        
+        @endif
+
+        {{-- ✅ Log Stocks in Inventory (Only show if approved) --}}
+        @if($status === 'approved')
+            <li role="presentation">
+                {{-- <button type="button" class="dropdown-item text-primary" 
+                        onclick="openLogStocksModal({{ $id }})">
+                    <i class="i-Add-Cart mr-2"></i> Log Stocks in Inventory
+                </button> --}}
+                <a href="javascript:void(0);" class="dropdown-item" onclick="openLogStocksModal({{ $id }})">
+                    <i class="nav-icon i-Folder-Download font-weight-bold mr-2"></i> Log Stocks in Inventory
+                </a>
+            </li>
         @endif
 
         <!-- Update -->
@@ -153,16 +172,21 @@
         </li>
         @endif
 
-        <!-- Archive -->
-        @if(isset($status) && $status === 'active' && isset($archiveRoute))
+        
+        <!-- ✅ Move to Archive (for both approved and active statuses) -->
+        @if(isset($status) && in_array($status, ['active', 'approved']) && isset($archiveRoute))
+        <li role="presentation">
             <form action="{{ $archiveRoute }}" method="POST"
-                  style="display:inline;">
+                onsubmit="return confirm('Move this Purchase Order to archive?');"
+                style="display:inline;">
                 @csrf
                 @method('PUT')
                 <button type="submit" class="dropdown-item">
-                    <i class="nav-icon i-Letter-Close font-weight-bold mr-2"></i> {{ $archiveLabel ?? 'Move to Archive' }}
+                    <i class="nav-icon i-Letter-Close font-weight-bold mr-2"></i>
+                    {{ $archiveLabel ?? 'Move to Archive' }}
                 </button>
             </form>
+        </li>
         @endif
 
         <!-- Restore -->

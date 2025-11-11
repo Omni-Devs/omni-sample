@@ -16,7 +16,7 @@ class InventoryPurchaseOrderController extends Controller
     {
         $status = $request->get('status', 'pending'); // default pending
 
-        $purchaseOrders = InventoryPurchaseOrder::with(['user', 'supplier'])
+        $purchaseOrders = InventoryPurchaseOrder::with(['user', 'supplier', 'approvedBy', 'archivedBy'])
             ->where('status', $status)
             ->orderBy('created_at', 'desc')
             ->get();
@@ -191,52 +191,109 @@ class InventoryPurchaseOrderController extends Controller
     }
 
     public function getAttachments($id)
-{
-    $po = \App\Models\InventoryPurchaseOrder::findOrFail($id);
+    {
+        $po = \App\Models\InventoryPurchaseOrder::findOrFail($id);
 
-    // Make sure we're using the correct column name: `attachments`
-    $attachments = [];
+        // Make sure we're using the correct column name: `attachments`
+        $attachments = [];
 
-    if ($po->attachments) {
-        $decoded = json_decode($po->attachments, true);
+        if ($po->attachments) {
+            $decoded = json_decode($po->attachments, true);
 
-        if (is_array($decoded)) {
-            $attachments = $decoded;
-        } else {
-            // Handle case where it’s just a string
-            $attachments = [$po->attachments];
+            if (is_array($decoded)) {
+                $attachments = $decoded;
+            } else {
+                // Handle case where it’s just a string
+                $attachments = [$po->attachments];
+            }
+        }
+
+        return response()->json(['attachments' => $attachments]);
+    }
+
+    public function approve($id)
+    {
+        $po = InventoryPurchaseOrder::findOrFail($id);
+            $po->update([
+                'status' => 'approved',
+                'approved_by' => auth()->id(),
+                'approved_at' => now(),
+            ]);
+
+        return redirect()->route('inventory_purchase_orders.index')
+            ->with('success', 'Purchase Order approved successfully.');
+    }
+
+    public function disapprove($id)
+    {
+        $po = InventoryPurchaseOrder::findOrFail($id);
+        $po->update([
+            'status' => 'disapproved',
+            'approved_by' => auth()->id(), // optionally track who disapproved
+            'approved_at' => now(),
+        ]);
+
+        return redirect()->route('inventory_purchase_orders.index')
+            ->with('warning', 'Purchase Order disapproved.');
+    }
+
+    public function getInvoiceData($id)
+    {
+        $po = \App\Models\InventoryPurchaseOrder::with(['details.component', 'user', 'supplier'])->find($id);
+
+        if (!$po) {
+            return response()->json(['message' => 'PO not found'], 404);
+        }
+
+        return response()->json($po);
+    }
+
+    public function archive($id)
+    {
+        $po = InventoryPurchaseOrder::findOrFail($id);
+        
+        $po->update([
+            'status' => 'archived',
+            'archived_by' => auth()->id(),
+            'archived_at' => now(),
+        ]);
+
+        return redirect()->route('inventory_purchase_orders.index', ['status' => 'archived'])
+            ->with('warning', 'Purchase Order moved to archive.');
+    }
+
+    public function logStocks($id)
+    {
+        try {
+            $po = InventoryPurchaseOrder::with(['items', 'supplier'])
+                ->findOrFail($id);
+                // dd($po->po_number);
+
+            return response()->json([
+                'po_number' => $po->po_number,
+                'created_at' => $po->created_at,
+                'branch_id' => $po->branch_id,
+                'items' => $po->items->map(function ($item) {
+                    return [
+                        'id' => $item->id,
+                        'name' => $item->component->name ?? '',
+                        'sku' => $item->component->code ?? '',
+                        'supplier' => $item->supplier->fullname ?? '',
+                        'category' => $item->component->category ?? '',
+                        'brand' => $item->component->brand ?? '',
+                        'unit' => $item->component->unit ?? '',
+                        'total_qty' => $item->qty ?? 0,
+                    ];
+                }),
+            ]);
+        } catch (\Exception $e) {
+            \Log::error($e);
+            return response()->json([
+                'error' => 'Failed to load purchase order',
+                'message' => $e->getMessage(),
+            ], 500);
         }
     }
 
-    return response()->json(['attachments' => $attachments]);
-}
 
-public function approve($id)
-{
-    $po = InventoryPurchaseOrder::findOrFail($id);
-    $po->update(['status' => 'approved']);
-
-    return redirect()->route('inventory_purchase_orders.index')
-        ->with('success', 'Purchase Order approved successfully.');
-}
-
-public function disapprove($id)
-{
-    $po = InventoryPurchaseOrder::findOrFail($id);
-    $po->update(['status' => 'disapproved']);
-
-    return redirect()->route('inventory_purchase_orders.index')
-        ->with('warning', 'Purchase Order disapproved.');
-}
-
-public function getInvoiceData($id)
-{
-    $po = \App\Models\InventoryPurchaseOrder::with(['details.component', 'user', 'supplier'])->find($id);
-
-    if (!$po) {
-        return response()->json(['message' => 'PO not found'], 404);
-    }
-
-    return response()->json($po);
-}
 }
