@@ -354,7 +354,18 @@
                            </tr>
                         </thead>
                   <tbody>
-                     @forelse ($orders as $order)
+                     @php
+                        // If a tab/status filter is set (via $status), filter the orders here
+                        // so each tab only shows orders that match that status.
+                        $filteredOrders = $orders;
+                           if (!empty($status)) {
+                              $filteredOrders = $orders->filter(function($o) use ($status) {
+                                 return strtolower($o->status) === strtolower($status);
+                              });
+                        }
+                     @endphp
+
+                     @forelse ($filteredOrders as $order)
                         <tr x-data="{ open: false }">
       <!-- Checkbox -->
       <td>
@@ -594,7 +605,7 @@
 </div>
 
 <form id="billOutForm_{{ $order->id }}" 
-      action="{{ route('orders.billout', $order->id) }}" 
+      action="/orders/{{ $order->id }}/billout" 
       method="POST">
    @csrf
    <input type="hidden" name="order_id" value="{{ $order->id }}">
@@ -824,86 +835,8 @@ function confirmBillOut(orderId) {
       })
       .catch(err => {
          console.error(err);
-         alert('❌ Error saving bill.');
       });
 }
-
-// function confirmBillOut(orderId) {
-//     const form = document.getElementById('billOutForm_' + orderId);
-//     if (!form) {
-//         alert("⚠️ Bill Out form not found.");
-//         return;
-//     }
-
-//     const formData = new FormData(form);
-
-//     // ✅ Include computed fields
-//     const fields = [
-//         'srPwdBill', 'discount20', 'otherDiscount',
-//         'netBill', 'vatable', 'vat12', 'totalCharge'
-//     ];
-//     fields.forEach(f => {
-//         const el = document.getElementById(f + '_' + orderId);
-//         if (el && el.value !== '') {
-//             formData.set(f, el.value);
-//         }
-//     });
-
-//     // ✅ Collect discount persons from saved memory
-//     const personsData = [];
-//     if (savedDiscountPersons[orderId]) {
-//         Object.entries(savedDiscountPersons[orderId]).forEach(([discountId, persons]) => {
-//             persons.forEach(p => {
-//                 personsData.push({
-//                     discount_id: discountId,
-//                     name: p.name || '',
-//                     id_number: p.id_number || ''
-//                 });
-//             });
-//         });
-//     }
-
-//     formData.append('persons', JSON.stringify(personsData));
-
-//     // ✅ Confirm action
-//     if (!confirm('Are you sure you want to confirm this Bill Out?')) return;
-
-//     fetch(form.action, {
-//         method: 'POST',
-//         headers: {
-//             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-//         },
-//       body: formData,
-//       credentials: 'same-origin'
-//     })
-//     .then(res => res.json())
-//     .then(data => {
-//         console.log("Bill Out Response:", data);
-
-//         if (data.success) {
-//             const totalChargeInput = document.getElementById('totalCharge_' + orderId);
-//             if (totalChargeInput) {
-//                 totalChargeInput.value = parseFloat(data.order.total_charge).toFixed(2);
-//             }
-
-//             const amountCell = document.getElementById('amount_' + orderId);
-//             if (amountCell) {
-//                 amountCell.textContent = `₱${Number(data.order.total_charge).toLocaleString('en-PH', {
-//                     minimumFractionDigits: 2
-//                 })}`;
-//             }
-
-//             alert('✅ Bill saved successfully!');
-//             setTimeout(() => window.location.href = "/orders?status=billout", 1000);
-//         } else {
-//             alert('⚠️ Failed to save bill: ' + (data.message || 'Unknown error'));
-//         }
-//     })
-//     .catch(err => {
-//         console.error("Bill Out Error:", err);
-//         alert('❌ Error saving bill.');
-//     });
-// }
 
 function toggleDiscountForm(orderId) {
     const hidden = document.getElementById('discountIds_' + orderId);

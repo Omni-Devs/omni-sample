@@ -18,7 +18,11 @@ class InventoryPurchaseOrder extends Model
         'status',
         'created_at',
         'branch_id',
-        'attachments'
+        'attachments',
+        'approved_by',
+        'approved_at',
+        'archived_by',
+        'archived_at',
     ];
 
     // Relationships
@@ -37,4 +41,16 @@ class InventoryPurchaseOrder extends Model
         return $this->hasMany(PoDetail::class, 'inventory_purchase_order_id');
     }
 
+    
+    public function approvedBy()
+    {
+        return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    public function archivedBy()
+    {
+        return $this->belongsTo(User::class, 'archived_by');
+    }
+
+    public function items() { return $this->hasMany(PurchaseOrderItem::class, 'purchase_order_id'); }
 }
