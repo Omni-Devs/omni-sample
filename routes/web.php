@@ -2,6 +2,7 @@
 
 <?php
 
+use App\Http\Controllers\AuditController;
 use App\Http\Controllers\BranchesController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ComponentController;
@@ -242,4 +243,7 @@ Route::get('/inventory/purchase-orders/{id}/invoice', [InventoryPurchaseOrderCon
 Route::put('/inventory/purchase-orders/{id}/archive', [InventoryPurchaseOrderController::class, 'archive'])
     ->name('inventory_purchase_orders.archive');
 Route::get('/inventory/purchase-orders/{id}/log-stocks', [InventoryPurchaseOrderController::class, 'logStocks']);
+
+Route::get('/inventory/audits', [AuditController::class, 'index'])->name('inventory_audit.index');
+Route::get('/inventory/audits/create', [AuditController::class, 'create'])->name('inventory_audit.create');
 
