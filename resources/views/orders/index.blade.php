@@ -824,7 +824,6 @@ function confirmBillOut(orderId) {
       .then(res => res.json())
       .then(data => {
          if (data.success) {
-               alert('✅ Bill saved successfully!');
                document.getElementById('totalCharge_' + orderId).value = data.order.total_charge;
 
                // Optional: reload or move order to Bill-Out section
@@ -968,6 +967,16 @@ function updatePersonData(orderId, discountId, index, field, value) {
          'name' => $c->name,
          'account_number' => $c->account_number
       ])) !!};
+
+      // expose maps globally so invoice builder can reliably lookup names even when relations
+      // are not present in the AJAX response (defensive fallback)
+      try {
+         window.paymentMethodsMap = window.paymentMethodsMap || {};
+         paymentMethods.forEach(pm => { window.paymentMethodsMap[pm.id] = pm.name; });
+
+         window.cashEquivalentsMap = window.cashEquivalentsMap || {};
+         cashEquivalents.forEach(ce => { window.cashEquivalentsMap[ce.id] = ce.name; });
+      } catch (e) { /* ignore map build errors */ }
 
       const tr = document.createElement('tr');
       tr.dataset.rowId = counter;
@@ -1132,14 +1141,37 @@ function updatePersonData(orderId, discountId, index, field, value) {
                   </table>
 
                      <div class="d-flex justify-content-between fw-bold mt-2"><span>Total Charge</span> <span>₱{{ number_format($order->total_charge ?? $order->net_amount ?? 0,2) }}</span></div>
+
+                     {{-- Payments breakdown grouped by payment method (Cash, GCash, Credit Card, etc.) --}}
+                     @php
+                  // Prefer showing the cash equivalent (e.g. "Cash On Hand | Noel", "GCash | 0977...")
+                  // and fall back to the payment method name (e.g. "Check", "Card") if none.
+                  $paymentsByMethod = $order->paymentDetails->groupBy(function($pd) {
+                     return optional($pd->cashEquivalent)->name ?? optional($pd->payment)->name ?? 'Other';
+                  })->map(function($group) {
+                     return $group->sum(fn($g) => floatval($g->amount_paid));
+                  });
+
+                        // total rendered & change: prefer order-level fields if available
+                        $totalRendered = floatval($order->total_payment_rendered ?? $order->paymentDetails->sum('amount_paid') ?? 0);
+                        $changeAmount = floatval($order->change_amount ?? $order->paymentDetails->last()?->change_amount ?? 0);
+                     @endphp
+
+                     @foreach($paymentsByMethod as $method => $amt)
+                        <div class="d-flex justify-content-between">
+                           <span>{{ $method }}</span>
+                           <span>₱{{ number_format($amt, 2) }}</span>
+                        </div>
+                     @endforeach
+
                      <div class="d-flex justify-content-between fw-bold">
-                     <span>Total Rendered</span>
-                     <span>{{ number_format($order->paymentDetails->last()?->total_rendered ?? 0, 2) }}</span>
-                  </div>
-                  <div class="d-flex justify-content-between fw-bold">
-                     <span>Change</span>
-                     <span>{{ number_format($order->paymentDetails->last()?->change_amount ?? 0, 2) }}</span>
-                  </div>
+                        <span>Total Rendered</span>
+                        <span>₱{{ number_format($totalRendered, 2) }}</span>
+                     </div>
+                     <div class="d-flex justify-content-between fw-bold">
+                        <span>Change</span>
+                        <span>₱{{ number_format($changeAmount, 2) }}</span>
+                     </div>
                               </div>
                   <p class="d-flex justify-content-between fw-bold mt-2"><span>POS Provided by:</span> <span>OMNI Systems Solutions</span></p>
                   <div class="d-flex flex-column small">
@@ -1183,63 +1215,78 @@ window.openInvoiceModalFromResponse = function(orderData) {
                   modalEl.tabIndex = -1;
                   modalEl.setAttribute('aria-hidden', 'true');
 
+                  // Build grouped payments HTML to ensure all methods are shown and summed correctly
+                  const paymentsArr = orderData.payment_details || orderData.paymentDetails || [];
+                  const paymentsMap = {};
+                  let computedTotalPaid = 0;
+                  paymentsArr.forEach(pd => {
+                     const name = (pd.payment && pd.payment.name) || pd.payment_name || 'Other';
+                     const amt = Number(pd.amount_paid || pd.amount || 0) || 0;
+                     computedTotalPaid += amt;
+                     paymentsMap[name] = (paymentsMap[name] || 0) + amt;
+                  });
+
+                  const paymentsHtml = Object.keys(paymentsMap).map(k => `\n                     <div style="display:flex;justify-content:space-between">\n                        <div>${k}</div>\n                        <div>₱${Number(paymentsMap[k]).toFixed(2)}</div>\n                     </div>`).join('');
+
+                  const totalPaidForDisplay = Number(orderData.total_payment_rendered ?? computedTotalPaid ?? 0).toFixed(2);
+                  const changeForDisplay = Number(orderData.change_amount ?? 0).toFixed(2);
+
                   modalEl.innerHTML = `
-                     <div class="modal-dialog modal-sm modal-dialog-scrollable">
-                        <div class="modal-content">
-                              <div class="modal-header">
-                                 <h5 class="modal-title">POS Receipt</h5>
-                                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                              </div>
-                              <div class="modal-body">
-                                 <div style="max-width:400px;margin:0 auto;font-family:Arial,Helvetica,sans-serif; font-size:13px;">
-                                    <div class="text-center mb-2">
-                                          <img src="/images/logo-default.png" width="60" height="60" alt="logo" />
-                                          <div><strong>${branch.name || 'Branch Name'}</strong></div>
-                                       2 <div>${branch.address || ''}</div>
-                                          <div>Permit #: ${branch.permit_number || ''}</div>
-                                          <div>DTI: ${branch.dti_issued || ''} | POS SN: ${branch.pos_sn || ''}</div>
+                           <div class="modal-dialog modal-sm modal-dialog-scrollable">
+                              <div class="modal-content">
+                                    <div class="modal-header">
+                                       <h5 class="modal-title">POS Receipt</h5>
+                                       <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                     </div>
-                                    <div class="mb-2 text-center"><strong>SALES INVOICE</strong></div>
-                                    <div>Date: ${orderData.created_at || ''}</div>
-                                    <div>INV: ${String(orderId).padStart(8, '0')}</div>
-                                    <div>TBL: ${orderData.table_no || ''} | Pax: ${orderData.number_pax || ''}</div>
-                                    <hr/>
-                                    <div>
-                                          ${(orderData.details || []).map(d => `
-                                             <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
-                                                <div style="width:55%">${(d.product?.name || d.component?.name || d.item_name || 'Item')}</div>
-                                                <div style="width:10%">${d.quantity}x</div>
-                                                <div style="width:35%;text-align:right">₱${((d.price || 0) * (d.quantity || 1)).toFixed(2)}</div>
-                                             </div>
-                                          `).join('')}
-                                    </div>
-                                    <hr/>
-                                    <div style="display:flex;justify-content:space-between"><div>Gross</div><div>₱${Number(orderData.gross_amount || (orderData.details||[]).reduce((s,i)=>s+(i.price||0)*(i.quantity||0),0)).toFixed(2)}</div></div>
-                                    <div style="display:flex;justify-content:space-between"><div>Discount</div><div>₱${Number(orderData.discount_total || orderData.sr_pwd_discount || 0).toFixed(2)}</div></div>
-                                    <div style="display:flex;justify-content:space-between;font-weight:bold"><div>Total</div><div>₱${Number(orderData.total_charge || orderData.net_amount || 0).toFixed(2)}</div></div>
-                                    <hr/>
-                                    <div><strong>Payments</strong></div>
-                                    ${(orderData.payment_details || orderData.paymentDetails || []).map(pd => `
-                                          <div style="display:flex;justify-content:space-between">
-                                             <div>${pd.payment?.name || pd.payment_name || 'Method'}</div>
-                                             <div>₱${Number(pd.amount_paid || 0).toFixed(2)}</div>
+                                    <div class="modal-body">
+                                       <div style="max-width:400px;margin:0 auto;font-family:Arial,Helvetica,sans-serif; font-size:13px;">
+                                          <div class="text-center mb-2">
+                                                <img src="/images/logo-default.png" width="60" height="60" alt="logo" />
+                                                <div><strong>${branch.name || 'Branch Name'}</strong></div>
+                                             2 <div>${branch.address || ''}</div>
+                                                <div>Permit #: ${branch.permit_number || ''}</div>
+                                                <div>DTI: ${branch.dti_issued || ''} | POS SN: ${branch.pos_sn || ''}</div>
                                           </div>
-                                    `).join('')}
-                                    <div style="display:flex;justify-content:space-between;margin-top:6px"><div>Total Paid</div><div>₱${Number(orderData.total_payment_rendered || 0).toFixed(2)}</div></div>
-                                    <div style="display:flex;justify-content:space-between"><div>Change</div><div>₱${Number(orderData.change_amount || 0).toFixed(2)}</div></div>
-                                    <p class="text-center small mt-3"><strong>This is not an official receipt</strong></p>
-                                 </div>
+                                          <div class="mb-2 text-center"><strong>SALES INVOICE</strong></div>
+                                          <div>Date: ${orderData.created_at || ''}</div>
+                                          <div>INV: ${String(orderId).padStart(8, '0')}</div>
+                                          <div>TBL: ${orderData.table_no || ''} | Pax: ${orderData.number_pax || ''}</div>
+                                          <hr/>
+                                          <div>
+                                                ${(orderData.details || []).map(d => `
+                                                   <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+                                                      <div style="width:55%">${(d.product?.name || d.component?.name || d.item_name || 'Item')}</div>
+                                                      <div style="width:10%">${d.quantity}x</div>
+                                                      <div style="width:35%;text-align:right">₱${((d.price || 0) * (d.quantity || 1)).toFixed(2)}</div>
+                                                   </div>
+                                                `).join('')}
+                                          </div>
+                                          <hr/>
+                                          <div style="display:flex;justify-content:space-between"><div>Gross</div><div>₱${Number(orderData.gross_amount || (orderData.details||[]).reduce((s,i)=>s+(i.price||0)*(i.quantity||0),0)).toFixed(2)}</div></div>
+                                          <div style="display:flex;justify-content:space-between"><div>Discount</div><div>₱${Number(orderData.discount_total || orderData.sr_pwd_discount || 0).toFixed(2)}</div></div>
+                                          <div style="display:flex;justify-content:space-between;font-weight:bold"><div>Total</div><div>₱${Number(orderData.total_charge || orderData.net_amount || 0).toFixed(2)}</div></div>
+                                          <hr/>
+                                          <div><strong>Payments</strong></div>
+                                          ${paymentsHtml}
+                                          <div style="display:flex;justify-content:space-between;margin-top:6px"><div>Total Paid</div><div>₱${totalPaidForDisplay}</div></div>
+                                          <div style="display:flex;justify-content:space-between"><div>Change</div><div>₱${changeForDisplay}</div></div>
+                                          <p class="text-center small mt-3"><strong>This is not an official receipt</strong></p>
+                                       </div>
+                                    </div>
+                                    <div class="modal-footer d-flex justify-content-center">
+                                       <button class="btn btn-outline-primary btn-sm me-2" onclick="window.print()">Print</button>
+                                       <button class="btn btn-primary btn-sm" data-bs-dismiss="modal">Close</button>
+                                    </div>
                               </div>
-                              <div class="modal-footer d-flex justify-content-center">
-                                 <button class="btn btn-outline-primary btn-sm me-2" onclick="window.print()">Print</button>
-                                 <button class="btn btn-primary btn-sm" data-bs-dismiss="modal">Close</button>
-                              </div>
-                        </div>
-                     </div>
-                  `;
+                           </div>
+                        `;
 
                   document.body.appendChild(modalEl);
-                  modalEl.addEventListener('hidden.bs.modal', () => modalEl.remove());
+                  modalEl.addEventListener('hidden.bs.modal', () => {
+                     modalEl.remove();
+                     // reload when the dynamically created invoice modal is closed so the orders list updates
+                     try { window.location.reload(); } catch (e) { /* ignore */ }
+                  });
             }
 
             // Show the modal using Bootstrap
@@ -1294,7 +1341,6 @@ window.submitPayment = function(orderId) {
     payload.append('change_amount', changeAmount);
 
     const token = document.querySelector('meta[name="csrf-token"]').content;
-    if (!confirm('Confirm submit payment for order #' + orderId + '?')) return;
 
     fetch('/orders/' + orderId + '/payment', {
         method: 'POST',
@@ -1307,7 +1353,6 @@ window.submitPayment = function(orderId) {
         console.log('✅ Payment response:', data);
 
         if (data.success) {
-            alert('Payment saved. Order marked as PAID.');
 
             // Update UI
             const row = document.querySelector(`.toggle-details[data-id="${orderId}"]`)?.closest('tr');
@@ -1318,19 +1363,22 @@ window.submitPayment = function(orderId) {
 
             // Close payment modal, then show invoice
             const paymentModal = document.getElementById('paymentModal' + orderId);
-            if (paymentModal && typeof bootstrap !== 'undefined') {
-                const pm = bootstrap.Modal.getInstance(paymentModal) || new bootstrap.Modal(paymentModal);
-                paymentModal.addEventListener('hidden.bs.modal', function onHidden() {
-                    paymentModal.removeEventListener('hidden.bs.modal', onHidden);
-                    if (data.order) {
-                        window.openInvoiceModalFromResponse(data.order);
-                    }
-                });
-                pm.hide(); 
-            } else if (data.order) {
-                // fallback if no modal found
-                window.openInvoiceModalFromResponse(data.order);
-            }
+         if (paymentModal && typeof bootstrap !== 'undefined') {
+            const pm = bootstrap.Modal.getInstance(paymentModal) || new bootstrap.Modal(paymentModal);
+            paymentModal.addEventListener('hidden.bs.modal', function onHidden() {
+               paymentModal.removeEventListener('hidden.bs.modal', onHidden);
+               if (data.order) {
+                  window.openInvoiceModalFromResponse(data.order);
+               }
+            });
+            pm.hide();
+
+                // (removed immediate reload — page will refresh when the receipt modal is closed)
+         } else if (data.order) {
+            // fallback if no modal found: open invoice then reload
+            window.openInvoiceModalFromResponse(data.order);
+                // (removed immediate reload — page will refresh when the receipt modal is closed)
+         }
         } else {
             alert('❌ Failed to save payment: ' + (data.message || 'Unknown error.'));
         }
@@ -1516,8 +1564,6 @@ window.submitPayment = function(orderId) {
       // csrf
       const token = document.querySelector('meta[name="csrf-token"]').content;
 
-      if (!confirm('Confirm submit payment for order #' + orderId + '?')) return;
-
       fetch("/orders/" + orderId + "/payment", {
          method: 'POST',
          headers: { 'X-CSRF-TOKEN': token },
@@ -1528,7 +1574,7 @@ window.submitPayment = function(orderId) {
          .then(data => {
             if (data.success) {
                console.log('Payment response', data);
-               alert('Payment saved. Order marked as PAID');
+               // alert('Payment saved. Order marked as PAID');
 
                // update status display in the row
                const checkbox = document.querySelector('.toggle-details[data-id="' + orderId + '"]');
@@ -1558,6 +1604,8 @@ window.submitPayment = function(orderId) {
                         console.warn('No order returned in payment response');
                      }
                      modal.hide();
+
+                     // (removed immediate reload — page will refresh when the receipt modal is closed)
                }
             } else {
                alert('Failed to save payment: ' + (data.message || 'Unknown'));
@@ -1588,5 +1636,20 @@ new Vue({
 });
 
 
+   </script>
+   <script>
+   document.addEventListener('DOMContentLoaded', function () {
+      // Attach reload-on-close to any existing (server-rendered) invoice modals so
+      // the orders list refreshes after the user closes the receipt (e.g., after printing).
+      document.querySelectorAll('[id^="invoiceModal"]').forEach(function(modalEl) {
+         // mark when shown so we only reload when it was actually opened by the user
+         modalEl.addEventListener('show.bs.modal', function () { modalEl.dataset._shown = '1'; });
+         modalEl.addEventListener('hidden.bs.modal', function () {
+            if (modalEl.dataset._shown) {
+               try { window.location.reload(); } catch (e) { /* ignore */ }
+            }
+         });
+      });
+   });
    </script>
 @endsection
