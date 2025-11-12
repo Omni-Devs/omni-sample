@@ -2,7 +2,7 @@
 
 <?php
 
-use App\Http\Controllers\AuditController;
+use App\Http\Controllers\InventoryAuditController;
 use App\Http\Controllers\BranchesController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ComponentController;
@@ -244,6 +244,9 @@ Route::put('/inventory/purchase-orders/{id}/archive', [InventoryPurchaseOrderCon
     ->name('inventory_purchase_orders.archive');
 Route::get('/inventory/purchase-orders/{id}/log-stocks', [InventoryPurchaseOrderController::class, 'logStocks']);
 
-Route::get('/inventory/audits', [AuditController::class, 'index'])->name('inventory_audit.index');
-Route::get('/inventory/audits/create', [AuditController::class, 'create'])->name('inventory_audit.create');
+Route::get('/inventory/audits', [InventoryAuditController::class, 'index'])->name('inventory_audit.index');
+Route::get('/inventory/audits/fetch', [InventoryAuditController::class, 'fetchAudits'])->name('inventory_audit.fetch');
+Route::get('/inventory/audits/create', [InventoryAuditController::class, 'create'])->name('inventory_audit.create');
+Route::post('/inventory/audits/store', [InventoryAuditController::class, 'store'])->name('inventory.audits.store');
+
 

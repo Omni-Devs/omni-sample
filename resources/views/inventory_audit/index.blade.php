@@ -28,14 +28,14 @@
             </div>
             <div class="col-sm-12 col-md-3">
                 <fieldset class="form-group">
-                    <legend class="col-form-label pt-0">Select Month *</legend>
-                    <v-select
+                <legend class="col-form-label pt-0">Select Month *</legend>
+                <v-select
                     v-model="selectedMonth"
                     :options="monthOptions"
                     :clearable="false"
                     placeholder="Select month"
                     label="label"
-                    ></v-select>
+                />
                 </fieldset>
             </div>
             <div class="col-sm-12 col-md-3">
@@ -162,24 +162,20 @@
                                     <td class="vgt-left-align text-left">@{{ audit.entry_datetime }}</td>
                                     <td class="vgt-left-align text-left">@{{ audit.audit_datetime }}</td>
                                     <td class="vgt-left-align text-left">@{{ audit.audited_by }}</td>
-                                    <td class="vgt-left-align text-left">@{{ audit.reference }}</td>
+                                    <td class="vgt-left-align text-left">@{{ audit.reference_no }}</td>
                                     <td class="vgt-left-align text-left">@{{ audit.warehouse }}</td>
                                     <td class="vgt-left-align text-right">
-                                    <div class="dropdown b-dropdown btn-group">
-                                        <button
-                                        class="btn dropdown-toggle btn-link btn-lg text-decoration-none dropdown-toggle-no-caret"
-                                        type="button"
-                                        >
-                                        <span class="_dot _r_block-dot bg-dark"></span>
-                                        <span class="_dot _r_block-dot bg-dark"></span>
-                                        <span class="_dot _r_block-dot bg-dark"></span>
-                                        </button>
-                                        <ul class="dropdown-menu dropdown-menu-right">
-                                        <li><a href="#" class="dropdown-item"><i class="nav-icon i-Edit mr-2"></i>Edit</a></li>
-                                        <li><a href="#" class="dropdown-item"><i class="nav-icon i-Eye mr-2"></i>View Audit Report</a></li>
-                                        <li><a href="#" class="dropdown-item"><i class="nav-icon i-Letter-Close mr-2"></i>Archive</a></li>
-                                        </ul>
-                                    </div>
+                                    {{-- Actions --}}
+                                    <td class="text-right">
+                                        @include('layouts.actions-dropdown', [
+                                        'id' => 'audit.id',
+                                        'editRoute' => '#',
+                                        'adjustmentRoute' => '#',
+                                        'viewAuditRoute' => '#',
+                                        'archived' => '#',
+                                        'logsRoute' => '#',
+                                        'remarksRoute' => '#',
+                                    ])
                                     </td>
                                 </tr>
 
@@ -202,52 +198,71 @@
 Vue.component('v-select', VueSelect.VueSelect);
 
 new Vue({
-  el: '#app', // change this to your Vue mount element
-  data() {
-    return {
-      selectedYear: new Date().getFullYear(),
-      yearOptions: [],
-      selectedMonth: 'All Months',
-      monthOptions: [],
-      selectedType: 'Products', // default selection
-      audits: [], // empty by default
-      auditTypeOptions: [
-        { label: 'Products', value: 'products' },
-        { label: 'Consumables/Engineering', value: 'consumables' },
-        { label: 'Assets', value: 'assets' },
-      ],
-    };
-  },
-  created() {
-    const currentYear = new Date().getFullYear();
-    const startYear = currentYear - 5; // adjust range (e.g., show 5 years before)
-    const endYear = currentYear + 5;   // and 5 years after
-    this.yearOptions = Array.from({ length: endYear - startYear + 1 }, (_, i) => {
-      const year = startYear + i;
-      return { label: year.toString(), value: year };
-    });
-
-    // Define all months (add "All Months" at top)
-    const months = [
-      'All Months',
-      'January',
-      'February',
-      'March',
-      'April',
-      'May',
-      'June',
-      'July',
-      'August',
-      'September',
-      'October',
-      'November',
-      'December',
-    ];
-    this.monthOptions = months.map((m) => ({
-      label: m,
-      value: m,
-    }));
-  },
+    el: '#app',
+    data() {
+        return {
+            selectedYear: null,
+            yearOptions: @json($yearOptions), // Use dynamic years from PHP
+             monthOptions: [
+            { label: 'All Months', value: 'All Months' },
+            { label: 'January', value: 'January' },
+            { label: 'February', value: 'February' },
+            { label: 'March', value: 'March' },
+            { label: 'April', value: 'April' },
+            { label: 'May', value: 'May' },
+            { label: 'June', value: 'June' },
+            { label: 'July', value: 'July' },
+            { label: 'August', value: 'August' },
+            { label: 'September', value: 'September' },
+            { label: 'October', value: 'October' },
+            { label: 'November', value: 'November' },
+            { label: 'December', value: 'December' },
+            ],
+            selectedMonth: { label: 'All Months', value: 'All Months' },
+            selectedType: 'Products',
+            auditTypeOptions: [
+                { label: 'Products', value: 'products' },
+                { label: 'Components', value: 'components' },
+                { label: 'Consumables/Engineering', value: 'consumables' },
+                { label: 'Assets', value: 'assets' },
+            ],
+            audits: @json($audits),
+        };
+    },
+    created() {
+        // Default selected year = latest year in options
+        if (this.yearOptions.length) {
+            this.selectedYear = this.yearOptions[this.yearOptions.length - 1].value;
+        }
+    },
+    watch: {
+        selectedYear() {
+            this.fetchAudits();
+        },
+        selectedMonth(newVal) {
+            this.fetchAudits();
+        },
+        selectedType() {
+            this.fetchAudits();
+        },
+    },
+    methods: {
+        fetchAudits() {
+        axios.get('{{ route('inventory_audit.fetch') }}', {
+            params: {
+                year: this.selectedYear,
+                month: this.selectedMonth.value, // pass only value, not object
+                type: this.selectedType.value || this.selectedType,
+            }
+        }).then(res => {
+            this.audits = res.data.audits || [];
+        }).catch(err => {
+            console.error(err);
+            this.audits = [];
+        });
+        },
+    },
 });
 </script>
+
 @endsection

@@ -31,6 +31,24 @@
         </li>
         @endisset
 
+         <!-- Adjustment -->
+        @isset($adjustmentRoute)
+        <li role="presentation">
+             <a class="dropdown-item" href="{{ $adjustmentRoute }}">
+                <i class="nav-icon i-Folder-Download font-weight-bold mr-2"></i> {{ $adjustmentLabel ?? 'Apply Adjustment to Stock Card' }}
+            </a>
+        </li>
+         @endisset
+
+         <!-- View Audit -->
+        @isset($viewAuditRoute)
+        <li role="presentation">
+             <a class="dropdown-item" href="{{ $viewAuditRoute }}">
+                <i class="nav-icon i-Eye font-weight-bold mr-2"></i> {{ $viewAuditLabel ?? 'View Audit Report' }}
+            </a>
+        </li>
+        @endisset
+
         @if ($currentRoute === 'inventory_purchase_orders.index')
         <li><hr class="dropdown-divider"></li>
 
@@ -55,6 +73,7 @@
 
         <li><hr class="dropdown-divider"></li>
 
+        @if(isset($status))
         <!-- ✅ Approve -->
         @if($status === 'pending')
         <li role="presentation">
@@ -88,6 +107,7 @@
                     <i class="nav-icon i-Folder-Download font-weight-bold mr-2"></i> Log Stocks in Inventory
                 </a>
             </li>
+        @endif
         @endif
 
         <!-- Update -->
@@ -218,6 +238,7 @@
             </a>
         </li>
         @endisset
+
         </ul>
         
 </div>

@@ -23,6 +23,10 @@
 <!-- Include Axios -->
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+
 <script>
   // Set CSRF token header for all Axios requests
   axios.defaults.headers.common['X-CSRF-TOKEN'] = document
