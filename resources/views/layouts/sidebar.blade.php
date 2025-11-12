@@ -619,12 +619,13 @@ new Vue({
   },
 
   totalCashSales() {
-    if (!Array.isArray(this.allPayments)) return 0;
+  if (!Array.isArray(this.allPayments)) return 0;
 
-    return this.allPayments
-      .filter(p => p.payment_name === 'Cash On Hand' || p.payment_name === 'Cash')
-      .reduce((sum, p) => sum + parseFloat(p.total_amount || 0), 0);
-  },
+  return this.allPayments
+    .filter(p => p.payment_name === 'Cash')
+    .reduce((sum, p) => sum + parseFloat(p.total_amount || 0), 0);
+},
+
   
   totalGCashSales() {
     return this.allPayments
@@ -850,12 +851,44 @@ async checkUnpaidOrders() {
     },
 
     fetchAllPayments() {
-      axios.get('/get-all-payments')
-        .then(response => {
-          const order = response.data.order;
-          this.allPayments = order.totals_by_payment || [];
-        })
-      },
+  axios.get('/get-all-payments')
+    .then(response => {
+      const order = response.data.order;
+      let payments = order.totals_by_payment || [];
+
+      // 🧠 Normalize similar payment names (treat them as one group)
+      payments = payments.map(p => {
+        let normalizedName = p.payment_name.trim().toLowerCase();
+
+        if (['cash', 'cash on hand', 'cash-on-hand'].includes(normalizedName)) {
+          p.payment_group = 'Cash';
+        } else if (['gcash', 'g-cash'].includes(normalizedName)) {
+          p.payment_group = 'GCash';
+        } else if (normalizedName.includes('bdo')) {
+          p.payment_group = 'BDO';
+        } else if (normalizedName.includes('bpi')) {
+          p.payment_group = 'BPI';
+        } else {
+          p.payment_group = 'Unknown';
+        }
+
+        return p;
+      });
+
+      // 🧾 Combine totals by normalized group
+      const combined = {};
+      payments.forEach(p => {
+        if (!combined[p.payment_group]) {
+          combined[p.payment_group] = { payment_name: p.payment_group, total_amount: 0 };
+        }
+        combined[p.payment_group].total_amount += parseFloat(p.total_amount || 0);
+      });
+
+      // ✅ Replace array with combined totals
+      this.allPayments = Object.values(combined);
+    })
+    .catch(err => console.error('Error fetching payments:', err));
+},
 
     // ✅ Start POS session
     async submitStartPOS() {
@@ -918,7 +951,7 @@ async checkUnpaidOrders() {
             transaction_date: this.closingDate,
             transaction_time: this.closingTime,
             starting_fund: this.startingFund,
-           cash_sales: this.totalCashSales, // automatically updated
+            cash_sales: this.totalCashSales, // automatically updated
             gcash_sales: this.totalGCashSales,
             bdo_sales: this.totalBDOSales,
             bpi_sales: this.totalBPISales,
