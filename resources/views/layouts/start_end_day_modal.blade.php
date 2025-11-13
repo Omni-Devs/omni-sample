@@ -14,6 +14,12 @@
       <div class="modal-body" style="max-height: 80vh; overflow-y: auto; overscroll-behavior: contain;">
         <!-- 🟢 START SESSION FORM -->
         <div v-if="modalMode === 'open'">
+
+          <div class="form-group mb-3">
+            <label>Login Name</label>
+            <input type="text" class="form-control" value="{{ auth()->user()->name }}" readonly>
+          </div>
+
           <div class="form-group mb-3">
             <label>Date</label>
             <input type="date" class="form-control" v-model="currentDate" readonly>
@@ -35,7 +41,32 @@
         <div v-else>
           <!-- Step 1: Confirmation -->
           <div v-if="endStep === 'confirm'" class="text-center">
-            <p>Are you sure you want to <strong>End the Day</strong>?</p>
+
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label>Login Name</label>
+                <input type="text" class="form-control" value="{{ auth()->user()->name }}" readonly>
+              </div>
+
+              <div class="col-md-6">
+                <label>Terminal</label>
+                <input type="text" class="form-control" v-model="terminal_no" readonly>
+              </div>
+                
+
+              <div class="col-md-6">
+                <label>Date</label>
+                <input type="date" class="form-control" v-model="currentDate" readonly>
+              </div>
+
+              <div class="col-md-6">
+                <label>Time</label>
+                <input type="time" class="form-control" v-model="currentTime">
+              </div>
+              
+            </div>
+            <br>
+            <p style="font-size: 18px">Are you sure you want to <strong>End the Day</strong>?</p>
             <div class="mt-3">
               <button class="btn btn-secondary me-2" data-bs-dismiss="modal">Cancel</button>
               <button class="btn btn-primary" @click="handleConfirmEndDay">Yes, End Day</button>

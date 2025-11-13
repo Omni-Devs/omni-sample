@@ -502,6 +502,8 @@ const currentDate = now.toISOString().split('T')[0];
 // Format time as HH:MM (24-hour format for input type="time")
 const currentTime = now.toTimeString().slice(0, 5); // e.g., "09:45"
 
+window.userName = "{{ auth()->user()->name }}";
+
 new Vue({
   el: "#startEndApp",
   data: {
@@ -509,7 +511,7 @@ new Vue({
     endStep: 'confirm',
     sessionData: null,
     branch_id: 1,
-    terminal_no: 'T1',
+    terminal_no: '',
     startingFund: 0,
     cash_sales: 0,
     total_denomination: 0,
@@ -558,6 +560,21 @@ new Vue({
     this.checkExistingSession();
     this.startAutoTimeUpdate();
     this.fetchAllPayments();
+    // 🧠 Detect OS name
+    let platform = "UnknownOS";
+    const userAgent = navigator.userAgent.toLowerCase();
+
+    if (userAgent.includes("win")) platform = "Windows";
+    else if (userAgent.includes("mac")) platform = "MacOS";
+    else if (userAgent.includes("linux")) platform = "Linux";
+    else if (userAgent.includes("android")) platform = "Android";
+    else if (userAgent.includes("iphone") || userAgent.includes("ipad")) platform = "iOS";
+
+    // 🧩 Combine OS + username
+    const userName = window.userName || "UnknownUser";
+    this.terminal_no = `${platform}_${userName}`;
+
+    console.log("Detected Terminal:", this.terminal_no);
 
     // Attach after mount just in case
   this.$nextTick(() => {
