@@ -232,6 +232,8 @@ Route::get('/inventory-purchase-orders/{purchaseOrder}/edit', [InventoryPurchase
 Route::put('/inventory-purchase-orders/{purchaseOrder}', [InventoryPurchaseOrderController::class, 'update'])->name('inventory_purchase_orders.update');
 Route::delete('/inventory-purchase-orders/{id}', [InventoryPurchaseOrderController::class, 'destroy'])->name('inventory_purchase_orders.destroy');
 Route::get('/inventory/purchase-orders/{id}/details', [InventoryPurchaseOrderController::class, 'getDetails']);
+// Generate next Delivery Receipt (DR) number for a branch
+Route::get('/inventory/purchase-orders/generate-next-dr', [InventoryPurchaseOrderController::class, 'generateNextDrNumber']);
 Route::post('/inventory/purchase-orders/attachments', [InventoryPurchaseOrderController::class, 'uploadAttachments'])
     ->name('inventory.purchase_orders.attachments');
 Route::get('/inventory_purchase_orders/{id}/attachments', [InventoryPurchaseOrderController::class, 'getAttachments']);
@@ -242,7 +244,8 @@ Route::put('/inventory/purchase-orders/{id}/disapprove', [InventoryPurchaseOrder
 Route::get('/inventory/purchase-orders/{id}/invoice', [InventoryPurchaseOrderController::class, 'getInvoiceData']);
 Route::put('/inventory/purchase-orders/{id}/archive', [InventoryPurchaseOrderController::class, 'archive'])
     ->name('inventory_purchase_orders.archive');
-Route::get('/inventory/purchase-orders/{id}/log-stocks', [InventoryPurchaseOrderController::class, 'logStocks']);
+// Route::get('/inventory/purchase-orders/{id}/log-stocks', [InventoryPurchaseOrderController::class, 'logStocks']);
+Route::post('/inventory/purchase-orders/{id}/log-stocks', [InventoryPurchaseOrderController::class, 'storeLogStocks']);
 
 Route::get('/inventory/audits', [InventoryAuditController::class, 'index'])->name('inventory_audit.index');
 Route::get('/inventory/audits/fetch', [InventoryAuditController::class, 'fetchAudits'])->name('inventory_audit.fetch');

@@ -3,6 +3,22 @@
 @section('content')
 <div class="main-content">
     {{-- Breadcrumb --}}
+    <!-- Scoped styles: make vgt tables more compact to match products index -->
+    <style>
+        /* match product table compactness */
+        table.vgt-table.small, table.vgt-table.table-sm, table.vgt-table.custom-vgt-table {
+            font-size: 13px !important;
+        }
+        table.vgt-table.small td, table.vgt-table.small th,
+        table.vgt-table.custom-vgt-table td, table.vgt-table.custom-vgt-table th {
+            padding: .4em .6em !important;
+        }
+        /* tighten modal inner tables as well */
+        .modal-body table.table.small td, .modal-body table.table.small th {
+            padding: .35em .5em !important;
+            font-size: 13px !important;
+        }
+    </style>
     <div>
         <div class="breadcrumb">
             <h1 class="mr-3">Inventory Purchase Orders</h1>
@@ -70,7 +86,7 @@
 
             {{-- Main Table --}}
             <div class="vgt-responsive mt-3">
-                <table class="table table-hover vgt-table">
+                <table class="table table-hover table-sm vgt-table small">
                     <thead>
                         <tr>
                             <th>Date & Time Created</th>
@@ -177,7 +193,6 @@
 </div>
 
 {{-- Log Stocks in Inventory Modal --}}
-<!-- Log Stocks in Inventory Modal -->
 <div class="modal fade" id="logStocksModal" tabindex="-1" aria-labelledby="logStocksModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-scrollable">
     <div class="modal-content">
@@ -216,14 +231,14 @@
           </div>
 
           <div class="mb-3">
-            <label for="delivery_dr" class="form-label fw-bold">Delivery DR #</label>
+            <label for="delivery_dr" class="form-label fw-bold">Delivery Receipt #</label>
             <!-- editable DR field prefilled by JS -->
-            <input type="text" class="form-control" id="delivery_dr" name="delivery_dr" placeholder="DR + Branch_ID + 000001">
+            <input type="text" class="form-control" id="delivery_dr" name="delivery_dr" placeholder="DR + Branch_ID + 00000">
           </div>
 
           <h6 class="fw-bold mt-4 mb-2">Receive Items</h6>
-          <div class="table-responsive">
-            <table class="table table-bordered align-middle">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-sm align-middle small">
               <thead>
                 <tr>
                   <th>Name</th>
@@ -232,8 +247,8 @@
                   <th>Category</th>
                   <th>Brand</th>
                   <th>Unit</th>
-                  <th>Total Qty Requested</th>
-                  <th>Qty to Receive</th>
+                  <th>Order Qty</th>
+                  <th>Received Qty</th>
                   <th>Action</th>
                 </tr>
               </thead>
@@ -319,8 +334,30 @@ function openLogStocksModal(poId) {
             console.log('Assigned PO number to UI element:', poNumberEl.textContent);
             poDateEl.textContent = data.created_at ? new Date(data.created_at).toLocaleString() : '—';
 
-            const branchId = data.branch_id ?? 'BR';
-            deliveryDrEl.value = `DR-${branchId}-000001`;
+            const branchId = data.branch_id ?? null;
+            // If we have a branch id, ask the server for the next DR number for that branch
+            if (branchId) {
+                fetch(`/inventory/purchase-orders/generate-next-dr?branch_id=${encodeURIComponent(branchId)}`)
+                    .then(r => {
+                        if (!r.ok) return r.text().then(t => { throw new Error(t || r.status); });
+                        return r.json();
+                    })
+                    .then(resp => {
+                        if (resp && resp.success && resp.next_dr_number) {
+                            deliveryDrEl.value = resp.next_dr_number;
+                        } else {
+                            // fallback predictable format
+                            deliveryDrEl.value = `DR-${branchId}-` + String(0).padStart(6, '0');
+                        }
+                    })
+                    .catch(err => {
+                        console.error('Failed to generate next DR number:', err);
+                        deliveryDrEl.value = `DR-${branchId}-` + String(0).padStart(6, '0');
+                    });
+            } else {
+                // no branch id available, keep generic placeholder
+                deliveryDrEl.value = 'DR-BR-' + String(0).padStart(6, '0');
+            }
 
             const details = Array.isArray(data.details) ? data.details : [];
             if (details.length === 0) {
@@ -332,7 +369,8 @@ function openLogStocksModal(poId) {
             details.forEach(d => {
                 const comp = d.component ?? {};
                 const totalRequested = Number(d.qty ?? 0);
-                const totalReceived = Number(d.total_received ?? 0);
+                const receivedAlready = Number(d.received_qty ?? 0);
+                const remaining = Math.max(0, totalRequested - receivedAlready);
 
                 const supplierName = (data && data.supplier && data.supplier.fullname)
                     ? data.supplier.fullname
@@ -348,15 +386,18 @@ function openLogStocksModal(poId) {
                     <td>${escapeHtml(comp.unit ?? '—')}</td>
                     <td class="text-end">${totalRequested}</td>
                     <td class="text-center">
-                        <div class="input-group input-group-sm" style="width:140px;margin:0 auto;">
-                            <button type="button" class="btn btn-outline-secondary" onclick="decrementQty(this)">-</button>
-                            <input type="number" min="0" max="${totalRequested}" value="0" data-detail-id="${d.id}" class="form-control text-end" />
-                            <button type="button" class="btn btn-outline-secondary" onclick="incrementQty(this)">+</button>
+                        <div class="d-flex flex-column align-items-center">
+                            <small class="text-muted mb-1">Received: ${receivedAlready}</small>
+                            <div class="input-group input-group-sm" style="width:160px;margin:0 auto;">
+                                <button type="button" class="btn btn-orange btn-primary px-3" onclick="decrementQty(this)">-</button>
+                                <input type="number" min="0" max="${remaining}" value="0" data-detail-id="${d.id}" class="form-control text-end" />
+                                <button type="button" class="btn btn-orange btn-primary px-3" onclick="incrementQty(this)">+</button>
+                            </div>
+                            <small class="text-muted mt-1">Remaining: ${remaining}</small>
                         </div>
                     </td>
                     <td>
                         <div class="btn-group btn-group-sm">
-                            <button type="button" class="btn btn-primary" onclick="editItem(${d.id})">Edit Details</button>
                             <button type="button" class="btn btn-danger" onclick="removeItemRow(this)">Remove</button>
                         </div>
                     </td>
@@ -695,11 +736,6 @@ function viewPOInvoice(poId) {
                     <div class="col-md-6">
                         <p><strong>Type of PO:</strong> ${data.type_of_request ?? '—'}</p>
                         <p><strong>Origin:</strong> ${data.select_origin ?? '—'}</p>
-                        <p><strong>Status:</strong> 
-                            <span class="badge bg-${data.status === 'approved' ? 'success' : data.status === 'disapproved' ? 'danger' : 'secondary'} text-uppercase">
-                                ${data.status}
-                            </span>
-                        </p>
                     </div>
                 </div>
 
@@ -720,7 +756,7 @@ function viewPOInvoice(poId) {
                     <tbody>${rows}</tbody>
                 </table>
 
-                <div class="text-end mt-3">
+                <div class="text-end mt-3 ml-auto" style="max-width: 200px;">
                     <p><strong>SUBTOTAL:</strong> ₱${subtotal.toFixed(2)}</p>
                     <p><strong>VAT (12%):</strong> ₱${tax.toFixed(2)}</p>
                     <h6><strong>GRAND TOTAL:</strong> ₱${grandTotal.toFixed(2)}</h6>

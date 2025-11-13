@@ -19,6 +19,7 @@ class InventoryPurchaseOrder extends Model
         'created_at',
         'branch_id',
         'attachments',
+        'delivery_dr',
         'approved_by',
         'approved_at',
         'archived_by',
