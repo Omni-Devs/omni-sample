@@ -537,7 +537,7 @@ public function show($id)
     $sessionEnd = $session->closed_at ? Carbon::parse($session->closed_at) : Carbon::now();
 
     // 🧾 Get all orders within timeframe
-    $orders = Order::with('paymentDetails.payment')
+    $orders = Order::with('paymentDetails.cashEquivalent')
         ->whereBetween('created_at', [$sessionStart, $sessionEnd])
         ->get();
 
@@ -550,7 +550,7 @@ public function show($id)
         if ($paymentDetails->count() > 1) {
             // 🧮 Multiple payments → check if there's a "Cash On Hand"
             foreach ($paymentDetails as $pd) {
-                $paymentName = optional($pd->payment)->name ?? 'Unknown';
+                $paymentName = optional($pd->cashEquivalent)->name ?? 'Unknown';
 
                 if (strtolower($paymentName) === 'cash on hand' || strtolower($paymentName) === 'cash') {
                     // ✅ Compute actual cash collected
@@ -569,7 +569,7 @@ public function show($id)
             }
         } else {
             // 🧾 Single payment (keep your original logic)
-            $paymentName = optional(optional($order->paymentDetails->first())->payment)->name ?? 'Unknown';
+            $paymentName = optional(optional($order->paymentDetails->first())->cashEquivalent)->name ?? 'Unknown';
             $total = $order->total_charge ?? 0;
 
             // If single payment is cash on hand, adjust computation
