@@ -82,7 +82,14 @@
             </a>
         </li>
         @endif
-        
+
+        @if($status === 'approved')
+        <li role="presentation">
+            <a href="javascript:void(0);" class="dropdown-item" onclick="openLogStocksModal({{ $id }})">
+                <i class="nav-icon i-Folder-Download font-weight-bold mr-2"></i> Log Stocks in Inventory
+            </a>
+        </li>
+        @endif
 
         <!-- ❌ Disapprove -->
         @if($status === 'pending')
@@ -94,19 +101,6 @@
             <li><hr class="dropdown-divider"></li>
         @endif
         
-        @endif
-
-        {{-- ✅ Log Stocks in Inventory (Only show if approved) --}}
-        @if($status === 'approved')
-            <li role="presentation">
-                {{-- <button type="button" class="dropdown-item text-primary" 
-                        onclick="openLogStocksModal({{ $id }})">
-                    <i class="i-Add-Cart mr-2"></i> Log Stocks in Inventory
-                </button> --}}
-                <a href="javascript:void(0);" class="dropdown-item" onclick="openLogStocksModal({{ $id }})">
-                    <i class="nav-icon i-Folder-Download font-weight-bold mr-2"></i> Log Stocks in Inventory
-                </a>
-            </li>
         @endif
         @endif
 
@@ -153,7 +147,7 @@
         @isset($cancelRoute)
             <li role="presentation">
             <a class="dropdown-item" href="{{ $cancelRoute }}">
-              <i class="nav-icon i-Letter-Close font-weight-bold mr-2"></i> {{ $cancelLabel ?? 'Cancel' }}
+                <i class="nav-icon i-Letter-Close font-weight-bold mr-2"></i> {{ $cancelLabel ?? 'Cancel' }}
             </a>
         </li>
         @endisset
@@ -181,8 +175,8 @@
         @if(isset($status) && $status === 'archived' && isset($deleteRoute))
         <li role="presentation">
             <form action="{{ $deleteRoute }}" method="POST"
-                  onsubmit="return confirm('Are you sure?');"
-                  style="display:inline;">
+                    onsubmit="return confirm('Are you sure?');"
+                    style="display:inline;">
                 @csrf
                 @method('DELETE')
                 <button type="submit" class="dropdown-item">

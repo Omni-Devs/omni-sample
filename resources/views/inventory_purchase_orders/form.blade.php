@@ -68,135 +68,161 @@
                             });
                             </script>
 
-                                        <!-- PO # -->
-                                        <div class="col-md-6">
-                                            <fieldset class="form-group">
-                                                <legend class="col-form-label pt-0">PO # *</legend>
-                                                <input 
-                                                    type="text" 
-                                                    name="po_number" 
-                                                    id="po_number" 
-                                                    class="form-control" 
-                                                    value="{{ old('po_number', $purchaseOrder->po_number ?? 'Auto Generated') }}" 
-                                                    readonly
-                                                >
-                                                <small class="form-text text-muted">
-                                                    This will be automatically generated when the PO is saved.<br>
-                                                    Example format: <strong>PO-[BranchID]-000001</strong>
-                                                </small>
-                                            </fieldset>
-                                        </div>
-                                        <!-- Requested By -->
-                                        <div class="col-md-6">
-                                            <fieldset class="form-group">
-                                                <legend class="col-form-label pt-0">Requested By *</legend>
-                                                <select name="user_id" id="user_id" class="form-select" required>
-                                                    <option value="">Select User</option>
-                                                    @foreach($users as $user)
-                                                        <option value="{{ $user->id }}"
-                                                            {{ old('user_id', $purchaseOrder->user_id ?? '') == $user->id ? 'selected' : '' }}>
-                                                            {{ $user->name }}
-                                                        </option>
-                                                    @endforeach
-                                                </select>
-                                                @error('user_id') <small class="text-danger">{{ $message }}</small> @enderror
-                                            </fieldset>
-                                        </div>
+                            <script>
+                                document.addEventListener('DOMContentLoaded', function() {
+                                    const branchInput = document.getElementById('branch_id');
+                                    const preview = document.getElementById('po_preview');
 
-                                        <!-- Department -->
-                                        <div class="col-md-6">
-                                            <fieldset class="form-group">
-                                                <legend class="col-form-label pt-0">Department</legend>
-                                                <input type="text" 
-                                                    name="department" 
-                                                    id="department" 
-                                                    class="form-control" 
-                                                    placeholder="Enter department"
-                                                    value="{{ old('department', $purchaseOrder->department ?? '') }}">
-                                            </fieldset>
-                                        </div>
+                                    if (!branchInput || !preview) return;
 
-                                        <!-- PRF Reference Number -->
-                                        <div class="col-md-6">
-                                            <fieldset class="form-group">
-                                                <legend class="col-form-label pt-0">PRF Reference #</legend>
-                                                <input type="text" 
-                                                    name="prf_reference_number" 
-                                                    id="prf_reference_number" 
-                                                    class="form-control" 
-                                                    placeholder="Enter PRF reference number"
-                                                    value="{{ old('prf_reference_number', $purchaseOrder->prf_reference_number ?? '') }}">
-                                            </fieldset>
-                                        </div>
+                                    function updatePreview() {
+                                        const bid = branchInput.value;
+                                        // If branch id is empty, keep the server-rendered preview
+                                        // (this avoids falling back to the literal 'BR')
+                                        if (!bid) return;
+                                        preview.value = `PO-${bid}-000001`;
+                                    }
 
-                                        <!-- Type of Request -->
-                                        <div class="col-md-6">
-                                            <fieldset class="form-group">
-                                                <legend class="col-form-label pt-0">Type of Request *</legend>
-                                                <select name="type_of_request" id="type_of_request" class="form-select form-select-sm shadow-none rounded" required>
-                                                    <option value="">Select Type</option>
-                                                    <option value="Direct/Indirect Materials" {{ old('type_of_request', $purchaseOrder->type_of_request ?? '') == 'Direct/Indirect Materials' ? 'selected' : '' }}>
-                                                        Direct/Indirect Materials
-                                                    </option>
-                                                    <option value="Consumables Engineering" {{ old('type_of_request', $purchaseOrder->type_of_request ?? '') == 'Consumables Engineering' ? 'selected' : '' }}>
-                                                        Consumables Engineering
-                                                    </option>
-                                                    <option value="Assets" {{ old('type_of_request', $purchaseOrder->type_of_request ?? '') == 'Assets' ? 'selected' : '' }}>
-                                                        Assets
-                                                    </option>
-                                                    <option value="Services" {{ old('type_of_request', $purchaseOrder->type_of_request ?? '') == 'Services' ? 'selected' : '' }}>
-                                                        Services
-                                                    </option>
-                                                </select>
-                                            </fieldset>
-                                        </div>
+                                    branchInput.addEventListener('change', updatePreview);
+                                    updatePreview();
+                                });
+                            </script>
 
-                                        <!-- Select Origin -->
-                                        <div class="col-md-6">
-                                            <fieldset class="form-group">
-                                                <legend class="col-form-label pt-0">Select Origin *</legend>
-                                                <select name="select_origin" id="select_origin" class="form-select" required>
-                                                    <option value="local" {{ old('select_origin', $purchaseOrder->select_origin ?? '') == 'local' ? 'selected' : '' }}>Local</option>
-                                                    <option value="international" {{ old('select_origin', $purchaseOrder->select_origin ?? '') == 'international' ? 'selected' : '' }}>International</option>
-                                                </select>
-                                            </fieldset>
-                                        </div>
+                            <!-- PO # -->
+                            <div class="col-md-6">
+                                <fieldset class="form-group">
+                                    <legend class="col-form-label pt-0">PO # *</legend>
+                                    @if(isset($purchaseOrder))
+                                        <input type="text" name="po_number" id="po_number" class="form-control" value="{{ old('po_number', $purchaseOrder->po_number) }}" readonly>
+                                        <input type="hidden" name="branch_id" value="{{ $purchaseOrder->branch_id }}">
+                                    @else
+                                        @php
+                                            // Default to the authenticated user's branch if available.
+                                            // The controller now provides $currentBranchId (from pivot `branch_user`).
+                                            $selectedBranchId = old('branch_id', $currentBranchId ?? '');
+                                            $selectedBranch = $branches->firstWhere('id', $selectedBranchId);
+                                        @endphp
 
-                                                                                <!-- Proforma Reference Number -->
-                                        <div class="col-md-6">
-                                            <fieldset class="form-group">
-                                                <legend class="col-form-label pt-0">Proforma Reference #</legend>
-                                                <input type="text" 
-                                                    name="proforma_reference_number" 
-                                                    id="proforma_reference_number" 
-                                                    class="form-control" 
-                                                    placeholder="Enter Proforma reference number"
-                                                    value="{{ old('proforma_reference_number', $purchaseOrder->proforma_reference_number ?? '') }}">
-                                            </fieldset>
-                                        </div>
+                                        <div class="d-flex gap-2">
+                                            {{-- store branch_id as hidden input so user can't change it on create --}}
+                                            <input type="hidden" name="branch_id" id="branch_id" value="{{ $selectedBranchId }}" required>
 
-                                        <!-- Supplier -->
-                                        <div class="col-md-6">
-                                            <fieldset class="form-group">
-                                                <legend class="col-form-label pt-0">Supplier *</legend>
-                                                <select name="supplier_id" id="supplier_id" class="form-select" required>
-                                                    <option value="">Select Supplier</option>
-                                                    @foreach($suppliers as $supplier)
-                                                        <option value="{{ $supplier->id }}"
-                                                            {{ old('supplier_id', $purchaseOrder->supplier_id ?? '') == $supplier->id ? 'selected' : '' }}>
-                                                            {{ $supplier->fullname }}
-                                                        </option>
-                                                    @endforeach
-                                                </select>
-                                                @error('supplier_id') <small class="text-danger">{{ $message }}</small> @enderror
-                                            </fieldset>
+                                            <input type="text" id="po_preview" class="form-control" value="PO-{{ $selectedBranchId }}-000001">
                                         </div>
-                                    </div>
-                                </div>
+                                    @endif
+                                </fieldset>
                             </div>
+                            <!-- Requested By -->
+                            <div class="col-md-6">
+                                <fieldset class="form-group">
+                                    <legend class="col-form-label pt-0">Requested By *</legend>
+                                    <select name="user_id" id="user_id" class="form-select" required>
+                                        <option value="">Select User</option>
+                                        @foreach($users as $user)
+                                            <option value="{{ $user->id }}"
+                                                {{ old('user_id', $purchaseOrder->user_id ?? '') == $user->id ? 'selected' : '' }}>
+                                                {{ $user->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    @error('user_id') <small class="text-danger">{{ $message }}</small> @enderror
+                                </fieldset>
+                            </div>
+
+                            <!-- Department -->
+                            <div class="col-md-6">
+                                <fieldset class="form-group">
+                                    <legend class="col-form-label pt-0">Department</legend>
+                                    <input type="text" 
+                                        name="department" 
+                                        id="department" 
+                                        class="form-control" 
+                                        placeholder="Enter department"
+                                        value="{{ old('department', $purchaseOrder->department ?? '') }}">
+                                </fieldset>
+                            </div>
+
+                            <!-- PRF Reference Number -->
+                            <div class="col-md-6">
+                                <fieldset class="form-group">
+                                    <legend class="col-form-label pt-0">PRF Reference #</legend>
+                                    <input type="text" 
+                                        name="prf_reference_number" 
+                                        id="prf_reference_number" 
+                                        class="form-control" 
+                                        placeholder="Enter PRF reference number"
+                                        value="{{ old('prf_reference_number', $purchaseOrder->prf_reference_number ?? '') }}">
+                                </fieldset>
+                            </div>
+
+                            <!-- Type of Request -->
+                            <div class="col-md-6">
+                                <fieldset class="form-group">
+                                    <legend class="col-form-label pt-0">Type of Request *</legend>
+                                    <select name="type_of_request" id="type_of_request" class="form-select form-select-sm shadow-none rounded" required>
+                                        <option value="">Select Type</option>
+                                        <option value="Direct/Indirect Materials" {{ old('type_of_request', $purchaseOrder->type_of_request ?? '') == 'Direct/Indirect Materials' ? 'selected' : '' }}>
+                                            Direct/Indirect Materials
+                                        </option>
+                                        <option value="Consumables Engineering" {{ old('type_of_request', $purchaseOrder->type_of_request ?? '') == 'Consumables Engineering' ? 'selected' : '' }}>
+                                            Consumables Engineering
+                                        </option>
+                                        <option value="Assets" {{ old('type_of_request', $purchaseOrder->type_of_request ?? '') == 'Assets' ? 'selected' : '' }}>
+                                            Assets
+                                        </option>
+                                        <option value="Services" {{ old('type_of_request', $purchaseOrder->type_of_request ?? '') == 'Services' ? 'selected' : '' }}>
+                                            Services
+                                        </option>
+                                    </select>
+                                </fieldset>
+                            </div>
+
+                            <!-- Select Origin -->
+                            <div class="col-md-6">
+                                <fieldset class="form-group">
+                                    <legend class="col-form-label pt-0">Select Origin *</legend>
+                                    <select name="select_origin" id="select_origin" class="form-select" required>
+                                        <option value="local" {{ old('select_origin', $purchaseOrder->select_origin ?? '') == 'local' ? 'selected' : '' }}>Local</option>
+                                        <option value="international" {{ old('select_origin', $purchaseOrder->select_origin ?? '') == 'international' ? 'selected' : '' }}>International</option>
+                                    </select>
+                                </fieldset>
+                            </div>
+
+                                                                    <!-- Proforma Reference Number -->
+                            <div class="col-md-6">
+                                <fieldset class="form-group">
+                                    <legend class="col-form-label pt-0">Proforma Reference #</legend>
+                                    <input type="text" 
+                                        name="proforma_reference_number" 
+                                        id="proforma_reference_number" 
+                                        class="form-control" 
+                                        placeholder="Enter Proforma reference number"
+                                        value="{{ old('proforma_reference_number', $purchaseOrder->proforma_reference_number ?? '') }}">
+                                </fieldset>
+                            </div>
+
+                            <!-- Supplier -->
+                            <div class="col-md-6">
+                                <fieldset class="form-group">
+                                    <legend class="col-form-label pt-0">Supplier *</legend>
+                                    <select name="supplier_id" id="supplier_id" class="form-select" required>
+                                        <option value="">Select Supplier</option>
+                                        @foreach($suppliers as $supplier)
+                                            <option value="{{ $supplier->id }}"
+                                                {{ old('supplier_id', $purchaseOrder->supplier_id ?? '') == $supplier->id ? 'selected' : '' }}>
+                                                {{ $supplier->fullname }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    @error('supplier_id') <small class="text-danger">{{ $message }}</small> @enderror
+                                </fieldset>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                             
 
-                            <div class="container-fluid">
+    <div class="container-fluid mt-4">
     <h3 class="mb-4">Create Purchase Ordering (PO)</h3>
 
     <!-- Product Selection -->
@@ -246,7 +272,7 @@
                         <th>Brand</th>
                         <th>Unit</th>
                         <th>Cost per Unit</th>
-                        <th>Qty</th>
+                        <th>Order Qty</th>
                         <th>Tax</th>
                         <th>Sub-Total</th>
                         <th>Action</th>
@@ -312,12 +338,17 @@ document.addEventListener('DOMContentLoaded', () => {
                                 class="form-control cost" 
                                 value="0" min="0" step="0.01">
                         </td>
-                        <td>
-                            <input type="number" 
-                                name="components[${id}][qty]" 
-                                class="form-control qty" 
-                                value="1" min="1">
-                        </td>
+                <td>
+                    <div class="input-group input-group-sm" style="width:160px;margin:0 auto;">
+                        <button type="button" class="btn btn-orange btn-primary px-3" onclick="decrementQty(this)">-</button>
+                        <input type="number" 
+                            name="components[${id}][qty]" 
+                            class="form-control text-center qty" 
+                            value="1" 
+                            min="1">
+                        <button type="button" class="btn btn-orange btn-primary px-3" onclick="incrementQty(this)">+</button>
+                    </div>
+                </td>
                         <td class="tax">₱0.00</td>
                         <td class="subtotal">₱0.00</td>
                         <td>
@@ -363,7 +394,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
             row.querySelector('.tax').textContent = `₱${rowTax.toFixed(2)}`;
             row.querySelector('.subtotal').textContent = `₱${rowSubtotal.toFixed(2)}`;
-        });
+            });
+        }
+    });
+
+    function incrementQty(btn) {
+        const input = btn.parentElement.querySelector('input[type="number"]');
+        if (!input) return;
+        input.value = Math.max(0, Number(input.value || 0) + 1);
     }
-});
+    function decrementQty(btn) {
+        const input = btn.parentElement.querySelector('input[type="number"]');
+        if (!input) return;
+        input.value = Math.max(0, Number(input.value || 0) - 1);
+    }
 </script>

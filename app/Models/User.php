@@ -6,6 +6,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Spatie\Permission\Traits\HasRoles;
+use App\Models\Branch;
 
 class User extends Authenticatable
 {
@@ -33,5 +34,13 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    /**
+     * The branches that belong to the user (pivot table `branch_user`).
+     */
+    public function branches()
+    {
+        return $this->belongsToMany(Branch::class);
     }
 }
