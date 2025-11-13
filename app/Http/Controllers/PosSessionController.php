@@ -55,20 +55,59 @@ class PosSessionController extends Controller
      */
     public function checkSession(Request $request)
     {
-        $terminalNo = $request->query('terminal_no');
+        // 🧠 Get terminal_no from frontend (Vue)
+        $terminalNo = $request->query('terminal_no'); 
+        $cashierId = auth()->id(); // Get logged-in user ID directly
 
+        if (!$terminalNo) {
+            return response()->json([
+                'error' => 'Missing terminal_no parameter.'
+            ], 400);
+        }
+
+        // 🧭 Look for open session for this terminal
         $session = CashAudit::where('terminal_no', $terminalNo)
             ->where('status', 'open')
             ->latest()
             ->first();
 
+        // ⚙️ If no open session found — create one
         if (!$session) {
+            $session = CashAudit::create([
+                'branch_id' => auth()->user()->branch_id ?? null,
+                'terminal_no' => $terminalNo,
+                'cashier_id' => $cashierId,
+                'starting_fund' => 0,
+                'status' => 'open',
+                'transaction_date' => now()->toDateString(),
+            ]);
+
             return response()->json([
-                'has_open_session' => false,
-                'session' => null,
+                'has_open_session' => true,
+                'session' => $session,
+                'message' => '🆕 New session created (no existing open session found)',
             ]);
         }
 
+        // ⚠️ If open session exists but belongs to another cashier → create new session
+        if ($session->cashier_id != $cashierId) {
+            $session = CashAudit::create([
+                'branch_id' => auth()->user()->branch_id ?? null,
+                'terminal_no' => $terminalNo,
+                'cashier_id' => $cashierId,
+                'starting_fund' => 0,
+                'status' => 'open',
+                'transaction_date' => now()->toDateString(),
+            ]);
+
+            return response()->json([
+                'has_open_session' => true,
+                'session' => $session,
+                'message' => '🆕 New session created (different cashier)',
+            ]);
+        }
+
+        // ✅ Existing session matches terminal and cashier
         return response()->json([
             'has_open_session' => true,
             'session' => [
@@ -80,8 +119,11 @@ class PosSessionController extends Controller
                 'status' => $session->status,
                 'transaction_date' => $session->transaction_date,
             ],
+            'message' => '✅ Existing open session found',
         ]);
     }
+
+
 
     /**
      * 🔒 Close the current cash audit session
