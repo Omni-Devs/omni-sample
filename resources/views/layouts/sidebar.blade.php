@@ -56,10 +56,13 @@
    <section class="ps-container sidebar-left rtl-ps-none ps scroll open ps--active-y">
       <div>
          <ul class="navigation-left">
-            <li data-item="dashboard" data-submenu="true" class="nav-item active">
-               <a href="/" class="nav-item-hold"><i class="nav-icon i-Bar-Chart"></i> <span class="nav-text">Menu</span></a> 
+            @if($user->hasRole('Administrator') || $user->can('view Dashboard'))
+            <li data-item="dashboard" data-submenu="true" class="nav-item">
+               <a href="/" class="nav-item-hold"><i class="nav-icon i-Bar-Chart"></i> <span class="nav-text">Dashboard</span></a> 
                <div class="triangle"></div>
             </li>
+            @endif
+
              @if($user->hasRole('Administrator') || $user->can('view POS'))
             <li data-item="Sales" data-submenu="true" class="nav-item">
                <a href="#" class="nav-item-hold"><i class="nav-icon i-Full-Basket"></i> <span class="nav-text">Sales</span></a> 
@@ -74,11 +77,6 @@
             </li>
             @endif
 
-
-            <li data-item="employee_dashboard" data-submenu="true" class="nav-item" style="display: none;">
-               <a href="/employee/dashboard" class="nav-item-hold"><i class="nav-icon i-Bar-Chart"></i> <span class="nav-text">Dashboard</span></a> 
-               <div class="triangle"></div>
-            </li>
             <li data-item="EmployeeProfile" data-submenu="true" class="nav-item" style="display: none;">
                <a href="#" class="nav-item-hold"><i class="nav-icon i-ID-2"></i> <span class="nav-text">My Profile</span></a> 
                <div class="triangle"></div>
@@ -132,25 +130,57 @@
    </section>
    <section class="ps-container sidebar-left-secondary ps rtl-ps-none">
       <div>
+
+          <ul data-parent="dashboard" class="childNav d-none">
+              <li class="nav-item"><a href="/" class=""><i class="nav-icon i-Bar-Chart"></i> <span class="item-name">Branch</span></a> </li>
+              <li class="nav-item dropdown-sidemenu">
+                <a href="#">
+                    <i class="nav-icon i-Line-Chart"></i>
+                    <span class="item-name">Global</span>
+                    <i class="dd-arrow i-Arrow-Down"></i>
+                </a>
+                <ul class="submenu">
+                    <li class="nav-item">
+                      <a href="#" class="">
+                          <i class="nav-icon i-Library"></i>
+                          <span class="item-name">Workforce</span>
+                      </a>
+                    </li>
+                    <li class="nav-item">
+                      <a href="#" class="">
+                          <i class="nav-icon i-Building"></i>
+                          <span class="item-name">Inventory</span>
+                      </a>
+                    </li>
+                    <li class="nav-item">
+                      <a href="#" class="">
+                          <i class="nav-icon i-Full-Basket"></i>
+                          <span class="item-name">Sales</span>
+                      </a>
+                    </li>
+                    <li class="nav-item">
+                      <a href="#" class="">
+                          <i class="nav-icon i-Edit-Map"></i>
+                          <span class="item-name">Accounting</span>
+                      </a>
+                    </li>
+                    <li class="nav-item">
+                      <a href="#" class="">
+                          <i class="nav-icon i-Business-Mens"></i>
+                          <span class="item-name">People</span>
+                      </a>
+                    </li>
+                </ul>
+              </li>
+              <li class="nav-item"><a href="#" class=""><i class="nav-icon i-Administrator"></i> <span class="item-name">Log History</span></a> </li>
+         </ul>
+
          <ul data-parent="EmployeeProfile" class="childNav d-none">
             <!----> <!----> <!----> <!----> <!----> <!----> <!----> <!----> <!----> <!----> <!----> <!----> <!----> <!---->
          </ul>
          <ul data-parent="EmployeeSubordinates" class="childNav d-none">
             <!----> <!----> <!----> <!----> <!----> <!----> <!----> <!----> <!----> <!----> <!----> <!----> <!---->
          </ul>
-         {{-- <ul data-parent="dashboard" class="childNav d-none d-block">
-            <li class="nav-item"><a href="/app/dashboard/main" class=""><i class="nav-icon i-Bar-Chart"></i> <span class="item-name">Branch</span></a></li>
-            <li class="nav-item dropdown-sidemenu">
-               <a href="#"><i class="nav-icon i-Line-Chart"></i> <span class="item-name">Global</span> <i class="dd-arrow i-Arrow-Down"></i></a> 
-               <ul class="submenu">
-                  <li><a href="/app/dashboard/workforce" class=""><i class="nav-icon i-ID-Card"></i> <span class="item-name">Workforce</span></a></li>
-                  <li><a href="/app/dashboard/inventory" class=""><i class="nav-icon i-ID-Card"></i> <span class="item-name">Inventory</span></a></li>
-                  <li><a href="/app/dashboard/sales" class=""><i class="nav-icon i-ID-Card"></i> <span class="item-name">Sales</span></a></li>
-                  <li><a href="/app/dashboard/accounting" class=""><i class="nav-icon i-ID-Card"></i> <span class="item-name">Accounting</span></a></li>
-               </ul>
-            </li>
-            <li class="nav-item"><a href="/app/dashboard/log-histories" class=""><i class="nav-icon i-Administrator"></i> <span class="item-name">Log History</span></a></li>
-         </ul> --}}
          <ul data-parent="reports" class="childNav d-none">
             <li class="nav-item"><a href="/app/reports/x-reading" class=""><i class="nav-icon i-Full-Basket"></i> <span class="item-name">POS</span></a> </li>
             <li class="nav-item dropdown-sidemenu">
@@ -171,68 +201,6 @@
             <li class="nav-item"><a href="/app/reports/y-reading" class=""><i class="nav-icon i-Building"></i> <span class="item-name">Inventory</span></a> </li>
             <li class="nav-item"><a href="/app/reports/y-reading" class=""><i class="nav-icon i-Library"></i> <span class="item-name">Workforce</span></a> </li>
             <li class="nav-item"><a href="/app/reports/y-reading" class=""><i class="nav-icon i-Receipt-3"></i> <span class="item-name">Accounting</span></a> </li>
-               {{-- <a href="#"><i class="nav-icon i-Library"></i> <span class="item-name">Workforce</span> <i class="dd-arrow i-Arrow-Down"></i></a> 
-               <ul class="submenu">
-                  <li><a href="/app/reports/workforce/summary" class=""><i class="nav-icon i-ID-Card"></i> <span class="item-name">Summary</span></a></li>
-                  <li><a href="/app/reports/workforce/employee-profiles" class=""><i class="nav-icon i-Business-ManWoman"></i> <span class="item-name">Employee Profiles</span></a></li>
-                  <li><a href="/app/reports/workforce/employee-files" class=""><i class="nav-icon i-File-Pictures"></i> <span class="item-name">Employee Files</span></a></li>
-                  <li><a href="/app/reports/workforce/shifts" class=""><i class="nav-icon i-Chef"></i> <span class="item-name">Shifts</span></a></li>
-                  <li><a href="/app/reports/workforce/timesheets" class=""><i class="nav-icon i-Calendar-4"></i> <span class="item-name">Timesheets</span></a></li>
-                  <li><a href="/app/reports/workforce/overtimes" class=""><i class="nav-icon i-Over-Time"></i> <span class="item-name">Regular Overtimes</span></a></li>
-                  <li><a href="/app/reports/workforce/restday-overtimes" class=""><i class="nav-icon i-Over-Time"></i> <span class="item-name">Restday Overtimes</span></a></li>
-                  <li><a href="/app/reports/workforce/salary-loans" class=""><i class="nav-icon i-Credit-Card"></i> <span class="item-name">Salary Loans</span></a></li>
-                  <li><a href="/app/reports/workforce/payroll-summaries" class=""><i class="nav-icon i-Receipt-4"></i> <span class="item-name">Payroll Summary</span></a></li>
-                  <li><a href="/app/reports/workforce/incident-reports" class=""><i class="nav-icon i-Link-2"></i> <span class="item-name">Incident Reports</span></a></li>
-                  <li><a href="/app/reports/workforce/disciplinary-actions" class=""><i class="nav-icon i-Financial"></i> <span class="item-name">Disciplinary Actions</span></a></li>
-                  <li><a href="/app/reports/workforce/leaves" class=""><i class="nav-icon i-Ticket"></i> <span class="item-name">Leaves</span></a></li>
-                  <li><a href="/app/reports/workforce/benefits" class=""><i class="nav-icon i-Betvibes"></i> <span class="item-name">Benefits</span></a></li>
-               </ul>
-            </li> --}}
-            {{-- <li class="nav-item dropdown-sidemenu">
-               <a href="#"><i class="nav-icon i-Building"></i> <span class="item-name">Inventory</span> <i class="dd-arrow i-Arrow-Down"></i></a> 
-               <ul class="submenu">
-                  <li><a href="/app/reports/inventory/summary" class=""><i class="nav-icon i-Posterous"></i> <span class="item-name">Summary Report</span></a></li>
-                  <li><a href="/app/reports/inventory/adjustment-summary" class=""><i class="nav-icon i-Data-Settings"></i> <span class="item-name">Products and Inventories Adjustments Report</span></a></li>
-                  <li><a href="/app/reports/inventory/procurements" class=""><i class="nav-icon i-Computer-Secure"></i> <span class="item-name">PRF Report</span></a></li>
-                  <li><a href="/app/reports/inventory/purchase-orders" class=""><i class="nav-icon i-Billing"></i> <span class="item-name">Po - Purchase Orders</span></a></li>
-                  <li><a href="/app/reports/inventory/transfers" class=""><i class="nav-icon i-Jeep-2"></i> <span class="item-name">Warehouse to Warehouse(Inbound) Report</span></a></li>
-                  <li><a href="/app/reports/inventory/warehouse-transfers" class=""><i class="nav-icon i-Jeep"></i> <span class="item-name">Warehouse to Warehouse(Outbound) Report</span></a></li>
-                  <li><a href="/app/reports/inventory/stock-requests" class=""><i class="nav-icon i-Safe-Box"></i> <span class="item-name">Branch to Branch(Inbound) Report</span></a></li>
-                  <li><a href="/app/reports/inventory/send-outs" class=""><i class="nav-icon i-Mail-Outbox"></i> <span class="item-name">Branch to Branch(Outbound) Report</span></a></li>
-                  <li><a href="/app/reports/inventory/disbursements" class=""><i class="nav-icon i-Split-Vertical"></i> <span class="item-name">Inventory Requests</span></a></li>
-                  <li><a href="/app/reports/inventory/processed-goods" class=""><i class="nav-icon i-Recycling-2"></i> <span class="item-name">Processed Goods Report</span></a></li>
-                  <li><a href="/app/reports/inventory/audits" class=""><i class="nav-icon i-Approved-Window"></i> <span class="item-name">Audit Report</span></a></li>
-                  <li><a href="/app/reports/inventory/input-taxes" class=""><i class="nav-icon i-Dollar"></i> <span class="item-name">Input Taxes</span></a></li>
-               </ul>
-            </li> --}}
-            {{-- <li class="nav-item dropdown-sidemenu">
-               <a href="#"><i class="nav-icon i-Full-Cart"></i> <span class="item-name">Sales</span> <i class="dd-arrow i-Arrow-Down"></i></a> 
-               <ul class="submenu">
-                  <li><a href="/app/reports/sales/summary" class=""><i class="nav-icon i-Pie-Chart"></i> <span class="item-name">Summary</span></a></li>
-                  <li><a href="/app/reports/sales/sales-journal" class=""><i class="nav-icon i-Book"></i> <span class="item-name">Sales Journal</span></a></li>
-                  <li><a href="/app/reports/sales/orders" class=""><i class="nav-icon i-Bookmark"></i> <span class="item-name">Orders and Reservations</span></a></li>
-                  <li><a href="/app/reports/sales/quotations" class=""><i class="nav-icon i-Full-Basket"></i> <span class="item-name">Quotations</span></a></li>
-                  <li><a href="/app/reports/sales/pick-ups" class=""><i class="nav-icon i-Hand"></i> <span class="item-name">Pick-Up Report</span></a></li>
-                  <li><a href="/app/reports/sales/deliveries" class=""><i class="nav-icon i-Jeep"></i> <span class="item-name">Delivery Report</span></a></li>
-                  <li><a href="/app/reports/sales/discounts" class=""><i class="nav-icon i-Coins"></i> <span class="item-name">Discounts</span></a></li>
-                  <li><a href="/app/reports/sales/voided-sales" class=""><i class="nav-icon i-Billing"></i> <span class="item-name">Voided Sales</span></a></li>
-                  <li><a href="/app/reports/sales/output-taxes" class=""><i class="nav-icon i-Receipt-3"></i> <span class="item-name">Output Taxes</span></a></li>
-               </ul>
-            </li> --}}
-            {{-- <li class="nav-item dropdown-sidemenu">
-               <a href="#"><i class="nav-icon i-Edit-Map"></i> <span class="item-name">X Reading</span> <i class="dd-arrow i-Arrow-Down"></i></a> 
-               <ul class="submenu">
-                  <li><a href="/app/reports/accounting/accounts-receivable" class=""><i class="nav-icon i-Add-Cart"></i> <span class="item-name">Accounts Receivable</span></a></li>
-                  <li><a href="/app/reports/accounting/accounts-payable" class=""><i class="nav-icon i-Bag-Coins"></i> <span class="item-name">Accounts Payable</span></a></li>
-                  <li><a href="/app/reports/accounting/ledger" class=""><i class="nav-icon i-Folders"></i> <span class="item-name">General Ledger</span></a></li>
-                  <li><a href="/app/reports/accounting/balance-sheet" class=""><i class="nav-icon i-Newspaper"></i> <span class="item-name">Balance Sheet</span></a></li>
-                  <li><a href="/app/reports/accounting/profit-loss-statement" class=""><i class="nav-icon i-Minimize-Window"></i> <span class="item-name">Profit and Loss Statement</span></a></li>
-                  <li><a href="/app/reports/accounting/sales-journal" class=""><i class="nav-icon i-Password-shopping"></i> <span class="item-name">Sales Journal</span></a></li>
-                  <li><a href="/app/reports/accounting/expense-journal" class=""><i class="nav-icon i-Receipt"></i> <span class="item-name">Expense Journal</span></a></li>
-                  <li><a href="/app/reports/accounting/tax-journal" class=""><i class="nav-icon i-Receipt-3"></i> <span class="item-name">Tax Journal</span></a></li>
-                  <li><a href="/app/reports/accounting/assets-summary" class=""><i class="nav-icon i-Building"></i> <span class="item-name">Assets Summary</span></a></li>
-               </ul>
-            </li> --}}
          </ul>
          {{-- <ul data-parent="Workforce" class="childNav d-none">
             <li class="nav-item"><a href="/app/workforce/upload-files" class=""><i class="nav-icon i-Upload-Window"></i> <span class="item-name">Upload Employee Files</span></a></li>
