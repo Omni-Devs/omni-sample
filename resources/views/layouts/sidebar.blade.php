@@ -335,8 +335,28 @@
             <li class="nav-item dropdown-sidemenu">
                <a href="#"><i class="nav-icon i-Gear"></i> <span class="item-name">General Settings</span> <i class="dd-arrow i-Arrow-Down"></i></a> 
                <ul class="submenu">
-                  <li class="nav-item"><a href="/app/settings/general/workforce" class=""><i class="nav-icon i-Library"></i> <span class="item-name">Workforce</span></a></li>
-                  
+                   <li class="nav-item dropdown-sidemenu">
+                     <a href="#">
+                        <i class="nav-icon i-Library"></i>
+                        <span class="item-name">Workforce</span>
+                        <i class="dd-arrow i-Arrow-Down"></i>
+                     </a>
+                     <ul class="submenu">
+                        <li class="nav-item">
+                           <a href="{{ route('departments.index') }}">
+                              <i class="nav-icon i-Bar-Chart"></i>
+                              <span class="item-name">Departments</span>
+                           </a>
+                        </li>
+                        <li class="nav-item">
+                           <a href="#">
+                              <i class="nav-icon i-Road-2"></i>
+                              <span class="item-name">Designations</span>
+                           </a>
+                        </li>
+                     </ul>
+                  </li>
+
                   <li class="nav-item dropdown-sidemenu">
                      <a href="#">
                         <i class="nav-icon i-Building"></i>
@@ -391,6 +411,14 @@
                            <a href="{{ route('cash_equivalents.index') }}">
                               <i class="nav-icon i-Wallet"></i>
                               <span class="item-name">Cash Equivalents</span>
+                           </a>
+                        </li>
+                     </ul>
+                     <ul class="submenu">
+                        <li class="nav-item">
+                           <a href="{{ route('asset-categories.index') }}">
+                              <i class="nav-icon i-Wallet"></i>
+                              <span class="item-name">Assets Category</span>
                            </a>
                         </li>
                      </ul>
