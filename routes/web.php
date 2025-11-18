@@ -252,7 +252,20 @@ Route::post('/inventory/purchase-orders/{id}/log-stocks', [InventoryPurchaseOrde
 Route::get('/inventory/audits', [InventoryAuditController::class, 'index'])->name('inventory_audit.index');
 Route::get('/inventory/audits/fetch', [InventoryAuditController::class, 'fetchAudits'])->name('inventory_audit.fetch');
 Route::get('/inventory/audits/create', [InventoryAuditController::class, 'create'])->name('inventory_audit.create');
+Route::post('/inventory/audits/{id}/apply', [\App\Http\Controllers\InventoryAuditController::class, 'apply'])->name('inventory_audit.apply');
+Route::get('/inventory/audits/{id}/show', [InventoryAuditController::class, 'show'])->name('inventory_audit.show');
+Route::get('/inventory/audits/{id}/pdf', [InventoryAuditController::class, 'downloadPdf'])->name('audits.pdf');
+Route::get('/inventory/items/fetch', [InventoryAuditController::class, 'fetchItems']);
 Route::post('/inventory/audits/store', [InventoryAuditController::class, 'store'])->name('inventory.audits.store');
+Route::delete('/inventory/audits/{id}/destroy', [InventoryAuditController::class, 'destroy'])->name('inventory_audits.destroy');
+
+// Archive an audit
+Route::put('/inventory/audits/{id}/archive', [InventoryAuditController::class, 'archive'])->name('inventory_audits.archive');
+Route::put('/inventory/audits/{id}/restore', [InventoryAuditController::class, 'restore'])->name('inventory_audits.restore');
+
+// 🔹 New routes for edit/update
+Route::get('/inventory/audits/{id}/edit', [InventoryAuditController::class, 'edit'])->name('inventory_audits.edit');
+Route::post('/inventory/audits/{id}/update', [InventoryAuditController::class, 'update'])->name('inventory_audits.update');
 
 Route::prefix('departments')->name('departments.')->group(function () {
 

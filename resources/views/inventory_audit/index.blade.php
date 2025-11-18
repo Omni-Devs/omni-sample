@@ -55,22 +55,28 @@
             <nav class="card-header">
                 <ul class="nav nav-tabs card-header-tabs">
                     <li class="nav-item">
-                        <a href="/kitchen" 
-                            class="nav-link active">
-                            Audit Logs
+                        <a href="#" 
+                            class="nav-link"
+                            :class="{ active: statusFilter === 'active' }"
+                            @click.prevent="setStatusFilter('active')">
+                            Active
                         </a>
                     </li>
 
                     <li class="nav-item">
-                        <a href="/kitchen/served" 
-                            class="nav-link">
+                        <a href="#" 
+                            class="nav-link"
+                            :class="{ active: statusFilter === 'completed' }"
+                            @click.prevent="setStatusFilter('completed')">
                             Completed
                         </a>
                     </li>
 
                     <li class="nav-item">
-                        <a href="/kitchen/walked"
-                            class="nav-link">
+                        <a href="#"
+                            class="nav-link"
+                            :class="{ active: statusFilter === 'archived' }"
+                            @click.prevent="setStatusFilter('archived')">
                             Archived
                         </a>
                     </li>
@@ -165,17 +171,15 @@
                                     <td class="vgt-left-align text-left">@{{ audit.reference_no }}</td>
                                     <td class="vgt-left-align text-left">@{{ audit.warehouse }}</td>
                                     <td class="vgt-left-align text-right">
-                                    {{-- Actions --}}
-                                    <td class="text-right">
-                                        @include('layouts.actions-dropdown', [
-                                        'id' => 'audit.id',
-                                        'editRoute' => '#',
-                                        'adjustmentRoute' => '#',
-                                        'viewAuditRoute' => '#',
-                                        'archived' => '#',
-                                        'logsRoute' => '#',
-                                        'remarksRoute' => '#',
-                                    ])
+                                        <actions-dropdown
+                                        :audit-id="audit.id"
+                                        :reference-no="audit.reference_no"
+                                        :status="audit.status"
+                                        @apply-adjustment="applyAdjustment"
+                                        @archive-audit="archiveAudit"
+                                        @restore-audit="restoreAudit"
+                                        @delete-permanently="deletePermanent"
+                                    ></actions-dropdown>
                                     </td>
                                 </tr>
 
@@ -193,6 +197,196 @@
             </div>
         </div>
 </div>
+
+<!-- Vue Dropdown Component -->
+<script type="text/x-template" id="actions-dropdown-template">
+<div class="dropdown btn-group" ref="dropdown">
+    <!-- 3 Dots Button -->
+    <button
+        type="button"
+        class="btn dropdown-toggle btn-link btn-lg text-decoration-none dropdown-toggle-no-caret"
+        @click.stop="toggleDropdown"
+        :aria-expanded="isOpen.toString()"
+    >
+        <span class="_dot _r_block-dot bg-dark"></span>
+        <span class="_dot _r_block-dot bg-dark"></span>
+        <span class="_dot _r_block-dot bg-dark"></span>
+    </button>
+
+    <ul :class="['dropdown-menu dropdown-menu-right', { show: isOpen }]">
+        <template v-if="status === 'archived'">
+            <li>
+                <a class="dropdown-item" :href="`/inventory/audits/${auditId}/edit`">
+                    <i class="nav-icon i-Edit font-weight-bold mr-2"></i>
+                    Edit
+                </a>
+            </li>
+            <li>
+                <a class="dropdown-item text-danger" href="#" @click.prevent="$emit('delete-permanently', auditId)">
+                    <i class="nav-icon i-Remove-Basket font-weight-bold mr-2"></i>
+                    Permanently Delete
+                </a>
+            </li>
+            <li>
+                <a class="dropdown-item" href="#" @click.prevent="$emit('restore-audit', auditId)">
+                    <i class="nav-icon i-Restore-Window font-weight-bold mr-2"></i>
+                    Restore as Active
+                </a>
+            </li>
+            <li>
+                <a href="javascript:void(0);" class="dropdown-item" @click="$emit('open-remarks', auditId)">
+                    <i class="nav-icon i-Mail-Attachement font-weight-bold mr-2"></i>
+                    Remarks
+                </a>
+            </li>
+        </template>
+
+        <template v-else-if="status === 'completed'">
+            <li>
+                <a class="dropdown-item" :href="`/inventory/audits/${auditId}/show`">
+                    <i class="nav-icon i-Eye font-weight-bold mr-2"></i>
+                    View Audit Report
+                </a>
+            </li>
+            <li>
+                <a class="dropdown-item" href="#">
+                    <i class="nav-icon i-Computer-Secure font-weight-bold mr-2"></i>
+                    Logs
+                </a>
+            </li>
+            <li>
+                <a href="javascript:void(0);" class="dropdown-item" @click="$emit('open-remarks', auditId)">
+                    <i class="nav-icon i-Mail-Attachement font-weight-bold mr-2"></i>
+                    Remarks
+                </a>
+            </li>
+        </template>
+
+        <template v-else>
+            <li>
+                <a class="dropdown-item" :href="`/inventory/audits/${auditId}/edit`">
+                    <i class="nav-icon i-Edit font-weight-bold mr-2"></i>
+                    Edit
+                </a>
+            </li>
+            <li>
+                <a class="dropdown-item" href="#" @click.prevent="confirmApply">
+                    <i class="nav-icon i-Folder-Download font-weight-bold mr-2"></i>
+                    Apply Adjustment to Stock Card
+                </a>
+            </li>
+            <li>
+                <a class="dropdown-item" :href="`/inventory/audits/${auditId}/show`">
+                    <i class="nav-icon i-Eye font-weight-bold mr-2"></i>
+                    View Audit Report
+                </a>
+            </li>
+            <li>
+                <a class="dropdown-item" href="#" @click.prevent="confirmArchive">
+                    <i class="nav-icon i-Letter-Close font-weight-bold mr-2"></i>
+                    Move to Archive
+                </a>
+            </li>
+            <li>
+                <a class="dropdown-item" href="#">
+                    <i class="nav-icon i-Computer-Secure font-weight-bold mr-2"></i>
+                    Logs
+                </a>
+            </li>
+            <li>
+                <a href="javascript:void(0);" class="dropdown-item" @click="$emit('open-remarks', auditId)">
+                    <i class="nav-icon i-Mail-Attachement font-weight-bold mr-2"></i>
+                    Remarks
+                </a>
+            </li>
+        </template>
+    </ul>
+</div>
+</script>
+
+<script>
+Vue.component("actions-dropdown", {
+    template: "#actions-dropdown-template",
+    props: {
+        auditId: Number,
+        referenceNo: {
+            type: [String, Number],
+            default: ''
+        },
+        status: {
+            type: String,
+            default: 'active'
+        }
+    },
+    data() {
+        return {
+            isOpen: false
+        };
+    },
+    methods: {
+        toggleDropdown() {
+            this.isOpen = !this.isOpen;
+        },
+        confirmApply() {
+            const ref = this.referenceNo || '';
+            if (typeof Swal === 'undefined') {
+                alert(`Are you sure you want to apply adjustments to Stock Card? Reference: ${ref}`);
+                return;
+            }
+            Swal.fire({
+                icon: 'warning',
+                title: '',
+                html: `Are you sure you want to apply adjustments to Stock Card?<br><strong>Reference: ${ref}</strong>`,
+                showCancelButton: true,
+                confirmButtonText: 'Continue',
+                cancelButtonText: 'Cancel',
+                customClass: {
+                    popup: 'swal2-custom-popup'
+                },
+                confirmButtonColor: '#ff630f',
+                cancelButtonColor: '#d33'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // emit event for parent to handle actual apply action (parent will prompt for credentials)
+                    this.$emit('apply-adjustment', this.auditId);
+                }
+            });
+        },
+        confirmArchive() {
+            const ref = this.referenceNo || '';
+            if (typeof Swal === 'undefined') {
+                if (!confirm(`Move audit ${ref} to archive?`)) return;
+                this.$emit('archive-audit', this.auditId);
+                return;
+            }
+            Swal.fire({
+                icon: 'warning',
+                title: '',
+                html: `Are you sure you want to move this audit to archive?<br><strong>Reference: ${ref}</strong>`,
+                showCancelButton: true,
+                confirmButtonText: 'Yes, archive it',
+                cancelButtonText: 'Cancel',
+                confirmButtonColor: '#6c757d'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    this.$emit('archive-audit', this.auditId);
+                }
+            });
+        },
+        handleClickOutside(event) {
+            if (!this.$refs.dropdown.contains(event.target)) {
+                this.isOpen = false;
+            }
+        }
+    },
+    mounted() {
+        document.addEventListener("click", this.handleClickOutside);
+    },
+    beforeDestroy() {
+        document.removeEventListener("click", this.handleClickOutside);
+    }
+});
+</script>
 
 <script>
 Vue.component('v-select', VueSelect.VueSelect);
@@ -227,6 +421,8 @@ new Vue({
                 { label: 'Assets', value: 'assets' },
             ],
             audits: @json($audits),
+            currentUserName: @json(optional(auth()->user())->name ?? ''),
+            statusFilter: 'active',
         };
     },
     created() {
@@ -253,6 +449,7 @@ new Vue({
                 year: this.selectedYear,
                 month: this.selectedMonth.value, // pass only value, not object
                 type: this.selectedType.value || this.selectedType,
+                status: this.statusFilter,
             }
         }).then(res => {
             this.audits = res.data.audits || [];
@@ -260,6 +457,168 @@ new Vue({
             console.error(err);
             this.audits = [];
         });
+        },
+        setStatusFilter(status) {
+            this.statusFilter = status;
+            this.fetchAudits();
+        },
+        applyAdjustment(auditId) {
+            const vm = this;
+            const ref = '';
+            if (typeof Swal === 'undefined') {
+                // fallback prompt
+                const username = this.currentUserName || prompt('Username');
+                const password = prompt('Password');
+                if (!username || !password) return alert('Credentials required');
+                axios.post(`/inventory/audits/${auditId}/apply`, { username, password })
+                    .then(res => { alert(res.data.message || 'Applied'); vm.fetchAudits(); })
+                    .catch(err => { alert(err.response?.data?.message || 'Failed'); });
+                return;
+            }
+
+            Swal.fire({
+                title: 'Authenticate',
+                html: `
+                    <label>Username</label>
+                    <input id="swal-username" class="swal2-input" value="${this.currentUserName}">
+                    <label>Password</label>
+                    <input id="swal-password" type="password" class="swal2-input" placeholder="Enter password">
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Submit',
+                focusConfirm: false,
+                preConfirm: () => {
+                    const username = document.getElementById('swal-username').value;
+                    const password = document.getElementById('swal-password').value;
+                    if (!username || !password) {
+                        Swal.showValidationMessage('Both username and password are required');
+                        return false;
+                    }
+                    return { username, password };
+                }
+            }).then((result) => {
+                if (result.isConfirmed && result.value) {
+                    const { username, password } = result.value;
+                    Swal.showLoading();
+                    axios.post(`/inventory/audits/${auditId}/apply`, { username, password })
+                        .then(res => {
+                            Swal.close();
+                            Swal.fire({ icon: 'success', title: 'Applied', text: res.data.message || 'Adjustments applied.' });
+                            vm.fetchAudits();
+                        })
+                        .catch(err => {
+                            Swal.close();
+                            const msg = err.response?.data?.message || 'Failed to apply adjustments.';
+                            Swal.fire({ icon: 'error', title: 'Error', text: msg });
+                        });
+                }
+            });
+        },
+        archiveAudit(auditId) {
+            const vm = this;
+            if (typeof Swal === 'undefined') {
+                if (!confirm('Move this audit to archive?')) return;
+                axios.put(`/inventory/audits/${auditId}/archive`).then(res => {
+                    alert(res.data.message || 'Archived');
+                    vm.fetchAudits();
+                }).catch(err => {
+                    alert(err.response?.data?.message || 'Failed to archive');
+                });
+                return;
+            }
+
+            Swal.fire({
+                title: 'Move to Archive',
+                text: 'Are you sure you want to move this audit to archive?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Yes',
+                cancelButtonText: 'Cancel'
+            }).then(result => {
+                if (result.isConfirmed) {
+                    Swal.showLoading();
+                    axios.put(`/inventory/audits/${auditId}/archive`).then(res => {
+                        Swal.close();
+                        Swal.fire({ icon: 'success', title: 'Archived', text: res.data.message });
+                        vm.fetchAudits();
+                    }).catch(err => {
+                        Swal.close();
+                        Swal.fire({ icon: 'error', title: 'Error', text: err.response?.data?.message || 'Failed to archive' });
+                    });
+                }
+            });
+        },
+        // Restore an archived audit back to active
+        restoreAudit(auditId) {
+            const vm = this;
+            if (typeof Swal === 'undefined') {
+                if (!confirm('Restore this audit to Audit Logs (active)?')) return;
+                axios.put(`/inventory/audits/${auditId}/restore`).then(res => {
+                    alert(res.data.message || 'Restored');
+                    vm.fetchAudits();
+                }).catch(err => {
+                    alert(err.response?.data?.message || 'Failed to restore');
+                });
+                return;
+            }
+
+            Swal.fire({
+                title: 'Restore Audit',
+                text: 'Restore this audit to Audit Logs (active)?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Restore',
+                cancelButtonText: 'Cancel'
+            }).then(result => {
+                if (result.isConfirmed) {
+                    Swal.showLoading();
+                    axios.put(`/inventory/audits/${auditId}/restore`).then(res => {
+                        Swal.close();
+                        Swal.fire({ icon: 'success', title: 'Restored', text: res.data.message });
+                        vm.fetchAudits();
+                    }).catch(err => {
+                        Swal.close();
+                        Swal.fire({ icon: 'error', title: 'Error', text: err.response?.data?.message || 'Failed to restore' });
+                    });
+                }
+            });
+        },
+
+        // Permanent delete of an audit
+        deletePermanent(auditId) {
+            const vm = this;
+            if (typeof Swal === 'undefined') {
+                if (!confirm('Permanently delete this audit? This cannot be undone.')) return;
+                axios.delete(`/inventory/audits/${auditId}/destroy`).then(res => {
+                    alert(res.data.message || 'Deleted');
+                    vm.fetchAudits();
+                }).catch(err => {
+                    alert(err.response?.data?.message || 'Failed to delete');
+                });
+                return;
+            }
+
+            Swal.fire({
+                title: 'Permanent Delete',
+                text: 'This audit will be permanently deleted and cannot be restored.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Delete',
+                cancelButtonText: 'Cancel',
+                confirmButtonColor: '#d33'
+            }).then(result => {
+                if (result.isConfirmed) {
+                    Swal.showLoading();
+                    axios.delete(`/inventory/audits/${auditId}/destroy`).then(res => {
+                        Swal.close();
+                        Swal.fire({ icon: 'success', title: 'Deleted', text: res.data.message });
+                        vm.fetchAudits();
+                    }).catch(err => {
+                        Swal.close();
+                        Swal.fire({ icon: 'error', title: 'Error', text: err.response?.data?.message || 'Failed to delete' });
+                    });
+                }
+            });
         },
     },
 });
