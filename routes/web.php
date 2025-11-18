@@ -19,6 +19,8 @@ use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\CashEquivalentController;
 use App\Http\Controllers\ComponentRemarkController;
 use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\DepartmentController;
+use App\Http\Controllers\AssetCategoryController;
 use App\Http\Controllers\InventoryPurchaseOrderController;
 use App\Http\Controllers\KitchenController;
 use App\Http\Controllers\OrderController;
@@ -252,4 +254,33 @@ Route::get('/inventory/audits/fetch', [InventoryAuditController::class, 'fetchAu
 Route::get('/inventory/audits/create', [InventoryAuditController::class, 'create'])->name('inventory_audit.create');
 Route::post('/inventory/audits/store', [InventoryAuditController::class, 'store'])->name('inventory.audits.store');
 
+Route::prefix('departments')->name('departments.')->group(function () {
+
+    Route::get('/', [DepartmentController::class, 'index'])->name('index');
+    Route::post('/', [DepartmentController::class, 'store'])->name('store');
+
+    Route::get('/{department}/edit', [DepartmentController::class, 'edit'])->name('edit');
+    Route::put('/{department}', [DepartmentController::class, 'update'])->name('update');
+
+    Route::delete('/{department}', [DepartmentController::class, 'destroy'])->name('destroy');
+
+    Route::put('/{department}/archive', [DepartmentController::class, 'archive'])->name('archive');
+    Route::put('/{department}/restore', [DepartmentController::class, 'restore'])->name('restore');
+
+});
+
+Route::prefix('asset-categories')->name('asset-categories.')->group(function () {
+
+    Route::get('/', [AssetCategoryController::class, 'index'])->name('index');
+    Route::post('/', [AssetCategoryController::class, 'store'])->name('store');
+
+    Route::get('/{asset_category}/edit', [AssetCategoryController::class, 'edit'])->name('edit');
+    Route::put('/{asset_category}', [AssetCategoryController::class, 'update'])->name('update');
+
+    Route::delete('/{asset_category}', [AssetCategoryController::class, 'destroy'])->name('destroy');
+
+    Route::put('/{asset_category}/archive', [AssetCategoryController::class, 'archive'])->name('archive');
+    Route::put('/{asset_category}/restore', [AssetCategoryController::class, 'restore'])->name('restore');
+
+});
 
