@@ -21,6 +21,7 @@ class Branch extends Model
         'dti_issued',
         'pos_sn',
         'min_number',
+        'status',
     ];
 
     public function users()
