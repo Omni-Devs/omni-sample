@@ -284,6 +284,32 @@
                                 </fieldset>
                                 </span>
                             </div>
+                            <div class="mt-4 col-sm-12">
+                                <span>
+                                <fieldset class="form-group">
+                                    <legend class="bv-no-focus-ring col-form-label pt-0">Branches</legend>
+                                    <div id="app-branches">
+                                        <v-select
+                                            multiple
+                                            :options='@json($branches)'
+                                            label="name"
+                                            :reduce="branch => branch.id"
+                                            v-model="selectedBranches"
+                                            placeholder="Select Branch(es)"
+                                            clearable
+                                        ></v-select>
+
+                                        <!-- Hidden inputs so Laravel receives an array -->
+                                        <input v-for="id in selectedBranches"
+                                               type="hidden"
+                                               name="branches[]"
+                                               :value="id">
+
+                                        <div id="Branches-feedback" class="invalid-feedback"></div>
+                                    </div>
+                                </fieldset>
+                                </span>
+                            </div>
                             <div class="mt-4 col-md-12">
                                 <div class="d-flex">
                                 <div class="mr-2">
@@ -310,6 +336,7 @@
     @include('layouts.user-editModal')
     <div>
         <div class="row">
+            @if(request('status', 'active') !== 'archived')
             <div class="col-sm-12 col-md-6 col-lg-3">
                 <div class="card card-icon-bg card-icon-bg-primary o-hidden mb-30 text-center">
                 <!----><!---->
@@ -327,6 +354,7 @@
                 <!----><!---->
                 </div>
             </div>
+            @endif
             <div class="col-sm-12 col-md-6 col-lg-3">
                 <div class="card card-icon-bg card-icon-bg-primary o-hidden mb-30 text-center">
                 <!----><!---->
@@ -417,9 +445,7 @@
                                                     <li>
                                                     <div class="my-1 custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" value="true" id="__BVID__251"><label class="custom-control-label" for="__BVID__251">Username</label></div>
                                                     </li>
-                                                    <li>
-                                                    <div class="my-1 custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" value="true" id="__BVID__252"><label class="custom-control-label" for="__BVID__252">Password</label></div>
-                                                    </li>
+                                                    {{-- Password column removed for security --}}
                                                     <li>
                                                     <div class="my-1 custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" value="true" id="__BVID__253"><label class="custom-control-label" for="__BVID__253">Email</label></div>
                                                     </li>
@@ -500,10 +526,7 @@
                                     Sort table by Username in descending order
                                     </span></button>
                                 </th>
-                                <th scope="col" aria-sort="descending" aria-controls="col-6" class="vgt-left-align text-left sortable" style="min-width: auto; width: auto;"><span>Password</span> <button><span class="sr-only">
-                                    Sort table by Password in descending order
-                                    </span></button>
-                                </th>
+                                {{-- Password column removed for security --}}
                                 <th scope="col" aria-sort="descending" aria-controls="col-7" class="vgt-left-align text-left sortable" style="min-width: auto; width: auto;"><span>Email</span> <button><span class="sr-only">
                                     Sort table by Email in descending order
                                     </span></button>
@@ -545,10 +568,6 @@
                                 </td>
                                 <td class="vgt-left-align text-left"><span>
                                     {{ $user->username }}
-                                    </span>
-                                </td>
-                                <td class="vgt-left-align text-left"><span>
-                                    {{ $user->password }}
                                     </span>
                                 </td>
                                 <td class="vgt-left-align text-left"><span>
@@ -791,6 +810,14 @@ new Vue({
   data: {
     selectedRoles: [], // will hold selected branch IDs
   }
+});
+
+// Separate Vue instance for branches multi-select in Add modal
+new Vue({
+    el: '#app-branches',
+    data: {
+        selectedBranches: [],
+    }
 });
 </script>
 @endsection
