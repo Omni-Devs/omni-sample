@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\Role;
+use App\Models\Branch;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage; 
@@ -16,15 +17,19 @@ class UserController extends Controller
     {
         $status = $request->get('status', 'active'); // default to active
 
-        // ✅ Include roles relationship here
-        $users = User::with('roles:id,name')
+        // ✅ Include roles and branches relationship here so inline user JSON contains them
+        $users = User::with([
+            'roles:id,name',
+            'branches:id,name'
+        ])
             ->where('status', $status)
             ->get();
 
         $nextUserId = User::max('id') + 1;
         $roles = Role::all();
+        $branches = Branch::all();
 
-        return view('users.index', compact('users', 'nextUserId', 'roles'));
+        return view('users.index', compact('users', 'nextUserId', 'roles', 'branches'));
     }
 
     public function create()
@@ -40,9 +45,11 @@ class UserController extends Controller
         'username' => 'required|string|max:255|unique:users,username',
         'email' => 'required|string|email|max:255|unique:users,email',
         'password' => 'required|string|min:4',
-        'mobile_number' => 'required|string|max:20',
+    'mobile_number' => 'nullable|string|max:20',
         'roles' => 'required|array',
         'roles.*' => 'exists:roles,id', // validate each role ID
+        'branches' => 'nullable|array',
+        'branches.*' => 'exists:branches,id',
         'image' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:2048',
         'address' => 'nullable|string|max:255',
     ]);
@@ -59,14 +66,19 @@ class UserController extends Controller
         'username' => $validated['username'],
         'email' => $validated['email'],
         'password' => Hash::make($validated['password']),
-        'mobile_number' => $validated['mobile_number'],
-        'address' => $validated['address'] ?? '',
+        'mobile_number' => $validated['mobile_number'] ?? null,
+        'address' => $validated['address'] ?? null,
         'image' => $imagePath,
         'active' => true,
     ]);
 
     // 🔹 Attach roles (pivot table)
     $user->roles()->sync($validated['roles']);
+
+    // 🔹 Attach branches (pivot table)
+    if ($request->filled('branches')) {
+        $user->branches()->sync($request->input('branches', []));
+    }
 
     return redirect()
         ->route('users.index')
@@ -75,7 +87,8 @@ class UserController extends Controller
 
     public function edit($id)
     {
-        $user = User::with('roles')->findOrFail($id);
+        // Include branches so modal can pre-select user's branches
+        $user = User::with(['roles', 'branches'])->findOrFail($id);
         return response()->json($user);
     }
 
@@ -99,6 +112,8 @@ public function update(Request $request, $id)
         'mobile_number' => 'nullable|string|max:20',
         'address' => 'nullable|string|max:255',
         'image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+        'branches' => 'nullable|array',
+        'branches.*' => 'exists:branches,id',
     ]);
 
     // Handle image upload if new one is uploaded
@@ -109,9 +124,14 @@ public function update(Request $request, $id)
 
     $user->update($validated);
 
-    // Update roles if using Spatie permissions
-    if ($request->filled('roles')) {
-        $user->syncRoles($request->roles);
+    // Update roles using pivot sync so numeric IDs are handled correctly
+    if ($request->has('roles')) {
+        $user->roles()->sync($request->input('roles', []));
+    }
+
+    // Update branches (pivot)
+    if ($request->has('branches')) {
+        $user->branches()->sync($request->input('branches', []));
     }
 
     return redirect()->back()->with('success', 'User updated successfully.');

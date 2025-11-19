@@ -11,7 +11,7 @@
                     @csrf
                     @method('PUT')
 
-                    <input type="hidden" id="editUserId" name="id">
+                    <input type="hidden" id="editUserHiddenId" name="id">
 
                     <div class="row">
                         <div class="col-md-6">
@@ -38,9 +38,9 @@
                         <div class="col-md-6">
                             <span>
                             <fieldset class="form-group" id="__BVID__388">
-                                <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0" id="__BVID__388__BV_label_">User # *</legend>
-                                <div>
-                                    <input type="text" placeholder="User #" class="form-control" aria-describedby="UserNo-feedback" label="UserNo" id="editUserId" readonly> 
+                                <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0" id="__BVID__388__BV_label_">User #</legend>
+                                    <div>
+                                    <input type="text" placeholder="User #" class="form-control" aria-describedby="UserNo-feedback" label="UserNo" id="editUserNumber" readonly> 
                                     <div id="UserNo-feedback" class="invalid-feedback"></div>
                                     <!----><!----><!---->
                                 </div>
@@ -147,6 +147,27 @@
                             </fieldset>
                         </div>
 
+                        <div class="col-md-12 mt-3">
+                            <fieldset class="form-group">
+                                <legend>Branches</legend>
+                                <div id="editBranchApp">
+                                    <v-select
+                                        multiple
+                                        :options='@json($branches)'
+                                        label="name"
+                                        :reduce="branch => branch.id"
+                                        v-model="selectedBranches"
+                                        placeholder="Select Branch(es)"
+                                        clearable
+                                    ></v-select>
+                                    <input v-for="id in selectedBranches"
+                                           type="hidden"
+                                           name="branches[]"
+                                           :value="id">
+                                </div>
+                            </fieldset>
+                        </div>
+
                         <div class="mt-4 col-md-12">
                             <div class="d-flex">
                                 <button type="submit" class="btn btn-primary me-2">
@@ -177,6 +198,16 @@ window.editRoleApp = new Vue({
     },
 });
 
+// ✅ Mount Vue app for branch selection in edit modal
+window.editBranchApp = new Vue({
+    el: '#editBranchApp',
+    data() {
+        return {
+            selectedBranches: [],
+        };
+    },
+});
+
 
 function previewEditUserImage(input) {
     if (input.files && input.files[0]) {
@@ -195,8 +226,12 @@ window.openEditUserModal = function (user) {
         const form = document.getElementById('editUserForm');
         form.action = `/users/${user.id}`;
 
-        // Fill fields
-        document.getElementById('editUserId').value = user.id;
+    // Fill fields
+    // set hidden id (for form submission) and visible user number
+    const hiddenIdEl = document.getElementById('editUserHiddenId');
+    const visibleIdEl = document.getElementById('editUserNumber');
+    if (hiddenIdEl) hiddenIdEl.value = user.id;
+    if (visibleIdEl) visibleIdEl.value = user.id;
         document.getElementById('editUserName').value = user.name;
         document.getElementById('editUserUsername').value = user.username;
         document.getElementById('editUserEmail').value = user.email;
@@ -211,6 +246,13 @@ window.openEditUserModal = function (user) {
         if (window.editRoleApp) {
             editRoleApp.selectedRoles = Array.isArray(user.roles)
                 ? user.roles.map(role => role.id)
+                : [];
+        }
+
+        // ✅ Safely handle branches
+        if (window.editBranchApp) {
+            editBranchApp.selectedBranches = Array.isArray(user.branches)
+                ? user.branches.map(branch => branch.id)
                 : [];
         }
 
