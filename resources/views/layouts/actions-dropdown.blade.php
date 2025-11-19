@@ -31,6 +31,17 @@
         </li>
         @endisset
 
+        @isset($branchEditRoute)
+        <li role="presentation">
+            <a class="dropdown-item"
+            href="#"
+            @click.prevent="$root.openEditModal({{ $data->toJson() }})">
+                <i class="nav-icon i-Edit font-weight-bold mr-2"></i> {{ $editLabel ?? 'Edit' }}
+            </a>
+        </li>
+        @endisset
+        
+
          <!-- Adjustment -->
         @isset($adjustmentRoute)
         <li role="presentation">
@@ -175,7 +186,10 @@
         @if(isset($status) && $status === 'archived' && isset($deleteRoute))
         <li role="presentation">
             <form action="{{ $deleteRoute }}" method="POST"
-                    onsubmit="return confirm('Are you sure?');"
+                    class="swal-confirm"
+                    data-title="Are you sure?"
+                    data-text="This will permanently delete the record."
+                    data-confirm-button="Permanently Delete"
                     style="display:inline;">
                 @csrf
                 @method('DELETE')
@@ -191,7 +205,10 @@
         @if(isset($status) && in_array($status, ['active', 'approved']) && isset($archiveRoute))
         <li role="presentation">
             <form action="{{ $archiveRoute }}" method="POST"
-                onsubmit="return confirm('Move this Purchase Order to archive?');"
+                class="swal-confirm"
+                data-title="Move to archive?"
+                data-text="Move this item to the archive?"
+                data-confirm-button="Move to Archive"
                 style="display:inline;">
                 @csrf
                 @method('PUT')
@@ -206,6 +223,10 @@
         <!-- Restore -->
         @if(isset($status) && $status === 'archived' && isset($restoreRoute))
             <form action="{{ $restoreRoute }}" method="POST"
+                  class="swal-confirm"
+                  data-title="Restore item?"
+                  data-text="Restore this item to active status?"
+                  data-confirm-button="Restore"
                   style="display:inline;">
                 @csrf
                 @method('PUT')

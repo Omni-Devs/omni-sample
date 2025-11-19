@@ -169,8 +169,10 @@ Route::delete('/permissions/{role}', [PermissionController::class, 'destroy'])->
 Route::get('/branches', [BranchesController::class, 'index'])->name('branches.index');
 Route::post('/branches', [BranchesController::class, 'store'])->name('branches.store');
 Route::get('/branches/{id}/edit', [BranchesController::class, 'edit'])->name('branches.edit');
-Route::put('/branches/{id}/update', [BranchesController::class, 'update'])->name('branches.update');
+Route::put('/branches/{id}', [BranchesController::class, 'update'])->name('branches.update');
 Route::delete('/branches/{id}', [BranchesController::class, 'destroy'])->name('branches.destroy');
+Route::put('/branches/{branch}/archive', [BranchesController::class, 'archive'])->name('branches.archive');
+Route::put('/branches/{branch}/restore', [BranchesController::class, 'restore'])->name('branches.restore');
 
 Route::get('/units', [UnitController::class, 'index'])->name('units.index');
 Route::post('/units', [UnitController::class, 'store'])->name('units.store');
