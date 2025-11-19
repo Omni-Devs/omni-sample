@@ -204,47 +204,6 @@
                                 <div class="modal fade" id="editAssetCategoryModal{{ $assetCategory->id }}" tabindex="-1" aria-labelledby="editAssetCategoryModalLabel{{ $assetCategory->id }}" aria-hidden="true">
                                     <div class="modal-dialog">
                                         <div class="modal-content">
-                                            {{-- <form action="{{ route('asset-categories.update', $assetCategory->id) }}" method="POST">
-                                                @csrf
-                                                @method('PUT')
-
-                                                <div class="modal-header">
-                                                    <h5 class="modal-title" id="editAssetCategoryModalLabel{{ $assetCategory->id }}">Edit Asset Category</h5>
-                                                    <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
-                                                        <span aria-hidden="true">&times;</span>
-                                                    </button>
-                                                </div>
-
-                                                   <div class="modal-body">
-                                                    <!-- Created At -->
-                                                    <div class="form-group mb-3">
-                                                        <label for="assetCategory-created-{{ $assetCategory->id }}">Date &amp; Time Created</label>
-                                                        <input type="datetime-local"
-                                                                name="created_at"
-                                                                id="assetCategory-created-{{ $assetCategory->id }}"
-                                                                class="form-control @error('created_at') is-invalid @enderror"
-                                                                value="{{ old('created_at', $assetCategory->created_at ? $assetCategory->created_at->timezone('Asia/Manila')->format('Y-m-d\TH:i') : '') }}">
-                                                        @error('created_at')
-                                                            <div class="invalid-feedback">{{ $message }}</div>
-                                                        @enderror
-                                                        <small class="form-text text-muted">
-                                                            Leave blank to keep the original creation date.
-                                                        </small>
-                                                    </div>
-
-                                                <div class="modal-body">
-                                                    <div class="form-group">
-                                                        <label for="name_{{ $assetCategory->id }}">Asset Category Name</label>
-                                                        <input type="text" name="name" id="name_{{ $assetCategory->id }}" class="form-control" value="{{ old('name', $assetCategory->name) }}" required>
-                                                    </div>
-                                                </div>
-
-                                                <div class="modal-footer">
-                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                                                    <button type="submit" class="btn btn-primary">Update</button>
-                                                </div> --}}
-                                                
-                                                
                                                 <form action="{{ route('asset-categories.update', $assetCategory->id) }}" method="POST">
                                                 @csrf
                                                 @method('PUT')

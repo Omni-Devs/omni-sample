@@ -30,6 +30,7 @@ use App\Http\Controllers\RemarkController;
 use App\Http\Controllers\SupplierController;
 use App\Models\CashEquivalent;
 use App\Models\User;
+use App\Http\Controllers\FundTransferController;
 use Illuminate\Support\Facades\View;
 
 
@@ -295,5 +296,32 @@ Route::prefix('asset-categories')->name('asset-categories.')->group(function () 
     Route::put('/{asset_category}/archive', [AssetCategoryController::class, 'archive'])->name('archive');
     Route::put('/{asset_category}/restore', [AssetCategoryController::class, 'restore'])->name('restore');
 
+});
+
+// Fund Transfers routes (follows same pattern as asset-categories)
+Route::prefix('fund-transfers')->name('fund-transfers.')->group(function () {
+
+    Route::get('/', [FundTransferController::class, 'index'])->name('index');
+    Route::post('/', [FundTransferController::class, 'store'])->name('store');
+
+    Route::get('/create', [FundTransferController::class, 'create'])->name('create');
+    Route::put('/{fund_transfer}', [FundTransferController::class, 'update'])->name('update');
+
+    Route::delete('/{fund_transfer}', [FundTransferController::class, 'destroy'])->name('destroy');
+
+    Route::put('/{fund_transfer}/approve', [FundTransferController::class, 'approve'])->name('approve');
+    Route::put('/{fund_transfer}/archive', [FundTransferController::class, 'archive'])->name('archive');
+    Route::put('/{fund_transfer}/restore', [FundTransferController::class, 'restore'])->name('restore');
+
+    Route::get('/{fund_transfer}', [FundTransferController::class, 'show'])->name('show');
+
+    // ✅ FIXED — attachment routes
+    Route::post('/{id}/attachments/upload', 
+        [FundTransferController::class, 'uploadAttachments']
+    )->name('attachments.upload');
+
+    Route::get('/{id}/attachments', 
+        [FundTransferController::class, 'getAttachments']
+    )->name('attachments.get');
 });
 
