@@ -17,6 +17,7 @@ class PoDetail extends Model
         'unit_cost',
         'tax',
         'sub_total',
+        'onhand',
     ];
 
     public function purchaseOrder()

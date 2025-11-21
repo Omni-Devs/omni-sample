@@ -239,18 +239,20 @@
                         <th>Category</th>
                         <th>Brand</th>
                         <th>Unit</th>
+                        <th>Current Onhand Quantity</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach($components as $component)
                     <tr>
-                        <td><input type="checkbox" class="component-checkbox" data-id="{{ $component->id }}" data-name="{{ $component->name }}" data-sku="{{ $component->code }}" data-supplier="{{ $component->supplier->fullname ?? 'Open' }}" data-category="{{ $component->category->name ?? 'N/A' }}" data-brand="{{ $component->brand ?? '-' }}" data-unit="{{ $component->unit }}"></td>
+                        <td><input type="checkbox" class="component-checkbox" data-id="{{ $component->id }}" data-name="{{ $component->name }}" data-sku="{{ $component->code }}" data-supplier="{{ $component->supplier->fullname ?? 'Open' }}" data-category="{{ $component->category->name ?? 'N/A' }}" data-brand="{{ $component->brand ?? '-' }}" data-unit="{{ $component->unit }}" data-onhand="{{ $component->onhand ?? '-' }}"></td>
                         <td>{{ $component->name }}</td>
                         <td>{{ $component->code }}</td>
-                        <td>{{ $component->supplier->fullname ?? 'Open' }}</td>
+                        <td>{{ $component->supplier->fullname ?? 'Open' }}</td> 
                         <td>{{ $component->category->name ?? 'N/A' }}</td>
                         <td>{{ $component->brand ?? '-' }}</td>
                         <td>{{ $component->unit }}</td>
+                        <td>{{ $component->onhand ?? '-' }}</td>
                     </tr>
                     @endforeach
                 </tbody>
@@ -271,6 +273,7 @@
                         <th>Category</th>
                         <th>Brand</th>
                         <th>Unit</th>
+                        <th>Current Onhand Quantity</th>
                         <th>Cost per Unit</th>
                         <th>Order Qty</th>
                         <th>Tax</th>
@@ -328,6 +331,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <td>${this.dataset.category}</td>
                         <td>${this.dataset.brand}</td>
                         <td>${this.dataset.unit}</td>
+                        <td>${this.dataset.onhand}</td>
 
                         <!-- hidden inputs that will be submitted -->
                         <input type="hidden" name="components[${id}][id]" value="${id}">
