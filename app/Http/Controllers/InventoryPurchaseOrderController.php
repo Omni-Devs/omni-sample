@@ -100,6 +100,7 @@ class InventoryPurchaseOrderController extends Controller
                 'unit_cost' => $unitCost,
                 'tax' => $tax,
                 'sub_total' => $qty * $unitCost,
+                'onhand' => $component->onhand ?? 0,
             ]);
 
             // 🔹 Update latest cost only (do NOT change onhand until goods are received)
