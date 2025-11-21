@@ -352,3 +352,4 @@ Route::prefix('accounting-categories')->name('accounting-categories.')->group(fu
         ->name('accounting-type.add-receivable');
 });
 
+Route::get('/accounting/account-receivable', [App\Http\Controllers\AccountReceivableController::class, 'index'])->name('account-receivable.index');
