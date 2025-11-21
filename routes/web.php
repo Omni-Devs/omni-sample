@@ -2,6 +2,7 @@
 
 <?php
 
+use App\Http\Controllers\AccountingCategoryController;
 use App\Http\Controllers\InventoryAuditController;
 use App\Http\Controllers\BranchesController;
 use App\Http\Controllers\CategoryController;
@@ -325,5 +326,29 @@ Route::prefix('fund-transfers')->name('fund-transfers.')->group(function () {
     Route::get('/{id}/attachments', 
         [FundTransferController::class, 'getAttachments']
     )->name('attachments.get');
+});
+
+Route::prefix('accounting-categories')->name('accounting-categories.')->group(function () {
+
+    Route::get('/', [AccountingCategoryController::class, 'index'])->name('index');
+    Route::post('/', [AccountingCategoryController::class, 'store'])->name('store');
+
+    Route::put('/{accounting_category}', [AccountingCategoryController::class, 'update'])->name('update');
+    Route::delete('/{accounting_category}', [AccountingCategoryController::class, 'destroy'])->name('destroy');
+
+    Route::put('/{accounting_category}/archive', [AccountingCategoryController::class, 'archive'])->name('archive');
+    Route::put('/{accounting_category}/restore', [AccountingCategoryController::class, 'restore'])->name('restore');
+
+    Route::post('/accounting-category/add-payable', [AccountingCategoryController::class, 'addPayable'])
+    ->name('accounting-category.add-payable');
+    Route::post('/accounting-category/add-receivable', [AccountingCategoryController::class, 'addReceivable'])
+    ->name('accounting-category.add-receivable');
+
+    // Add Type routes
+    Route::post('/accounting-type/add-payable', [AccountingCategoryController::class, 'addTypePayable'])
+        ->name('accounting-type.add-payable');
+
+    Route::post('/accounting-type/add-receivable', [AccountingCategoryController::class, 'addTypeReceivable'])
+        ->name('accounting-type.add-receivable');
 });
 
