@@ -416,8 +416,16 @@
                      </ul>
                      <ul class="submenu">
                         <li class="nav-item">
+                           <a href="{{ route('accounting-categories.index') }}">
+                              <i class="nav-icon i-Add-Cart"></i>
+                              <span class="item-name">Accounting Category</span>
+                           </a>
+                        </li>
+                     </ul>
+                     <ul class="submenu">
+                        <li class="nav-item">
                            <a href="{{ route('asset-categories.index') }}">
-                              <i class="nav-icon i-Wallet"></i>
+                              <i class="nav-icon i-Network-Window"></i>
                               <span class="item-name">Assets Category</span>
                            </a>
                         </li>
