@@ -10,11 +10,13 @@
         <span class="_dot _r_block-dot bg-dark"></span>
 
         {{-- 🔴 Badge indicator for remarks --}}
+    @isset($remarksRoute)
     <span id="remarksBadge-{{ $id }}"
         class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger text-white fw-bold d-none"
         style="font-size: 0.55rem; transform: translate(40%, -40%) !important;">
         1
     </span>
+    @endisset
     </button>
 
     @php
@@ -249,6 +251,15 @@
         @isset($remarksRoute)
         <li role="presentation">
             <a href="javascript:void(0);" class="dropdown-item" onclick="openRemarksModal({{ $id }})">
+                <i class="nav-icon i-Mail-Attachement font-weight-bold mr-2"></i> Remarks
+            </a>
+        </li>
+        @endisset
+
+        <!-- Remarks Sample-->
+        @isset($remarksSample)
+        <li role="presentation">
+            <a href="javascript:void(0);" class="dropdown-item">
                 <i class="nav-icon i-Mail-Attachement font-weight-bold mr-2"></i> Remarks
             </a>
         </li>

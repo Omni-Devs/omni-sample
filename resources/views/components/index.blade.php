@@ -266,6 +266,7 @@
                                  @include('layouts.actions-dropdown', [
                                     'id' => $component->id,
                                     'editRoute' => route('components.edit', $component->id),
+                                    'stockCardRoute' => route('components.stock-card', $component->id),
                                     'deleteRoute' => route('components.destroy', $component->id),
                                     'archiveRoute' => route('components.archive', $component->id),
                                     'restoreRoute' => route('components.restore', $component->id),

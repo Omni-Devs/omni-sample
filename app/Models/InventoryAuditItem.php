@@ -30,7 +30,7 @@ class InventoryAuditItem extends Model
 
     public function audit()
     {
-        return $this->belongsTo(InventoryAudit::class);
+        return $this->belongsTo(InventoryAudit::class, 'inventory_audit_id');
     }
 
     public function product()
