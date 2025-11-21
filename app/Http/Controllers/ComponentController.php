@@ -157,61 +157,109 @@ class ComponentController extends Controller
     }
 
   public function stockCard($id)
-    {
-        $component = Component::findOrFail($id);
-        $movements = collect();
+{
+    $component = Component::findOrFail($id);
 
-        // 1️⃣ Fetch all audit items
-        $auditItems = \App\Models\InventoryAuditItem::with('audit')
-            ->where('component_id', $id)
-            ->get()
-            ->map(function ($item) use ($component) {
-                $reference = $item->audit ? $item->audit->reference_no : "AUDIT-{$item->id}";
-                return [
-                    "entry_datetime" => $item->created_at,
-                    "activity"       => "AUDIT",
-                    "reference_no"   => $reference,
-                    "qty_balance"    => $item->quantity ?? 0,
-                    "cost_per_unit"  => $component->cost ?? 0,
-                ];
-            });
+    $movements = collect();
 
-        // 2️⃣ Fetch all deductions
-        $deductions = \App\Models\InventoryDeduction::where('component_id', $id)
-            ->get()
-            ->map(function ($deduction) use ($component) {
-                $reference = $deduction->order_detail_id 
-                    ? "ORD-{$deduction->order_detail_id}" 
-                    : "DED-{$deduction->id}";
-                $activityType = $deduction->order_detail_id ? "ORDER" : "DEDUCTION";
-                return [
-                    "entry_datetime" => $deduction->created_at,
-                    "activity"       => $activityType,
-                    "reference_no"   => $reference,
-                    "qty_balance"    => $deduction->new_quantity ?? 0,
-                    "cost_per_unit"  => $component->cost ?? 0,
-                ];
-            });
-
-        // 3️⃣ Merge and sort by date ascending (oldest first)
-        $movements = $auditItems->concat($deductions)
-            ->sortBy('entry_datetime')
-            ->values();
-
-        // 4️⃣ Compute Qty In and Qty Out based on previous balance
-        $prevBalance = 0;
-        $movements = $movements->map(function ($m) use (&$prevBalance) {
-            $diff = $m['qty_balance'] - $prevBalance;
-            $m['qty_in']  = $diff > 0 ? $diff : 0;
-            $m['qty_out'] = $diff < 0 ? abs($diff) : 0;
-            $prevBalance = $m['qty_balance'];
-            return $m;
+    /* -------------------------------------------------------------
+     | 1) AUDITS (ONLY COMPLETED)
+     ------------------------------------------------------------- */
+    $auditItems = \App\Models\InventoryAuditItem::where('component_id', $id)
+        ->whereHas('audit', function ($q) {
+            $q->where('status', 'completed');
+        })
+        ->with('audit')
+        ->get()
+        ->map(function ($item) use ($component) {
+            return [
+                "entry_datetime" => $item->created_at,
+                "activity"       => "AUDIT",
+                "reference_no"   => $item->audit ? $item->audit->reference_no : "AUDIT-{$item->id}",
+                "qty_balance"    => $item->quantity ?? 0,
+                "cost_per_unit"  => $component->cost ?? 0,
+            ];
         });
 
-        // 5️⃣ Sort descending for display
-        $movements = $movements->sortByDesc('entry_datetime')->values();
+    /* -------------------------------------------------------------
+     | 2) DEDUCTIONS (ORDER + MANUAL)
+     ------------------------------------------------------------- */
+    $deductions = \App\Models\InventoryDeduction::where('component_id', $id)
+        ->get()
+        ->map(function ($deduction) use ($component) {
 
-        return view('components.stock-card', compact('component', 'movements'));
-    }
+            $reference = $deduction->order_detail_id
+                ? "ORD-{$deduction->order_detail_id}"
+                : "DED-{$deduction->id}";
+
+            return [
+                "entry_datetime" => $deduction->created_at,
+                "activity"       => $deduction->order_detail_id ? "ORDER" : "DEDUCTION",
+                "reference_no"   => $reference,
+                "qty_balance"    => $deduction->new_quantity ?? 0,
+                "cost_per_unit"  => $component->cost ?? 0,
+            ];
+        });
+
+    /* -------------------------------------------------------------
+     | 3) PO DETAILS (ALWAYS INBOUND QTY)
+     ------------------------------------------------------------- */
+    $poDetails = \App\Models\PoDetail::where('component_id', $id)
+    ->whereHas('purchaseOrder', function ($q) {
+        $q->whereIn('status', ['approved', 'completed']);
+    })
+    ->with('purchaseOrder')
+    ->get()
+    ->map(function ($item) use ($component) {
+
+        // Compute new balance (onhand + received qty)
+        $newBalance = ($item->onhand ?? 0) + ($item->received_qty ?? 0);
+
+        return [
+            "entry_datetime" => $item->created_at,
+            "activity"       => "PURCHASE",
+            "reference_no"   => $item->purchaseOrder
+                ? $item->purchaseOrder->po_number
+                : "PO-{$item->id}",
+            "qty_balance"    => $newBalance,
+            "cost_per_unit"  => $component->cost ?? 0,
+        ];
+    });
+
+
+    /* -------------------------------------------------------------
+     | 4) Merge ALL movements by date ascending
+     ------------------------------------------------------------- */
+    $movements = $auditItems
+        ->concat($deductions)
+        ->concat($poDetails)
+        ->sortBy('entry_datetime')
+        ->values();
+
+    /* -------------------------------------------------------------
+     | 5) Compute qty_in & qty_out from balance difference
+     ------------------------------------------------------------- */
+    $prevBalance = 0;
+
+    $movements = $movements->map(function ($m) use (&$prevBalance) {
+
+        $diff = $m['qty_balance'] - $prevBalance;
+
+        $m['qty_in']  = $diff > 0 ? $diff : 0;
+        $m['qty_out'] = $diff < 0 ? abs($diff) : 0;
+
+        $prevBalance = $m['qty_balance'];
+
+        return $m;
+    });
+
+    /* -------------------------------------------------------------
+     | 6) Show newest first on front end
+     ------------------------------------------------------------- */
+    $movements = $movements->sortByDesc('entry_datetime')->values();
+
+    return view('components.stock-card', compact('component', 'movements'));
+}
+
 
 }

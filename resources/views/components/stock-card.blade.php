@@ -89,7 +89,14 @@
                         <h6 data-v-0eb8d504="" class="t-font-boldest">Images</h6>
                         <div data-v-0eb8d504="">
                             <span data-v-0eb8d504="" class="b-avatar badge-light rounded" style="width: 5rem; height: 5rem;">
-                            <span class="b-avatar-img"><img src="/images/products/no-image.png" alt="avatar"></span><!---->
+                                <span class="b-avatar-img">
+                                    <img 
+                                        src="{{ $component->image 
+                                                ? asset('storage/' . $component->image) 
+                                                : 'https://placehold.co/150x150?text=No+Image' }}"
+                                        alt="component image"
+                                    >
+                                </span>
                             </span>
                         </div>
                     </div>
@@ -261,7 +268,7 @@
 
                                             <!-- Date and Time -->
                                             <td class="vgt-left-align text-left">
-                                                <span>@{{ log.entry_datetime }}</span>
+                                                <span>@{{ formatDate(log.entry_datetime) }}</span>
                                             </td>
 
                                             <!-- Activity -->
@@ -322,6 +329,18 @@ new Vue({
             logs: @json($movements), // <-- Laravel passes data directly
         };
     },
+    methods: {
+        formatDate(date) {
+            return new Date(date).toLocaleString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true
+            });
+        }
+    }
 });
 </script>
 @endsection
