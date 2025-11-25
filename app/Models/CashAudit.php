@@ -22,6 +22,7 @@ class CashAudit extends Model
         'gcash_sales',
         'bdo_sales',
         'bpi_sales',
+        'other',
         'total_sales',
         'receivable_bpi',
         'tip',

@@ -24,7 +24,7 @@
                     <!-- Reference Number -->
                     <div class="col-sm-12 col-md-6 col-lg-4">
                         <fieldset class="form-group">
-                            <legend>Reference # *</legend>
+                            <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0">Reference # *</legend>
                             <input type="text" class="form-control" v-model="referenceNo" readonly placeholder="Auto-generated Reference #">
                         </fieldset>
                     </div>
@@ -32,7 +32,7 @@
                     <!-- Entry Date/Time -->
                     <div class="col-sm-12 col-md-6 col-lg-4">
                         <fieldset class="form-group">
-                            <legend>Date and Time of Entry</legend>
+                            <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0">Date and Time of Entry</legend>
                             <div class="d-flex align-items-center">
                                 <div class="vue-daterange-picker form-control reportrange-text">@{{ formattedNow }}</div>
                                 <button type="button" class="btn ml-2 btn-secondary btn-sm" @click="clearDate">Clear</button>
@@ -46,7 +46,7 @@
                     <!-- Audit Date/Time -->
                     <div class="col-sm-12 col-md-6 col-lg-4">
                         <fieldset class="form-group">
-                            <legend>Date and Time of Audit *</legend>
+                            <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0">Date and Time of Audit *</legend>
                             <div class="d-flex align-items-center">
                                 <div class="vue-daterange-picker form-control reportrange-text">@{{ formattedAudit }}</div>
                                 <button type="button" class="btn ml-2 btn-secondary btn-sm" @click="clearAuditDate">Clear</button>
@@ -57,7 +57,7 @@
                     <!-- Auditor -->
                     <div class="col-sm-12 col-md-6 col-lg-4">
                         <fieldset class="form-group">
-                            <legend>Audited by *</legend>
+                            <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0">Audited by *</legend>
                             <select class="form-control" v-model="selectedAuditor">
                                 <option disabled value="">Select Auditor</option>
                                 <option v-for="user in users" :key="user.id" :value="user.id">@{{ user.name }}</option>
@@ -68,7 +68,7 @@
                     <!-- Type -->
                     <div class="col-sm-12 col-md-6 col-lg-4">
                         <fieldset class="form-group">
-                            <legend>Type *</legend>
+                            <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0">Type *</legend>
                             <v-select v-model="selectedType" :options="auditTypeOptions" :clearable="true" placeholder="Select type" label="label"></v-select>
                         </fieldset>
                     </div>
