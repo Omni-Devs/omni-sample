@@ -602,35 +602,38 @@
                     <!----> 
                     <div class="vgt-wrap__footer vgt-clearfix">
                         <div class="footer__row-count vgt-pull-left">
-                            <form>
-                            <label for="vgt-select-rpp-835833998041" class="footer__row-count__label">Rows per page:</label> 
-                            <select id="vgt-select-rpp-835833998041" autocomplete="off" name="" aria-controls="vgt-table" class="footer__row-count__select">
-                                <option value="10">
-                                    10
-                                </option>
-                                <option value="20">
-                                    20
-                                </option>
-                                <option value="30">
-                                    30
-                                </option>
-                                <option value="40">
-                                    40
-                                </option>
-                                <option value="50">
-                                    50
-                                </option>
-                                <option value="-1">All</option>
-                            </select>
+                            <form method="GET" id="perPageForm">
+                                <input type="hidden" name="status" value="{{ $status }}">
+
+                                <label for="per_page" class="footer__row-count__label">Rows per page:</label>
+
+                                <select name="per_page" id="per_page" class="footer__row-count__select" onchange="document.getElementById('perPageForm').submit()">
+                                    <option value="10" {{ $users->perPage() == 10 ? 'selected' : '' }}>10</option>
+                                    <option value="20" {{ $users->perPage() == 20 ? 'selected' : '' }}>20</option>
+                                    <option value="30" {{ $users->perPage() == 30 ? 'selected' : '' }}>30</option>
+                                    <option value="40" {{ $users->perPage() == 40 ? 'selected' : '' }}>40</option>
+                                    <option value="50" {{ $users->perPage() == 50 ? 'selected' : '' }}>50</option>
+                                </select>
                             </form>
+
                         </div>
                         <div class="footer__navigation vgt-pull-right">
                             <div data-v-347cbcfa="" class="footer__navigation__page-info">
-                            <div data-v-347cbcfa="">
-                                1 - 9 of 9
+                                <div>
+                                    {{ $users->firstItem() }} - {{ $users->lastItem() }} of {{ $users->total() }}
+                                </div>
                             </div>
-                            </div>
-                            <!----> <button type="button" aria-controls="vgt-table" class="footer__navigation__page-btn disabled"><span aria-hidden="true" class="chevron left"></span> <span>prev</span></button> <button type="button" aria-controls="vgt-table" class="footer__navigation__page-btn disabled"><span>next</span> <span aria-hidden="true" class="chevron right"></span></button> <!---->
+                            <button type="button"
+                                    onclick="window.location='{{ $users->previousPageUrl() }}'"
+                                    class="footer__navigation__page-btn {{ $users->onFirstPage() ? 'disabled' : '' }}">
+                                <span class="chevron left"></span> <span>prev</span>
+                            </button>
+
+                            <button type="button"
+                                    onclick="window.location='{{ $users->nextPageUrl() }}'"
+                                    class="footer__navigation__page-btn {{ $users->hasMorePages() ? '' : 'disabled' }}">
+                                <span>next</span> <span class="chevron right"></span>
+                            </button>
                         </div>
                     </div>
                 </div>

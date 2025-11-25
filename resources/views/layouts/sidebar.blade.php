@@ -308,6 +308,7 @@
          </ul>
          <ul data-parent="Accounting" class="childNav d-none">
             <li class="nav-item"><a href="/app/accounting/account-receivables" class=""><i class="nav-icon i-Add-Cart"></i> <span class="item-name">Accounts Receivable</span></a></li>
+            <li class="nav-item"><a href="/accounts-receivable" class=""><i class="nav-icon i-Add-Cart"></i> <span class="item-name">Accounts Receivable</span></a></li>
             <li class="nav-item"><a href="/app/accounting/account-payables" class=""><i class="nav-icon i-Bag-Coins"></i> <span class="item-name">Accounts Payable</span></a></li>
             <li class="nav-item"><a href="/app/accounting/assets" class=""><i class="nav-icon i-Building"></i> <span class="item-name">Assets Management</span></a></li>
             <li class="nav-item"><a href="{{ route('fund-transfers.index') }}" class=""><i class="nav-icon i-Letter-Sent"></i> <span class="item-name">Fund Transfer</span></a></li>
@@ -672,6 +673,13 @@ new Vue({
       .filter(p => p.payment_name === 'BPI')
       .reduce((sum, p) => sum + parseFloat(p.total_amount || 0), 0);
   },
+
+  
+totalOtherSales() {
+  return this.allPayments
+    .filter(p => !['Cash', 'GCash', 'BDO', 'BPI'].includes(p.payment_name))
+    .reduce((sum, p) => sum + parseFloat(p.total_amount || 0), 0);
+},
   
   totalSales() {
     // Total of all payment types
@@ -877,39 +885,47 @@ async checkUnpaidOrders() {
       const order = response.data.order;
       let payments = order.totals_by_payment || [];
 
-      // 🧠 Normalize similar payment names (treat them as one group)
+      // 🧩 Normalize only the known groups
       payments = payments.map(p => {
-        let normalizedName = p.payment_name.trim().toLowerCase();
+        let normalized = p.payment_name.trim().toLowerCase();
 
-        if (['cash', 'cash on hand', 'cash-on-hand'].includes(normalizedName)) {
+        if (['cash', 'cash on hand', 'cash-on-hand'].includes(normalized)) {
           p.payment_group = 'Cash';
-        } else if (['gcash', 'g-cash'].includes(normalizedName)) {
+
+        } else if (['gcash', 'g-cash'].includes(normalized)) {
           p.payment_group = 'GCash';
-        } else if (normalizedName.includes('bdo')) {
+
+        } else if (normalized.includes('bdo')) {
           p.payment_group = 'BDO';
-        } else if (normalizedName.includes('bpi')) {
+
+        } else if (normalized.includes('bpi')) {
           p.payment_group = 'BPI';
+
         } else {
-          p.payment_group = 'Unknown';
+          // 🆕 All NEW / OTHER payment methods use their REAL NAME
+          p.payment_group = p.payment_name; 
         }
 
         return p;
       });
 
-      // 🧾 Combine totals by normalized group
+      // 🧾 Combine totals by group
       const combined = {};
       payments.forEach(p => {
         if (!combined[p.payment_group]) {
-          combined[p.payment_group] = { payment_name: p.payment_group, total_amount: 0 };
+          combined[p.payment_group] = { 
+            payment_name: p.payment_group, 
+            total_amount: 0 
+          };
         }
         combined[p.payment_group].total_amount += parseFloat(p.total_amount || 0);
       });
 
-      // ✅ Replace array with combined totals
       this.allPayments = Object.values(combined);
     })
     .catch(err => console.error('Error fetching payments:', err));
 },
+
 
     // ✅ Start POS session
     async submitStartPOS() {
@@ -976,6 +992,7 @@ async checkUnpaidOrders() {
             gcash_sales: this.totalGCashSales,
             bdo_sales: this.totalBDOSales,
             bpi_sales: this.totalBPISales,
+            other: this.totalOtherSales,
             receivable_bpi: this.receivableBPI,
             tip: this.tip,
 

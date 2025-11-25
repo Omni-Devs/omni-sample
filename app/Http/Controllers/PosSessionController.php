@@ -202,7 +202,8 @@ class PosSessionController extends Controller
                 ($validated['cash_sales'] ?? 0) +
                 ($validated['gcash_sales'] ?? 0) +
                 ($validated['bdo_sales'] ?? 0) +
-                ($validated['bpi_sales'] ?? 0);
+                ($validated['bpi_sales'] ?? 0) +
+                ($validated['other'] ?? 0);
 
             // ✅ 3. Update session with closing data
             $session->update([
@@ -212,6 +213,7 @@ class PosSessionController extends Controller
                 'gcash_sales'        => $validated['gcash_sales'] ?? 0,
                 'bdo_sales'          => $validated['bdo_sales'] ?? 0,
                 'bpi_sales'          => $validated['bpi_sales'] ?? 0,
+                'other'              => $validated['other'] ?? 0,
                 'total_sales'        => $totalSales,
                 'tip'                => $validated['tip'] ?? 0,
                 'shortage'           => $validated['shortage'] ?? 0,

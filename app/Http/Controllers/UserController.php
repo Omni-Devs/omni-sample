@@ -15,22 +15,21 @@ class UserController extends Controller
     // Display a listing of users
     public function index(Request $request)
     {
-        $status = $request->get('status', 'active'); // default to active
+        $status = $request->get('status', 'active');
+        $perPage = $request->get('per_page', 10); // default 10 rows per page
 
-        // ✅ Include roles and branches relationship here so inline user JSON contains them
-        $users = User::with([
-            'roles:id,name',
-            'branches:id,name'
-        ])
+        $users = User::with(['roles:id,name', 'branches:id,name'])
             ->where('status', $status)
-            ->get();
+            ->paginate($perPage)                // 👉 real pagination
+            ->appends(['status' => $status]);   // keep status when switching pages
 
         $nextUserId = User::max('id') + 1;
         $roles = Role::all();
         $branches = Branch::all();
 
-        return view('users.index', compact('users', 'nextUserId', 'roles', 'branches'));
+        return view('users.index', compact('users', 'nextUserId', 'roles', 'branches', 'status', 'perPage'));
     }
+
 
     public function create()
     {
