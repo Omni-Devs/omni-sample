@@ -8,32 +8,65 @@ use Illuminate\Support\Facades\Auth;
 
 class AccountingCategoryController extends Controller
 {
+// public function index()
+// {
+//     // PAYABLE categories
+//     $categoryPayableOptions = AccountingCategory::where('mode', 'payable')
+//         ->pluck('category_payable')
+//         ->filter()
+//         ->unique()
+//         ->values();
+
+//     // RECEIVABLE categories
+//     $categoryReceivableOptions = AccountingCategory::where('mode', 'receivable')
+//         ->pluck('category_receivable')
+//         ->filter()
+//         ->unique()
+//         ->values();
+
+//     // TYPES GROUPED BY CATEGORY
+//     $typesByCategoryPayable = AccountingCategory::where('mode', 'payable')
+//         ->whereNotNull('type_payable')
+//         ->select('category_payable', 'type_payable')
+//         ->get()
+//         ->groupBy('category_payable');
+
+//     $typesByCategoryReceivable = AccountingCategory::where('mode', 'receivable')
+//         ->whereNotNull('type_receivable')
+//         ->select('category_receivable', 'type_receivable')
+//         ->get()
+//         ->groupBy('category_receivable');
+
+//     return view('accounting-categories.index', compact(
+//         'categoryPayableOptions',
+//         'categoryReceivableOptions',
+//         'typesByCategoryPayable',
+//         'typesByCategoryReceivable'
+//     ));
+// }
+
 public function index()
 {
-    // PAYABLE categories
+    // PAYABLE categories (only category records, type_payable is null)
     $categoryPayableOptions = AccountingCategory::where('mode', 'payable')
-        ->pluck('category_payable')
-        ->filter()
-        ->unique()
-        ->values();
+        ->whereNull('type_payable')
+        ->get();
 
-    // RECEIVABLE categories
+    // RECEIVABLE categories (only category records, type_receivable is null)
     $categoryReceivableOptions = AccountingCategory::where('mode', 'receivable')
-        ->pluck('category_receivable')
-        ->filter()
-        ->unique()
-        ->values();
+        ->whereNull('type_receivable')
+        ->get();
 
     // TYPES GROUPED BY CATEGORY
     $typesByCategoryPayable = AccountingCategory::where('mode', 'payable')
         ->whereNotNull('type_payable')
-        ->select('category_payable', 'type_payable')
+        ->select('id', 'category_payable', 'type_payable')
         ->get()
         ->groupBy('category_payable');
 
     $typesByCategoryReceivable = AccountingCategory::where('mode', 'receivable')
         ->whereNotNull('type_receivable')
-        ->select('category_receivable', 'type_receivable')
+        ->select('id', 'category_receivable', 'type_receivable')
         ->get()
         ->groupBy('category_receivable');
 
@@ -137,11 +170,36 @@ public function index()
         return redirect()->route('accounting-categories.index');
     }
 
-    public function destroy(AccountingCategory $accountingCategory)
-    {
-        $accountingCategory->delete();
-        return redirect()->route('accounting-categories.index');
+    // public function destroy(AccountingCategory $accountingCategory)
+    // {
+    //     $accountingCategory->delete();
+    //     return redirect()->route('accounting-categories.index');
+    // }
+
+public function destroy($id)
+{
+    $category = AccountingCategory::find($id);
+
+    if (!$category) {
+        return response()->json(['success' => false, 'message' => 'Category not found'], 404);
     }
+
+    // Determine if payable or receivable
+    if ($category->mode === 'receivable') {
+        $categoryName = $category->category_receivable;
+
+        // Delete ALL rows under same receivable category
+        AccountingCategory::where('category_receivable', $categoryName)->delete();
+
+    } else {
+        $categoryName = $category->category_payable;
+
+        // Delete ALL rows under same payable category
+        AccountingCategory::where('category_payable', $categoryName)->delete();
+    }
+
+    return response()->json(['success' => true]);
+}
 
     public function addPayable(Request $request)
     {
@@ -215,5 +273,19 @@ public function index()
         ]);
 
         return response()->json(['success' => true, 'data' => $cat]);
+    }
+
+    public function destroyType($id)
+    {
+        // Find the type record in AccountingCategory by ID
+        $type = AccountingCategory::findOrFail($id);
+
+        // Only delete if it's a type (has type_payable or type_receivable)
+        if ($type->type_payable || $type->type_receivable) {
+            $type->delete();
+            return response()->json(['success' => true]);
+        }
+
+        return response()->json(['success' => false, 'message' => 'Not a type record'], 400);
     }
 }

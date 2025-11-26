@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Branch;
 use App\Models\CashEquivalent;
 use App\Models\FundTransfer;
 use App\Models\Payment;
@@ -11,29 +12,7 @@ use Illuminate\Support\Facades\Auth;
 
 class FundTransferController extends Controller
 {
-    // public function index(Request $request)
-    // {
-    //     $status = $request->get('status');
-        
-    //     // Fund transfers query
-    //     $query = FundTransfer::with(['createdBy', 'methodOfTransfer', 'fromCashEquivalent', 'toCashEquivalent'])
-    //         ->orderBy('created_at', 'desc');
-
-    //     if ($status) {
-    //         $query->where('status', $status);
-    //     }
-
-    //     $fundTransfers = $query->paginate(25);
-
-    //     // Load cash equivalents and payments for the Add Modal
-    //     $cashEquivalents = CashEquivalent::all();
-    //     $payments = Payment::all();
-
-    //     return view('fund-transfers.index', compact('fundTransfers', 'status', 'cashEquivalents', 'payments'));
-    // }
-
-
-        public function index(Request $request)
+    public function index(Request $request)
     {
         $status = $request->get('status', 'pending');
         
@@ -56,12 +35,18 @@ class FundTransferController extends Controller
         $payments = Payment::all();
         $users = User::where('status', 'active')->get();
 
+        $branches = Branch::all();
+        $currentBranch = auth()->check() ? auth()->user()->branches()->first() : null;
+        $currentBranchId = $currentBranch->id ?? ($branches->first()->id ?? null);
+
         return view('fund-transfers.index', compact(
             'fundTransfers', 
             'status', 
             'cashEquivalents', 
             'payments', 
-            'users'
+            'users',
+            'branches', 
+            'currentBranchId',
         ));
     }
 
@@ -97,6 +82,7 @@ class FundTransferController extends Controller
 
         FundTransfer::create([
             'reference_number' => $request->reference_number,
+            // 'branch_id' => $request->branch_id, // ✅ Add this
             'method_of_transfer_id' => $request->method_of_transfer_id,
             'from_cash_equivalent_id' => $request->from_cash_equivalent_id,
             'to_cash_equivalent_id' => $request->to_cash_equivalent_id,
