@@ -19,6 +19,7 @@ class FundTransfer extends Model
         'description',
         'status',
         'attachments',
+        'branch_id',
     ];
     
     protected $casts = [
@@ -45,5 +46,10 @@ class FundTransfer extends Model
     public function toCashEquivalent()
     {
         return $this->belongsTo(CashEquivalent::class, 'to_cash_equivalent_id');
+    }
+
+    public function branch()
+    {
+        return $this->belongsTo(Branch::class);
     }
 }

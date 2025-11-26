@@ -352,6 +352,9 @@ Route::prefix('accounting-categories')->name('accounting-categories.')->group(fu
 
     Route::post('/accounting-type/add-receivable', [AccountingCategoryController::class, 'addTypeReceivable'])
         ->name('accounting-type.add-receivable');
+
+    Route::delete('/accounting-type/{id}', [AccountingCategoryController::class, 'destroyType'])
+    ->name('accounting-type.destroy');
 });
 
 Route::get('/accounts-receivable', [App\Http\Controllers\AccountReceivableController::class, 'index'])->name('account-receivable.index');

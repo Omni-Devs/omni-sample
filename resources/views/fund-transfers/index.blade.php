@@ -110,26 +110,59 @@
                                                         </div>
 
                                                         <!-- Reference Number -->
-                                                        <div class="col-md-12 mb-3">
+                                                        {{-- <div class="col-md-12 mb-3">
                                                             <label>Reference Number *</label>
                                                             <input type="text" name="reference_number"
-                                                                   class="form-control @error('reference_number') is-invalid @enderror"
-                                                                   value="{{ old('reference_number') }}" required>
+                                                                    class="form-control @error('reference_number') is-invalid @enderror"
+                                                                    value="{{ old('reference_number') }}" required>
                                                             @error('reference_number')
                                                                 <div class="invalid-feedback">{{ $message }}</div>
                                                             @enderror
-                                                        </div>
+                                                        </div> --}}
+
+                                                        <div class="col-md-12 mb-3">
+                                                            <label>Reference Number *</label>
+                                                            {{-- @php
+                                                                $selectedBranchId = old('branch_id', $currentBranchId ?? '');
+                                                                $selectedBranch = $branches->firstWhere('id', $selectedBranchId);
+                                                            @endphp
+                                                            <input type="text" name="reference_number"
+                                                                    class="form-control @error('reference_number') is-invalid @enderror"
+                                                                    value="{{ $selectedBranch ? 'FT-' . $selectedBranch->id . '-000001' : '' }}" required>
+                                                            @error('reference_number')
+                                                                <div class="invalid-feedback">{{ $message }}</div>
+                                                            @enderror  --}}
+                                                            @php
+                                                                $selectedBranchId = old('branch_id', $currentBranchId ?? '');
+                                                                $selectedBranch = $branches->firstWhere('id', $selectedBranchId);
+
+                                                                $prefix = 'FT-' . $selectedBranchId . '-';
+
+                                                                $latestFT = \App\Models\FundTransfer::where('reference_number', 'LIKE', $prefix . '%')
+                                                                    ->latest('id')
+                                                                    ->first();
+
+                                                                $nextNumber = $latestFT
+                                                                    ? intval(substr($latestFT->reference_number, -6)) + 1
+                                                                    : 1;
+
+                                                                $formattedRef = $selectedBranch
+                                                                    ? $prefix . str_pad($nextNumber, 6, '0', STR_PAD_LEFT)
+                                                                    : '';
+                                                                @endphp
+                                                                <input type="text" name="reference_number" class="form-control" value="{{ old('reference_number', $formattedRef) }}" required>
+                                                            </div>
 
                                                         <!-- From Cash Equivalent -->
                                                         <div class="col-md-6 mb-3">
                                                             <label>From *</label>
-                                                            <select name="from_cash_equivalent_id"
+                                                            <select id="from_cash" name="from_cash_equivalent_id"
                                                                     class="form-control @error('from_cash_equivalent_id') is-invalid @enderror"
                                                                     required>
                                                                 <option value="">Select Cash Equivalent</option>
                                                                 @foreach($cashEquivalents as $ce)
-                                                                    <option value="{{ $ce->id }}" {{ old('from_cash_equivalent_id') == $ce->id ? 'selected' : '' }}>
-                                                                        {{ $ce->name }}
+                                                                    <option value="{{ $ce->id }}">
+                                                                        {{ $ce->name }} - {{ $ce->account_number }}
                                                                     </option>
                                                                 @endforeach
                                                             </select>
@@ -141,13 +174,13 @@
                                                         <!-- To Cash Equivalent -->
                                                         <div class="col-md-6 mb-3">
                                                             <label>To *</label>
-                                                            <select name="to_cash_equivalent_id"
+                                                            <select id="to_cash" name="to_cash_equivalent_id"
                                                                     class="form-control @error('to_cash_equivalent_id') is-invalid @enderror"
                                                                     required>
                                                                 <option value="">Select Cash Equivalent</option>
                                                                 @foreach($cashEquivalents as $ce)
-                                                                    <option value="{{ $ce->id }}" {{ old('to_cash_equivalent_id') == $ce->id ? 'selected' : '' }}>
-                                                                        {{ $ce->name }}
+                                                                    <option value="{{ $ce->id }}">
+                                                                        {{ $ce->name }} - {{ $ce->account_number }}
                                                                     </option>
                                                                 @endforeach
                                                             </select>
@@ -256,30 +289,30 @@
                         </div>
 
                         <!-- From Cash Equivalent -->
-                        <div class="col-md-6 mb-3">
+                    <div class="col-md-6 mb-3">
                             <label>From *</label>
-                            <select name="from_cash_equivalent_id" class="form-control" required>
+                            <select id="from_cash_{{ $ft->id }}" name="from_cash_equivalent_id" class="form-control" required>
                                 <option value="">Select</option>
-                                @foreach ($cashEquivalents as $ce)
+                                @foreach ($cashEquivalents->sortBy('name') as $ce)
                                     <option value="{{ $ce->id }}" {{ $ft->from_cash_equivalent_id == $ce->id ? 'selected' : '' }}>
-                                        {{ $ce->name }}
+                                        {{ $ce->name }} - {{ $ce->account_number }}
                                     </option>
                                 @endforeach
                             </select>
                         </div>
 
-                        <!-- To Cash Equivalent -->
-                        <div class="col-md-6 mb-3">
-                            <label>To *</label>
-                            <select name="to_cash_equivalent_id" class="form-control" required>
-                                <option value="">Select</option>
-                                @foreach ($cashEquivalents as $ce)
-                                    <option value="{{ $ce->id }}" {{ $ft->to_cash_equivalent_id == $ce->id ? 'selected' : '' }}>
-                                        {{ $ce->name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
+                                            <!-- To Cash Equivalent -->
+                                    <div class="col-md-6 mb-3">
+                        <label>To *</label>
+                        <select id="to_cash_{{ $ft->id }}" name="to_cash_equivalent_id" class="form-control" required>
+                            <option value="">Select</option>
+                            @foreach ($cashEquivalents->sortBy('name') as $ce)
+                                <option value="{{ $ce->id }}" {{ $ft->to_cash_equivalent_id == $ce->id ? 'selected' : '' }}>
+                                    {{ $ce->name }} - {{ $ce->account_number }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
 
                         <!-- Amount -->
                         <div class="col-md-6 mb-3">
@@ -357,11 +390,11 @@
                                     <td class="text-left">{{ $ft->reference_number }}</td>
 
                                     <td class="text-left">
-                                        {{ $ft->fromCashEquivalent->name ?? 'N/A' }}
+                                        {{ $ft->fromCashEquivalent ? $ft->fromCashEquivalent->name . ' - ' . $ft->fromCashEquivalent->account_number : 'N/A' }}
                                     </td>
 
                                     <td class="text-left">
-                                        {{ $ft->toCashEquivalent->name ?? 'N/A' }}
+                                        {{ $ft->toCashEquivalent ? $ft->toCashEquivalent->name . ' - ' . $ft->toCashEquivalent->account_number : 'N/A' }}
                                     </td>
 
                                     <td class="text-left">
@@ -602,5 +635,70 @@ function openViewAttachmentsModal(ftId) {
             container.innerHTML = `<p class="text-danger">Failed to load attachments.</p>`;
         });
 }
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+
+        const fromSelect = document.getElementById("from_cash");
+        const toSelect = document.getElementById("to_cash");
+
+        function filterToOptions() {
+            const selectedFrom = fromSelect.value;
+
+            // Loop through options of "To"
+            for (let option of toSelect.options) {
+                if (option.value === selectedFrom && selectedFrom !== "") {
+                    option.style.display = "none";  // hide selected from item
+                } else {
+                    option.style.display = "block"; // show all others
+                }
+            }
+
+            // If currently selected "To" becomes invalid → reset
+            if (toSelect.value === selectedFrom) {
+                toSelect.value = "";
+            }
+        }
+
+        fromSelect.addEventListener("change", filterToOptions);
+
+        // Run on page load (for old() values)
+        filterToOptions();
+    });
+    </script>
+
+    <script>
+document.addEventListener("DOMContentLoaded", function() {
+
+    document.querySelectorAll("[id^='from_cash_']").forEach(fromSelect => {
+
+        const id = fromSelect.id.replace("from_cash_", "");
+        const toSelect = document.getElementById("to_cash_" + id);
+
+        function filterOptions() {
+            const selectedFrom = fromSelect.value;
+
+            for (let option of toSelect.options) {
+                if (option.value === selectedFrom && selectedFrom !== "") {
+                    option.style.display = "none";
+                } else {
+                    option.style.display = "block";
+                }
+            }
+
+            // Reset if conflict
+            if (toSelect.value === selectedFrom) {
+                toSelect.value = "";
+            }
+        }
+
+        fromSelect.addEventListener("change", filterOptions);
+
+        // Run once per modal on load (helps with old values)
+        filterOptions();
+    });
+
+});
 </script>
 
