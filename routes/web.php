@@ -29,6 +29,7 @@ use App\Http\Controllers\SalesJournalController;
 use App\Http\Controllers\PosSessionController;
 use App\Http\Controllers\RemarkController;
 use App\Http\Controllers\SupplierController;
+use App\Http\Controllers\AccountReceivableController;
 use App\Models\CashEquivalent;
 use App\Models\User;
 use App\Http\Controllers\FundTransferController;
@@ -357,5 +358,10 @@ Route::prefix('accounting-categories')->name('accounting-categories.')->group(fu
     ->name('accounting-type.destroy');
 });
 
-Route::get('/accounts-receivable', [App\Http\Controllers\AccountReceivableController::class, 'index'])->name('account-receivable.index');
-Route::get('/accounts-receivable/create', [App\Http\Controllers\AccountReceivableController::class, 'create'])->name('account-receivable.create');
+Route::get('/accounts-receivable', [AccountReceivableController::class, 'index'])->name('account-receivable.index');
+Route::get('/accounts-receivable/filter', [AccountReceivableController::class, 'filter']);
+Route::get('/accounts-receivable/create', [AccountReceivableController::class, 'create'])->name('account-receivable.create');
+Route::post('/accounts-receivable/store', [AccountReceivableController::class, 'store'])->name('account-receivable.store');
+Route::get('/api/receivable/categories', [AccountReceivableController::class, 'getCategories']);
+Route::get('/api/receivable/types', [AccountReceivableController::class, 'getTypes']);
+
