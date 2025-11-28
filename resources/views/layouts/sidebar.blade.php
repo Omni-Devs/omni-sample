@@ -307,7 +307,6 @@
             </li>
          </ul>
          <ul data-parent="Accounting" class="childNav d-none">
-            <li class="nav-item"><a href="/app/accounting/account-receivables" class=""><i class="nav-icon i-Add-Cart"></i> <span class="item-name">Accounts Receivable</span></a></li>
             <li class="nav-item"><a href="/accounts-receivable" class=""><i class="nav-icon i-Add-Cart"></i> <span class="item-name">Accounts Receivable</span></a></li>
             <li class="nav-item"><a href="/app/accounting/account-payables" class=""><i class="nav-icon i-Bag-Coins"></i> <span class="item-name">Accounts Payable</span></a></li>
             <li class="nav-item"><a href="/app/accounting/assets" class=""><i class="nav-icon i-Building"></i> <span class="item-name">Assets Management</span></a></li>
