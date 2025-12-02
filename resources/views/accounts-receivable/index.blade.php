@@ -1,5 +1,10 @@
 @extends('layouts.app')
 @section('content')
+<style>
+    .vs__search {
+    font-size: 14px;     /* Change font size */
+}
+</style>
 <div class="main-content" id="app">
     <div>
         <div class="breadcrumb">
@@ -78,8 +83,86 @@
             </div>
         </div>
     </div>
+    <!-- Receive Payment Modal -->
+<div class="modal fade" id="receivePaymentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <form @submit.prevent="submitPayment">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Receive Payment</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
 
+                <div class="modal-body">
+                    
+                    <!-- Must match controller -->
+                    <input type="hidden" v-model="paymentForm.account_receivable_id">
 
+                    <div class="row g-3">
+
+                        <!-- Date & Time -->
+                        <div class="col-12">
+                            <label class="form-label">Date And Time of Transaction <span class="text-danger">*</span></label>
+                            <div class="d-flex">
+                                <input type="text" 
+                                    class="form-control"
+                                    id="receive_payment_datetime"
+                                    v-model="paymentForm.transaction_datetime"
+                                    placeholder="Select date & time"
+                                    readonly>
+                                <button type="button" 
+                                        class="btn btn-secondary btn-sm ms-2" 
+                                        @click="clearPaymentDate">
+                                    Clear
+                                </button>
+                            </div>
+                            <small class="text-muted">Cannot select future date.</small>
+                        </div>
+
+                        <!-- Amount -->
+                        <div class="col-12">
+                            <label class="form-label">Amount <span class="text-danger">*</span></label>
+                            <input type="number" step="0.01" class="form-control"
+                                v-model.number="paymentForm.amount" placeholder="0.00" required>
+                        </div>
+
+                        <!-- Cash Equivalent -->
+                        <div class="col-12">
+                            <label class="form-label">Cash Equivalent <span class="text-danger">*</span></label>
+                            <v-select
+                                :options="cashEquivalents"
+                                label="label"
+                                :reduce="opt => opt.id"
+                                v-model="paymentForm.cash_equivalent_id"
+                                placeholder="Select Destination Account"
+                            ></v-select>
+                        </div>
+
+                        <!-- Payment Method -->
+                        <div class="col-12">
+                            <label class="form-label">Method of Payment <span class="text-danger">*</span></label>
+                            <v-select
+                                :options="paymentMethods"
+                                label="label"
+                                :reduce="opt => opt.id"
+                                v-model="paymentForm.payment_method_id"
+                                placeholder="Select Payment Method"
+                            ></v-select>
+                        </div>
+
+                        <!-- Submit -->
+                        <div class="col-12 mt-4">
+                            <button type="submit" class="btn btn-primary" :disabled="submitting">
+                                <span v-if="submitting" class="spinner-border spinner-border-sm me-2"></span>
+                                Submit Payment
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
 
     <div class="wrapper">
         <div class="row row mb-4">
@@ -339,6 +422,27 @@
                                         Sort table by Status in descending order
                                         </span></button>
                                     </th>
+
+                                    <!-- DYNAMIC HEADERS BASED ON CURRENT TAB (statusFilter) -->
+                                    <template v-if="statusFilter === 'approved' || statusFilter === 'completed'">
+                                        <th>Approved By</th>
+                                        <th>Date & Time Approved</th>
+                                    </template>
+
+                                    <template v-if="statusFilter === 'completed'">
+                                        <th>Completed By</th>
+                                        <th>Date & Time Completed</th>
+                                    </template>
+
+                                    <template v-if="statusFilter === 'disapproved'">
+                                        <th>Disapproved By</th>
+                                        <th>Date & Time Disapproved</th>
+                                    </template>
+
+                                    <template v-if="statusFilter === 'archived'">
+                                        <th>Archived By</th>
+                                        <th>Date & Time Archived</th>
+                                    </template>
                                     <!----><!----><!----><!----><!----><!----><!----><!---->
                                     <th scope="col" aria-sort="descending" aria-controls="col-23" class="vgt-left-align text-right" style="min-width: auto; width: auto;">
                                         <span>Action</span> <!---->
@@ -355,10 +459,10 @@
                                         </td>
 
                                         <!-- Date and Time of Entry -->
-                                        <td>@{{ row.created_at }}</td>
+                                        <td>@{{ row.created_at ? new Date(row.created_at).toLocaleString('en-US', {month:'short', day:'numeric', year:'numeric', hour:'numeric', minute:'2-digit', hour12:true}) : '—' }}</td>
 
                                         <!-- Date and Time of Transaction -->
-                                        <td>@{{ row.transaction_datetime }}</td>
+                                       <td>@{{ row.transaction_datetime ? new Date(row.transaction_datetime + ' UTC').toLocaleString('en-US', {month:'short', day:'numeric', year:'numeric', hour:'numeric', minute:'2-digit', hour12:true}) : '—' }}</td>
 
                                         <!-- Created By -->
                                         <td>@{{ row.user?.name }}</td>
@@ -385,7 +489,7 @@
                                         <td><button class="btn btn-sm btn-primary" @click="openModal(row.items)">View</button></td>
 
                                         <!-- Due Date -->
-                                        <td>@{{ row.due_date }}</td>
+                                        <td>@{{ row.due_date ? new Date(row.due_date).toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'}) : '—' }}</td>
 
                                         <!-- Total Received -->
                                         <td>@{{ row.total_received }}</td>
@@ -395,6 +499,24 @@
 
                                         <!-- Status -->
                                         <td>@{{ row.status }}</td>
+
+                                        <!-- Approved By / At -->
+                                        <template v-if="statusFilter === 'approved' || statusFilter === 'completed'">
+                                            <td>@{{ row.approved_by?.name || '-' }}</td>
+                                            <td>@{{ row.approved_at ? new Date(row.approved_at).toLocaleString('en-US', {month:'short', day:'numeric', year:'numeric', hour:'numeric', minute:'2-digit', hour12:true}) : '' }}</td>
+                                        </template>
+
+                                         <!-- Disapproved By / At -->
+                                        <template v-if="statusFilter === 'disapproved'">
+                                            <td>@{{ row.disapproved_by?.name || '-' }}</td>
+                                            <td>@{{ row.disapproved_at ? new Date(row.disapproved_at).toLocaleString('en-US', {month:'short', day:'numeric', year:'numeric', hour:'numeric', minute:'2-digit', hour12:true}) : '' }}</td>
+                                        </template>
+
+                                         <!-- Archived By / At -->
+                                        <template v-if="statusFilter === 'archived'">
+                                            <td>@{{ row.archived_by?.name || '-' }}</td>
+                                            <td>@{{ row.archived_at ? new Date(row.archived_at).toLocaleString('en-US', {month:'short', day:'numeric', year:'numeric', hour:'numeric', minute:'2-digit', hour12:true}) : '' }}</td>
+                                        </template>
 
                                         <!-- Action -->
                                         <td class="text-right">
@@ -447,136 +569,147 @@
 
 <script type="text/x-template" id="actions-dropdown-template">
 <div class="dropdown btn-group" ref="dropdown">
-    <!-- 3 Dots Button -->
-    <button
-        type="button"
-        class="btn dropdown-toggle btn-link btn-lg text-decoration-none dropdown-toggle-no-caret"
-        @click.stop="toggleDropdown"
-        :aria-expanded="isOpen.toString()"
-    >
+    <button type="button" class="btn dropdown-toggle btn-link btn-lg text-decoration-none dropdown-toggle-no-caret"
+            @click.stop="toggleDropdown">
         <span class="_dot _r_block-dot bg-dark"></span>
         <span class="_dot _r_block-dot bg-dark"></span>
         <span class="_dot _r_block-dot bg-dark"></span>
     </button>
 
     <ul :class="['dropdown-menu dropdown-menu-right', { show: isOpen }]">
-        <!-- Archived -->
+
+        <!-- 1. View Invoice -->
+        <li>
+            <a class="dropdown-item" href="#" @click.prevent="$emit('view-invoice', row.id)">
+                <i class="nav-icon i-Receipt font-weight-bold mr-2"></i>
+                View Invoice
+            </a>
+        </li>
+
+        <!-- 1.5 View Delivery Reciept -->
+        <li v-if="['approved', 'completed','archived'].includes(row.status)">
+            <a class="dropdown-item" href="#" @click.prevent="$emit('view-delivery-reciept', row.id)">
+                <i class="nav-icon i-Receipt font-weight-bold mr-2"></i>
+                View Delivery Reciept
+            </a>
+        </li>
+
+        <!-- 2. Approve – Only for pending -->
+        <li v-if="row.status === 'pending'">
+            <a class="dropdown-item" href="#" @click.prevent="changeStatus(row.id, 'approved')">
+                <i class="nav-icon i-Like font-weight-bold mr-2"></i>
+                Approve
+            </a>
+        </li>
+
+        <!-- 3. Disapprove – Only for pending & approved -->
+        <li v-if="['pending'].includes(row.status)">
+            <a class="dropdown-item" href="#" @click.prevent="changeStatus(row.id, 'disapproved')">
+                <i class="nav-icon i-Unlike-2 font-weight-bold mr-2"></i>
+                Disapprove
+            </a>
+        </li>
+
+        <!-- 4. Edit Receivable – Only for pending & approved -->
+        <li v-if="['pending'].includes(row.status)">
+            <a class="dropdown-item" :href="`/accounts-receivable/${row.id}/edit`">
+                <i class="nav-icon i-Edit font-weight-bold mr-2"></i>
+                Edit Receivable
+            </a>
+        </li>
+
+        <!-- 5. Add Attachment -->
+        <li>
+            <a class="dropdown-item" href="#" @click.prevent="$emit('add-attachment', row.id)">
+                <i class="nav-icon i-Add-File font-weight-bold mr-2"></i>
+                Add Attachment
+            </a>
+        </li>
+
+        <!-- 6. View Attached File -->
+        <li>
+            <a class="dropdown-item" href="#" @click.prevent="$emit('view-attachments', row.id)">
+                <i class="nav-icon i-Files font-weight-bold mr-2"></i>
+                View Attached File
+            </a>
+        </li>
+
+        <!-- For Disapproved & Archived – Add Restore Option -->
+        <li v-if="['disapproved', 'archived'].includes(row.status)">
+            <a class="dropdown-item text-info" href="#" @click.prevent="changeStatus(row.id, 'pending')">
+                <i class="nav-icon i-Restore-Window font-weight-bold mr-2"></i>
+                Restore to Pending
+            </a>
+        </li>
+
+        <!-- 7. Edit Due Date – Only pending & approved -->
+        <li v-if="['pending', 'approved'].includes(row.status)">
+            <a class="dropdown-item" href="#" @click.prevent="$emit('edit-due-date', row.id)">
+                <i class="nav-icon i-Calendar font-weight-bold mr-2"></i>
+                Edit Due Date
+            </a>
+        </li>
+
+        <!-- 7.5 Receive Payment – Only approved -->
+        <li v-if="['approved'].includes(row.status)">
+            <a class="dropdown-item" href="#" 
+            @click.prevent="$parent.openReceivePayment(row)">
+                <i class="nav-icon i-Money font-weight-bold mr-2"></i>
+                Receive Payment
+            </a>
+        </li>
+
+        <!-- 7. Mark as Completed – approved -->
+        <li v-if="['approved'].includes(row.status)">
+            <a class="dropdown-item" href="#" @click.prevent="$emit('edit-due-date', row.id)">
+                <i class="nav-icon i-Check font-weight-bold mr-2"></i>
+                Mark as Completed
+            </a>
+        </li>
+
+        <!-- 8. Move to Archive – pending, approved, completed, disapproved -->
+        <li v-if="['pending', 'approved', 'completed', 'disapproved'].includes(row.status)">
+            <a class="dropdown-item" href="#" @click.prevent="changeStatus(row.id, 'archived')">
+                <i class="nav-icon i-Letter-Close font-weight-bold mr-2"></i>
+                Move to Archive
+            </a>
+        </li>
+
+        <!-- ARCHIVED: Replace "Move to Archive" with these -->
         <template v-if="row.status === 'archived'">
             <li>
-                <a class="dropdown-item text-danger" href="#" @click.prevent="$emit('delete-permanently', row.id)">
-                    <i class="nav-icon i-Remove-Basket font-weight-bold mr-2"></i>
+                <a class="dropdown-item" href="#" @click.prevent="$emit('delete-permanently', row.id)">
+                    <i class="nav-icon i-Close font-weight-bold mr-2"></i>
                     Permanently Delete
                 </a>
             </li>
-            <li>
-                <a class="dropdown-item" href="#" @click.prevent="$emit('restore-receivable', row.id)">
-                    <i class="nav-icon i-Restore-Window font-weight-bold mr-2"></i>
-                    Restore as Active
-                </a>
-            </li>
-            <li>
-                <a href="javascript:void(0);" class="dropdown-item" @click="$emit('open-remarks', row.id)">
-                    <i class="nav-icon i-Mail-Attachement font-weight-bold mr-2"></i>
-                    Remarks
-                </a>
-            </li>
         </template>
 
-        <!-- Completed -->
-        <template v-else-if="row.status === 'completed'">
-            <li>
-                <a class="dropdown-item" href="#" @click.prevent="$emit('view-invoice', row.id)">
-                    <i class="nav-icon i-Receipt font-weight-bold mr-2"></i>
-                    View Invoice
-                </a>
-            </li>
-            <li>
-                <a class="dropdown-item" href="#">
-                    <i class="nav-icon i-Computer-Secure font-weight-bold mr-2"></i>
-                    Logs
-                </a>
-            </li>
-            <li>
-                <a href="javascript:void(0);" class="dropdown-item" @click="$emit('open-remarks', row.id)">
-                    <i class="nav-icon i-Mail-Attachement font-weight-bold mr-2"></i>
-                    Remarks
-                </a>
-            </li>
-        </template>
+        <!-- 9. Logs -->
+        <li>
+            <a class="dropdown-item" href="#" @click.prevent="$emit('logs', row.id)">
+                <i class="nav-icon i-Computer-Secure font-weight-bold mr-2"></i>
+                Logs
+            </a>
+        </li>
 
-        <!-- Default / Pending / Active -->
-        <template v-else>
-            <li>
-                <a class="dropdown-item" href="#" @click.prevent="$emit('view-invoice', row.id)">
-                    <i class="nav-icon i-Receipt font-weight-bold mr-2"></i>
-                    View Invoice
-                </a>
-            </li>
-            <li>
-                <a class="dropdown-item" href="#" @click.prevent="$emit('approve', row.id)">
-                    <i class="nav-icon i-Like font-weight-bold mr-2"></i>
-                    Approve
-                </a>
-            </li>
-            <li>
-                <a class="dropdown-item" href="#" @click.prevent="$emit('disapprove', row.id)">
-                    <i class="nav-icon i-Unlike-2 font-weight-bold mr-2"></i>
-                    Disapprove
-                </a>
-            </li>
-            <li>
-                <a class="dropdown-item" href="#" @click.prevent="$emit('edit-receivable', row.id)">
-                    <i class="nav-icon i-Edit font-weight-bold mr-2"></i>
-                    Edit Receivable
-                </a>
-            </li>
-            <li>
-                <a class="dropdown-item" href="#" @click.prevent="$emit('add-attachment', row.id)">
-                    <i class="nav-icon i-Add-File font-weight-bold mr-2"></i>
-                    Add Attachment
-                </a>
-            </li>
-            <li>
-                <a class="dropdown-item" href="#" @click.prevent="$emit('view-attachments', row.id)">
-                    <i class="nav-icon i-Files font-weight-bold mr-2"></i>
-                    View Attached File
-                </a>
-            </li>
-            <li>
-                <a class="dropdown-item" href="#" @click.prevent="$emit('move-to-archive', row.id)">
-                    <i class="nav-icon i-Letter-Close font-weight-bold mr-2"></i>
-                    Move to Archive
-                </a>
-            </li>
-            <li>
-                <a class="dropdown-item" href="#" @click.prevent="$emit('edit-due-date', row.id)">
-                    <i class="nav-icon i-Calendar font-weight-bold mr-2"></i>
-                    Edit Due Date
-                </a>
-            </li>
-            <li>
-                <a class="dropdown-item" href="#" @click.prevent="$emit('logs', row.id)">
-                    <i class="nav-icon i-Computer-Secure font-weight-bold mr-2"></i>
-                    Logs
-                </a>
-            </li>
-            <li>
-                <a class="dropdown-item" href="#" @click.prevent="$emit('open-remarks', row.id)">
-                    <i class="nav-icon i-Mail-Attachement font-weight-bold mr-2"></i>
-                    Remarks
-                </a>
-            </li>
-        </template>
+        <!-- 10. Remarks -->
+        <li>
+            <a class="dropdown-item" href="#" @click.prevent="$emit('open-remarks', row.id)">
+                <i class="nav-icon i-Mail-Attachement font-weight-bold mr-2"></i>
+                Remarks
+            </a>
+        </li>
+
     </ul>
 </div>
 </script>
 
-
-
 <script>
-Vue.component('v-select', VueSelect.VueSelect);
-
-const receivableData = @json($receivables);
+    const receivables = @json($receivables);
+    console.log(receivables);
+</script>
+<script>
 
 window.yearRange = {
     min: {{ $minYear ?? 'null' }},
@@ -596,33 +729,57 @@ Vue.component("actions-dropdown", {
         };
     },
     methods: {
-        toggleDropdown() {
-            this.isOpen = !this.isOpen;
-        },
+        toggleDropdown() { this.isOpen = !this.isOpen; },
         handleClickOutside(event) {
-            if (!this.$refs.dropdown.contains(event.target)) {
+            if (!this.$refs.dropdown?.contains(event.target)) this.isOpen = false;
+        },
+        async changeStatus(id, status) {
+            const labels = {
+                approved: 'APPROVE',
+                disapproved: 'DISAPPROVE',
+                completed: 'MARK AS COMPLETED',
+                archived: 'ARCHIVE',
+                pending: 'RESTORE TO PENDING'
+            };
+
+            const result = await Swal.fire({
+                title: 'Are you sure?',
+                text: `You are about to ${labels[status] || status.toUpperCase()} this receivable.`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, proceed',
+                cancelButtonText: 'Cancel'
+            });
+
+            if (!result.isConfirmed) return;
+
+            try {
+                const res = await axios.post(`/accounts-receivable/${id}/status`, { status });
+                const rec = this.$parent.records.find(r => r.id === id);
+                if (rec) {
+                    rec.status = status;
+                    rec.updated_at = res.data.updated_at || new Date();
+                }
                 this.isOpen = false;
-            }
-        },
-        updateStatus(id, newStatus) {
-            // Find the record locally
-            const record = this.records.find(r => r.id === id);
-            if (!record) return;
+                this.$emit('status-updated');
 
-            // Update status locally
-            record.status = newStatus;
-
-            // Optional: send to backend
-            axios.post(`/accounts-receivable/${id}/update-status`, { status: newStatus })
-                .then(res => {
-                    console.log('Status updated:', res.data);
-                })
-                .catch(err => {
-                    console.error('Failed to update status:', err);
-                    // revert locally if failed
-                    record.status = record.status === 'approved' ? 'pending' : record.status === 'disapproved' ? 'pending' : record.status;
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Success!',
+                    text: `Receivable has been ${status}.`,
+                    timer: 2000,
+                    showConfirmButton: false
                 });
-        },
+            } catch (err) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: err.response?.data?.message || 'Something went wrong!'
+                });
+            }
+        }
     },
     mounted() {
         document.addEventListener("click", this.handleClickOutside);
@@ -631,6 +788,8 @@ Vue.component("actions-dropdown", {
         document.removeEventListener("click", this.handleClickOutside);
     }
 });
+
+Vue.component('v-select', VueSelect.VueSelect);
 
 
 new Vue({
@@ -670,12 +829,42 @@ new Vue({
             },
 
             records: [],
+            currentInvoice: null,
+            paymentForm: {
+                 account_receivable_id: null,
+                transaction_datetime: '',
+                amount: 0,
+                cash_equivalent_id: null,
+                payment_method_id: null,
+            },
+            cashEquivalents: [],
+            paymentMethods: [],
+            submitting: false,
         };
     },
 
     mounted() {
         this.generateYears();
         this.fetchRecords(); // load initial data
+        this.loadPaymentOptions();
+
+       this.$nextTick(() => {
+            // Existing datetime picker (for other forms)
+            if (this.$refs.someOtherPicker) { /* ... */ }
+
+            // NEW: Initialize for Receive Payment modal
+            $('#receive_payment_datetime').daterangepicker({
+                singleDatePicker: true,
+                timePicker: true,
+                timePicker24Hour: true,
+                maxDate: moment(), // This line blocks future dates
+                locale: {
+                    format: 'YYYY-MM-DD HH:mm'
+                }
+            }).on('apply.daterangepicker', (ev, picker) => {
+                this.paymentForm.transaction_datetime = picker.startDate.format('YYYY-MM-DD HH:mm:ss');
+            });
+        });
     },
 
     watch: {
@@ -752,6 +941,99 @@ new Vue({
                 console.log(this.records); // <-- Check if items exist
             })
             .catch(err => console.error(err));
+        },
+
+        // New: Open Receive Payment Modal
+openReceivePayment(invoice) {
+    this.currentInvoice = invoice;
+
+    this.paymentForm = {
+        account_receivable_id: invoice.id,
+        transaction_datetime: moment().format("YYYY-MM-DD HH:mm:ss"),
+        amount: parseFloat(invoice.remaining_balance || invoice.total || 0),
+        cash_equivalent_id: null,
+        payment_method_id: null,
+    };
+
+    this.$nextTick(() => {
+        this.initDatePickers();
+        const modal = new bootstrap.Modal(document.getElementById('receivePaymentModal'));
+        modal.show();
+    });
+},
+
+
+    loadPaymentOptions() {
+        axios.get('/receive-payment-options')
+            .then(res => {
+                this.cashEquivalents = res.data.cash_equivalents;
+                this.paymentMethods   = res.data.payment_methods;
+            })
+            .catch(() => {
+                Swal.fire('Error', 'Failed to load payment options', 'error');
+            });
+    },
+
+    initDatePickers() {
+        const vm = this;
+        const today = moment();
+
+        $('#receive_payment_datetime').daterangepicker({
+            singleDatePicker: true,
+            timePicker: true,
+            timePicker24Hour: true,
+            maxDate: today, // Prevent future datetime
+            locale: { format: 'YYYY-MM-DD HH:mm:ss' }
+        }).on('apply.daterangepicker', (ev, picker) => {
+            vm.paymentForm.transaction_datetime = picker.startDate.format('YYYY-MM-DD HH:mm:ss');
+        });
+    },
+
+
+        async submitPayment() {
+            if (this.submitting) return;
+            this.submitting = true;
+
+            const url = `/accounts-receivables/${this.paymentForm.account_receivable_id}/payments`;
+
+            try {
+                await axios.post(url, this.paymentForm);
+
+                // Success SweetAlert
+                await Swal.fire({
+                    icon: 'success',
+                    title: 'Payment Recorded!',
+                    text: 'The payment has been successfully saved.',
+                    timer: 2500,
+                    showConfirmButton: false
+                });
+
+                bootstrap.Modal.getInstance(document.getElementById('receivePaymentModal')).hide();
+                this.fetchRecords();
+
+                // Reset form
+                this.paymentForm = {
+                    account_receivable_id: this.paymentForm.account_receivable_id,
+                    transaction_datetime: '',
+                    amount: 0,
+                    cash_equivalent_id: null,
+                    payment_method_id: null,
+                };
+
+            } catch (err) {
+                const msg = err.response?.data?.message || 'Payment failed. Please try again.';
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Payment Failed',
+                    text: msg
+                });
+            } finally {
+                this.submitting = false;
+            }
+        },
+        clearPaymentDate() {
+            this.paymentForm.transaction_datetime = '';
+            $('#receive_payment_datetime').val(''); // Clear the input visually
         },
 
     },

@@ -9,6 +9,8 @@ class Branch extends Model
 {
     use HasFactory;
 
+    protected $table = 'Branches';
+
     protected $fillable = [
         'name',
         'mobile_number',
@@ -26,7 +28,11 @@ class Branch extends Model
 
     public function users()
     {
-        return $this->belongsToMany(User::class);
+        return $this->belongsToMany(User::class, 'branch_user');
     }
 
+    public function accountsReceivables()
+    {
+        return $this->hasMany(AccountsReceivables::class, 'branch_id');
+    }
 }

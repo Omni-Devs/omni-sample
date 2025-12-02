@@ -11,10 +11,18 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Your existing alias (keep it)
         $middleware->alias([
-        'redirect.auth' => \App\Http\Middleware\RedirectIfAuthenticatedCustom::class,
-    ]);
+            'redirect.auth' => \App\Http\Middleware\RedirectIfAuthenticatedCustom::class,
+        ]);
+
+        // THIS LINE FIXES YOUR BRANCH PROBLEM FOREVER
+        $middleware->append(\App\Http\Middleware\EnsureUserBranchIsLoaded::class);
+
+        // Optional: If you want it ONLY on API routes, use this instead:
+        // $middleware->api(append: \App\Http\Middleware\EnsureUserBranchIsLoaded::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
-    })->create();
+    })
+    ->create();
