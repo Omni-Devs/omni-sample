@@ -89,6 +89,7 @@
 <body>
   @php
     $user = Auth::user();
+    $branch = auth()->user()->branches()->first();
   @endphp
 {{-- @if(Auth::user()->roles->contains('name', 'Administrator')) --}}
     @include('layouts.header')

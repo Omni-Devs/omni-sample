@@ -361,7 +361,12 @@ Route::prefix('accounting-categories')->name('accounting-categories.')->group(fu
 Route::get('/accounts-receivable', [AccountReceivableController::class, 'index'])->name('account-receivable.index');
 Route::get('/accounts-receivable/filter', [AccountReceivableController::class, 'filter']);
 Route::get('/accounts-receivable/create', [AccountReceivableController::class, 'create'])->name('account-receivable.create');
+Route::get('/accounts-receivable/{id}/edit', [AccountReceivableController::class, 'edit'])->name('account-receivable.edit');
+Route::post('/accounts-receivable/{id}/update', [AccountReceivableController::class, 'update'])->name('account-receivable.update');
 Route::post('/accounts-receivable/store', [AccountReceivableController::class, 'store'])->name('account-receivable.store');
 Route::get('/api/receivable/categories', [AccountReceivableController::class, 'getCategories']);
 Route::get('/api/receivable/types', [AccountReceivableController::class, 'getTypes']);
+Route::post('/accounts-receivable/{id}/status', [AccountReceivableController::class, 'updateStatus']);
+Route::get('/receive-payment-options', [AccountReceivableController::class, 'receivePaymentOptions']);
+Route::post('/accounts-receivables/{id}/payments', [AccountReceivableController::class, 'updatePayment']);
 
