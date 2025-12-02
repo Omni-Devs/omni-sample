@@ -369,4 +369,5 @@ Route::get('/api/receivable/types', [AccountReceivableController::class, 'getTyp
 Route::post('/accounts-receivable/{id}/status', [AccountReceivableController::class, 'updateStatus']);
 Route::get('/receive-payment-options', [AccountReceivableController::class, 'receivePaymentOptions']);
 Route::post('/accounts-receivables/{id}/payments', [AccountReceivableController::class, 'updatePayment']);
+Route::patch('/accounts-receivable/{id}/due-date', [AccountReceivableController::class, 'updateDueDate']);
 
