@@ -32,18 +32,21 @@ class AccountReceivableController extends Controller
 
    public function filter(Request $request)
     {
+        $perPage = $request->input('per_page', 10); // default 10
+        $page    = $request->input('page', 1);
+
         $query = AccountsReceivables::with([
             'user',
             'branch', 
             'items.type',
-            'approvedBy',      // Add this
-            'completedBy',     // Add this
-            'disapprovedBy',   // Add this
-            'archivedBy'       // Add this
+            'approvedBy',
+            'completedBy',
+            'disapprovedBy',
+            'archivedBy'
         ])
         ->whereYear('transaction_datetime', $request->year);
 
-        if ($request->month !== 'all') {
+        if ($request->month && $request->month !== 'all') {
             $query->whereMonth('transaction_datetime', $request->month);
         }
 
@@ -51,7 +54,18 @@ class AccountReceivableController extends Controller
             $query->where('status', $request->status);
         }
 
-        return response()->json($query->get()->toArray());
+        // THIS IS THE ONLY CHANGE YOU NEED
+        $paginated = $query->paginate($perPage, ['*'], 'page', $page);
+
+        return response()->json([
+            'data'         => $paginated->items(),
+            'current_page' => $paginated->currentPage(),
+            'from'         => $paginated->firstItem(),
+            'to'           => $paginated->lastItem(),
+            'per_page'     => $paginated->perPage(),
+            'total'        => $paginated->total(),
+            'last_page'    => $paginated->lastPage(),
+        ]);
     }
 
 public function create()
@@ -113,67 +127,76 @@ public function create()
     }
 
     public function update(Request $request, $id)
-{
-    DB::beginTransaction();
+    {
+        DB::beginTransaction();
 
-    try {
-        $receivable = AccountsReceivables::findOrFail($id);
+        try {
+            $receivable = AccountsReceivables::findOrFail($id);
 
-        // Update main receivable record
-        $receivable->update([
-            'transaction_datetime' => $request->transaction_datetime,
-            'payor_name'           => $request->payor_name,
-            'company'              => $request->company ?? null,
-            'address'              => $request->address ?? null,
-            'mobile_no'            => $request->mobile_no ?? null,
-            'email'                => $request->email ?? null,
-            'tin'                  => $request->tin ?? null,
-            'payee_details'        => $request->payee_details,
-            'due_date'             => $request->due_date,
-            'sub_total'            => $request->sub_total ?? 0,
-            'total_tax'            => $request->total_tax ?? 0,
-            'total_amount'         => $request->total_amount ?? 0,
-            'status' => $request->status ?? 'pending',
-        ]);
+            // Update main record (excluding amount_due)
+            $receivable->update([
+                'transaction_datetime' => $request->transaction_datetime,
+                'payor_name'           => $request->payor_name,
+                'company'              => $request->company ?? null,
+                'address'              => $request->address ?? null,
+                'mobile_no'            => $request->mobile_no ?? null,
+                'email'                => $request->email ?? null,
+                'tin'                  => $request->tin ?? null,
+                'due_date'             => $request->due_date,
+                'sub_total'            => $request->sub_total ?? 0,
+                'total_tax'            => $request->total_tax ?? 0,
+                'total_amount'         => $request->total_amount ?? 0,
+                'status'               => $request->status ?? 'pending',
+            ]);
 
-        // Delete old items
-        $receivable->items()->delete();
+            // Delete old items
+            $receivable->items()->delete();
 
-        // Create new items from summaryList
-        if ($request->has('items') && is_array($request->items)) {
-            foreach ($request->items as $item) {
-                $receivable->items()->create([
-                    'type_id'       => $item['type_id'],
-                    'description'   => $item['description'],
-                    'qty'           => $item['qty'],
-                    'unit_price'    => $item['unit_price'],
-                    'tax'           => $item['tax'] ?? 'NON-VAT',
-                    'tax_amount'    => $item['tax_amount'] ?? 0,
-                    'sub_total'     => $item['sub_total'],
-                    'total_amount'  => $item['total_amount'],
-                ]);
+            // Re-create items
+            if ($request->has('items') && is_array($request->items)) {
+                foreach ($request->items as $item) {
+                    $receivable->items()->create([
+                        'type_id'      => $item['type_id'],
+                        'description'  => $item['description'],
+                        'qty'          => $item['qty'],
+                        'unit_price'   => $item['unit_price'],
+                        'tax'          => $item['tax'] ?? 'NON-VAT',
+                        'tax_amount'   => $item['tax_amount'] ?? 0,
+                        'sub_total'    => $item['sub_total'],
+                        'total_amount' => $item['total_amount'],
+                    ]);
+                }
             }
+
+            // 🔥 Recalculate amount_due based on all items
+            $amountDue = $receivable->items()->sum('total_amount');
+
+            // Calculate balance using amount_due - total_received
+            $balance = $amountDue - ($receivable->total_received ?? 0);
+
+            $receivable->update([
+                'amount_due' => $amountDue,
+                'balance'    => $balance
+            ]);
+
+            DB::commit();
+
+            return redirect('/accounts-receivable')
+                ->with('success', 'Accounts Receivable updated successfully.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            \Log::error('AR Update Failed: ' . $e->getMessage(), [
+                'request' => $request->all(),
+                'id'      => $id
+            ]);
+
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Failed to update record. Please try again.');
         }
-
-        DB::commit();
-
-        return redirect('/accounts-receivable')
-            ->with('success', 'Accounts Receivable updated successfully.');
-
-    } catch (\Exception $e) {
-        DB::rollBack();
-
-        \Log::error('AR Update Failed: ' . $e->getMessage(), [
-            'request' => $request->all(),
-            'id'      => $id
-        ]);
-
-        return redirect()->back()
-            ->withInput()
-            ->with('error', 'Failed to update record. Please try again.');
     }
-}
-
     
     public function getCategories()
     {
@@ -225,7 +248,6 @@ public function create()
         'mobile_no'           => 'nullable|string|max:50',
         'email'               => 'nullable|email|max:255',
         'tin'                 => 'nullable|string|max:50',
-        'payee_details'       => 'required|string|max:255',
         'due_date'            => 'required|date',
 
         'items'               => 'required|array|min:1',
@@ -271,7 +293,6 @@ public function create()
         'mobile_no'            => $validated['mobile_no'],
         'email'                => $validated['email'],
         'tin'                 => $validated['tin'],
-        'payee_details'        => $validated['payee_details'],
         'due_date'             => $validated['due_date'],
         'user_id'              => auth()->id(),
         'transaction_type'     => 'Account Receivables',
@@ -460,6 +481,20 @@ public function create()
                 'status' => $ar->status,
             ]
         ]);
+    }
+
+    // In your Controller
+    public function updateDueDate(Request $request, $id)
+    {
+        $request->validate([
+            'due_date' => 'required|date'
+        ]);
+
+        $ar = AccountsReceivables::findOrFail($id);
+        $ar->due_date = $request->due_date;
+        $ar->save();
+
+        return response()->json(['message' => 'Due date updated', 'due_date' => $ar->due_date]);
     }
 
 }

@@ -21,7 +21,6 @@ class AccountsReceivables extends Model
         'mobile_no',
         'email',
         'tin',
-        'payee_details',
         'due_date',
         'user_id',
         'branch_id',   

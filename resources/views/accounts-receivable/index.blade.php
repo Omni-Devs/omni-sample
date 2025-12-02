@@ -2,8 +2,11 @@
 @section('content')
 <style>
     .vs__search {
-    font-size: 14px;     /* Change font size */
-}
+        font-size: 14px;
+    }
+    .dropdown-menu {
+        position: relative;
+    }
 </style>
 <div class="main-content" id="app">
     <div>
@@ -84,80 +87,118 @@
         </div>
     </div>
     <!-- Receive Payment Modal -->
-<div class="modal fade" id="receivePaymentModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <form @submit.prevent="submitPayment">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Receive Payment</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
+    <div class="modal fade" id="receivePaymentModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <form @submit.prevent="submitPayment">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Receive Payment</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
 
-                <div class="modal-body">
-                    
-                    <!-- Must match controller -->
-                    <input type="hidden" v-model="paymentForm.account_receivable_id">
+                    <div class="modal-body">
+                        
+                        <!-- Must match controller -->
+                        <input type="hidden" v-model="paymentForm.account_receivable_id">
 
-                    <div class="row g-3">
+                        <div class="row g-3">
 
-                        <!-- Date & Time -->
-                        <div class="col-12">
-                            <label class="form-label">Date And Time of Transaction <span class="text-danger">*</span></label>
-                            <div class="d-flex">
-                                <input type="text" 
-                                    class="form-control"
-                                    id="receive_payment_datetime"
-                                    v-model="paymentForm.transaction_datetime"
-                                    placeholder="Select date & time"
-                                    readonly>
-                                <button type="button" 
-                                        class="btn btn-secondary btn-sm ms-2" 
-                                        @click="clearPaymentDate">
-                                    Clear
+                            <!-- Date & Time -->
+                            <div class="col-12">
+                                <label class="form-label">Date And Time of Transaction <span class="text-danger">*</span></label>
+                                <div class="d-flex">
+                                    <input type="text" 
+                                        class="form-control"
+                                        id="receive_payment_datetime"
+                                        v-model="paymentForm.transaction_datetime"
+                                        placeholder="Select date & time"
+                                        readonly>
+                                    <button type="button" 
+                                            class="btn btn-secondary btn-sm ms-2" 
+                                            @click="clearPaymentDate">
+                                        Clear
+                                    </button>
+                                </div>
+                                <small class="text-muted">Cannot select future date.</small>
+                            </div>
+
+                            <!-- Amount -->
+                            <div class="col-12">
+                                <label class="form-label">Amount <span class="text-danger">*</span></label>
+                                <input type="number" step="0.01" class="form-control"
+                                    v-model.number="paymentForm.amount" placeholder="0.00" required>
+                            </div>
+
+                            <!-- Cash Equivalent -->
+                            <div class="col-12">
+                                <label class="form-label">Cash Equivalent <span class="text-danger">*</span></label>
+                                <v-select
+                                    :options="cashEquivalents"
+                                    label="label"
+                                    :reduce="opt => opt.id"
+                                    v-model="paymentForm.cash_equivalent_id"
+                                    placeholder="Select Destination Account"
+                                ></v-select>
+                            </div>
+
+                            <!-- Payment Method -->
+                            <div class="col-12">
+                                <label class="form-label">Method of Payment <span class="text-danger">*</span></label>
+                                <v-select
+                                    :options="paymentMethods"
+                                    label="label"
+                                    :reduce="opt => opt.id"
+                                    v-model="paymentForm.payment_method_id"
+                                    placeholder="Select Payment Method"
+                                ></v-select>
+                            </div>
+
+                            <!-- Submit -->
+                            <div class="col-12 mt-4">
+                                <button type="submit" class="btn btn-primary" :disabled="submitting">
+                                    <span v-if="submitting" class="spinner-border spinner-border-sm me-2"></span>
+                                    Submit Payment
                                 </button>
                             </div>
-                            <small class="text-muted">Cannot select future date.</small>
-                        </div>
-
-                        <!-- Amount -->
-                        <div class="col-12">
-                            <label class="form-label">Amount <span class="text-danger">*</span></label>
-                            <input type="number" step="0.01" class="form-control"
-                                v-model.number="paymentForm.amount" placeholder="0.00" required>
-                        </div>
-
-                        <!-- Cash Equivalent -->
-                        <div class="col-12">
-                            <label class="form-label">Cash Equivalent <span class="text-danger">*</span></label>
-                            <v-select
-                                :options="cashEquivalents"
-                                label="label"
-                                :reduce="opt => opt.id"
-                                v-model="paymentForm.cash_equivalent_id"
-                                placeholder="Select Destination Account"
-                            ></v-select>
-                        </div>
-
-                        <!-- Payment Method -->
-                        <div class="col-12">
-                            <label class="form-label">Method of Payment <span class="text-danger">*</span></label>
-                            <v-select
-                                :options="paymentMethods"
-                                label="label"
-                                :reduce="opt => opt.id"
-                                v-model="paymentForm.payment_method_id"
-                                placeholder="Select Payment Method"
-                            ></v-select>
-                        </div>
-
-                        <!-- Submit -->
-                        <div class="col-12 mt-4">
-                            <button type="submit" class="btn btn-primary" :disabled="submitting">
-                                <span v-if="submitting" class="spinner-border spinner-border-sm me-2"></span>
-                                Submit Payment
-                            </button>
                         </div>
                     </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+   <!-- Edit Due Date Modal -->
+<div class="modal fade" id="editDueDateModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-md">
+        <form @submit.prevent="submitDueDate">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Due Date</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label">New Due Date <span class="text-danger">*</span></label>
+                            <input
+                                type="text"
+                                class="form-control"
+                                id="due_date_picker"
+                                v-model="dueDateForm.due_date"
+                                placeholder="Select due date"
+                                readonly
+                                required
+                            >
+                            <small class="text-muted">You cannot select a date in the past.</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary" :disabled="submittingDueDate || !dueDateForm.due_date">
+                        <span v-if="submittingDueDate" class="spinner-border spinner-border-sm me-2"></span>
+                        Update Due Date
+                    </button>
                 </div>
             </div>
         </form>
@@ -254,9 +295,6 @@
                                                         </li>
                                                         <li>
                                                             <div class="my-1 custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" value="true" id="__BVID__315"><label class="custom-control-label" for="__BVID__315">Payor</label></div>
-                                                        </li>
-                                                        <li>
-                                                            <div class="my-1 custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" value="true" id="__BVID__316"><label class="custom-control-label" for="__BVID__316">Payee</label></div>
                                                         </li>
                                                         <li>
                                                             <div class="my-1 custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" value="true" id="__BVID__317"><label class="custom-control-label" for="__BVID__317">Amount Due</label></div>
@@ -394,10 +432,6 @@
                                         Sort table by Payor in descending order
                                         </span></button>
                                     </th>
-                                    <th scope="col" aria-sort="descending" aria-controls="col-7" class="vgt-left-align text-left w-160px sortable" style="min-width: auto; width: auto;"><span>Payee</span> <button><span class="sr-only">
-                                        Sort table by Payee in descending order
-                                        </span></button>
-                                    </th>
                                     <th scope="col" aria-sort="descending" aria-controls="col-8" class="vgt-left-align text-left w-160px sortable" style="min-width: auto; width: auto;"><span>Amount Due</span> <button><span class="sr-only">
                                         Sort table by Amount Due in descending order
                                         </span></button>
@@ -479,9 +513,6 @@
                                         <!-- Payor -->
                                         <td>@{{ row.payor_name }}</td>
 
-                                        <!-- Payee -->
-                                        <td>@{{ row.payee_details }}</td>
-
                                         <!-- Amount Due -->
                                         <td>@{{ row.amount_due }}</td>
 
@@ -504,6 +535,12 @@
                                         <template v-if="statusFilter === 'approved' || statusFilter === 'completed'">
                                             <td>@{{ row.approved_by?.name || '-' }}</td>
                                             <td>@{{ row.approved_at ? new Date(row.approved_at).toLocaleString('en-US', {month:'short', day:'numeric', year:'numeric', hour:'numeric', minute:'2-digit', hour12:true}) : '' }}</td>
+                                        </template>
+
+                                        <!-- Completed By / At -->
+                                        <template v-if="statusFilter === 'completed'">
+                                            <td>@{{ row.completed_by?.name || '-' }}</td>
+                                            <td>@{{ row.completed_at ? new Date(row.completed_at).toLocaleString('en-US', {month:'short', day:'numeric', year:'numeric', hour:'numeric', minute:'2-digit', hour12:true}) : '' }}</td>
                                         </template>
 
                                          <!-- Disapproved By / At -->
@@ -531,33 +568,46 @@
                             </table>
                         </div>
                         <div class="vgt-wrap__footer vgt-clearfix">
+                            <!-- Rows per page -->
                             <div class="footer__row-count vgt-pull-left">
                                 <form>
-                                    <label for="vgt-select-rpp-163988036525" class="footer__row-count__label">Rows per page:</label> 
-                                    <select id="vgt-select-rpp-163988036525" autocomplete="off" name="perPageSelect" aria-controls="vgt-table" class="footer__row-count__select">
-                                        <option value="10">
-                                        10
-                                        </option>
-                                        <option value="20">
-                                        20
-                                        </option>
-                                        <option value="50">
-                                        50
-                                        </option>
-                                        <option value="100">
-                                        100
-                                        </option>
-                                        <!---->
+                                    <label class="footer__row-count__label">Rows per page:</label>
+                                    <select v-model.number="pagination.per_page" @change="fetchRecords(1)" class="footer__row-count__select">
+                                        <option value="10">10</option>
+                                        <option value="20">20</option>
+                                        <option value="50">50</option>
+                                        <option value="100">100</option>
                                     </select>
                                 </form>
                             </div>
+
+                            <!-- Showing X to Y of Z -->
                             <div class="footer__navigation vgt-pull-right">
-                                <div data-v-347cbcfa="" class="footer__navigation__page-info">
-                                    <div data-v-347cbcfa="">
-                                        1 - 10 of 32
+                                <div class="footer__navigation__page-info">
+                                    <div v-if="pagination.total > 0">
+                                        Showing @{{ pagination.from }} to @{{ pagination.to }} of @{{ pagination.total }} entries
+                                    </div>
+                                    <div v-else class="text-muted">
+                                        No entries found
                                     </div>
                                 </div>
-                                <!----> <button type="button" aria-controls="vgt-table" class="footer__navigation__page-btn disabled"><span aria-hidden="true" class="chevron left"></span> <span>prev</span></button> <button type="button" aria-controls="vgt-table" class="footer__navigation__page-btn"><span>next</span> <span aria-hidden="true" class="chevron right"></span></button> <!---->
+
+                                <!-- Prev / Next Buttons -->
+                                <button type="button"
+                                        class="footer__navigation__page-btn"
+                                        :class="{ disabled: pagination.current_page <= 1 }"
+                                        :disabled="pagination.current_page <= 1"
+                                        @click="fetchRecords(pagination.current_page - 1)">
+                                    <span class="chevron left"></span> prev
+                                </button>
+
+                                <button type="button"
+                                        class="footer__navigation__page-btn"
+                                        :class="{ disabled: pagination.current_page >= pagination.last_page }"
+                                        :disabled="pagination.current_page >= pagination.last_page"
+                                        @click="fetchRecords(pagination.current_page + 1)">
+                                    next <span class="chevron right"></span>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -636,7 +686,7 @@
 
         <!-- For Disapproved & Archived – Add Restore Option -->
         <li v-if="['disapproved', 'archived'].includes(row.status)">
-            <a class="dropdown-item text-info" href="#" @click.prevent="changeStatus(row.id, 'pending')">
+            <a class="dropdown-item" href="#" @click.prevent="changeStatus(row.id, 'pending')">
                 <i class="nav-icon i-Restore-Window font-weight-bold mr-2"></i>
                 Restore to Pending
             </a>
@@ -644,7 +694,7 @@
 
         <!-- 7. Edit Due Date – Only pending & approved -->
         <li v-if="['pending', 'approved'].includes(row.status)">
-            <a class="dropdown-item" href="#" @click.prevent="$emit('edit-due-date', row.id)">
+            <a class="dropdown-item" href="#" @click.prevent="$parent.openEditDueDateModal(row)">
                 <i class="nav-icon i-Calendar font-weight-bold mr-2"></i>
                 Edit Due Date
             </a>
@@ -762,6 +812,7 @@ Vue.component("actions-dropdown", {
                     rec.status = status;
                     rec.updated_at = res.data.updated_at || new Date();
                 }
+                this.$parent.fetchRecords(this.$parent.pagination.current_page);
                 this.isOpen = false;
                 this.$emit('status-updated');
 
@@ -840,6 +891,21 @@ new Vue({
             cashEquivalents: [],
             paymentMethods: [],
             submitting: false,
+            dueDateForm: {
+                id: null,
+                due_date: ''
+            },
+            submittingDueDate: false,
+            currentDueDateRow: null,
+            pagination: {
+                current_page: 1,
+                from: 0,
+                to: 0,
+                total: 0,
+                per_page: 10,
+                last_page: 1
+            },
+            loading: false,
         };
     },
 
@@ -868,12 +934,10 @@ new Vue({
     },
 
     watch: {
-        "filter.year"() {
-            this.fetchRecords();
-        },
-        "filter.month"() {
-            this.fetchRecords();
-        }
+        "filter.year"() { this.fetchRecords(1); },
+        "filter.month"() { this.fetchRecords(1); },
+        statusFilter() { this.fetchRecords(1); },
+        "pagination.per_page"() { this.fetchRecords(1); } // reset to page 1 when changing rows
     },
 
     methods: {
@@ -926,68 +990,184 @@ new Vue({
             this.fetchRecords();
         },
 
-        fetchRecords() {
+        fetchRecords(page = 1) {
             if (!this.filter.year || !this.filter.month) return;
+
+            this.loading = true;
 
             axios.get('/accounts-receivable/filter', {
                 params: {
                     year: this.filter.year,
                     month: this.filter.month.value,
                     status: this.statusFilter,
+                    page: page,
+                    per_page: this.pagination.per_page || 10
                 }
             })
             .then(res => {
-                this.records = res.data;
-                console.log(this.records); // <-- Check if items exist
+                this.records = res.data.data;
+
+                // Update pagination info
+                this.pagination = {
+                    current_page: res.data.current_page,
+                    from: res.data.from || 0,
+                    to: res.data.to || 0,
+                    total: res.data.total,
+                    per_page: parseInt(res.data.per_page),
+                    last_page: res.data.last_page
+                };
             })
-            .catch(err => console.error(err));
+            .catch(err => {
+                console.error(err);
+                Swal.fire('Error', 'Failed to load data', 'error');
+            })
+            .finally(() => this.loading = false);
         },
 
         // New: Open Receive Payment Modal
-openReceivePayment(invoice) {
-    this.currentInvoice = invoice;
+        openReceivePayment(invoice) {
+            this.currentInvoice = invoice;
 
-    this.paymentForm = {
-        account_receivable_id: invoice.id,
-        transaction_datetime: moment().format("YYYY-MM-DD HH:mm:ss"),
-        amount: parseFloat(invoice.remaining_balance || invoice.total || 0),
-        cash_equivalent_id: null,
-        payment_method_id: null,
-    };
+            this.paymentForm = {
+                account_receivable_id: invoice.id,
+                transaction_datetime: moment().format("YYYY-MM-DD HH:mm:ss"),
+                amount: parseFloat(invoice.remaining_balance || invoice.total || 0),
+                cash_equivalent_id: null,
+                payment_method_id: null,
+            };
 
-    this.$nextTick(() => {
-        this.initDatePickers();
-        const modal = new bootstrap.Modal(document.getElementById('receivePaymentModal'));
-        modal.show();
-    });
-},
-
-
-    loadPaymentOptions() {
-        axios.get('/receive-payment-options')
-            .then(res => {
-                this.cashEquivalents = res.data.cash_equivalents;
-                this.paymentMethods   = res.data.payment_methods;
-            })
-            .catch(() => {
-                Swal.fire('Error', 'Failed to load payment options', 'error');
+            this.$nextTick(() => {
+                this.initDatePickers();
+                const modal = new bootstrap.Modal(document.getElementById('receivePaymentModal'));
+                modal.show();
             });
-    },
+        },
 
-    initDatePickers() {
-        const vm = this;
-        const today = moment();
+        loadPaymentOptions() {
+            axios.get('/receive-payment-options')
+                .then(res => {
+                    this.cashEquivalents = res.data.cash_equivalents;
+                    this.paymentMethods   = res.data.payment_methods;
+                })
+                .catch(() => {
+                    Swal.fire('Error', 'Failed to load payment options', 'error');
+                });
+        },
 
-        $('#receive_payment_datetime').daterangepicker({
-            singleDatePicker: true,
-            timePicker: true,
-            timePicker24Hour: true,
-            maxDate: today, // Prevent future datetime
-            locale: { format: 'YYYY-MM-DD HH:mm:ss' }
-        }).on('apply.daterangepicker', (ev, picker) => {
-            vm.paymentForm.transaction_datetime = picker.startDate.format('YYYY-MM-DD HH:mm:ss');
-        });
-    },
+        initDatePickers() {
+            const vm = this;
+            const today = moment();
+
+            $('#receive_payment_datetime').daterangepicker({
+                singleDatePicker: true,
+                timePicker: true,
+                timePicker24Hour: true,
+                maxDate: today, // Prevent future datetime
+                locale: { format: 'YYYY-MM-DD HH:mm:ss' }
+            }).on('apply.daterangepicker', (ev, picker) => {
+                vm.paymentForm.transaction_datetime = picker.startDate.format('YYYY-MM-DD HH:mm:ss');
+            });
+        },
+
+        openEditDueDateModal(row) {
+            this.currentDueDateRow = row;
+            
+            const existingDueDate = row.due_date ? moment(row.due_date) : null;
+            const today = moment().startOf('day');
+
+            this.dueDateForm = {
+                id: row.id,
+                due_date: existingDueDate && existingDueDate.isSameOrAfter(today, 'day')
+                    ? existingDueDate.format('YYYY-MM-DD')
+                    : today.format('YYYY-MM-DD')  // Force today if old date was in the past
+            };
+
+            this.$nextTick(() => {
+                this.initDueDatePicker();
+                const modal = new bootstrap.Modal(document.getElementById('editDueDateModal'));
+                modal.show();
+            });
+        },
+
+        initDueDatePicker() {
+            const vm = this;
+            const today = moment().startOf('day'); // Today at 00:00
+
+            // Destroy previous instance if exists
+            if ($('#due_date_picker').data('daterangepicker')) {
+                $('#due_date_picker').data('daterangepicker').remove();
+            }
+
+            $('#due_date_picker').daterangepicker({
+                singleDatePicker: true,
+                showDropdowns: true,
+                minDate: today,                    // This disables all past dates
+                startDate: vm.dueDateForm.due_date ? moment(vm.dueDateForm.due_date) : today,
+                locale: {
+                    format: 'YYYY-MM-DD'
+                }
+            }).on('apply.daterangepicker', function(ev, picker) {
+                const selectedDate = picker.startDate.format('YYYY-MM-DD');
+                vm.dueDateForm.due_date = selectedDate;
+                $(this).val(selectedDate);
+            }).on('cancel.daterangepicker', function() {
+                $(this).val('');
+                vm.dueDateForm.due_date = '';
+            });
+
+            // Pre-fill if due_date already exists and is today or future
+            if (vm.dueDateForm.due_date) {
+                const date = moment(vm.dueDateForm.due_date);
+                if (date.isSameOrAfter(today, 'day')) {
+                    $('#due_date_picker').val(date.format('YYYY-MM-DD'));
+                } else {
+                    // If current due_date is in the past, default to today
+                    vm.dueDateForm.due_date = today.format('YYYY-MM-DD');
+                    $('#due_date_picker').val(today.format('YYYY-MM-DD'));
+                }
+            } else {
+                $('#due_date_picker').val(today.format('YYYY-MM-DD'));
+                vm.dueDateForm.due_date = today.format('YYYY-MM-DD');
+            }
+        },
+
+        async submitDueDate() {
+            if (this.submittingDueDate || !this.dueDateForm.due_date) return;
+
+            this.submittingDueDate = true;
+
+            try {
+                const response = await axios.patch(`/accounts-receivable/${this.dueDateForm.id}/due-date`, {
+                    due_date: this.dueDateForm.due_date
+                });
+
+                // Update the row in the table
+                const record = this.records.find(r => r.id === this.dueDateForm.id);
+                if (record) {
+                    record.due_date = this.dueDateForm.due_date;
+                }
+
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Success!',
+                    text: 'Due date updated successfully.',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+                
+                this.fetchRecords(this.pagination.current_page);
+
+                bootstrap.Modal.getInstance(document.getElementById('editDueDateModal')).hide();
+            } catch (err) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: err.response?.data?.message || 'Failed to update due date.'
+                });
+            } finally {
+                this.submittingDueDate = false;
+            }
+        },
 
 
         async submitPayment() {
@@ -1009,7 +1189,7 @@ openReceivePayment(invoice) {
                 });
 
                 bootstrap.Modal.getInstance(document.getElementById('receivePaymentModal')).hide();
-                this.fetchRecords();
+                this.fetchRecords(this.pagination.current_page);
 
                 // Reset form
                 this.paymentForm = {
@@ -1035,7 +1215,6 @@ openReceivePayment(invoice) {
             this.paymentForm.transaction_datetime = '';
             $('#receive_payment_datetime').val(''); // Clear the input visually
         },
-
     },
     computed: {
          modalSubTotal() {
