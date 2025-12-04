@@ -18,4 +18,9 @@ class AccountingCategory extends Model
         'created_by',
         'status',
     ];
+
+    public function payableDetails()
+    {
+        return $this->hasMany(AccountPayableDetail::class, 'accounting_category_id');
+    }
 }

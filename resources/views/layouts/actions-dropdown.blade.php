@@ -117,6 +117,41 @@
         @endif
         @endif
 
+        @if ($currentRoute === 'accounts-payables.index')
+
+        @if(isset($status))
+            <li><hr class="dropdown-divider"></li>
+
+            <!-- 📄 View Invoice -->
+            <li role="presentation">
+                <a href="javascript:void(0);" class="dropdown-item" onclick="viewAmountDetailsModal({{ $id }})">
+                    <i class="nav-icon i-Receipt-3 font-weight-bold mr-2"></i> View Invoice
+                </a>
+            </li>
+
+            <!-- 👍 Approve -->
+            @if($status === 'pending')
+            <li role="presentation">
+                <a href="javascript:void(0);" class="dropdown-item text-success" onclick="approveAP({{ $id }})">
+                    <i class="nav-icon i-Like font-weight-bold mr-2"></i> Approve
+                </a>
+            </li>
+            @endif
+
+            <!-- 👎 Disapprove -->
+            @if($status === 'pending')
+            <li role="presentation">
+                <a href="javascript:void(0);" class="dropdown-item text-danger" onclick="disapproveAP({{ $id }})">
+                    <i class="nav-icon i-Unlike-2 font-weight-bold mr-2"></i> Disapprove
+                </a>
+            </li>
+
+            <li><hr class="dropdown-divider"></li>
+            @endif
+        @endif
+        @endif
+
+
         <!-- Update -->
         @isset($updateRoute)
         <li role="presentation">
@@ -204,6 +239,14 @@
 
         
         <!-- ✅ Move to Archive (for both approved and active statuses) -->
+        @if ($currentRoute === 'accounts-payables.index' && isset($ap) && $ap->status === 'approved')
+                    <li role="presentation">
+                <a href="javascript:void(0);" class="dropdown-item" onclick="openMakePaymentModal({{ $ap->id }})">
+                    <i class="nav-icon i-Money font-weight-bold mr-2"></i> Make Payment
+                </a>
+            </li>
+        @endif
+
         @if(isset($status) && in_array($status, ['active', 'approved']) && isset($archiveRoute))
         <li role="presentation">
             <form action="{{ $archiveRoute }}" method="POST"

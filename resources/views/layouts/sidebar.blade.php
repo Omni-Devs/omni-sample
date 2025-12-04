@@ -308,7 +308,7 @@
          </ul>
          <ul data-parent="Accounting" class="childNav d-none">
             <li class="nav-item"><a href="/accounts-receivable" class=""><i class="nav-icon i-Add-Cart"></i> <span class="item-name">Accounts Receivable</span></a></li>
-            <li class="nav-item"><a href="/app/accounting/account-payables" class=""><i class="nav-icon i-Bag-Coins"></i> <span class="item-name">Accounts Payable</span></a></li>
+            <li class="nav-item"><a href="/accounts-payables" class=""><i class="nav-icon i-Bag-Coins"></i> <span class="item-name">Accounts Payable</span></a></li>
             <li class="nav-item"><a href="/app/accounting/assets" class=""><i class="nav-icon i-Building"></i> <span class="item-name">Assets Management</span></a></li>
             <li class="nav-item"><a href="{{ route('fund-transfers.index') }}" class=""><i class="nav-icon i-Letter-Sent"></i> <span class="item-name">Fund Transfer</span></a></li>
             <li class="nav-item"><a href="/app/accounting/liquidations" class=""><i class="nav-icon i-Maximize-Window"></i> <span class="item-name">Liquidate</span></a></li>
@@ -427,6 +427,14 @@
                            <a href="{{ route('asset-categories.index') }}">
                               <i class="nav-icon i-Network-Window"></i>
                               <span class="item-name">Assets Category</span>
+                           </a>
+                        </li>
+                     </ul>
+                     <ul class="submenu">
+                        <li class="nav-item">
+                           <a href="{{ route('taxes.index') }}">
+                              <i class="nav-icon i-Network-Window"></i>
+                              <span class="item-name">Taxes</span>
                            </a>
                         </li>
                      </ul>
