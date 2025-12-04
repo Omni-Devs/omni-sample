@@ -85,7 +85,6 @@
                                                 <div class="modal-body">
 
                                                     <div class="row">
-
                                                         <div class="col-md-12 mb-3">
                                                             <label for="created_at">Date and Time Created</label>
                                                             <div class="d-flex">
@@ -122,16 +121,6 @@
 
                                                         <div class="col-md-12 mb-3">
                                                             <label>Reference Number *</label>
-                                                            {{-- @php
-                                                                $selectedBranchId = old('branch_id', $currentBranchId ?? '');
-                                                                $selectedBranch = $branches->firstWhere('id', $selectedBranchId);
-                                                            @endphp
-                                                            <input type="text" name="reference_number"
-                                                                    class="form-control @error('reference_number') is-invalid @enderror"
-                                                                    value="{{ $selectedBranch ? 'FT-' . $selectedBranch->id . '-000001' : '' }}" required>
-                                                            @error('reference_number')
-                                                                <div class="invalid-feedback">{{ $message }}</div>
-                                                            @enderror  --}}
                                                             @php
                                                                 $selectedBranchId = old('branch_id', $currentBranchId ?? '');
                                                                 $selectedBranch = $branches->firstWhere('id', $selectedBranchId);

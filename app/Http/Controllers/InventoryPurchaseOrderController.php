@@ -267,40 +267,7 @@ class InventoryPurchaseOrderController extends Controller
         return redirect()->route('inventory_purchase_orders.index', ['status' => 'archived'])
             ->with('warning', 'Purchase Order moved to archive.');
     }
-
-    // public function logStocks($id)
-    // {
-    //     try {
-    //         $po = InventoryPurchaseOrder::with(['items', 'supplier'])
-    //             ->findOrFail($id);
-    //             // dd($po->po_number);
-
-    //         return response()->json([
-    //             'po_number' => $po->po_number,
-    //             'created_at' => $po->created_at,
-    //             'branch_id' => $po->branch_id,
-    //             'items' => $po->items->map(function ($item) {
-    //                 return [
-    //                     'id' => $item->id,
-    //                     'name' => $item->component->name ?? '',
-    //                     'sku' => $item->component->code ?? '',
-    //                     'supplier' => $item->supplier->fullname ?? '',
-    //                     'category' => $item->component->category ?? '',
-    //                     'brand' => $item->component->brand ?? '',
-    //                     'unit' => $item->component->unit ?? '',
-    //                     'total_qty' => $item->qty ?? 0,
-    //                 ];
-    //             }),
-    //         ]);
-    //     } catch (\Exception $e) {
-    //         \Log::error($e);
-    //         return response()->json([
-    //             'error' => 'Failed to load purchase order',
-    //             'message' => $e->getMessage(),
-    //         ], 500);
-    //     }
-    // }
-
+    
     /**
      * Store logged stock receipts for a PO.
      * Accepts: date_of_receipt (nullable), delivery_dr (nullable), items: [{detail_id, qty_received}]

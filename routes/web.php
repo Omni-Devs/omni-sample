@@ -3,6 +3,7 @@
 <?php
 
 use App\Http\Controllers\AccountingCategoryController;
+use App\Http\Controllers\AccountPayableController;
 use App\Http\Controllers\InventoryAuditController;
 use App\Http\Controllers\BranchesController;
 use App\Http\Controllers\CategoryController;
@@ -35,6 +36,7 @@ use App\Models\User;
 use App\Http\Controllers\FundTransferController;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Http\Request;
+use App\Http\Controllers\TaxController;
 use Illuminate\Support\Facades\View;
 
 
@@ -398,6 +400,55 @@ Route::prefix('accounting-categories')->name('accounting-categories.')->group(fu
 
     Route::delete('/accounting-type/{id}', [AccountingCategoryController::class, 'destroyType'])
     ->name('accounting-type.destroy');
+});
+
+Route::prefix('accounts-payables')->name('accounts-payables.')->group(function () {
+
+    // LIST + CREATE + STORE
+    Route::get('/', [AccountPayableController::class, 'index'])->name('index');
+    Route::get('/create', [AccountPayableController::class, 'create'])->name('create');
+    Route::post('/store', [AccountPayableController::class, 'store'])->name('store');
+
+    // VIEW DETAILS (View Invoice)
+    Route::get('/{id}/show', [AccountPayableController::class, 'show'])->name('show');
+
+    // EDIT + UPDATE
+    Route::get('/{id}/edit', [AccountPayableController::class, 'edit'])->name('edit');
+    Route::put('/{id}/update', [AccountPayableController::class, 'update'])->name('update');
+
+    // APPROVAL ACTIONS
+    Route::put('/{id}/approve', [AccountPayableController::class, 'approve'])->name('approve');
+    Route::put('/{id}/disapprove', [AccountPayableController::class, 'disapprove'])->name('disapprove');
+
+    // ATTACHMENTS
+    Route::get('/{id}/attachments', [AccountPayableController::class, 'viewAttachments'])->name('attachments');
+    Route::post('/{id}/attach', [AccountPayableController::class, 'addAttachment'])->name('attach');
+
+    // ARCHIVE + DELETE
+    Route::put('/{id}/archive', [AccountPayableController::class, 'archive'])->name('archive');
+    Route::delete('/{id}/destroy', [AccountPayableController::class, 'destroy'])->name('destroy');
+
+    Route::get('/{id}/amount-details', [AccountPayableController::class, 'amountDetails'])
+    ->name('amount-details');
+
+    Route::get('/accounts-payables/{id}/invoice', [AccountPayableController::class, 'invoice'])
+    ->name('accounts-payables.invoice');
+
+    Route::post('/make-payment', [AccountPayableController::class, 'makePayment'])
+    ->name('makePayment');
+    
+    Route::get('/get-types/{category}', [AccountPayableController::class, 'getTypes'])
+    ->name('getTypes');
+});
+
+Route::prefix('taxes')->name('taxes.')->group(function () {
+    Route::get('/', [TaxController::class, 'index'])->name('index');
+    Route::post('/', [TaxController::class, 'store'])->name('store');
+    Route::put('/{tax}/archive', [TaxController::class, 'archive'])->name('archive');
+    Route::put('/{tax}/restore', [TaxController::class, 'restore'])->name('restore');
+    Route::get('/{tax}/edit', [TaxController::class, 'edit'])->name('edit');
+    Route::put('/{tax}', [TaxController::class, 'update'])->name('update');
+    Route::delete('/{tax}', [TaxController::class, 'destroy'])->name('destroy');
 });
 
 Route::get('/accounts-receivable', [AccountReceivableController::class, 'index'])->name('account-receivable.index');

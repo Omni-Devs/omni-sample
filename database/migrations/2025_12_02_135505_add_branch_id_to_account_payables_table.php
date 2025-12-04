@@ -11,9 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('accounts_receivables', function (Blueprint $table) {
-            $table->string('reference_no')->unique()->change();
-            $table->index(['branch_id', 'reference_no']);
+        Schema::table('account_payables', function (Blueprint $table) {
+            $table->unsignedBigInteger('branch_id')->nullable()->after('id');
         });
     }
 
@@ -22,8 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('accounts_receivables', function (Blueprint $table) {
-            //
+        Schema::table('account_payables', function (Blueprint $table) {
+            $table->dropColumn('branch_id');
         });
     }
 };

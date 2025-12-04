@@ -248,11 +248,11 @@ async function saveNewType() {
     const name = nameInput.value.trim();
     const mode = modeSelect.value;
 
-    // Get selected category from list (NOT from dropdown)
+    // Get selected category from list
     const activeCategory = document.querySelector('.category-item.active');
     const category = activeCategory ? activeCategory.dataset.category : null;
 
-    // Clear previous errors
+    // Clear errors
     nameInput.classList.remove('is-invalid');
     document.getElementById('err_new_type_name').innerText = '';
 
@@ -272,10 +272,7 @@ async function saveNewType() {
             ? "{{ route('accounting-categories.accounting-type.add-payable') }}"
             : "{{ route('accounting-categories.accounting-type.add-receivable') }}";
 
-        const payload = { 
-            category: category, 
-            name: name 
-        };
+        const payload = { category: category, name: name };
 
         const res = await fetch(url, {
             method: "POST",
@@ -293,30 +290,47 @@ async function saveNewType() {
             return;
         }
 
-        // SUCCESS: append the new type to list
+        // -------------------------------------------------------------
+        // ✅ SUCCESS — ADD NEW TYPE TO LIST (INSTANT, NO RELOAD)
+        // -------------------------------------------------------------
         const list = document.getElementById('typeList');
         const li = document.createElement('li');
 
-        li.classList.add('list-group-item', 'type-item');
-        li.classList.add(mode === 'payable' ? 'payable-type' : 'receivable-type');
+        li.classList.add(
+            'list-group-item',
+            'type-item',
+            mode === 'payable' ? 'payable-type' : 'receivable-type'
+        );
+
         li.dataset.category = category;
-        li.innerText = name.charAt(0).toUpperCase() + name.slice(1);
+        li.dataset.id = data.id; // <-- backend must return new ID
+        li.classList.remove('d-none');
 
-        // Show only if category matches
-        li.classList.toggle('d-none', data.category !== category);
+        // The inner HTML must include the delete button
+        li.innerHTML = `
+            ${name.charAt(0).toUpperCase() + name.slice(1)}
+            <button class="btn btn-sm btn-danger float-right"
+                    onclick="event.stopPropagation(); removeType(${data.id})">
+                -
+            </button>
+        `;
 
+        // Append to list
         list.appendChild(li);
 
+        // Hide form again
         toggleTypeForm();
+
         Swal.fire('Success', `${name} added successfully!`, 'success');
-        location.reload();
+
+        // Clear input
+        document.getElementById('new_type_name').value = '';
 
     } catch (err) {
         console.error(err);
         Swal.fire('Error', err.message || 'Something went wrong', 'error');
     }
 }
-
 function toggleCategoryForm() {
     const form = document.getElementById('newCategoryForm');
     const title = document.getElementById('newCategoryTitle');

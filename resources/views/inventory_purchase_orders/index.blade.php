@@ -154,21 +154,13 @@
                                     </span>
                                 </td>
 
-                    {{-- ✅ Archived Info (only visible in archived tab) --}}
-                        {{-- @if($status === 'archived')
-                            <td>{{ $po->archivedBy?->name ?? '—' }}</td>
-                            <td>{{ $po->archived_at ? \Carbon\Carbon::parse($po->archived_at)->format('Y-m-d H:i A') : '—' }}</td>
-                        @endif --}}
-
-                         {{-- ✅ Archived Tab Columns --}}
+                        {{-- ✅ Archived Tab Columns --}}
                     @if($status === 'archived')
                         <td>{{ $po->archivedBy?->name ?? '' }}</td>
                         <td>
                             {{ $po->archived_at ? \Carbon\Carbon::parse($po->archived_at)->format('Y-m-d H:i A') : '' }}
                         </td>
                     @endif
-
-
 
                         {{-- ✅ Actions --}}
                             <td class="text-right">
