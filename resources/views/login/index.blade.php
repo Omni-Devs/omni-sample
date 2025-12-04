@@ -212,32 +212,30 @@ ease-in-out;
                                  <div class="alert alert-danger">{{ $errors->first('login') }}</div>
                             @endif
                             <span>
-                                <form method="POST" action="{{ route('login.submit') }}">
+                                <form method="POST" action="{{ route('login.submit') }}" autocomplete="off">
                                     @csrf
-                                    <span>
-                                        <fieldset class="form-group text-12">
-                                            <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0">Username</legend>
-                                            <div>
-                                                <input type="text" name="username" class="form-control-rounded form-control @error('username') is-invalid @enderror" value="{{ old('username') }}" required autofocus>
-                                                @error('username')
-                                                     <div class="invalid-feedback">{{ $message }}</div>
-                                                @enderror
-                                            </div>
-                                        </fieldset>
-                                    </span>
-                                    <span>
-                                        <fieldset class="form-group text-12">
-                                            <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0">Password</legend>
-                                            <div>
-                                                <div class="input-button">
-                                                     <input type="password" name="password" class="form-control-rounded form-control @error('password') is-invalid @enderror" required>
-                                                     <button type="button" title="Show Password"><i class="i-Eye"></i></button>
-                                                </div>
-                                                @error('password')
-                                                     <div class="invalid-feedback">{{ $message }}</div>
-                                                @enderror
-                                            </div>
-                                        </fieldset>
+
+                                    <!-- Hidden dummy fields – Chrome fills these instead of real ones -->
+                                    <input type="text"     name="prevent_autofill_username" id="prevent_autofill_username" value="" style="display:none;" autocomplete="nope" />
+                                    <input type="password" name="prevent_autofill_password" id="prevent_autofill_password" value="" style="display:none;" autocomplete="nope" />
+
+                                    <!-- Your real fields (unchanged) -->
+                                    <fieldset class="form-group text-12">
+                                        <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0">Username</legend>
+                                        <div>
+                                            <input type="text" name="username" class="form-control-rounded form-control" 
+                                                value="{{ old('username') }}" required autofocus autocomplete="username">
+                                        </div>
+                                    </fieldset>
+
+                                    <fieldset class="form-group text-12">
+                                        <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0">Password</legend>
+                                        <div class="input-button">
+                                            <input type="password" name="password" class="form-control-rounded form-control" 
+                                                required autocomplete="current-password">
+                                            <button type="button" title="Show Password"><i class="i-Eye"></i></button>
+                                        </div>
+                                    </fieldset>
                                     </span>
                                     <button type="submit" class="btn btn-rounded btn-block mt-2 btn-primary mt-2">Sign In</button>
                                 </form>

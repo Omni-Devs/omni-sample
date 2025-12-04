@@ -9028,6 +9028,117 @@ input[type=color].form-control:disabled {
 .i-Zootool:before {
     content: "\ee25";
 }
+/* ───────────────────────────────
+   1. CLEAR CACHE BUTTON – Beautiful Hover
+   ─────────────────────────────── */
+#clearCacheLink {
+    transition: all 0.3s ease;
+    border-radius: 8px;
+    padding: 6px 12px;
+    display: inline-block;
+}
+
+#clearCacheLink:hover {
+    background-color: #e3f2fd !important;
+    color: #1976d2 !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(25, 118, 210, 0.15);
+}
+
+#clearCacheLink .fa-spinner {
+    font-size: 12px;
+}
+
+/* ───────────────────────────────
+   2. LOGOUT BUTTON – Remove Ugly Border & Focus Ring
+   ─────────────────────────────── */
+#dropdown-1 .dropdown-item button,
+#dropdown-1 .dropdown-item [type="submit"] {
+    all: unset !important;                    /* Remove all default button styles */
+    cursor: pointer;
+    width: 100%;
+    text-align: left;
+    padding: 10px 16px !important;
+    font-size: 14px;
+    transition: background 0.2s ease;
+    display: block;
+}
+
+#dropdown-1 .dropdown-item button:hover,
+#dropdown-1 .dropdown-item [type="submit"]:hover {
+    background-color: #f8d7da !important;
+    color: #721c24 !important;
+}
+
+/* Remove blue focus outline */
+#dropdown-1 .dropdown-item button:focus,
+#dropdown-1 .dropdown-item [type="submit"]:focus {
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+/* ───────────────────────────────
+   3. CLEAN DROPDOWN STYLES (Your existing + improved)
+   ─────────────────────────────── */
+.dropdown-menu {
+    display: none;
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    margin-top: 8px;
+    overflow: hidden;
+}
+
+.dropdown-menu.show {
+    display: block !important;
+}
+
+#dropdown-1 .dropdown-menu {
+    min-width: 220px !important;
+    right: 0;
+    left: auto !important;
+}
+
+#dropdown-1 .dropdown-header {
+    padding: 14px 16px;
+    font-weight: 600;
+    font-size: 14px;
+    border-radius: 12px 12px 0 0;
+}
+
+#dropdown-1 .dropdown-item {
+    padding: 11px 16px;
+    font-size: 14px;
+    transition: background 0.2s ease;
+}
+
+#dropdown-1 .dropdown-item:hover {
+    background-color: #f0f4ff;
+}
+
+/* Header dropdowns (branch, user, bell) */
+.header-dropdown-toggle + .dropdown-menu,
+.dropdown:has(.header-dropdown-toggle) .dropdown-menu {
+    display: none;
+}
+.header-dropdown-toggle + .dropdown-menu.show,
+.dropdown:has(.header-dropdown-toggle) .dropdown-menu.show {
+    display: block !important;
+}
+.logout-link {
+    padding: 12px 20px !important;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    color: inherit !important;
+    text-decoration: none !important;
+    transition: all 0.25s ease;
+    font-size: 14px;
+}
+
+.logout-link:hover {
+    font-weight: 500;
+}
 <style>@import url(https://fonts.googleapis.com/css?family=Nunito:300,400,400i,600,700,800,900);</style>
 <style>@import url(https://fonts.googleapis.com/css?family=Nunito:300,400,400i,600,700,800,900);</style><style>/*!
  * Bootstrap v4.1.3 (https://getbootstrap.com/)
@@ -9143,25 +9254,35 @@ input[type=color].form-control:disabled {
       <div class="header-part-right">
          <div class="mr-3">
             <div class="b-overlay-wrap position-relative d-inline-block btn-loader">
-               <form action="{{ route('logout') }}" method="POST">
-                @csrf
-                <button type="submit" class="btn btn-outline-primary ripple btn-sm"><i class="i-Brush" style="font-size: 12px;"></i>
-               Logout
+            <a href="javascript:void(0)" class="dropdown-item" id="clearCacheLink">
+                <button type="button" class="btn btn-outline-primary ripple btn-sm"><i class="i-Brush" style="font-size: 12px;"></i>
+               Clear Cache
                </button><!---->
-               </form>
+               </a>
             </div>
          </div>
          <div class="mr-3">
-            <div class="dropdown b-dropdown btn-group" id="__BVID__24">
-               <!----><button aria-haspopup="menu" aria-expanded="false" type="button" class="btn dropdown-toggle btn-link btn-lg text-decoration-none dropdown-toggle-no-caret" id="__BVID__24__BV_toggle_"><small><i class="i-Shop-4 mr-2"></i> <strong>
-               Bantayan
-               </strong></small></button>
-               <ul role="menu" tabindex="-1" class="dropdown-menu" aria-labelledby="__BVID__24__BV_toggle_">
-                  <li role="presentation"><a role="menuitem" href="#" target="_self" class="dropdown-item active">
-                     Bantayan
-                     </a>
-                  </li>
-               </ul>
+            <!-- Branch Dropdown -->
+            <div class="dropdown b-dropdown btn-group">
+                <button type="button" id="branchDropdownToggle" class="btn header-dropdown-toggle btn-link text-decoration-none dropdown-toggle-no-caret">
+                    <small>
+                        <i class="i-Shop-4 mr-2"></i>
+                        <strong id="currentBranchName" style="font-size: 14px;">
+                            {{ current_branch()?->name ?? 'No Branch' }}
+                        </strong>
+                    </small>
+                </button>
+
+                <ul class="dropdown-menu">
+                    @foreach(auth()->user()->branches as $branch)
+                        <li>
+                            <a href="#" class="dropdown-item {{ current_branch_id() == $branch->id ? 'active' : '' }}"
+                            onclick="event.preventDefault(); switchBranch({{ $branch->id }}, '{{ addslashes($branch->name) }}')">
+                                {{ $branch->name }}
+                            </a>
+                        </li>
+                    @endforeach
+                </ul>
             </div>
          </div>
          <!----> <i class="i-Full-Screen header-icon d-none d-sm-inline-block"></i> 
@@ -9185,14 +9306,25 @@ input[type=color].form-control:disabled {
          </div>
          <div class="dropdown">
             <div id="dropdown-1" class="dropdown b-dropdown m-md-2 user col align-self-end d-md-block btn-group">
-               <!----><button id="dropdown-1__BV_toggle_" aria-haspopup="menu" aria-expanded="false" type="button" class="btn dropdown-toggle btn-link text-decoration-none dropdown-toggle-no-caret"><img src="/images/avatar/no_avatar.png" id="userDropdown" alt="" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></button>
+               <!----><button id="dropdown-1__BV_toggle_" aria-haspopup="menu" aria-expanded="false" type="button" id="dropdown-1__BV_toggle_" class="btn header-dropdown-toggle btn-link text-decoration-none dropdown-toggle-no-caret"><img src="/images/avatar/no_avatar.png" id="userDropdown" alt="" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></button>
                <ul role="menu" tabindex="-1" aria-labelledby="dropdown-1__BV_toggle_" class="dropdown-menu">
                   <div aria-labelledby="userDropdown" class="dropdown-menu-right">
-                     <div class="dropdown-header"><i class="i-Lock-User mr-1"></i> <span>John</span></div>
-                     <a href="/app/profile" class="dropdown-item">Profile</a> <a href="/app/log-histories" class="dropdown-item">Log History</a> <!----> <a href="#" class="dropdown-item">Logout</a>
+                     <div class="dropdown-header"><i class="i-Lock-User mr-1"></i> <span>{{ Auth::user()->name }}</span></div>
+                     <a href="/app/profile" class="dropdown-item">Profile</a> <a href="/app/log-histories" class="dropdown-item">Log History</a> <!----> 
+                     <li role="presentation" class="dropdown-item p-0 m-0">
+<li role="presentation" class="dropdown-item p-0 m-0">
+    <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
+        @csrf
+    </form>
+    <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();"
+       class="logout-link w-100 d-flex align-items-center text-left">
+         Logout
+    </a>
+</li>
                   </div>
                </ul>
             </div>
          </div>
       </div>
    </div>
+   
