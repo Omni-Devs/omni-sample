@@ -33,12 +33,27 @@ use App\Http\Controllers\AccountReceivableController;
 use App\Models\CashEquivalent;
 use App\Models\User;
 use App\Http\Controllers\FundTransferController;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\View;
 
 
 Route::get('/', function () {
     return redirect()->route('login');
 })->middleware('redirect.auth');
+
+Route::post('/clear-cache', function () {
+    // Clear everything Laravel uses
+    Artisan::call('cache:clear');
+    Artisan::call('route:clear');
+    Artisan::call('config:clear');
+    Artisan::call('view:clear');
+    Artisan::call('event:clear');
+    // Optional extras
+    // Artisan::call('optimize:clear');
+
+    return response()->json(['message' => 'Application cache cleared successfully!']);
+})->name('clear-cache');
 
 Route::get('/pos', function () {
     return view('point-of-sale');
@@ -47,6 +62,7 @@ Route::get('/pos', function () {
 Route::get('/dashboard', function () {
     return view('dashboard');
 })->name('dashboard');
+
 
 // No new route needed!
 View::composer('layouts.sidebar', function ($view) {
@@ -106,6 +122,32 @@ Route::get('/check-unpaid-orders', [OrderController::class, 'checkUnpaidOrders']
 Route::get('/login', [LoginController::class, 'index'])->name('login');
 Route::post('/login', [LoginController::class, 'login'])->name('login.submit');
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
+
+Route::middleware('auth')->group(function () {
+
+    // ←←← PUT YOUR SWITCH-BRANCH ROUTE HERE
+    Route::post('/switch-branch', function (Request $request) {
+        $branchId = $request->input('branch_id');
+
+        if (!$branchId || !is_numeric($branchId)) {
+            return response()->json(['error' => 'Invalid branch'], 400);
+        }
+
+        $user = auth()->user();
+
+        // This NOW works because auth() is guaranteed
+        $hasAccess = $user->branches()->where('branch_id', $branchId)->exists();
+
+        if (!$hasAccess) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        session(['branch_id' => $branchId]);
+
+        return response()->json(['success' => true, 'branch_id' => $branchId]);
+    })->name('switch-branch');
+
+});
 
 // routes/web.php
 Route::prefix('pos/session')->group(function () {

@@ -28,7 +28,7 @@ class Branch extends Model
 
     public function users()
     {
-        return $this->belongsToMany(User::class, 'branch_user');
+        return $this->belongsToMany(User::class, 'branch_user', 'branch_id', 'user_id');
     }
 
     public function accountsReceivables()

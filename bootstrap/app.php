@@ -16,8 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'redirect.auth' => \App\Http\Middleware\RedirectIfAuthenticatedCustom::class,
         ]);
 
-        // THIS LINE FIXES YOUR BRANCH PROBLEM FOREVER
-        $middleware->append(\App\Http\Middleware\EnsureUserBranchIsLoaded::class);
+        $middleware->append(\App\Http\Middleware\SetCurrentBranch::class);
 
         // Optional: If you want it ONLY on API routes, use this instead:
         // $middleware->api(append: \App\Http\Middleware\EnsureUserBranchIsLoaded::class);
