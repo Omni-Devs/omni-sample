@@ -31,6 +31,7 @@ use App\Http\Controllers\PosSessionController;
 use App\Http\Controllers\RemarkController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\AccountReceivableController;
+use App\Http\Controllers\DesignationController;
 use App\Models\CashEquivalent;
 use App\Models\User;
 use App\Http\Controllers\FundTransferController;
@@ -168,6 +169,7 @@ Route::put('/users/{user}/restore', [UserController::class, 'restore'])->name('u
 Route::get('/users/{id}/edit', [UserController::class, 'edit'])->name('users.edit');
 Route::put('/users/{id}', [UserController::class, 'update'])->name('users.update');
 Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
+Route::put('/users/{user}/status/{status}', [UserController::class, 'updateStatus'])->name('users.updateStatus');
 
 
 
@@ -330,6 +332,21 @@ Route::prefix('departments')->name('departments.')->group(function () {
 
     Route::put('/{department}/archive', [DepartmentController::class, 'archive'])->name('archive');
     Route::put('/{department}/restore', [DepartmentController::class, 'restore'])->name('restore');
+
+});
+
+Route::prefix('designations')->name('designations.')->group(function () {
+
+    Route::get('/', [DesignationController::class, 'index'])->name('index');
+    Route::post('/', [DesignationController::class, 'store'])->name('store');
+
+    Route::get('/{designation}/edit', [DesignationController::class, 'edit'])->name('edit');
+    Route::put('/{designation}', [DesignationController::class, 'update'])->name('update');
+
+    Route::delete('/{designation}', [DesignationController::class, 'destroy'])->name('destroy');
+
+    Route::put('/{designation}/archive', [DesignationController::class, 'archive'])->name('archive');
+    Route::put('/{designation}/restore', [DesignationController::class, 'restore'])->name('restore');
 
 });
 

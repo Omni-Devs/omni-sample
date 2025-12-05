@@ -265,6 +265,39 @@
         </li>
         @endif
 
+    {{-- test --}}
+    @if(isset($resignRoute) && $status !== 'resigned')
+    <li>
+        <form action="{{ $resignRoute }}" method="POST" class="swal-confirm" data-title="Mark as Resigned?" data-text="This will change user status to Resigned." data-confirm-button="Yes" style="display:inline;">
+            @csrf
+            @method('PUT')
+            <button type="submit" class="dropdown-item">
+                <i class="i-Check me-1"></i> Resign
+            </button>
+        </form>
+    </li>
+    @endif
+
+    @if(isset($terminateRoute) && $status !== 'terminated')
+    <li>
+        <form action="{{ $terminateRoute }}" method="POST" class="swal-confirm" data-title="Mark as Terminated?" data-text="This will change user status to Terminated." data-confirm-button="Yes" style="display:inline;">
+            @csrf
+            @method('PUT')
+            <button type="submit" class="dropdown-item">
+                <i class="i-Close me-1"></i> Terminate
+            </button>
+        </form>
+    </li>
+    @endif
+
+    @if(isset($profileRoute))
+    <li>
+        <a href="{{ $profileRoute }}" target="_blank" class="dropdown-item">
+            <i class="i-Eye me-1"></i> View Profile
+        </a>
+    </li>
+    @endif
+
         <!-- Restore -->
         @if(isset($status) && $status === 'archived' && isset($restoreRoute))
             <form action="{{ $restoreRoute }}" method="POST"
