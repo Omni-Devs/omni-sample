@@ -314,8 +314,7 @@
             <li class="nav-item"><a href="/app/accounting/liquidations" class=""><i class="nav-icon i-Maximize-Window"></i> <span class="item-name">Liquidate</span></a></li>
          </ul>
          <ul data-parent="People" class="childNav d-none">
-            <li class="nav-item"><a href="/app/people/users" class=""><i class="nav-icon i-Administrator"></i> <span class="item-name">Users</span></a></li>
-            <li class="nav-item"><a href="/app/people/employees" class=""><i class="nav-icon i-Engineering"></i> <span class="item-name">Employees</span></a></li>
+            <li class="nav-item"><a href="/users" class=""><i class="nav-icon i-Engineering"></i> <span class="item-name">Users/Employees</span></a></li>
             <li class="nav-item"><a href="{{ route('customers.index') }}" class=""><i class="nav-icon i-Business-ManWoman"></i> <span class="item-name">Customers</span></a></li>
             <li class="nav-item"><a href="{{ route('suppliers.index') }}" class=""><i class="nav-icon i-Business-Mens"></i> <span class="item-name">Suppliers</span></a></li>
          </ul>
@@ -328,7 +327,7 @@
                   </a>
                </li>
                <li class="nav-item"><a href="{{ route('branches.index') }}" class=""><i class="nav-icon i-Location-2"></i> <span class="item-name">Branches</span></a></li>
-               <li class="nav-item"><a href="/users" class=""><i class="nav-icon i-Administrator"></i> <span class="item-name">Users</span></a></li>
+               
                <li class="nav-item"><a href="/permission" class=""><i class="nav-icon i-Key"></i> <span class="item-name">Permission</span></a></li>
                <li class="nav-item"><a href="/app/settings/general/accounting" class=""><i class="nav-icon i-Data-Backup"></i> <span class="item-name">Back-Up Database</span></a></li>
             </ul>
@@ -349,7 +348,7 @@
                            </a>
                         </li>
                         <li class="nav-item">
-                           <a href="#">
+                           <a href="{{ route('designations.index') }}">
                               <i class="nav-icon i-Road-2"></i>
                               <span class="item-name">Designations</span>
                            </a>

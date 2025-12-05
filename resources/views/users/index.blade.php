@@ -3,7 +3,7 @@
 <div class="main-content">
     <div>
         <div class="breadcrumb">
-            <h1 class="mr-3">Users management</h1>
+            <h1 class="mr-3">User/Employees</h1>
             <ul>
                 <li><a href=""> People </a></li>
                 <!----> <!---->
@@ -177,9 +177,9 @@
                             <div class="col-md-6">
                                 <span>
                                 <fieldset class="form-group" id="__BVID__388">
-                                    <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0" id="__BVID__388__BV_label_">User # *</legend>
+                                    <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0" id="__BVID__388__BV_label_">Employee # *</legend>
                                     <div>
-                                        <input type="text" placeholder="User #" class="form-control" aria-describedby="UserNo-feedback" label="UserNo" id="__BVID__389" name="id" value="{{ $nextUserId }}" readonly> 
+                                        <input type="text" placeholder="Employee #" class="form-control" aria-describedby="UserNo-feedback" label="UserNo" id="__BVID__389" name="id" value="{{ $nextUserId }}" readonly> 
                                         <div id="UserNo-feedback" class="invalid-feedback"></div>
                                         <!----><!----><!---->
                                     </div>
@@ -189,9 +189,9 @@
                             <div class="col-md-6">
                                 <span>
                                 <fieldset class="form-group" id="__BVID__391">
-                                    <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0" id="__BVID__391__BV_label_">Full Name *</legend>
+                                    <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0" id="__BVID__391__BV_label_">Employee Name *</legend>
                                     <div>
-                                        <input type="text" placeholder="Full Name" class="form-control" aria-describedby="FullName-feedback" label="FullName" id="__BVID__392" name="name"> 
+                                        <input type="text" placeholder="Employee Name" class="form-control" aria-describedby="FullName-feedback" label="FullName" id="__BVID__392" name="name"> 
                                         <div id="FullName-feedback" class="invalid-feedback"></div>
                                         <!----><!----><!---->
                                     </div>
@@ -344,7 +344,7 @@
                     <!----><!---->
                     <div class="content align-items-center">
                         <p class="text-muted mt-2 mb-0 text-uppercase">
-                            User Licenses
+                            Employee Licenses
                         </p>
                         <p class="text-primary text-24 line-height-1 mb-2">
                             {{ $users->count() }}
@@ -365,7 +365,7 @@
                         @endphp
 
                         <p class="text-muted mt-2 mb-0 text-uppercase">
-                            {{ ucfirst($currentStatus) }} Users
+                            {{ ucfirst($currentStatus) }} Employees
                         </p>
                         <p class="text-primary text-24 line-height-1 mb-2">
                             {{ $users->where('status', $currentStatus)->count() }}
@@ -376,22 +376,27 @@
                 </div>
             </div>
         </div>
-        <div class="card">
-            <!----><!---->
-            <nav class="card-header">
-                <ul class="nav nav-tabs card-header-tabs">
-                <li class="nav-item">
-            <a href="{{ route('users.index', ['status' => 'active']) }}"
-               class="nav-link {{ request('status', 'active') === 'active' ? 'active' : '' }}">
-                Active
-            </a>
-        </li>
-        <li class="nav-item">
-            <a href="{{ route('users.index', ['status' => 'archived']) }}"
-               class="nav-link {{ request('status') === 'archived' ? 'active' : '' }}">
-                Archived
-            </a>
-        </li>
+    <div class="card">
+        <nav class="card-header">
+        <ul class="nav nav-tabs card-header-tabs">
+            <li class="nav-item">
+                <a href="{{ route('users.index', ['status' => 'active']) }}"
+                   class="nav-link {{ request('status', 'active') === 'active' ? 'active' : '' }}">
+                    Active
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{{ route('users.index', ['status' => 'resigned']) }}"
+                   class="nav-link {{ request('status') === 'resigned' ? 'active' : '' }}">
+                    Resigned
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{{ route('users.index', ['status' => 'terminated']) }}"
+                   class="nav-link {{ request('status') === 'terminated' ? 'active' : '' }}">
+                    Terminated
+                </a>
+            </li>
                 </ul>
             </nav>
             <div class="card-body">
@@ -414,7 +419,7 @@
                         </div>
                         <div class="vgt-global-search__actions vgt-pull-right">
                             <div class="mt-2 mb-3">
-                            <div id="dropdown-form" class="dropdown b-dropdown m-2 btn-group" rounded="">
+                            <div id="dropdown-form" class="2rdropdown b-dropdown m-2 btn-group" rounded="">
                                 <!----><button id="dropdown-form__BV_toggle_" aria-haspopup="menu" aria-expanded="false" type="button" class="btn dropdown-toggle btn-light dropdown-toggle-no-caret"><i class="i-Gear"></i></button>
                                 <ul role="menu" tabindex="-1" aria-labelledby="dropdown-form__BV_toggle_" class="dropdown-menu dropdown-menu-right">
                                     <li role="presentation">
@@ -434,10 +439,10 @@
                                                     <div class="my-1 custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" value="true" id="__BVID__247"><label class="custom-control-label" for="__BVID__247">Created By</label></div>
                                                     </li>
                                                     <li>
-                                                    <div class="my-1 custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" value="true" id="__BVID__248"><label class="custom-control-label" for="__BVID__248">User #</label></div>
+                                                    <div class="my-1 custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" value="true" id="__BVID__248"><label class="custom-control-label" for="__BVID__248">Employee #</label></div>
                                                     </li>
                                                     <li>
-                                                    <div class="my-1 custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" value="true" id="__BVID__249"><label class="custom-control-label" for="__BVID__249">Full Name</label></div>
+                                                    <div class="my-1 custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" value="true" id="__BVID__249"><label class="custom-control-label" for="__BVID__249">Employee Name</label></div>
                                                     </li>
                                                     <li>
                                                     <div class="my-1 custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" value="true" id="__BVID__250"><label class="custom-control-label" for="__BVID__250">Permission</label></div>
@@ -475,10 +480,6 @@
                                     </li>
                                 </ul>
                             </div>
-                            <button type="button" class="btn btn-outline-info ripple m-1 btn-sm collapsed" aria-expanded="false" aria-controls="sidebar-right" style="overflow-anchor: none;"><i class="i-Filter-2"></i>
-                            Filter
-                            </button> <button type="button" class="btn btn-outline-success ripple m-1 btn-sm"><i class="i-File-Copy"></i> PDF
-                            </button> <button class="btn btn-sm btn-outline-danger ripple m-1"><i class="i-File-Excel"></i> EXCEL
                              </button> <button type="button" class="btn btn-primary btn-icon" data-bs-toggle="modal" data-bs-target="#UserModal">
                                 <i class="i-Add"></i> Add
                             </button>
@@ -510,12 +511,12 @@
                                 <!----> 
                                 <th scope="col" class="vgt-checkbox-col"><input type="checkbox"></th>
                                 <!----><!---->
-                                <th scope="col" aria-sort="descending" aria-controls="col-2" class="vgt-left-align text-left sortable" style="min-width: auto; width: auto;"><span>User #</span> <button><span class="sr-only">
-                                    Sort table by User # in descending order
+                                <th scope="col" aria-sort="descending" aria-controls="col-2" class="vgt-left-align text-left sortable" style="min-width: auto; width: auto;"><span>Employee #</span> <button><span class="sr-only">
+                                    Sort table by Employee # in descending order
                                     </span></button>
                                 </th>
-                                <th scope="col" aria-sort="descending" aria-controls="col-3" class="vgt-left-align text-left sortable" style="min-width: auto; width: auto;"><span>Full Name</span> <button><span class="sr-only">
-                                    Sort table by Full Name in descending order
+                                <th scope="col" aria-sort="descending" aria-controls="col-3" class="vgt-left-align text-left sortable" style="min-width: auto; width: auto;"><span>Employee Name</span> <button><span class="sr-only">
+                                    Sort table by Employee Name in descending order
                                     </span></button>
                                 </th>
                                 <th scope="col" aria-sort="descending" aria-controls="col-4" class="vgt-left-align text-left sortable" style="min-width: auto; width: auto;"><span>Permission</span> <button><span class="sr-only">
@@ -584,6 +585,8 @@
                                         'id' => $user->id,
                                         'userEditRoute' => '#',
                                         'archiveRoute' => route('users.archive', $user->id),
+                                        'resignRoute' => route('users.updateStatus', [$user->id, 'resigned']),
+                                        'terminateRoute' => route('users.updateStatus', [$user->id, 'terminated']),
                                         'logsRoute' => '#',
                                         'profileRoute' => route('users.profile', $user->id),
                                         'remarksRoute' => '#',
@@ -658,102 +661,6 @@
             <div class="b-sidebar-body">
                 <div class="px-3 py-2">
                 <div class="row">
-                    <div class="col-md-12">
-                        <fieldset class="form-group" id="__BVID__216">
-                            <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0" id="__BVID__216__BV_label_">User Code</legend>
-                            <div>
-                            <input type="text" placeholder="Filter by User Code" class="form-control" label="UserCode" id="__BVID__217"><!----><!----><!---->
-                            </div>
-                        </fieldset>
-                    </div>
-                    <div class="col-md-12">
-                        <fieldset class="form-group" id="__BVID__218">
-                            <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0" id="__BVID__218__BV_label_">Full Name</legend>
-                            <div>
-                            <input type="text" placeholder="Filter by Full Name" class="form-control" label="FullName" id="__BVID__219"><!----><!----><!---->
-                            </div>
-                        </fieldset>
-                    </div>
-                    <div class="col-md-12">
-                        <fieldset class="form-group" id="__BVID__220">
-                            <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0" id="__BVID__220__BV_label_">Branch</legend>
-                            <div>
-                            <div dir="auto" class="v-select vs--single vs--searchable">
-                                <div id="vs1__combobox" role="combobox" aria-expanded="false" aria-owns="vs1__listbox" aria-label="Search for option" class="vs__dropdown-toggle">
-                                    <div class="vs__selected-options"> <input placeholder="Filter by Branch" aria-autocomplete="list" aria-labelledby="vs1__combobox" aria-controls="vs1__listbox" type="search" autocomplete="off" class="vs__search"></div>
-                                    <div class="vs__actions">
-                                        <button type="button" title="Clear Selected" aria-label="Clear Selected" class="vs__clear" style="display: none;">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10">
-                                            <path d="M6.895455 5l2.842897-2.842898c.348864-.348863.348864-.914488 0-1.263636L9.106534.261648c-.348864-.348864-.914489-.348864-1.263636 0L5 3.104545 2.157102.261648c-.348863-.348864-.914488-.348864-1.263636 0L.261648.893466c-.348864.348864-.348864.914489 0 1.263636L3.104545 5 .261648 7.842898c-.348864.348863-.348864.914488 0 1.263636l.631818.631818c.348864.348864.914773.348864 1.263636 0L5 6.895455l2.842898 2.842897c.348863.348864.914772.348864 1.263636 0l.631818-.631818c.348864-.348864.348864-.914489 0-1.263636L6.895455 5z"></path>
-                                        </svg>
-                                        </button>
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="10" role="presentation" class="vs__open-indicator">
-                                        <path d="M9.211364 7.59931l4.48338-4.867229c.407008-.441854.407008-1.158247 0-1.60046l-.73712-.80023c-.407008-.441854-1.066904-.441854-1.474243 0L7 5.198617 2.51662.33139c-.407008-.441853-1.066904-.441853-1.474243 0l-.737121.80023c-.407008.441854-.407008 1.158248 0 1.600461l4.48338 4.867228L7 10l2.211364-2.40069z"></path>
-                                        </svg>
-                                        <div class="vs__spinner" style="display: none;">Loading...</div>
-                                    </div>
-                                </div>
-                                <ul id="vs1__listbox" role="listbox" style="display: none; visibility: hidden;"></ul>
-                            </div>
-                            <!----><!----><!---->
-                            </div>
-                        </fieldset>
-                    </div>
-                    <div class="col-md-12">
-                        <fieldset class="form-group" id="__BVID__225">
-                            <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0" id="__BVID__225__BV_label_">Permission</legend>
-                            <div>
-                            <div dir="auto" class="v-select vs--single vs--searchable">
-                                <div id="vs2__combobox" role="combobox" aria-expanded="false" aria-owns="vs2__listbox" aria-label="Search for option" class="vs__dropdown-toggle">
-                                    <div class="vs__selected-options"> <input placeholder="Filter by Permission" aria-autocomplete="list" aria-labelledby="vs2__combobox" aria-controls="vs2__listbox" type="search" autocomplete="off" class="vs__search"></div>
-                                    <div class="vs__actions">
-                                        <button type="button" title="Clear Selected" aria-label="Clear Selected" class="vs__clear" style="display: none;">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10">
-                                            <path d="M6.895455 5l2.842897-2.842898c.348864-.348863.348864-.914488 0-1.263636L9.106534.261648c-.348864-.348864-.914489-.348864-1.263636 0L5 3.104545 2.157102.261648c-.348863-.348864-.914488-.348864-1.263636 0L.261648.893466c-.348864.348864-.348864.914489 0 1.263636L3.104545 5 .261648 7.842898c-.348864.348863-.348864.914488 0 1.263636l.631818.631818c.348864.348864.914773.348864 1.263636 0L5 6.895455l2.842898 2.842897c.348863.348864.914772.348864 1.263636 0l.631818-.631818c.348864-.348864.348864-.914489 0-1.263636L6.895455 5z"></path>
-                                        </svg>
-                                        </button>
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="10" role="presentation" class="vs__open-indicator">
-                                        <path d="M9.211364 7.59931l4.48338-4.867229c.407008-.441854.407008-1.158247 0-1.60046l-.73712-.80023c-.407008-.441854-1.066904-.441854-1.474243 0L7 5.198617 2.51662.33139c-.407008-.441853-1.066904-.441853-1.474243 0l-.737121.80023c-.407008.441854-.407008 1.158248 0 1.600461l4.48338 4.867228L7 10l2.211364-2.40069z"></path>
-                                        </svg>
-                                        <div class="vs__spinner" style="display: none;">Loading...</div>
-                                    </div>
-                                </div>
-                                <ul id="vs2__listbox" role="listbox" style="display: none; visibility: hidden;"></ul>
-                            </div>
-                            <!----><!----><!---->
-                            </div>
-                        </fieldset>
-                    </div>
-                    <div class="col-md-12">
-                        <fieldset class="form-group" id="__BVID__230">
-                            <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0" id="__BVID__230__BV_label_">Created By</legend>
-                            <div>
-                            <input type="text" placeholder="Filter by Created by" class="form-control" label="CreatedBy" id="__BVID__231"><!----><!----><!---->
-                            </div>
-                        </fieldset>
-                    </div>
-                    <div class="col-md-12">
-                        <fieldset class="form-group" id="__BVID__232">
-                            <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0" id="__BVID__232__BV_label_">Created Date</legend>
-                            <div>
-                            <div data-v-1ebd09d2="" class="vue-daterange-picker">
-                                <div data-v-1ebd09d2="" class="form-control reportrange-text"><i data-v-1ebd09d2="" class="glyphicon glyphicon-calendar fa fa-calendar"></i> <span data-v-1ebd09d2=""> - </span><b data-v-1ebd09d2="" class="caret"></b></div>
-                                <!---->
-                            </div>
-                            <button type="button" class="btn btn-danger btn-badge btn-sm">
-                            Clear Date Range
-                            </button><!----><!----><!---->
-                            </div>
-                        </fieldset>
-                    </div>
-                    <div class="col-sm-12 col-md-6"><button type="button" class="btn btn-primary m-1 btn-sm btn-block"><i class="i-Filter-2"></i>
-                        Filter
-                        </button>
-                    </div>
-                    <div class="col-sm-12 col-md-6"><button type="button" class="btn btn-danger m-1 btn-sm btn-block"><i class="i-Power-2"></i>
-                        Reset
-                        </button>
-                    </div>
                 </div>
                 </div>
             </div>
@@ -766,6 +673,7 @@
     </span>
     <!---->
 </div>
+
 @endsection
 @section('scripts')
 <script>
