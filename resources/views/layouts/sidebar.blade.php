@@ -353,6 +353,12 @@
                               <span class="item-name">Designations</span>
                            </a>
                         </li>
+                        <li class="nav-item">
+                           <a href="{{ route('statuses.index') }}">
+                              <i class="nav-icon i-ID-Card"></i>
+                              <span class="item-name">Statuses</span>
+                           </a>
+                        </li>
                      </ul>
                   </li>
 
