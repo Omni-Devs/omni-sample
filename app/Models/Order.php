@@ -29,7 +29,7 @@ class Order extends Model
         'total_payment_rendered',
         'change_amount',
         'time_submitted',
-        'cashier',
+        'cashier_id',
     ];
 
     public function user()

@@ -516,7 +516,7 @@
                </div>
                <div class="col-md-3">
                <label class="form-label">Cashier</label>
-               <input type="text" class="form-control" value="{{ $order->cashier ?? 'N/A' }}" readonly>
+               <input type="text" class="form-control" value="{{ $order->cashier?->name ?? auth()->user()->name }}" readonly>
                </div>
             </div>
 
