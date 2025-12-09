@@ -197,7 +197,7 @@ class OrderController extends Controller
         'time_submitted' => $request->input('time_submitted'),
         'order_type' => $validated['order_type'],
         'gross_amount'   => $validated['gross_amount'],
-        'cashier' => auth()->user()->name,
+        'cashier_id' => auth()->user()->id,
     ]);
 
     // Attach order details
@@ -259,7 +259,7 @@ class OrderController extends Controller
             'total_charge' => $request->input('totalCharge', 0),
             'charges_description' => $request->input('charges_description'),
             'status'           => 'billout', // ✅ change order status,
-            'cashier' => auth()->user()->name, // <== save cashier here too
+             'cashier_id' => auth()->user()->id, // <-- save user id here
         ]);
 
         // Save discount entries
@@ -471,7 +471,7 @@ public function show($id)
             'total_payment_rendered' => $totalPaid,
             'change_amount' => $changeAmount,
             'charges_description' => ($order->charges_description ?? '') . "\nPayments added on " . now()->toDateTimeString(),
-            'cashier' => auth()->user()->name, // <-- save cashier here
+            'cashier_id' => auth()->user()->id, // <-- save cashier here
         ]);
 
         // update all payment details for this order: set total_rendered and clear change_amount
