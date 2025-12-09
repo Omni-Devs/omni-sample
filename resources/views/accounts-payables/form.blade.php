@@ -142,8 +142,8 @@
                         <input type="number" id="qty" class="form-control" value="1">
 
                         <label class="mt-3">Tax *</label>
-                        <select id="tax" class="form-control" required>
-                            <option value="" disabled selected>Select Tax</option>
+                        <select id="tax" class="form-control">
+                            <option value="" disabled selected>-</option>
                             @foreach($taxes as $t)
                                 {{-- <option value="{{ $t->id }}" data-value="{{ $t->value }}">
                                 {{ $t->name }} - ₱{{ number_format($t->value, 2) }}
@@ -249,11 +249,10 @@ function addToSummary() {
     const amt = parseFloat(amtInput.value);
 
     // Validation only for Step 2 fields
-    if (!cat.value || !typeId || !desc || !tax_id || amt <= 0) {
+    if (!cat.value || !typeId || !desc || amt <= 0) {
         alert("Please fill out all fields in Step 2.");
         return;
     }
-
     // Disable step 1
     disableStep1();
 
@@ -277,6 +276,7 @@ function addToSummary() {
         quantity: qty,
         tax_id: tax_id,
         tax_value: tax_value,
+        tax_type: tax_type, 
         amount_per_unit: amt,
         total_amount: total_amount
     });
@@ -309,14 +309,12 @@ function renderTable() {
         tbody.innerHTML = `<tr id="emptyRow"><td colspan="7" class="text-center text-muted">No data for table</td></tr>`;
     }
 
-      details.forEach((row, i) => {
-
+    details.forEach((row, i) => {
     let qty = parseFloat(row.quantity);
     let unit = parseFloat(row.amount_per_unit);
     let subtotal = qty * unit;
 
     let taxAmount = 0;
-
     if (row.tax_type === "percentage") {
         taxAmount = subtotal * (parseFloat(row.tax_value) / 100);
     } else {
@@ -325,31 +323,24 @@ function renderTable() {
 
     let totalWithTax = subtotal + taxAmount;
 
-    let taxDisplay = row.tax_type === "percentage"
-        ? `${parseFloat(row.tax_value).toFixed(2)}%`
-        : `₱${parseFloat(row.tax_value).toFixed(2)}`;
+    // Update row values
+    row.tax_amount = taxAmount;
+    row.total_amount = totalWithTax;
 
-        tbody.innerHTML += `
-            <tr data-row 
-                data-qty="${row.quantity}" 
-                data-tax="${row.tax_value}" 
-                data-tax-type="${row.tax_type}"
-                data-amount="${row.amount_per_unit}"
-                data-tax-amount="${row.tax_amount}">
-                
-                <td>${row.category_name}</td>
-                <td>${row.type_name}</td>
-                <td>${row.description}</td>
-                <td>${row.quantity}</td>
-                <td>${taxDisplay}</td>
-                <td>₱${parseFloat(row.amount_per_unit).toFixed(2)}</td>
-                <td>₱${parseFloat(row.total_amount).toFixed(2)}</td>
-
-                <td class="text-right">
-                    <button type="button" class="btn btn-danger btn-sm" onclick="removeRow(${i})">Delete</button>
-                </td>
-            </tr>`;
-    });
+    tbody.innerHTML += `
+        <tr data-row>
+            <td>${row.category_name}</td>
+            <td>${row.type_name}</td>
+            <td>${row.description}</td>
+            <td>${row.quantity}</td>
+            <td>₱${taxAmount.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+            <td>₱${subtotal.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+            <td>₱${totalWithTax.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+            <td class="text-right">
+                <button type="button" class="btn btn-danger btn-sm" onclick="removeRow(${i})">Delete</button>
+            </td>
+        </tr>`;
+});
 
     document.getElementById("detailsInput").value = JSON.stringify(details);
     updateTotals();
