@@ -81,7 +81,7 @@
                         </div>
                         <div class="modal-body">
                            <div class="container-fluid">
-                              <div class="row mb-2">
+                              <div class="row mb-2"> 
                                  <div class="col-md-2">
                                     <label class="form-label">Order No</label>
                                     <input type="text" class="form-control" value="{{ $order->id }}" readonly>
@@ -516,7 +516,7 @@
                </div>
                <div class="col-md-3">
                <label class="form-label">Cashier</label>
-               <input type="text" class="form-control" value="{{ auth()->user()->name ?? '' }}" readonly>
+               <input type="text" class="form-control" value="{{ $order->cashier ?? 'N/A' }}" readonly>
                </div>
             </div>
 
