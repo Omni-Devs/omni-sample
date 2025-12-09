@@ -178,6 +178,7 @@
                                     <th>Description</th>
                                     <th>Qty</th>
                                     <th>Tax</th>
+                                    <th>Sub Total</th>
                                     <th>Total</th>
                                     <th class="text-right">Action</th>
                                 </tr>
@@ -227,69 +228,6 @@
     document.addEventListener("DOMContentLoaded", () => {
         renderTable();
     });
-
-// function addToSummary() {
-//     const cat = document.getElementById("cat");
-//     const catName = cat.options[cat.selectedIndex].text; // label
-
-//     const typeSelect = document.getElementById("type");
-//     const typeId = typeSelect.value;                      
-//     const typeName = typeSelect.options[typeSelect.selectedIndex] 
-//                         ? typeSelect.options[typeSelect.selectedIndex].text 
-//                         : '';
-
-//     const desc = document.getElementById("desc").value;
-//     const qty = parseFloat(document.getElementById("qty").value);
-//     const taxSelect = document.getElementById('tax');
-//     const selectedTax = taxSelect.options[taxSelect.selectedIndex];
-//     // const tax_id = parseInt(selectedTax.value, 10);
-//     // const tax_value = parseFloat(selectedTax.dataset.value) || 0;
-
-//     const tax_id = parseInt(selectedTax.value, 10);
-//     const tax_value = parseFloat(selectedTax.dataset.value) || 0; // value column
-//     const tax_type = selectedTax.dataset.type; // <-- NEW (percentage or fixed)
-
-
-//     const amt = parseFloat(document.getElementById("amount").value);
-
-//     if (!cat.value || !typeId || !typeName || !desc || amt <= 0) {
-//         alert("Fill all required fields");
-//         return;
-//     }
-
-//     // ⬇️ PLACE THIS RIGHT HERE
-//     disableStep1();
-
-//    // --- TAX CALCULATION FIX ---
-//     let tax_amount = 0;
-
-//     if (tax_type === "percentage") {
-//         // Example: 25% of 1000 = 250
-//         tax_amount = (qty * amt) * (tax_value / 100);
-//     } else {
-//         // FIXED tax → use tax_value directly
-//         tax_amount = tax_value;
-//     }
-
-//     // TOTAL = Amount + Tax
-//     const total_amount = (qty * amt) + tax_amount;
-
-//     // Add to details array
-//     details.push({
-//         accounting_category_id: parseInt(typeId, 10),
-//         category_name: catName,
-//         type_name: typeName,
-//         description: desc,
-//         quantity: qty,
-//         tax_id: tax_id,
-//         tax_value: tax_value,
-//         amount_per_unit: amt,
-//         total_amount: total_amount
-//     });
-
-//     // Re-render table
-//     renderTable();
-// }
 
 function addToSummary() {
     const cat = document.getElementById("cat");
@@ -371,14 +309,25 @@ function renderTable() {
         tbody.innerHTML = `<tr id="emptyRow"><td colspan="7" class="text-center text-muted">No data for table</td></tr>`;
     }
 
-        details.forEach((row, i) => {
-        let taxDisplay = "";
+      details.forEach((row, i) => {
 
-        if (row.tax_type === "percentage") {
-            taxDisplay = `${row.tax_value}%`;
-        } else {
-            taxDisplay = `₱${parseFloat(row.tax_value).toFixed(2)}`;
-        }
+    let qty = parseFloat(row.quantity);
+    let unit = parseFloat(row.amount_per_unit);
+    let subtotal = qty * unit;
+
+    let taxAmount = 0;
+
+    if (row.tax_type === "percentage") {
+        taxAmount = subtotal * (parseFloat(row.tax_value) / 100);
+    } else {
+        taxAmount = parseFloat(row.tax_value);
+    }
+
+    let totalWithTax = subtotal + taxAmount;
+
+    let taxDisplay = row.tax_type === "percentage"
+        ? `${parseFloat(row.tax_value).toFixed(2)}%`
+        : `₱${parseFloat(row.tax_value).toFixed(2)}`;
 
         tbody.innerHTML += `
             <tr data-row 
@@ -393,6 +342,7 @@ function renderTable() {
                 <td>${row.description}</td>
                 <td>${row.quantity}</td>
                 <td>${taxDisplay}</td>
+                <td>₱${parseFloat(row.amount_per_unit).toFixed(2)}</td>
                 <td>₱${parseFloat(row.total_amount).toFixed(2)}</td>
 
                 <td class="text-right">
@@ -411,26 +361,39 @@ function removeRow(i) {
 }
 
 function updateTotals() {
-    let rows = document.querySelectorAll("#summaryTable tr[data-row]");
-    let subTotal = 0, taxTotal = 0;
+ let subTotal = 0;
+    let taxTotal = 0;
 
-    rows.forEach(row => {
-        let qty = parseFloat(row.dataset.qty) || 0;
-        let amount = parseFloat(row.dataset.amount) || 0;
-        let taxPercent = parseFloat(row.dataset.tax) || 0;
+    details.forEach(d => {
+        const qty = parseFloat(d.quantity) || 0;
+        const unit = parseFloat(d.amount_per_unit) || 0;
+        const taxValue = parseFloat(d.tax_value) || 0;
+        const taxType = d.tax_type; // percentage or fixed
 
-        let lineSub = qty * amount;
-        let lineTax = lineSub * taxPercent / 100;
+        let lineSub = qty * unit;
+        let lineTax = 0;
+
+        if (taxType === "percentage") {
+            lineTax = lineSub * (taxValue / 100);
+        } else {
+            lineTax = taxValue;
+        }
 
         subTotal += lineSub;
         taxTotal += lineTax;
     });
 
-    let grandTotal = subTotal + taxTotal;
+    const grandTotal = subTotal + taxTotal;
 
-    document.getElementById("subTotalDisplay").textContent = `₱${subTotal.toFixed(2)}`;
-    document.getElementById("taxTotalDisplay").textContent = `₱${taxTotal.toFixed(2)}`;
-    document.getElementById("grandTotalDisplay").textContent = `₱${grandTotal.toFixed(2)}`;
+    // Display formatted values
+    document.getElementById("subTotalDisplay").textContent =
+        `₱${subTotal.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
+
+    document.getElementById("taxTotalDisplay").textContent =
+        `₱${taxTotal.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
+
+    document.getElementById("grandTotalDisplay").textContent =
+        `₱${grandTotal.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
 }
 
 document.getElementById('cat').addEventListener('change', function () {
