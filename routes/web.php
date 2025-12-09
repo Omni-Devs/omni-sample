@@ -35,6 +35,7 @@ use App\Http\Controllers\DesignationController;
 use App\Models\CashEquivalent;
 use App\Models\User;
 use App\Http\Controllers\FundTransferController;
+use App\Http\Controllers\StatusController;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Http\Request;
 use App\Http\Controllers\TaxController;
@@ -320,6 +321,8 @@ Route::put('/inventory/audits/{id}/restore', [InventoryAuditController::class, '
 Route::get('/inventory/audits/{id}/edit', [InventoryAuditController::class, 'edit'])->name('inventory_audits.edit');
 Route::post('/inventory/audits/{id}/update', [InventoryAuditController::class, 'update'])->name('inventory_audits.update');
 
+
+// Workforce
 Route::prefix('departments')->name('departments.')->group(function () {
 
     Route::get('/', [DepartmentController::class, 'index'])->name('index');
@@ -348,6 +351,18 @@ Route::prefix('designations')->name('designations.')->group(function () {
     Route::put('/{designation}/archive', [DesignationController::class, 'archive'])->name('archive');
     Route::put('/{designation}/restore', [DesignationController::class, 'restore'])->name('restore');
 
+});
+
+Route::prefix('statuses')->name('statuses.')->group(function () {
+    Route::get('/', [StatusController::class, 'index'])->name('index');
+    Route::post('/', [StatusController::class, 'store'])->name('store');
+
+    Route::get('/{status}/edit', [StatusController::class, 'edit'])->name('edit');
+    Route::put('/{status}', [StatusController::class, 'update'])->name('update');
+
+    Route::delete('/{status}', [StatusController::class, 'destroy'])->name('destroy');
+    Route::put('/{status}/archive', [StatusController::class, 'archive'])->name('archive');
+    Route::put('/{status}/restore', [StatusController::class, 'restore'])->name('restore');
 });
 
 Route::prefix('asset-categories')->name('asset-categories.')->group(function () {
