@@ -361,6 +361,12 @@
                               <span class="item-name">Statuses</span>
                            </a>
                         </li>
+                        <li class="nav-item">
+                           <a href="{{ route('night-differentials.index') }}">
+                              <i class="nav-icon i-Over-Time"></i>
+                              <span class="item-name">Night Differentials</span>
+                           </a>
+                        </li>
                      </ul>
                   </li>
 

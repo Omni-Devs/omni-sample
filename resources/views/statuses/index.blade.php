@@ -179,6 +179,20 @@
                                                 </li>
                                                 @endif
 
+                                                {{-- Logs --}}
+                                                <li>
+                                                    <a class="dropdown-item" href="#">
+                                                        <i class="nav-icon i-Computer-Secure font-weight-bold mr-2"></i> Logs
+                                                    </a>
+                                                </li>
+
+                                                {{-- Remarks --}}
+                                                <li>
+                                                    <a class="dropdown-item" href="#">
+                                                        <i class="nav-icon i-Mail-Attachement font-weight-bold mr-2"></i> Remarks
+                                                    </a>
+                                                </li>
+
 
                                             </ul>
                                         </div>

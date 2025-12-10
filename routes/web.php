@@ -1,5 +1,3 @@
-
-
 <?php
 
 use App\Http\Controllers\AccountingCategoryController;
@@ -495,4 +493,8 @@ Route::post('/accounts-receivable/{id}/status', [AccountReceivableController::cl
 Route::get('/receive-payment-options', [AccountReceivableController::class, 'receivePaymentOptions']);
 Route::post('/accounts-receivables/{id}/payments', [AccountReceivableController::class, 'updatePayment']);
 Route::patch('/accounts-receivable/{id}/due-date', [AccountReceivableController::class, 'updateDueDate']);
+
+// Night Differentials routes
+Route::get('/night-differentials', [App\Http\Controllers\NightDifferentialController::class, 'index'])->name('night-differentials.index');
+Route::post('/night-differentials', [App\Http\Controllers\NightDifferentialController::class, 'store'])->name('night-differentials.store');
 
