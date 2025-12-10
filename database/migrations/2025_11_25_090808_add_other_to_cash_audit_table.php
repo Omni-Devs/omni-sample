@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('cash_audit', function (Blueprint $table) {
+        Schema::table('cash_audits', function (Blueprint $table) {
             $table->decimal('other', 12, 2)->default(0.00)->after('bpi_sales');
         });
     }
@@ -21,7 +21,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('cash_audit', function (Blueprint $table) {
+        Schema::table('cash_audits', function (Blueprint $table) {
             $table->dropColumn('other');
         });
     }

@@ -2,6 +2,8 @@
 <script src="https://unpkg.com/vue@2.7.14/dist/vue.js"></script>
 <!-- Include Axios -->
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <style>
    .sidebar-left {
   height: 100vh;           /* Full screen height */
@@ -289,7 +291,7 @@
             </li>
             <li class="nav-item"><a href="#" class=""><i class="nav-icon i-Remove-Bag"></i> <span class="item-name">Sales Invoicing</span></a></li>
             <li class="nav-item"><a href="/app/sales/manage-deliveries" class=""><i class="nav-icon i-Jeep"></i> <span class="item-name">Orders and Reservations</span></a></li>
-            <li class="nav-item"><a href="/app/sales/manage-pick-ups" class=""><i class="nav-icon i-Hand"></i> <span class="item-name">Closing</span></a></li>
+            <li class="nav-item"><a href="/closing" class=""><i class="nav-icon i-Hand"></i> <span class="item-name">Closing</span></a></li>
             <li class="nav-item"><a href="/kitchen" class=""><i class="nav-icon i-Full-Basket"></i> <span class="item-name">KDS</span></a></li>
             {{-- <li class="nav-item"><a href="/app/sales/quotations" class=""><i class="nav-icon i-Receipt-3"></i> <span class="item-name">Quotations</span></a></li> --}}
             {{-- <li class="nav-item"><a href="/app/sales/manage-prospects" class=""><i class="nav-icon i-Checked-User"></i> <span class="item-name">Manage Prospects</span></a></li> --}}
@@ -511,14 +513,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
 });
 
+</script>
+
+<script>
 const now = new Date();
-
-// Format date as YYYY-MM-DD
-const currentDate = now.toISOString().split('T')[0];
-
-// Format time as HH:MM (24-hour format for input type="time")
-const currentTime = now.toTimeString().slice(0, 5); // e.g., "09:45"
-
 window.userName = "{{ auth()->user()->name }}";
 
 new Vue({
@@ -527,93 +525,38 @@ new Vue({
     modalMode: 'open',
     endStep: 'confirm',
     sessionData: null,
-    branch_id: 1,
     terminal_no: '',
-    startingFund: 0,
-    cash_sales: 0,
-    total_denomination: 0,
-    tip: 0,
-
-    currentDate: '',
-    currentTime: '',
-    closingDate: '',
-    closingTime: '',
-    endCash: '',
+    startingFund: '',
+    tip: '',
+    transferTo: '',
+    transferAmount: '',
     remarks: '',
+    closingDateTime: '',
+    manualTimeEdit: false,
+    loginDate: '', 
+   loginTime: '',
+
+    // Denominations
+    denom_1000: '', denom_500: '', denom_200: '', denom_100: '',
+    denom_50: '',   denom_20: '',  denom_10: '', denom_5: '',
+    denom_1: '',    denom_050: '', denom_025: '', denom_010: '', denom_005: '',
+
+    allPayments: [],
+    manualBreakdown: {},
 
     hasStartedPOS: localStorage.getItem('hasStartedPOS') === '1' ? 1 : 0,
-
-    // 💵 Individual denomination fields (now match DB columns)
-    denom_1000: '',
-   denom_500: '',
-   denom_200: '',
-   denom_100: '',
-   denom_50: '',
-   denom_20: '',
-   denom_10: '',
-   denom_5: '',
-   denom_1: '',
-   denom_050: '',
-   denom_025: '',
-   denom_010: '',
-   denom_005: '',
-
-    cashSales: 0,
-    gcashSales: 0,
-    bdoSales: 0,
-    bpiSales: 0,
-    receivableBPI: 0,
-    tip: '',
-   transferTo: '',
-   cashEquivalents: [],
-   transferAmount: '',
-
-   manualTimeEdit: false,
-   allPayments: [],
-   },
+  },
 
   mounted() {
     this.setInitialDateTime();
-    this.checkExistingSession();
+    this.detectTerminalName();
     this.startAutoTimeUpdate();
-    this.fetchAllPayments();
-    // 🧠 Detect OS name
-    let platform = "UnknownOS";
-    const userAgent = navigator.userAgent.toLowerCase();
+    this.setNow();
+    setInterval(() => {
+      if (!this.manualTimeEdit) this.setNow();
+    }, 30000);
 
-    if (userAgent.includes("win")) platform = "Windows";
-    else if (userAgent.includes("mac")) platform = "MacOS";
-    else if (userAgent.includes("linux")) platform = "Linux";
-    else if (userAgent.includes("android")) platform = "Android";
-    else if (userAgent.includes("iphone") || userAgent.includes("ipad")) platform = "iOS";
-
-    // 🧩 Combine OS + username
-    const userName = window.userName || "UnknownUser";
-    this.terminal_no = `${platform}_${userName}`;
-
-    console.log("Detected Terminal:", this.terminal_no);
-
-    // Attach after mount just in case
-  this.$nextTick(() => {
-    this.attachDenominationListeners();
-  });
-  // Run once Vue is mounted
-  this.initDenominationWatcher();
-
-  // Attach again when modal is shown
-  const modalEl = document.getElementById('startPOSModal');
-  if (modalEl) {
-    modalEl.addEventListener('shown.bs.modal', () => {
-      console.log('Modal shown — attaching listeners');
-      this.attachDenominationListeners();
-    });
-  }
-  setTimeout(() => {
-    this.attachDenominationListeners();
-  }, 300); // wait 0.3s to let modal/table render
-    
-
-    // 🧩 Attach sidebar handlers
+    // Attach listeners
     document.querySelector('.startEndTrigger')?.addEventListener('click', (e) => {
       e.preventDefault();
       this.promptStartEndModal();
@@ -624,438 +567,402 @@ new Vue({
       this.handlePOSNavigation('/orders');
     });
 
-    // 🧩 Handle direct URL access (if someone types /orders manually)
     if (window.location.pathname === '/orders') {
       this.handlePOSNavigation('/orders', true);
     }
   },
 
-  
   computed: {
-    // 🔹 Total from denomination inputs
-  denominationTotal() {
-    const total =
-      (this.denom_1000 * 1000) +
-      (this.denom_500 * 500) +
-      (this.denom_200 * 200) +
-      (this.denom_100 * 100) +
-      (this.denom_50 * 50) +
-      (this.denom_20 * 20) +
-      (this.denom_10 * 10) +
-      (this.denom_5 * 5) +
-      (this.denom_1 * 1) +
-      (this.denom_050 * 0.5) +
-      (this.denom_025 * 0.25) +
-      (this.denom_010 * 0.1) +
-      (this.denom_005 * 0.05);
-
-    return isNaN(total) ? 0 : parseFloat(total.toFixed(2));
-  },
-
-  totalCashSales() {
-  if (!Array.isArray(this.allPayments)) return 0;
-
-  return this.allPayments
-    .filter(p => p.payment_name === 'Cash')
-    .reduce((sum, p) => sum + parseFloat(p.total_amount || 0), 0);
-},
-
-  
-  totalGCashSales() {
-    return this.allPayments
-      .filter(p => p.payment_name === 'GCash')
-      .reduce((sum, p) => sum + parseFloat(p.total_amount || 0), 0);
-  },
-
-  // 🔹 POS cash sales + starting fund
-  posCashSalesTotal() {
-      const total = this.totalCashSales;
-
+    transaction_datetime() {
+      return this.closingDateTime ? this.closingDateTime.replace('T', ' ') + ':00' : null;
+    },
+    denominationTotal() {
+      const total =
+        (parseInt(this.denom_1000) || 0) * 1000 +
+        (parseInt(this.denom_500)  || 0) * 500 +
+        (parseInt(this.denom_200)  || 0) * 200 +
+        (parseInt(this.denom_100)  || 0) * 100 +
+        (parseInt(this.denom_50)   || 0) * 50 +
+        (parseInt(this.denom_20)   || 0) * 20 +
+        (parseInt(this.denom_10)   || 0) * 10 +
+        (parseInt(this.denom_5)    || 0) * 5 +
+        (parseInt(this.denom_1)    || 0) * 1 +
+        (parseInt(this.denom_050)  || 0) * 0.5 +
+        (parseInt(this.denom_025)  || 0) * 0.25 +
+        (parseInt(this.denom_010)  || 0) * 0.1 +
+        (parseInt(this.denom_005)  || 0) * 0.05;
       return parseFloat(total.toFixed(2));
-  },
-  
-  totalBDOSales() {
-    return this.allPayments
-      .filter(p => p.payment_name === 'BDO')
-      .reduce((sum, p) => sum + parseFloat(p.total_amount || 0), 0);
-  },
-  
-  totalBPISales() {
-    return this.allPayments
-      .filter(p => p.payment_name === 'BPI')
-      .reduce((sum, p) => sum + parseFloat(p.total_amount || 0), 0);
+    },
+    paymentBreakdown() {
+      const breakdown = {};
+      this.allPayments.forEach(p => {
+        const key = this.slugify(p.payment_name);
+        breakdown[key] = parseFloat(p.total_amount || 0);
+      });
+      Object.assign(breakdown, this.manualBreakdown);
+      return breakdown;
+    },
+    cashSales() {
+    const cashItem = this.allPayments.find(p =>
+      p.payment_name.toLowerCase().includes('cash')
+    );
+    const amount = cashItem ? parseFloat(cashItem.total_amount) || 0 : 0;
+
+    // FIX: Round to 2 decimals to kill floating-point bugs
+    const cleanAmount = Math.round(amount * 100) / 100;
+
+    console.log('%cCash Sales (clean):', 'color: lime; font-weight: bold;', cleanAmount);
+    return cleanAmount;
   },
 
-  
-totalOtherSales() {
-  return this.allPayments
-    .filter(p => !['Cash', 'GCash', 'BDO', 'BPI'].includes(p.payment_name))
-    .reduce((sum, p) => sum + parseFloat(p.total_amount || 0), 0);
-},
-  
-  totalSales() {
-    // Total of all payment types
-    return this.totalCashSales + this.totalGCashSales + this.totalBDOSales + this.totalBPISales;
-  },
-  
+  // 2. EXPECTED CASH IN DRAWER — now 100% accurate
+  expectedCashInDrawer() {
+    const starting = parseFloat(this.startingFund) || 0;
+    const expected = starting + this.cashSales;
 
-  // 🔹 Expected cash = sales + fund
-  expectedCash() {
-   const value = parseFloat(this.startingFund) + parseFloat(this.posCashSalesTotal);
-   return isNaN(value) ? 0 : parseFloat(value.toFixed(2));
+    // FINAL FIX: Round to 2 decimals
+    const clean = Math.round(expected * 100) / 100;
+
+    console.log('%cExpected Cash in Drawer:', 'color: gold; font-weight: bold;', clean);
+    return clean;
   },
 
-  // 🔹 Actual cash counted (denominations + tips)
-  actualCashCounted() {
-    return this.denominationTotal;
-  },
-
-  // 🔹 Shortage (if actual < expected)
+  // 3. SHORTAGE & OVERAGE — now perfect
   shortage() {
-    const diff = this.actualCashCounted - this.expectedCash;
-    return diff < 0 ? Math.abs(diff).toFixed(2) : 0;
+    const diff = this.denominationTotal - this.expectedCashInDrawer;
+    return diff < -0.01 ? Math.abs(diff).toFixed(2) : '0.00'; // tolerance 1 cent
   },
 
-  // 🔹 Overage (if actual > expected)
   overage() {
-    const diff = this.actualCashCounted - this.expectedCash;
-    return diff > 0 ? diff.toFixed(2) : 0;
+    const diff = this.denominationTotal - this.expectedCashInDrawer;
+    return diff > 0.01 ? diff.toFixed(2) : '0.00'; // tolerance 1 cent
   },
-
-  
 },
 
   methods: {
-    // 🕒 Initialize current and closing datetime
+    slugify(text) {
+      return text.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/(^_|_$)/g, '');
+    },
+
+    setNow() {
+      const now = new Date();
+      const offset = now.getTimezoneOffset() * 60000;
+      const local = new Date(now.getTime() - offset);
+      this.closingDateTime = local.toISOString().slice(0, 16);
+    },
+
+    detectTerminalName() {
+      const platform = /win/i.test(navigator.userAgent) ? 'Windows' :
+                       /mac/i.test(navigator.userAgent) ? 'MacOS' :
+                       /linux/i.test(navigator.userAgent) ? 'Linux' :
+                       /android/i.test(navigator.userAgent) ? 'Android' : 'iOS';
+      this.terminal_no = `${platform}_${window.userName || 'User'}`;
+    },
+
     setInitialDateTime() {
       const now = new Date();
-      const date = now.toISOString().split('T')[0];
-      const time = now.toTimeString().slice(0, 5);
-      this.currentDate = date;
-      this.currentTime = time;
-      this.closingDate = date;
-      this.closingTime = time;
+      this.closingDateTime = now.toISOString().slice(0, 16);
     },
 
-    // ⏱ Auto update time
     startAutoTimeUpdate() {
       setInterval(() => {
-        if (!this.manualTimeEdit) {
-          const now = new Date();
-          const time = now.toTimeString().slice(0, 5);
-          this.currentTime = time;
-          this.closingTime = time;
-        }
+        if (!this.manualTimeEdit) this.setNow();
       }, 1000);
     },
-    async fetchOpenSession() {
-  try {
-    const response = await axios.get('/pos/session/check', {
-      params: { terminal_no: this.terminal_no }
-    });
 
-    const session = response.data.session;
-    console.log('Fetched session data:', cashEquivalents);
-    
-    if (response.data.has_open_session && session) {
-      // 🧾 Set your data
-      this.startingFund = session.starting_fund || 0;
-
-      // 🪣 Also store it in localStorage for persistence (optional)
-      localStorage.setItem('startingFund', this.startingFund);
-
-    } else {
-      console.warn('No open session found for terminal', this.terminal_no);
+    setLoginDateTime(datetime) {
+    if (!datetime) {
+      const now = new Date();
+      this.loginDate = now.toISOString().split('T')[0];
+      this.loginTime = now.toTimeString().slice(0, 5);
+      console.log('No datetime → using current time:', this.loginDate, this.loginTime);
+      return;
     }
-  } catch (error) {
-    console.error('Error fetching session info:', error);
-  }
-},
 
+    let datePart, timePart;
 
-    initDenominationWatcher() {
-    const modal = document.getElementById('endOfDayModal');
-    if (modal) {
-      // Bootstrap event: fires when modal is fully shown
-      modal.addEventListener('shown.bs.modal', () => {
-        console.log('✅ Modal shown — attaching denomination listeners');
-        this.attachDenominationListeners();
-      });
+    // Case 1: ISO format → "2025-12-05T03:08:46.000000Z"
+    if (datetime.includes('T')) {
+      const [date, time] = datetime.split('T');
+      datePart = date;                                      // "2025-12-05"
+      timePart = time.split('.')[0].slice(0, 8);            // "03:08:46" → "03:08"
+      
+      // Optional: Convert UTC to local time (recommended!)
+      const local = new Date(datetime);
+      datePart = local.toISOString().split('T')[0];
+      timePart = local.toTimeString().slice(0, 5);          // "10:59" in your timezone
+    } 
+    // Case 2: Old format → "2025-12-05 10:59:46"
+    else if (datetime.includes(' ')) {
+      const [date, time] = datetime.split(' ');
+      datePart = date;
+      timePart = time.slice(0, 5);
+    } 
+    else {
+      console.warn('Invalid datetime format:', datetime);
+      datePart = new Date().toISOString().split('T')[0];
+      timePart = '00:00';
     }
+
+    this.loginDate = datePart;
+    this.loginTime = timePart;
+
   },
 
-    // 🔍 Check session state
+    // MAIN LOGIC: Check session and decide what to show
     async checkExistingSession() {
       try {
         const { data } = await axios.get('/pos/session/check', {
           params: { terminal_no: this.terminal_no }
         });
 
-        if (data.has_open_session && data.session.status === 'open') {
+        // FIRST: Extract and set login date/time
+        this.setLoginDateTime(data.transaction_datetime || null);
+
+        // 1. Already open on THIS terminal → resume
+        if (data.has_open_session && data.on_this_terminal) {
           this.hasStartedPOS = 1;
           this.sessionData = data.session;
+          this.startingFund = data.session.starting_fund || 0;
           localStorage.setItem('hasStartedPOS', '1');
           this.modalMode = 'close';
-          this.startingFund = data.session.starting_fund;
-        } else {
+          return;
+        }
+
+        // 2. Conflict: open session on different terminal → BLOCK + warn
+        if (data.conflict) {
           this.hasStartedPOS = 0;
           localStorage.removeItem('hasStartedPOS');
           this.modalMode = 'open';
+
+          await Swal.fire({
+            icon: 'warning',
+            title: 'Cannot Start Session',
+            html: `
+              <p>You already have an <strong>open session</strong> on:</p>
+              <h4 class="text-danger fw-bold mb-3">${data.old_terminal}</h4>
+              <p>Please <strong>close the session</strong> on that terminal first.</p>
+            `,
+            confirmButtonText: 'Understood',
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+          });
+          return;
         }
+
+        // 3. All clear → allow start
+        this.hasStartedPOS = 0;
+        localStorage.removeItem('hasStartedPOS');
+        this.modalMode = 'open';
+        this.startingFund = ''; // reset
+
       } catch (err) {
-        console.error(err);
+        console.error('Session check failed:', err);
+        this.modalMode = 'open';
       }
     },
 
-    // 🧩 For “Start / End of the Day” manual menu click
     promptStartEndModal() {
       this.checkExistingSession().then(() => {
-        const modalEl = document.getElementById('startPOSModal');
-        if (modalEl) {
-          const modal = new bootstrap.Modal(modalEl);
-          this.fetchOpenSession();
-          modal.show();
-        }
+        const modal = new bootstrap.Modal(document.getElementById('startPOSModal'));
+        modal.show();
       });
     },
 
-    // 🧭 Handle when clicking /orders or typing URL directly
     async handlePOSNavigation(url, auto = false) {
-      try {
-        const response = await axios.get('/pos/session/check', {
-          params: { terminal_no: this.terminal_no }
-        });
-
-        const session = response.data.session;
-
-        if (response.data.has_open_session && session.status === 'open') {
-          // ✅ Allow access to POS
-          if (!auto) window.location.href = url;
-        } else {
-          // ❌ Show modal
-          this.hasStartedPOS = 0;
-          localStorage.removeItem('hasStartedPOS');
-          this.modalMode = 'open';
-
-          this.$nextTick(() => {
-            const modalEl = document.getElementById('startPOSModal');
-            if (modalEl && !bootstrap.Modal.getInstance(modalEl)) {
-              const modal = new bootstrap.Modal(modalEl);
-              this.fetchOpenSession();
-              modal.show();
-            }
-          });
-
-          if (auto) console.log('🔒 Session not started — showing modal.');
-        }
-      } catch (error) {
-        console.error('Error checking session before POS navigation:', error);
-      }
-    },
-
-    async handleConfirmEndDay() {
-      // 🧠 simulate unpaid order check
-      const unpaidOrders = await this.checkUnpaidOrders();
-
-      if (unpaidOrders) {
-        this.endStep = 'unpaid';
+      await this.checkExistingSession();
+      if (this.hasStartedPOS) {
+        if (!auto) window.location.href = url;
       } else {
-        this.endStep = 'form'; // move to actual end form
+        const modal = new bootstrap.Modal(document.getElementById('startPOSModal'));
+        modal.show();
       }
     },
+    async handleConfirmEndDay() {
+      // 🧠 simulate unpaid order check
+      const unpaidOrders = await this.checkUnpaidOrders();
+      if (unpaidOrders) {
+        this.endStep = 'unpaid';
+      } else {
+        this.endStep = 'form'; // move to actual end form
+      }
 
-    handleUnpaidOk() {
-    // Close the modal
-    const modalEl = document.getElementById('startPOSModal');
-    const modalInstance = bootstrap.Modal.getInstance(modalEl);
-    modalInstance.hide();
-
-    // Reset for next open
-    this.endStep = 'confirm';
-  },
-
+// THIS IS THE MISSING LINE!!!
+    console.log('%c[END DAY] No unpaid orders → Loading payment breakdown now!', 'color: lime; font-size: 16px; background: black;');
+    await this.fetchAllPayments();
+    },
+    handleUnpaidOk() {
+    // Close the modal
+    const modalEl = document.getElementById('startPOSModal');
+    const modalInstance = bootstrap.Modal.getInstance(modalEl);
+    modalInstance.hide();
+    // Reset for next open
+    this.endStep = 'confirm';
+  },
 async checkUnpaidOrders() {
-   try {
-      const res = await axios.get('/check-unpaid-orders', {
-         params: { cashier_id: this.cashier_id }
-      });
-      return res.data.has_unpaid_orders;
-   } catch (error) {
-      console.error('Error checking unpaid orders:', error);
-      return false;
-   }
+   try {
+      const res = await axios.get('/check-unpaid-orders', {
+         params: { cashier_id: this.cashier_id }
+      });
+      return res.data.has_unpaid_orders;
+   } catch (error) {
+      console.error('Error checking unpaid orders:', error);
+      return false;
+   }
 },
 
+async fetchAllPayments() {
 
-    resetEndStep() {
-      this.endStep = 'confirm';
-    },
+  try {
+    const response = await axios.get('/get-all-payments');
+    const payments = response.data.order?.totals_by_payment || [];
 
-    fetchAllPayments() {
-  axios.get('/get-all-payments')
-    .then(response => {
-      const order = response.data.order;
-      let payments = order.totals_by_payment || [];
+    if (payments.length === 0) {
+      console.warn('%c[POS] No payments found for this session yet.', 'color: #FF5722;');
+      this.allPayments = [];
+      return;
+    }
 
-      // 🧩 Normalize only the known groups
-      payments = payments.map(p => {
-        let normalized = p.payment_name.trim().toLowerCase();
+    // Map and clean the data
+    this.allPayments = payments.map(p => {
+      const cleaned = {
+        payment_name: p.payment_name || 'Unknown',
+        total_amount: parseFloat(p.total_amount || 0)
+      };
+      return cleaned;
+    });
 
-        if (['cash', 'cash on hand', 'cash-on-hand'].includes(normalized)) {
-          p.payment_group = 'Cash';
-
-        } else if (['gcash', 'g-cash'].includes(normalized)) {
-          p.payment_group = 'GCash';
-
-        } else if (normalized.includes('bdo')) {
-          p.payment_group = 'BDO';
-
-        } else if (normalized.includes('bpi')) {
-          p.payment_group = 'BPI';
-
-        } else {
-          // 🆕 All NEW / OTHER payment methods use their REAL NAME
-          p.payment_group = p.payment_name; 
-        }
-
-        return p;
-      });
-
-      // 🧾 Combine totals by group
-      const combined = {};
-      payments.forEach(p => {
-        if (!combined[p.payment_group]) {
-          combined[p.payment_group] = { 
-            payment_name: p.payment_group, 
-            total_amount: 0 
-          };
-        }
-        combined[p.payment_group].total_amount += parseFloat(p.total_amount || 0);
-      });
-
-      this.allPayments = Object.values(combined);
-    })
-    .catch(err => console.error('Error fetching payments:', err));
+  } catch (err) {
+    console.error('%c[POS] Failed to fetch payments!', 'color: #F44336; font-weight: bold;', err);
+    console.error('Error response:', err.response?.data);
+    console.error('Status:', err.response?.status);
+    
+    this.allPayments = [];
+  }
 },
 
-
-    // ✅ Start POS session
+    // SUCCESS + ERROR with SweetAlert2
     async submitStartPOS() {
       try {
-        const res = await axios.post('/pos/session/open', {
-          branch_id: this.branch_id,
+        await axios.post('/pos/session/open', {
           terminal_no: this.terminal_no,
           cash_fund: this.startingFund,
+          transaction_datetime: new Date().toISOString().slice(0, 19).replace('T', ' '),
         });
 
-        if (res.status === 201) {
-          alert('POS session started successfully!');
-          this.hasStartedPOS = 1;
-          localStorage.setItem('hasStartedPOS', '1');
-          this.modalMode = 'close';
-          window.location.href = '/orders';
-        }
+        await Swal.fire({
+          icon: 'success',
+          title: 'POS Session Started!',
+          text: `Terminal: ${this.terminal_no} • Fund: ₱${this.startingFund.toLocaleString()}`,
+          timer: 1800,
+          timerProgressBar: true,
+          showConfirmButton: false
+        });
+
+        this.hasStartedPOS = 1;
+        localStorage.setItem('hasStartedPOS', '1');
+        this.modalMode = 'close';
+
+        setTimeout(() => window.location.href = '/orders', 800);
+
       } catch (err) {
-        alert(err.response?.data?.message || 'Failed to start session.');
+        const msg = err.response?.data?.message || 'Failed to start session.';
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: msg,
+          confirmButtonText: 'OK'
+        });
       }
     },
 
-    getPaymentTotal(name) {
-      const payment = this.allPayments.find(p => p.payment_name === name);
-      return parseFloat(payment?.total_amount || 0);
-   },
+   async submitEndPOS() {
+   // 🔰 Confirmation dialog
+   const confirmResult = await Swal.fire({
+      title: 'Are you sure?',
+      text: 'Do you really want to close this session?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Yes, close it',
+      cancelButtonText: 'Cancel'
+   });
 
-   // / 🔴 End POS session (save to user_sessions)
-    async submitEndPOS() {
-      try {
-        // Compute total denomination value
-        const totalCashCounted =
-          (this.denom_1000 * 1000) +
-          (this.denom_500 * 500) +
-          (this.denom_200 * 200) +
-          (this.denom_100 * 100) +
-          (this.denom_50 * 50) +
-          (this.denom_20 * 20) +
-          (this.denom_10 * 10) +
-          (this.denom_5 * 5) +
-          (this.denom_1 * 1) +
-          (this.denom_050 * 0.5) +
-          (this.denom_025 * 0.25) +
-          (this.denom_010 * 0.10) +
-          (this.denom_005 * 0.05);
+   if (!confirmResult.isConfirmed) return;
 
-        this.endCash = totalCashCounted;
+   const payload = {
+      terminal_no: this.terminal_no,
+      transaction_datetime: this.transaction_datetime,
+      starting_fund: parseFloat(this.startingFund) || 0,
+      tip: parseFloat(this.tip) || 0,
+      transfer_to: this.transferTo || null,
+      transfer_amount: parseFloat(this.transferAmount) || 0,
+      remarks: this.remarks,
 
-        const shortage = totalCashCounted < this.cashSales
-          ? this.cashSales - totalCashCounted
-          : 0;
+      manual_breakdown: Object.keys(this.manualBreakdown || {}).length > 0 
+      ? this.manualBreakdown 
+      : null,
 
-        const overage = totalCashCounted > this.cashSales
-          ? totalCashCounted - this.cashSales
-          : 0;
+      d_1000: parseInt(this.denom_1000) || null,
+      d_500:  parseInt(this.denom_500)  || null,
+      d_200:  parseInt(this.denom_200)  || null,
+      d_100:  parseInt(this.denom_100)  || null,
+      d_50:   parseInt(this.denom_50)   || null,
+      d_20:   parseInt(this.denom_20)   || null,
+      d_10:   parseInt(this.denom_10)   || null,
+      d_5:    parseInt(this.denom_5)    || null,
+      d_1:    parseInt(this.denom_1)    || null,
+      d_050:  parseInt(this.denom_050)  || null,
+      d_025:  parseInt(this.denom_025)  || null,
+      d_010:  parseInt(this.denom_010)  || null,
+      d_005:  parseInt(this.denom_005)  || null,
+   };
 
-        const payload = {
-            branch_id: this.branch_id,
-            terminal_no: this.terminal_no,
-            transaction_date: this.closingDate,
-            transaction_time: this.closingTime,
-            starting_fund: this.startingFund,
-            cash_sales: this.totalCashSales, // automatically updated
-            gcash_sales: this.totalGCashSales,
-            bdo_sales: this.totalBDOSales,
-            bpi_sales: this.totalBPISales,
-            other: this.totalOtherSales,
-            receivable_bpi: this.receivableBPI,
-            tip: this.tip,
+   try {
+      // 🔰 Loading state
+      Swal.fire({
+         title: 'Closing session...',
+         text: 'Please wait',
+         allowOutsideClick: false,
+         didOpen: () => {
+         Swal.showLoading();
+         }
+      });
 
-            // 💰 Automatically computed totals
-            total_cash_counted: this.actualCashCounted,
-            shortage: this.shortage,
-            overage: this.overage,
+      const res = await axios.post('/pos/session/close', payload);
 
-            transfer_to: this.transferTo,
-            transfer_amount: this.transferAmount,
-            remarks: this.remarks,
+      // 🔰 Success alert
+      if (res.data.success) {
+         await Swal.fire({
+         icon: 'success',
+         title: 'Session Closed',
+         text: 'Session closed successfully!'
+         });
 
-            // 🔹 Include all denomination fields (for backend saving)
-            d_1000: this.denom_1000,
-            d_500: this.denom_500,
-            d_200: this.denom_200,
-            d_100: this.denom_100,
-            d_50: this.denom_50,
-            d_20: this.denom_20,
-            d_10: this.denom_10,
-            d_5: this.denom_5,
-            d_1: this.denom_1,
-            d_050: this.denom_050,
-            d_025: this.denom_025,
-            d_010: this.denom_010,
-            d_005: this.denom_005,
-            };
-
-
-        console.log('Payload:', payload);
-
-        const response = await axios.post('/pos/session/close', payload);
-
-        if (response.data.success) {
-          alert('POS session closed successfully!');
-          this.hasStartedPOS = 0;
-          localStorage.removeItem('hasStartedPOS');
-          this.modalMode = 'open';
-        } else {
-          alert(response.data.message || 'Failed to close session.');
-        }
-      } catch (err) {
-        console.error(err);
-        alert(err.response?.data?.message || 'Error closing session.');
+         // Update UI
+         this.hasStartedPOS = 0;
+         localStorage.removeItem('hasStartedPOS');
+         this.modalMode = 'open';
+         bootstrap.Modal.getInstance(document.getElementById('endOfDayModal'))?.hide();
+         setTimeout(() => {
+            window.location.href = '/orders';
+        }, 800);
       }
-},
+
+   } catch (err) {
+      // 🔰 Error alert
+      Swal.fire({
+         icon: 'error',
+         title: 'Error',
+         text: err.response?.data?.message || 'Error closing session'
+      });
+   }
+}
   },
+
   watch: {
-    currentTime(newVal, oldVal) {
-      if (newVal !== oldVal) this.manualTimeEdit = true;
-    },
+    closingDateTime() {
+      this.manualTimeEdit = true;
+    }
   }
 });
 </script>

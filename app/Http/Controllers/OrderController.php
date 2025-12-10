@@ -188,9 +188,12 @@ class OrderController extends Controller
         }
     }
 
+    $branchId = $validated['branch_id'] ?? current_branch_id();
+
     // Create the order
     $order = Order::create([
         'user_id'   => $validated['user_id'],
+        'branch_id' => $branchId,
         'table_no'  => $validated['table_no'],
         'number_pax'=> $validated['number_pax'],
         'status'    => $validated['status'],
@@ -517,97 +520,171 @@ public function show($id)
         // dd($order->total_payment_rendered, $order->change_amount, $order->paymentDetails->pluck(['total_rendered', 'change_amount']));
     }
 
-   public function getAllStatusPayments(Request $request)
-{
-    $cashierId = Auth::id();
+//    public function getAllStatusPayments(Request $request)
+// {
+//     $cashierId = Auth::id();
 
-    // 🔍 Find the active (open) CashAudit session for this cashier
-    $session = CashAudit::where('cashier_id', $cashierId)
-        ->where('status', 'open')
-        ->first();
+//     // 🔍 Find the active (open) CashAudit session for this cashier
+//     $session = CashAudit::where('cashier_id', $cashierId)
+//         ->where('status', 'open')
+//         ->first();
 
-    if (!$session) {
-        return response()->json([
-            'order' => [
-                'totals_by_payment' => [],
-            ],
-            'message' => 'No active POS session found.',
-        ]);
-    }
+//     if (!$session) {
+//         return response()->json([
+//             'order' => [
+//                 'totals_by_payment' => [],
+//             ],
+//             'message' => 'No active POS session found.',
+//         ]);
+//     }
 
-    // 🕒 Define timeframe (session start → now or closed_at)
-    $sessionStart = Carbon::parse($session->created_at);
-    $sessionEnd = $session->closed_at ? Carbon::parse($session->closed_at) : Carbon::now();
+//     // 🕒 Define timeframe (session start → now or closed_at)
+//     $sessionStart = Carbon::parse($session->created_at);
+//     $sessionEnd = $session->closed_at ? Carbon::parse($session->closed_at) : Carbon::now();
 
-    // 🧾 Get all orders within timeframe
-    $orders = Order::with('paymentDetails.cashEquivalent')
-        ->whereBetween('created_at', [$sessionStart, $sessionEnd])
-        ->get();
+//     // 🧾 Get all orders within timeframe
+//     $orders = Order::with('paymentDetails.cashEquivalent')
+//         ->whereBetween('created_at', [$sessionStart, $sessionEnd])
+//         ->get();
 
-    // 🔹 Map each order to its effective payment(s)
-    $ordersWithPayments = collect();
+//     // 🔹 Map each order to its effective payment(s)
+//     $ordersWithPayments = collect();
 
-    foreach ($orders as $order) {
-        $paymentDetails = $order->paymentDetails;
+//     foreach ($orders as $order) {
+//         $paymentDetails = $order->paymentDetails;
 
-        if ($paymentDetails->count() > 1) {
-            // 🧮 Multiple payments → check if there's a "Cash On Hand"
-            foreach ($paymentDetails as $pd) {
-                $paymentName = optional($pd->cashEquivalent)->name ?? 'Unknown';
+//         if ($paymentDetails->count() > 1) {
+//             // 🧮 Multiple payments → check if there's a "Cash On Hand"
+//             foreach ($paymentDetails as $pd) {
+//                 $paymentName = optional($pd->cashEquivalent)->name ?? 'Unknown';
 
-                if (strtolower($paymentName) === 'cash on hand' || strtolower($paymentName) === 'cash') {
-                    // ✅ Compute actual cash collected
-                    $actualCash = ($pd->amount_paid ?? 0) - ($pd->change_amount ?? 0);
+//                 if (strtolower($paymentName) === 'cash on hand' || strtolower($paymentName) === 'cash') {
+//                     // ✅ Compute actual cash collected
+//                     $actualCash = ($pd->amount_paid ?? 0) - ($pd->change_amount ?? 0);
 
-                    $ordersWithPayments->push([
-                        'payment_name' => 'Cash On Hand',
-                        'total_charge' => $actualCash,
-                    ]);
-                } else {
-                    $ordersWithPayments->push([
-                        'payment_name' => $paymentName,
-                        'total_charge' => $pd->amount_paid ?? 0,
-                    ]);
-                }
-            }
-        } else {
-            // 🧾 Single payment (keep your original logic)
-            $paymentName = optional(optional($order->paymentDetails->first())->cashEquivalent)->name ?? 'Unknown';
-            $total = $order->total_charge ?? 0;
+//                     $ordersWithPayments->push([
+//                         'payment_name' => 'Cash On Hand',
+//                         'total_charge' => $actualCash,
+//                     ]);
+//                 } else {
+//                     $ordersWithPayments->push([
+//                         'payment_name' => $paymentName,
+//                         'total_charge' => $pd->amount_paid ?? 0,
+//                     ]);
+//                 }
+//             }
+//         } else {
+//             // 🧾 Single payment (keep your original logic)
+//             $paymentName = optional(optional($order->paymentDetails->first())->cashEquivalent)->name ?? 'Unknown';
+//             $total = $order->total_charge ?? 0;
 
-            // If single payment is cash on hand, adjust computation
-            if (strtolower($paymentName) === 'cash on hand' || strtolower($paymentName) === 'cash') {
-                $pd = $order->paymentDetails->first();
-                $total = ($pd->amount_paid ?? 0) - ($pd->change_amount ?? 0);
-            }
+//             // If single payment is cash on hand, adjust computation
+//             if (strtolower($paymentName) === 'cash on hand' || strtolower($paymentName) === 'cash') {
+//                 $pd = $order->paymentDetails->first();
+//                 $total = ($pd->amount_paid ?? 0) - ($pd->change_amount ?? 0);
+//             }
 
-            $ordersWithPayments->push([
-                'payment_name' => $paymentName,
-                'total_charge' => $total,
+//             $ordersWithPayments->push([
+//                 'payment_name' => $paymentName,
+//                 'total_charge' => $total,
+//             ]);
+//         }
+//     }
+
+//     // 🔸 Group by payment name and sum total_charge
+//     $totalsByPayment = $ordersWithPayments
+//         ->groupBy('payment_name')
+//         ->map(function ($items, $key) {
+//             return [
+//                 'payment_name' => $key,
+//                 'total_amount' => $items->sum('total_charge'),
+//             ];
+//         })
+//         ->values();
+
+//     // ✅ Return results
+//     return response()->json([
+//         'order' => [
+//             'totals_by_payment' => $totalsByPayment,
+//         ],
+//         'session_start' => $sessionStart->toDateTimeString(),
+//         'session_end' => $sessionEnd->toDateTimeString(),
+//     ]);
+// }
+
+    public function getAllStatusPayments(Request $request)
+    {
+        $cashierId = auth()->id();
+        $branchId   = current_branch_id();
+        $terminalNo = $request->query('terminal_no');
+
+        $session = CashAudit::where('cashier_id', $cashierId)
+            ->where('branch_id', $branchId)
+            // ->where('terminal_no', $terminalNo)
+            ->where('status', 'open')
+            ->first();
+
+        if (!$session) {
+            return response()->json([
+                'order' => ['totals_by_payment' => []],
+                'message' => 'No active session',
             ]);
         }
-    }
 
-    // 🔸 Group by payment name and sum total_charge
-    $totalsByPayment = $ordersWithPayments
-        ->groupBy('payment_name')
-        ->map(function ($items, $key) {
+        // Fix: Convert session start time from UTC → Asia/Manila
+        $startUtc = $session->transaction_datetime ?? $session->created_at;
+        $start    = Carbon::parse($startUtc)->setTimezone('Asia/Manila');
+        $end      = Carbon::now('Asia/Manila');
+
+        // Load both relationships so we can get the name correctly
+        $paymentDetails = PaymentDetail::with(['cashEquivalent', 'payment'])
+            ->whereHas('order', function ($q) use ($cashierId, $branchId) {
+                $q->where('cashier_id', $cashierId)
+                  ->where('branch_id', $branchId);
+            })
+            ->whereBetween('created_at', [$start, $end])
+            ->get();
+
+        // Group by payment method name
+        $totals = $paymentDetails->groupBy(function ($pd) {
+            // 1. Try cash equivalent (GCash, Maya, Card, etc.)
+            // 2. Fallback to payment type (Cash, Cash on Hand, etc.)
+            $name = $pd->payment?->name 
+                ?? $pd->cashEquivalent?->name 
+                ?? 'Unknown';
+
+            return strtolower(trim($name));
+        })->map(function ($group, $key) {
+            $total = $group->sum(function ($pd) use ($key) {
+                $amountPaid   = (float) ($pd->amount_paid ?? 0);
+                $changeAmount = (float) ($pd->change_amount ?? 0);
+
+                // Only subtract change for cash-based payments
+                $isCash = str_contains($key, 'cash');
+
+                return $isCash 
+                    ? ($amountPaid - $changeAmount)
+                    : $amountPaid;
+            });
+
+            $displayName = ucwords(str_replace(['_', '-'], ' ', $key));
+
             return [
-                'payment_name' => $key,
-                'total_amount' => $items->sum('total_charge'),
+                'payment_name' => $displayName,   // e.g. "Cash On Hand", "Gcash"
+                'total_amount' => round($total, 2),
             ];
-        })
-        ->values();
+        })->values();
 
-    // ✅ Return results
-    return response()->json([
-        'order' => [
-            'totals_by_payment' => $totalsByPayment,
-        ],
-        'session_start' => $sessionStart->toDateTimeString(),
-        'session_end' => $sessionEnd->toDateTimeString(),
-    ]);
-}
+        return response()->json([
+            'order' => [
+                'totals_by_payment' => $totals->toArray(),
+            ],
+            'session_info' => [
+                'start_manila' => $start->format('Y-m-d H:i:s'),
+                'total_records' => $paymentDetails->count(),
+            ]
+        ]);
+    }
 
 
    public function checkUnpaidOrders(Request $request)

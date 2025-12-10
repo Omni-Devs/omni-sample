@@ -1,3 +1,4 @@
+<meta name="csrf-token" content="{{ csrf_token() }}">
 <!-- POS Start / End Modal -->
 <div class="modal fade" id="startPOSModal" tabindex="-1" aria-labelledby="startPOSModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-lg"><!-- 🔹 use modal-lg or custom width -->
@@ -15,24 +16,44 @@
         <!-- 🟢 START SESSION FORM -->
         <div v-if="modalMode === 'open'">
 
-          <div class="form-group mb-3">
-            <label>Login Name</label>
+          <div class="col-12">
+            <label class="form-label fw-bold">Cashier Name</label>
             <input type="text" class="form-control" value="{{ auth()->user()->name }}" readonly>
           </div>
 
-          <div class="form-group mb-3">
-            <label>Date</label>
-            <input type="date" class="form-control" v-model="currentDate" readonly>
+          <!-- Terminal (Auto-detected) -->
+          <div class="col-12">
+            <label class="form-label fw-bold">Terminal</label>
+            <input type="text" class="form-control" :value="terminal_no" readonly>
           </div>
 
-          <div class="form-group mb-3">
-            <label>Time</label>
-            <input type="time" class="form-control" v-model="currentTime">
+          <!-- Closing Date & Time (Combined) -->
+          <div class="col-12">
+            <label class="form-label fw-bold">
+              Closing Date & Time <small class="text-muted">(End of Shift)</small>
+            </label>
+            <input 
+              type="datetime-local" 
+              class="form-control" 
+              v-model="closingDateTime"
+              step="60"
+              required
+            >
+            <small class="text-muted">
+              Current: <strong>@{{ new Date().toLocaleString() }}</strong>
+            </small>
           </div>
 
-          <div class="form-group mb-3">
-            <label>Starting Fund (₱)</label>
-            <input type="number" class="form-control" v-model="startingFund" placeholder="Enter starting fund">
+          <!-- Starting Fund -->
+          <div class="col-12 col-md-6">
+            <label class="form-label fw-bold">Starting Fund (₱)</label>
+            <input 
+              type="number" 
+              step="0.01" 
+              class="form-control" 
+              v-model.number="startingFund" 
+              placeholder="0.00"
+            >
           </div>
         </div>
 
@@ -55,13 +76,13 @@
                 
 
               <div class="col-md-6">
-                <label>Date</label>
-                <input type="date" class="form-control" v-model="currentDate" readonly>
+                <label>Login Date</label>
+                <input type="date" class="form-control" v-model="loginDate" readonly>
               </div>
 
               <div class="col-md-6">
-                <label>Time</label>
-                <input type="time" class="form-control" v-model="currentTime">
+                <label>Login Time</label>
+                <input type="time" class="form-control" v-model="loginTime">
               </div>
               
             </div>
@@ -190,7 +211,7 @@
                     <input 
                       type="number"
                       step="0.01"
-                      :value="posCashSalesTotal"
+                      :value="cashSales"
                       readonly
                       class="form-control form-control-sm"
                     >
@@ -213,7 +234,6 @@
                   <label>Shortage:</label>
                   <input
                     type="number"
-                    step="0.01"
                     :value="shortage"
                     readonly
                     class="form-control form-control-sm"
@@ -224,7 +244,6 @@
                   <label>Overage:</label>
                   <input
                     type="number"
-                    step="0.01"
                     :value="overage"
                     readonly
                     class="form-control form-control-sm"
@@ -284,12 +303,12 @@
             </div>
 
             <h6 class="mt-3"><strong>Receivables</strong></h6>
-              <div class="row">
+              {{-- <div class="row">
                 <div class="col-md-3 mb-2">
                   <label>BPI:</label>
                   <input type="number" step="0.01" v-model="receivableBPI" class="form-control form-control-sm">
                 </div>
-              </div>
+              </div> --}}
             </div>
 
         </div>
@@ -306,7 +325,7 @@
           Start Session
         </button>
 
-        <button v-else class="btn btn-danger" @click="submitEndPOS">
+        <button v-else class="btn btn-primary" @click="submitEndPOS">
           End Session
         </button>
       </div>

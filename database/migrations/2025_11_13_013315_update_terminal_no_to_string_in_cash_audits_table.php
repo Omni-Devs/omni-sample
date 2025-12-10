@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('cash_audit', function (Blueprint $table) {
+        Schema::table('cash_audits', function (Blueprint $table) {
             $table->string('terminal_no')->change();
         });
     }
