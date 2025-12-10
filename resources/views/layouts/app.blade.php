@@ -85,6 +85,7 @@
   .vs__listbox li:hover {
     background: #f0f0f0;
   }
+  
 </style>
 <body>
   @php

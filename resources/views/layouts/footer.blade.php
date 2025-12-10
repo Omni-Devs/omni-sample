@@ -76,7 +76,7 @@ document.addEventListener("DOMContentLoaded", function () {
         });
 
         // Default dashboard
-        activate("dashboard");
+        // activate("dashboard");
     }
 
     // Close sidebar on outside click
@@ -272,6 +272,9 @@ function switchBranch(branchId, branchName) {
                 allowEscapeKey: false,
                 showClass: { popup: 'animate__animated animate__fadeInDown faster' },
                 hideClass: { popup: 'animate__animated animate__fadeOutUp faster' }
+            }).then(() => {
+                // This runs after SweetAlert closes → refresh page
+                window.location.reload();
             });
         } else {
             throw new Error();

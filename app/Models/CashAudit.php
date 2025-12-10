@@ -9,27 +9,35 @@ class CashAudit extends Model
 {
     use HasFactory;
 
-    protected $table = 'cash_audit';
+    protected $table = 'cash_audits';
 
     protected $fillable = [
         'branch_id',
         'cashier_id',
         'terminal_no',
-        'transaction_date',
-        'transaction_time',
+
+        // Combined datetime field
+        'transaction_datetime',
+
         'starting_fund',
-        'cash_sales',
-        'gcash_sales',
-        'bdo_sales',
-        'bpi_sales',
-        'other',
+
+        // New JSON field
+        'payment_breakdown',
+
+        // New computed sales total
         'total_sales',
-        'receivable_bpi',
+
+        // Renamed field
+        'receivable',
+
         'tip',
         'shortage',
         'overage',
+
         'transfer_to',
         'transfer_amount',
+
+        // Denominations
         'd_1000',
         'd_500',
         'd_200',
@@ -43,24 +51,29 @@ class CashAudit extends Model
         'd_025',
         'd_010',
         'd_005',
+
         'remarks',
         'status',
         'closed_at',
     ];
 
     protected $casts = [
-        'transaction_date' => 'date',
-        'transaction_time' => 'datetime:H:i:s',
+        'transaction_datetime' => 'datetime',
+
         'starting_fund' => 'decimal:2',
-        'cash_sales' => 'decimal:2',
-        'gcash_sales' => 'decimal:2',
-        'bdo_sales' => 'decimal:2',
-        'bpi_sales' => 'decimal:2',
-        'receivable_bpi' => 'decimal:2',
+
+        // JSON breakdown
+        'payment_breakdown' => 'array',
+
+        'total_sales' => 'decimal:2',
+        'receivable' => 'decimal:2',
+
         'tip' => 'decimal:2',
         'shortage' => 'decimal:2',
         'overage' => 'decimal:2',
+
         'transfer_amount' => 'decimal:2',
+
         'closed_at' => 'datetime',
     ];
 
@@ -84,15 +97,6 @@ class CashAudit extends Model
             ($this->d_010 ?? 0) * 0.10 +
             ($this->d_005 ?? 0) * 0.05;
     }
-
-    /**
-     * 🔹 Example relationships (optional)
-     * Uncomment or adjust based on your actual setup
-     */
-    // public function branch()
-    // {
-    //     return $this->belongsTo(Branch::class);
-    // }
 
     public function cashier()
     {

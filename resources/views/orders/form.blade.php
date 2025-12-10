@@ -191,6 +191,14 @@ input[type=number] {
   transform: translateY(-5px);
 }
 
+.form-control:disabled, .form-control[readonly] {
+    font-size: 14px !important;
+}
+
+.waiter-select .vs__search::placeholder {
+  font-size: 14px !important;
+}
+
 </style>
 <div id="app">
 <h2>@{{ isEdit ? 'Edit Order' : 'Order Entry' }}</h2>
@@ -729,17 +737,44 @@ toggleCategory(category) {
     ? `/orders/update/${this.order.id}`
     : '/orders/store';
 
-  // ✅ Axios call
   axios.post(url, payload)
-    .then(res => {
-      console.log("✅ Server response:", res.data);
-      alert(res.data.message);
-      window.location.href = res.data.redirect;
-    })
-    .catch(err => {
-      console.error("❌ Error saving order:", err.response?.data || err);
-      alert("Error saving order. Check console for details.");
+  .then(res => {
+    console.log("✅ Server response:", res.data);
+
+    // Show loading first
+    Swal.fire({
+      title: 'Saving...',
+      text: 'Please wait',
+      didOpen: () => {
+        Swal.showLoading();
+      },
+      allowOutsideClick: false
     });
+
+    // After a short delay, show success alert
+    setTimeout(() => {
+      Swal.fire({
+        icon: 'success',
+        title: 'Success!',
+        text: res.data.message,
+        confirmButtonText: 'OK'
+      }).then(() => {
+        // ⬅️ Redirect here AFTER clicking OK
+        window.location.href = res.data.redirect;
+      });
+    }, 800); // delay to let loading state show
+  })
+  .catch(err => {
+    console.error("❌ Error saving order:", err.response?.data || err);
+
+    Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: "Error saving order. Check console for details.",
+      confirmButtonText: 'OK'
+    });
+  });
+
 },
    },
    watch: {
