@@ -38,7 +38,8 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Http\Request;
 use App\Http\Controllers\TaxController;
 use Illuminate\Support\Facades\View;
-
+use App\Http\Controllers\PosClossingController;
+use App\Http\Controllers\LeavesController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -493,6 +494,11 @@ Route::post('/accounts-receivable/{id}/status', [AccountReceivableController::cl
 Route::get('/receive-payment-options', [AccountReceivableController::class, 'receivePaymentOptions']);
 Route::post('/accounts-receivables/{id}/payments', [AccountReceivableController::class, 'updatePayment']);
 Route::patch('/accounts-receivable/{id}/due-date', [AccountReceivableController::class, 'updateDueDate']);
+
+Route::get('/pos-clossing', [PosClossingController::class, 'index'])->name('pos-clossing.index');
+Route::get('/pos-clossing/closed', [PosClossingController::class, 'getClosed'])->name('pos-clossing.closed');
+
+Route::get('/leaves', [LeavesController::class, 'index'])->name('leaves.index');
 
 // Night Differentials routes
 Route::get('/night-differentials', [App\Http\Controllers\NightDifferentialController::class, 'index'])->name('night-differentials.index');
