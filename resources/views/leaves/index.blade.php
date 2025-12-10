@@ -12,9 +12,9 @@
 <div class="main-content" id="app">
     <div>
         <div class="breadcrumb">
-            <h1 class="mr-3">Closing</h1>
+            <h1 class="mr-3">Leaves</h1>
             <ul>
-                <li><a href="">POS</a></li>
+                <li><a href="">Workforce Settings</a></li>
             </ul>
         </div>
         <div class="separator-breadcrumb border-top"></div>
@@ -132,20 +132,32 @@
                                 <tr>
                                     <!----> 
                                     <th scope="col" class="vgt-checkbox-col"><input type="checkbox"></th>
-                                    <th scope="col" aria-sort="descending" aria-controls="col-0" class="vgt-left-align text-left w-190px sortable" style="min-width: auto; width: auto;"><span>Date and Time Created</span> <button><span class="sr-only">
+                                    <th scope="col" aria-sort="descending" aria-controls="col-0" class="vgt-left-align text-left w-190px sortable" style="min-width: auto; width: auto;"><span>Date Created</span> <button><span class="sr-only">
                                         Sort table by Date Created in descending order
                                         </span></button>
                                     </th>
-                                    <th scope="col" aria-sort="descending" aria-controls="col-1" class="vgt-left-align text-left w-220px sortable" style="min-width: auto; width: auto;"><span>Created By</span> <button><span class="sr-only">
+                                    <th scope="col" aria-sort="descending" aria-controls="col-1" class="vgt-left-align text-left w-220px sortable" style="min-width: auto; width: auto;"><span>Reference #</span> <button><span class="sr-only">
                                         Sort table by Reference # in descending order
                                         </span></button>
                                     </th>
-                                    <th scope="col" aria-sort="descending" aria-controls="col-2" class="vgt-left-align text-left w-160px sortable" style="min-width: auto; width: auto;"><span>Name</span> <button><span class="sr-only">
+                                    <th scope="col" aria-sort="descending" aria-controls="col-2" class="vgt-left-align text-left w-160px sortable" style="min-width: auto; width: auto;"><span>From</span> <button><span class="sr-only">
                                         Sort table by From in descending order
                                         </span></button>
                                     </th>
-                                    <th scope="col" aria-sort="descending" aria-controls="col-3" class="vgt-left-align text-left w-160px sortable" style="min-width: auto; width: auto;"><span>Notice Period</span> <button><span class="sr-only">
+                                    <th scope="col" aria-sort="descending" aria-controls="col-3" class="vgt-left-align text-left w-160px sortable" style="min-width: auto; width: auto;"><span>To</span> <button><span class="sr-only">
                                         Sort table by To in descending order
+                                        </span></button>
+                                    </th>
+                                    <th scope="col" aria-sort="descending" aria-controls="col-4" class="vgt-left-align text-left sortable" style="min-width: auto; width: auto;"><span>Method Transfer</span> <button><span class="sr-only">
+                                        Sort table by Metod of Transfer in descending order
+                                        </span></button>
+                                    </th>
+                                    <th scope="col" aria-sort="descending" aria-controls="col-5" class="vgt-left-align text-left w-160px sortable" style="min-width: auto; width: auto;"><span>Created By</span> <button><span class="sr-only">
+                                        Sort table by Created By in descending order
+                                        </span></button>
+                                    </th>
+                                    <th scope="col" aria-sort="descending" aria-controls="col-6" class="vgt-left-align text-left w-160px sortable" style="min-width: auto; width: auto;"><span>Amount</span> <button><span class="sr-only">
+                                        Sort table by Amount in descending order
                                         </span></button>
                                     </th>
                                     <!----><!----><!----><!----><!----><!----><!----><!---->
@@ -160,13 +172,13 @@
                                         <td class="vgt-checkbox-col">
                                             <input type="checkbox" :value="row.id">
                                         </td>
-                                        <td class="vgt-left-align text-left w-190px"> Static</td>
+                                        <td class="vgt-left-align text-left w-190px"> @{{ formatDateTime(row.closed_at) }}</td>
                                         <td class="vgt-left-align text-left w-220px">Reference Static</td>
                                         <td class="vgt-left-align text-left w-160px">From Static</td>
                                         <td class="vgt-left-align text-left w-160px">To Static</td>
                                         <td class="vgt-left-align text-left">Method Static</td>
-                                        <td class="vgt-left-align text-left w-160px">Static</td>
-                                        <td class="vgt-left-align text-left w-160px">Static</td>
+                                        <td class="vgt-left-align text-left w-160px">@{{ row.cashier.name }}</td>
+                                        <td class="vgt-left-align text-left w-160px">@{{ row.transfer_amount }}</td>
                                         <td class="vgt-left-align text-right">
                                             <actions-dropdown :row="row"></actions-dropdown>
                                         </td>
@@ -237,7 +249,6 @@
     </button>
 </div>
 </script>
-
 <script>
 Vue.component("actions-dropdown", {
     template: "#actions-dropdown-template",
@@ -328,88 +339,88 @@ new Vue({
                 to: 0,
                 last_page: 1,
             },
-            statusFilter: 'pending',
+            statusFilter: 'active',
             statusList: [
-                { label: 'Pending', value: 'pending' },
-                { label: 'Completed', value: 'completed' },
+                { label: 'Active', value: 'active' },
+                { label: 'Archived', value: 'archived' },
             ],
         }
     },
 
-    mounted() {
-        this.fetchRecords();
-    },
+    // mounted() {
+    //     this.fetchRecords();
+    // },
 
-    methods: {
-        fetchRecords(page = 1) {
-            console.log("📡 Fetching records with params:", {
-                status: this.statusFilter,
-                page: page,
-                per_page: this.pagination.per_page,
-            });
+    // methods: {
+    //     fetchRecords(page = 1) {
+    //         console.log("📡 Fetching records with params:", {
+    //             status: this.statusFilter,
+    //             page: page,
+    //             per_page: this.pagination.per_page,
+    //         });
 
-            axios.get('/pos-clossing/closed', {
-                params: {
-                    status: this.statusFilter,
-                    page: page,
-                    per_page: this.pagination.per_page,
-                }
-            })
-            .then(response => {
+    //         axios.get('/pos-clossing/closed', {
+    //             params: {
+    //                 status: this.statusFilter,
+    //                 page: page,
+    //                 per_page: this.pagination.per_page,
+    //             }
+    //         })
+    //         .then(response => {
 
-                console.log("✅ API Response:", response.data);
+    //             console.log("✅ API Response:", response.data);
 
-                this.records = response.data.data || response.data;
+    //             this.records = response.data.data || response.data;
 
-                console.log("📦 Records stored:", this.records);
+    //             console.log("📦 Records stored:", this.records);
 
-                // If paginated response exists
-                if (response.data.current_page) {
-                    this.pagination.current_page = response.data.current_page;
-                    this.pagination.per_page = response.data.per_page;
-                    this.pagination.total = response.data.total;
-                    this.pagination.from = response.data.from;
-                    this.pagination.to = response.data.to;
-                    this.pagination.last_page = response.data.last_page;
-                }
+    //             // If paginated response exists
+    //             if (response.data.current_page) {
+    //                 this.pagination.current_page = response.data.current_page;
+    //                 this.pagination.per_page = response.data.per_page;
+    //                 this.pagination.total = response.data.total;
+    //                 this.pagination.from = response.data.from;
+    //                 this.pagination.to = response.data.to;
+    //                 this.pagination.last_page = response.data.last_page;
+    //             }
 
-                console.log("📊 Pagination:", this.pagination);
-            })
-            .catch(error => {
-                console.error("❌ Error fetching records:", error);
-            });
-        },
-        formatDateTime(datetime) {
-            if (!datetime) return '';
+    //             console.log("📊 Pagination:", this.pagination);
+    //         })
+    //         .catch(error => {
+    //             console.error("❌ Error fetching records:", error);
+    //         });
+    //     },
+    //     formatDateTime(datetime) {
+    //         if (!datetime) return '';
 
-            let date = new Date(datetime);
+    //         let date = new Date(datetime);
 
-            return date.toLocaleString('en-US', {
-                timeZone: 'Asia/Manila',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-                hour: 'numeric',
-                minute: '2-digit',
-                second: '2-digit',
-                hour12: true
-            });
-        },
+    //         return date.toLocaleString('en-US', {
+    //             timeZone: 'Asia/Manila',
+    //             year: 'numeric',
+    //             month: 'long',
+    //             day: 'numeric',
+    //             hour: 'numeric',
+    //             minute: '2-digit',
+    //             second: '2-digit',
+    //             hour12: true
+    //         });
+    //     },
 
-        setStatus(status) {
-            console.log("🔄 Changing status filter to:", status);
-            this.statusFilter = status;
-            this.fetchRecords(1);
-        },
-        computed: {
-            filteredRecords() {
-                return this.records.filter(r => r.status === this.statusFilter);
-            }
-        }
+    //     setStatus(status) {
+    //         console.log("🔄 Changing status filter to:", status);
+    //         this.statusFilter = status;
+    //         this.fetchRecords(1);
+    //     },
+    //     computed: {
+    //         filteredRecords() {
+    //             return this.records.filter(r => r.status === this.statusFilter);
+    //         }
+    //     }
 
-    },
+    // },
 
 });
+<script>
 </script>
-
 @endsection

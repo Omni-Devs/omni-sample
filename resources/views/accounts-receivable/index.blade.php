@@ -168,42 +168,42 @@
     </div>
 
    <!-- Edit Due Date Modal -->
-<div class="modal fade" id="editDueDateModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-md">
-        <form @submit.prevent="submitDueDate">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Edit Due Date</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="row g-3">
-                        <div class="col-12">
-                            <label class="form-label">New Due Date <span class="text-danger">*</span></label>
-                            <input
-                                type="text"
-                                class="form-control"
-                                id="due_date_picker"
-                                v-model="dueDateForm.due_date"
-                                placeholder="Select due date"
-                                readonly
-                                required
-                            >
-                            <small class="text-muted">You cannot select a date in the past.</small>
+    <div class="modal fade" id="editDueDateModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-md">
+            <form @submit.prevent="submitDueDate">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Edit Due Date</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label">New Due Date <span class="text-danger">*</span></label>
+                                <input
+                                    type="text"
+                                    class="form-control"
+                                    id="due_date_picker"
+                                    v-model="dueDateForm.due_date"
+                                    placeholder="Select due date"
+                                    readonly
+                                    required
+                                >
+                                <small class="text-muted">You cannot select a date in the past.</small>
+                            </div>
                         </div>
                     </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary" :disabled="submittingDueDate || !dueDateForm.due_date">
+                            <span v-if="submittingDueDate" class="spinner-border spinner-border-sm me-2"></span>
+                            Update Due Date
+                        </button>
+                    </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary" :disabled="submittingDueDate || !dueDateForm.due_date">
-                        <span v-if="submittingDueDate" class="spinner-border spinner-border-sm me-2"></span>
-                        Update Due Date
-                    </button>
-                </div>
-            </div>
-        </form>
+            </form>
+        </div>
     </div>
-</div>
 
     <div class="wrapper">
         <div class="row row mb-4">
