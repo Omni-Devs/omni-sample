@@ -19,6 +19,64 @@
         </div>
         <div class="separator-breadcrumb border-top"></div>
     </div>
+    <div class="modal fade" id="ItemDetailsModal" tabindex="-1" aria-labelledby="ItemDetailsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+            
+            <div class="modal-header">
+                <h5 class="modal-title" id="ItemDetailsModalLabel">Add</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <!-- Body -->
+            <div class="modal-body" style="max-height: 80vh; overflow-y: auto; overscroll-behavior: contain;">
+
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+
+        <button class="btn btn-primary" @click="submitStartPOS">
+          Start Session
+        </button>
+
+        <button v-else class="btn btn-primary" @click="submitEndPOS">
+          End Session
+        </button>
+      </div>
+    </div>
+            
+            {{-- <div class="row g-3">
+              <div class="col-md-6">
+                <fieldset class="form-group">
+                    <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0">Date and Time of Entry</legend>
+                    <div class="d-flex align-items-center">
+                        <div class="vue-daterange-picker form-control reportrange-text">@{{ formattedNow }}</div>
+                        <button type="button" class="btn ml-2 btn-secondary btn-sm" @click="clearDate">Clear</button>
+                    </div>
+                    <small class="form-text text-muted">
+                        Edit the Date/Time to backdate, otherwise leave blank for real-time.
+                    </small>
+                </fieldset>
+              </div>
+
+              <div class="col-md-6">
+                <label>Name *</label>
+                <input type="text" class="form-control" v-model="name" readonly>
+              </div>
+                
+
+              <div class="col-md-6">
+                <label>Set days of Notice Period</label>
+                <input type="date" class="form-control" v-model="noticePeriod" readonly>
+              </div>
+              
+            </div> --}}
+
+            </div>
+        </div>
+    </div>
     <div class="wrapper">
         <div class="card mt-4">
         <div class="card-body">
@@ -108,9 +166,13 @@
                                             </li>
                                         </ul>
                                     </div>
-                                    <a href="#" class="btn btn-primary btn-icon m-1">
-                                    Close
-                                    </a>
+                                    <button type="button" class="btn btn-outline-info ripple m-1 btn-sm collapsed" aria-expanded="false" aria-controls="sidebar-right" style="overflow-anchor: none;"><i class="i-Filter-2"></i>
+                                    Filter
+                                    </button> <button type="button" class="btn btn-outline-success ripple m-1 btn-sm"><i class="i-File-Copy"></i> PDF
+                                    </button> <button class="btn btn-sm btn-outline-danger ripple m-1"><i class="i-File-Excel"></i> EXCEL
+                                    </button><button @click="openAddModal" class="btn btn-primary btn-rounded btn-icon m-1">
+                                        <i class="i-Add"></i> Add
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -347,80 +409,72 @@ new Vue({
         }
     },
 
-    // mounted() {
-    //     this.fetchRecords();
-    // },
+    mounted() {
+        this.fetchRecords();
+    },
 
-    // methods: {
-    //     fetchRecords(page = 1) {
-    //         console.log("📡 Fetching records with params:", {
-    //             status: this.statusFilter,
-    //             page: page,
-    //             per_page: this.pagination.per_page,
-    //         });
+        methods: {
+            openAddModal() {
+                const modalEl = document.getElementById('ItemDetailsModal');
+                const modal = new bootstrap.Modal(modalEl);
+                modal.show();
+            },
+            fetchRecords(page = 1) {
+                axios.get('/leaves', {
+                    params: {
+                        status: this.statusFilter,
+                        page: page,
+                        per_page: this.pagination.per_page,
+                    }
+                })
+                .then(response => {
 
-    //         axios.get('/pos-clossing/closed', {
-    //             params: {
-    //                 status: this.statusFilter,
-    //                 page: page,
-    //                 per_page: this.pagination.per_page,
-    //             }
-    //         })
-    //         .then(response => {
+                    const res = response.data;
 
-    //             console.log("✅ API Response:", response.data);
+                    // Main data
+                    this.records = res.data || res;
 
-    //             this.records = response.data.data || response.data;
+                    // Pagination (if API paginated)
+                    if (res.current_page) {
+                        this.pagination.current_page = res.current_page;
+                        this.pagination.per_page = res.per_page;
+                        this.pagination.total = res.total;
+                        this.pagination.from = res.from;
+                        this.pagination.to = res.to;
+                        this.pagination.last_page = res.last_page;
+                    }
+                })
+                .catch(error => {
+                    console.error("❌ Error fetching records:", error);
+                });
+            },
 
-    //             console.log("📦 Records stored:", this.records);
+            // Reformatted date/time to Asia/Manila
+            formatDateTime(datetime) {
+                if (!datetime) return '';
 
-    //             // If paginated response exists
-    //             if (response.data.current_page) {
-    //                 this.pagination.current_page = response.data.current_page;
-    //                 this.pagination.per_page = response.data.per_page;
-    //                 this.pagination.total = response.data.total;
-    //                 this.pagination.from = response.data.from;
-    //                 this.pagination.to = response.data.to;
-    //                 this.pagination.last_page = response.data.last_page;
-    //             }
+                return new Date(datetime).toLocaleString('en-US', {
+                    timeZone: 'Asia/Manila',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    second: '2-digit',
+                    hour12: true
+                });
+            },
 
-    //             console.log("📊 Pagination:", this.pagination);
-    //         })
-    //         .catch(error => {
-    //             console.error("❌ Error fetching records:", error);
-    //         });
-    //     },
-    //     formatDateTime(datetime) {
-    //         if (!datetime) return '';
-
-    //         let date = new Date(datetime);
-
-    //         return date.toLocaleString('en-US', {
-    //             timeZone: 'Asia/Manila',
-    //             year: 'numeric',
-    //             month: 'long',
-    //             day: 'numeric',
-    //             hour: 'numeric',
-    //             minute: '2-digit',
-    //             second: '2-digit',
-    //             hour12: true
-    //         });
-    //     },
-
-    //     setStatus(status) {
-    //         console.log("🔄 Changing status filter to:", status);
-    //         this.statusFilter = status;
-    //         this.fetchRecords(1);
-    //     },
-    //     computed: {
-    //         filteredRecords() {
-    //             return this.records.filter(r => r.status === this.statusFilter);
-    //         }
-    //     }
-
-    // },
-
+            setStatus(status) {
+                this.statusFilter = status;
+                this.fetchRecords(1);
+            },
+        },
+        computed: {
+            filteredRecords() {
+                return this.records.filter(r => r.status === this.statusFilter);
+            }
+        }
 });
-<script>
 </script>
 @endsection

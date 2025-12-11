@@ -552,7 +552,8 @@ new Vue({
     closingDateTime: '',
     manualTimeEdit: false,
     loginDate: '', 
-   loginTime: '',
+    loginTime: '',
+    isProcessing: false,
 
     // Denominations
     denom_1000: '', denom_500: '', denom_200: '', denom_100: '',
@@ -569,6 +570,7 @@ new Vue({
     this.setInitialDateTime();
     this.detectTerminalName();
     this.startAutoTimeUpdate();
+    this.fetchAllPayments();
     this.setNow();
     setInterval(() => {
       if (!this.manualTimeEdit) this.setNow();
@@ -622,8 +624,8 @@ new Vue({
     },
     cashSales() {
     const cashItem = this.allPayments.find(p =>
-      p.payment_name.toLowerCase().includes('cash')
-    );
+      /\bcash\b/i.test(p.payment_name)
+      );
     const amount = cashItem ? parseFloat(cashItem.total_amount) || 0 : 0;
 
     // FIX: Round to 2 decimals to kill floating-point bugs
@@ -654,7 +656,7 @@ new Vue({
   overage() {
     const diff = this.denominationTotal - this.expectedCashInDrawer;
     return diff > 0.01 ? diff.toFixed(2) : '0.00'; // tolerance 1 cent
-  },
+  }
 },
 
   methods: {
@@ -797,12 +799,11 @@ new Vue({
       }
     },
     async handleConfirmEndDay() {
-      // 🧠 simulate unpaid order check
       const unpaidOrders = await this.checkUnpaidOrders();
       if (unpaidOrders) {
         this.endStep = 'unpaid';
       } else {
-        this.endStep = 'form'; // move to actual end form
+        this.endStep = 'form';
       }
 
 // THIS IS THE MISSING LINE!!!
@@ -856,12 +857,18 @@ async fetchAllPayments() {
     console.error('Status:', err.response?.status);
     
     this.allPayments = [];
+    console.log(this.allPayments)
   }
 },
 
     // SUCCESS + ERROR with SweetAlert2
     async submitStartPOS() {
       try {
+      // Close modal immediately
+      const modalElement = document.getElementById('startPOSModal');
+      const modalInstance = bootstrap.Modal.getInstance(modalElement);
+      if (modalInstance) modalInstance.hide();
+
         await axios.post('/pos/session/open', {
           terminal_no: this.terminal_no,
           cash_fund: this.startingFund,
@@ -871,17 +878,17 @@ async fetchAllPayments() {
         await Swal.fire({
           icon: 'success',
           title: 'POS Session Started!',
-          text: `Terminal: ${this.terminal_no} • Fund: ₱${this.startingFund.toLocaleString()}`,
-          timer: 1800,
-          timerProgressBar: true,
-          showConfirmButton: false
+          text: `Fund: ₱${this.startingFund.toLocaleString()}`,
+          timer: 1500,
+          showConfirmButton: false,
+          allowOutsideClick: false
         });
 
         this.hasStartedPOS = 1;
         localStorage.setItem('hasStartedPOS', '1');
-        this.modalMode = 'close';
+      //   this.modalMode = 'close';
 
-        setTimeout(() => window.location.href = '/orders', 800);
+        window.location.href = '/orders';
 
       } catch (err) {
         const msg = err.response?.data?.message || 'Failed to start session.';
@@ -894,7 +901,54 @@ async fetchAllPayments() {
       }
     },
 
+    validateBeforeSubmit() {
+        const denom = Number(this.denominationTotal) || 0;
+        const transfer = Number(this.transferAmount) || 0;
+        const shortage = Number(this.shortage) || 0;
+        const overage = Number(this.overage) || 0;
+        const remarks = this.remarks ? this.remarks.trim() : '';
+
+        if (denom !== transfer) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Mismatch Detected',
+                text: `Denomination total must match the transfer amount`,
+            });
+            return false;
+        }
+
+        if ((shortage !== 0 || overage !== 0) && remarks === '') {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Remarks Required',
+                text: 'Please enter remarks when there is a shortage or overage.',
+            });
+            return false;
+        }
+
+        return true;
+    },
+
    async submitEndPOS() {
+   // 🔹 VALIDATION: Require transfer_to + amount
+   if (!this.transferTo) {
+      return Swal.fire({
+         icon: 'warning',
+         title: 'Missing Transfer Account',
+         text: 'Please select a "Transfer To" account.',
+      });
+   }
+
+   if (!this.transferAmount || parseFloat(this.transferAmount) <= 0) {
+      return Swal.fire({
+         icon: 'warning',
+         title: 'Invalid Amount',
+         text: 'Please enter a valid transfer amount.',
+      });
+   }
+
+   if (!this.validateBeforeSubmit()) return;
+
    // 🔰 Confirmation dialog
    const confirmResult = await Swal.fire({
       title: 'Are you sure?',
@@ -906,6 +960,17 @@ async fetchAllPayments() {
    });
 
    if (!confirmResult.isConfirmed) return;
+
+   
+    // 1. Immediately hide + disable the modal to prevent any flash
+    const modalElement = document.getElementById('startPOSModal');
+    const modalInstance = bootstrap.Modal.getInstance(modalElement);
+    if (modalInstance) {
+      modalInstance.hide();
+    }
+
+    modalElement.style.pointerEvents = 'none';
+    modalElement.querySelector('.modal-content').style.opacity = '0.6';
 
    const payload = {
       terminal_no: this.terminal_no,
@@ -953,26 +1018,30 @@ async fetchAllPayments() {
          await Swal.fire({
          icon: 'success',
          title: 'Session Closed',
-         text: 'Session closed successfully!'
+         text: 'Session closed successfully!',
+         timer: 2000,
+         timerProgressBar: true,
+         showConfirmButton: false,
+         allowOutsideClick: false,
+         allowEscapeKey: false
          });
 
          // Update UI
          this.hasStartedPOS = 0;
          localStorage.removeItem('hasStartedPOS');
-         this.modalMode = 'open';
-         bootstrap.Modal.getInstance(document.getElementById('endOfDayModal'))?.hide();
-         setTimeout(() => {
-            window.location.href = '/orders';
-        }, 800);
+         // this.modalMode = 'open';
+         // bootstrap.Modal.getInstance(document.getElementById('endOfDayModal'))?.hide();
+         window.location.href = '/orders';
       }
 
    } catch (err) {
-      // 🔰 Error alert
-      Swal.fire({
-         icon: 'error',
-         title: 'Error',
-         text: err.response?.data?.message || 'Error closing session'
-      });
+      // Re-enable modal on error
+      const modalElement = document.getElementById('startPOSModal');
+      modalElement.style.pointerEvents = '';
+      modalElement.querySelector('.modal-content').style.opacity = '';
+
+      const msg = err.response?.data?.message || 'Failed to end session.';
+      Swal.fire('Error', msg, 'error');
    }
 }
   },
