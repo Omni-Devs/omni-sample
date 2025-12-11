@@ -501,6 +501,7 @@ Route::get('/pos-clossing/closed', [PosClossingController::class, 'getClosed'])-
 
 Route::get('/leaves', [LeavesController::class, 'index'])->name('leaves.index');
 
+
 // Night Differentials routes
 Route::get('/night-differentials', [App\Http\Controllers\NightDifferentialController::class, 'index'])->name('night-differentials.index');
 Route::post('/night-differentials', [App\Http\Controllers\NightDifferentialController::class, 'store'])->name('night-differentials.store');

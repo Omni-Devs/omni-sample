@@ -62,48 +62,7 @@
                                             </li>
                                             <li role="presentation" style="width: 220px;">
                                             <form tabindex="-1" class="b-dropdown-form p-0">
-                                                <section class="ps-container ps">
-                                                    <div class="px-4" style="max-height: 400px;">
-                                                        <ul class="list-unstyled">
-                                                        <li>
-                                                            <div class="my-1 custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" value="true" id="__BVID__309"><label class="custom-control-label" for="__BVID__309">Date Created</label></div>
-                                                        </li>
-                                                       
-                                                        <li>
-                                                            <div class="my-1 custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" value="true" id="__BVID__311"><label class="custom-control-label" for="__BVID__311">Created By</label></div>
-                                                        </li>
-                                                        <li>
-                                                            <div class="my-1 custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" value="true" id="__BVID__314"><label class="custom-control-label" for="__BVID__314">Reference #</label></div>
-                                                        </li>
-                                                        </li>
-                                                        <li>
-                                                            <div class="my-1 custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" value="true" id="__BVID__327"><label class="custom-control-label" for="__BVID__327">From</label></div>
-                                                        </li>
-                                                        <li>
-                                                            <div class="my-1 custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" value="true" id="__BVID__328"><label class="custom-control-label" for="__BVID__328">To</label></div>
-                                                        </li>
-                                                        <li>
-                                                            <div class="my-1 custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" value="true" id="__BVID__329"><label class="custom-control-label" for="__BVID__329">Metod of Transfer</label></div>
-                                                        </li>
-                                                        <li>
-                                                            <div class="my-1 custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" value="true" id="__BVID__330"><label class="custom-control-label" for="__BVID__330">Created By</label></div>
-                                                        </li>
-                                                        <li>
-                                                            <div class="my-1 custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" value="true" id="__BVID__331"><label class="custom-control-label" for="__BVID__331">Amount</label></div>
-                                                        </li>
-                                                        <li>
-                                                            <div class="my-1 custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" value="true" id="__BVID__332"><label class="custom-control-label" for="__BVID__332">Action</label></div>
-                                                        </li>
-                                                        <li><button type="button" class="btn mt-2 mb-3 btn-primary btn-sm">Save</button></li>
-                                                        </ul>
-                                                    </div>
-                                                    <div class="ps__rail-x" style="left: 0px; bottom: 0px;">
-                                                        <div class="ps__thumb-x" tabindex="0" style="left: 0px; width: 0px;"></div>
-                                                    </div>
-                                                    <div class="ps__rail-y" style="top: 0px; right: 0px;">
-                                                        <div class="ps__thumb-y" tabindex="0" style="top: 0px; height: 0px;"></div>
-                                                    </div>
-                                                </section>
+                                     
                                             </form>
                                             </li>
                                         </ul>
@@ -136,15 +95,27 @@
                                         Sort table by Date Created in descending order
                                         </span></button>
                                     </th>
-                                    <th scope="col" aria-sort="descending" aria-controls="col-1" class="vgt-left-align text-left w-220px sortable" style="min-width: auto; width: auto;"><span>Created By</span> <button><span class="sr-only">
+                                    <th scope="col" aria-sort="descending" aria-controls="col-1" class="vgt-left-align text-left w-220px sortable" style="min-width: auto; width: auto;"><span>Reference #</span> <button><span class="sr-only">
                                         Sort table by Reference # in descending order
                                         </span></button>
                                     </th>
-                                    <th scope="col" aria-sort="descending" aria-controls="col-2" class="vgt-left-align text-left w-160px sortable" style="min-width: auto; width: auto;"><span>Name</span> <button><span class="sr-only">
+                                    <th scope="col" aria-sort="descending" aria-controls="col-2" class="vgt-left-align text-left w-160px sortable" style="min-width: auto; width: auto;"><span>From</span> <button><span class="sr-only">
                                         Sort table by From in descending order
                                         </span></button>
                                     </th>
-                                    <th scope="col" aria-sort="descending" aria-controls="col-3" class="vgt-left-align text-left w-160px sortable" style="min-width: auto; width: auto;"><span>Notice Period</span> <button><span class="sr-only">
+                                    <th scope="col" aria-sort="descending" aria-controls="col-3" class="vgt-left-align text-left w-160px sortable" style="min-width: auto; width: auto;"><span>To</span> <button><span class="sr-only">
+                                        Sort table by To in descending order
+                                        </span></button>
+                                    </th>
+                                    <th scope="col" aria-sort="descending" aria-controls="col-3" class="vgt-left-align text-left w-160px sortable" style="min-width: auto; width: auto;"><span>Method of Transfer</span> <button><span class="sr-only">
+                                        Sort table by To in descending order
+                                        </span></button>
+                                    </th>
+                                    <th scope="col" aria-sort="descending" aria-controls="col-3" class="vgt-left-align text-left w-160px sortable" style="min-width: auto; width: auto;"><span>Created By</span> <button><span class="sr-only">
+                                        Sort table by To in descending order
+                                        </span></button>
+                                    </th>
+                                    <th scope="col" aria-sort="descending" aria-controls="col-3" class="vgt-left-align text-left w-160px sortable" style="min-width: auto; width: auto;"><span>Amount</span> <button><span class="sr-only">
                                         Sort table by To in descending order
                                         </span></button>
                                     </th>
@@ -160,13 +131,13 @@
                                         <td class="vgt-checkbox-col">
                                             <input type="checkbox" :value="row.id">
                                         </td>
-                                        <td class="vgt-left-align text-left w-190px"> Static</td>
+                                        <td class="vgt-left-align text-left w-190px"> @{{formatDateTime(row.closed_at)}}</td>
                                         <td class="vgt-left-align text-left w-220px">Reference Static</td>
-                                        <td class="vgt-left-align text-left w-160px">From Static</td>
+                                        <td class="vgt-left-align text-left w-160px">@{{row.cashier.name}}</td>
                                         <td class="vgt-left-align text-left w-160px">To Static</td>
                                         <td class="vgt-left-align text-left">Method Static</td>
-                                        <td class="vgt-left-align text-left w-160px">Static</td>
-                                        <td class="vgt-left-align text-left w-160px">Static</td>
+                                        <td class="vgt-left-align text-left w-160px">@{{row.cashier.name}}</td>
+                                        <td class="vgt-left-align text-left w-160px">@{{row.transfer_amount}}</td>
                                         <td class="vgt-left-align text-right">
                                             <actions-dropdown :row="row"></actions-dropdown>
                                         </td>
