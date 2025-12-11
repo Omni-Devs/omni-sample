@@ -34,6 +34,7 @@ use App\Models\CashEquivalent;
 use App\Models\User;
 use App\Http\Controllers\FundTransferController;
 use App\Http\Controllers\StatusController;
+use App\Http\Controllers\BenefitController;
 use App\Http\Controllers\HolidayController;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Http\Request;
@@ -505,6 +506,18 @@ Route::get('/leaves', [LeavesController::class, 'index'])->name('leaves.index');
 // Night Differentials routes
 Route::get('/night-differentials', [App\Http\Controllers\NightDifferentialController::class, 'index'])->name('night-differentials.index');
 Route::post('/night-differentials', [App\Http\Controllers\NightDifferentialController::class, 'store'])->name('night-differentials.store');
+
+Route::prefix('benefits')->name('benefits.')->group(function () {
+    Route::get('/', [BenefitController::class, 'index'])->name('index');
+    Route::post('/', [BenefitController::class, 'store'])->name('store');
+
+    Route::get('/{benefit}/edit', [BenefitController::class, 'edit'])->name('edit');
+    Route::put('/{benefit}', [BenefitController::class, 'update'])->name('update');
+
+    Route::delete('/{benefit}', [BenefitController::class, 'destroy'])->name('destroy');
+    Route::put('/{benefit}/archive', [BenefitController::class, 'archive'])->name('archive');
+    Route::put('/{benefit}/restore', [BenefitController::class, 'restore'])->name('restore');
+});
 
 
 Route::prefix('holidays')->name('holidays.')->group(function () {
