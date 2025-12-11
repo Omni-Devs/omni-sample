@@ -379,6 +379,12 @@
                               <span class="item-name">Holidays</span>
                            </a>
                         </li>
+                        <li class="nav-item">
+                           <a href="{{ route('benefits.index') }}">
+                              <i class="nav-icon i-Betvibes"></i>
+                              <span class="item-name">Benefits</span>
+                           </a>
+                        </li>
                      </ul>
                   </li>
 
