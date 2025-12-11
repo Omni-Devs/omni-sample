@@ -34,6 +34,7 @@ use App\Models\CashEquivalent;
 use App\Models\User;
 use App\Http\Controllers\FundTransferController;
 use App\Http\Controllers\StatusController;
+use App\Http\Controllers\HolidayController;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Http\Request;
 use App\Http\Controllers\TaxController;
@@ -503,4 +504,17 @@ Route::get('/leaves', [LeavesController::class, 'index'])->name('leaves.index');
 // Night Differentials routes
 Route::get('/night-differentials', [App\Http\Controllers\NightDifferentialController::class, 'index'])->name('night-differentials.index');
 Route::post('/night-differentials', [App\Http\Controllers\NightDifferentialController::class, 'store'])->name('night-differentials.store');
+
+
+Route::prefix('holidays')->name('holidays.')->group(function () {
+    Route::get('/', [HolidayController::class, 'index'])->name('index');
+    Route::post('/', [HolidayController::class, 'store'])->name('store');
+
+    Route::get('/{holiday}/edit', [HolidayController::class, 'edit'])->name('edit');
+    Route::put('/{holiday}', [HolidayController::class, 'update'])->name('update');
+
+    Route::delete('/{holiday}', [HolidayController::class, 'destroy'])->name('destroy');
+    Route::put('/{holiday}/archive', [HolidayController::class, 'archive'])->name('archive');
+    Route::put('/{holiday}/restore', [HolidayController::class, 'restore'])->name('restore');
+});
 

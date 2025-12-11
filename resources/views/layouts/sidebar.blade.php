@@ -358,7 +358,7 @@
                         <li class="nav-item">
                            <a href="{{ route('statuses.index') }}">
                               <i class="nav-icon i-ID-Card"></i>
-                              <span class="item-name">Statuses</span>
+                              <span class="item-name">Status</span>
                            </a>
                         </li>
                         <li class="nav-item">
@@ -371,6 +371,12 @@
                            <a href="{{ route('night-differentials.index') }}">
                               <i class="nav-icon i-Over-Time"></i>
                               <span class="item-name">Night Differentials</span>
+                           </a>
+                        </li>
+                        <li class="nav-item">
+                           <a href="{{ route('holidays.index') }}">
+                              <i class="nav-icon i-Calendar-2"></i>
+                              <span class="item-name">Holidays</span>
                            </a>
                         </li>
                      </ul>
