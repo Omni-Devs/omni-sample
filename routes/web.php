@@ -43,6 +43,7 @@ use App\Http\Controllers\TaxController;
 use Illuminate\Support\Facades\View;
 use App\Http\Controllers\PosClossingController;
 use App\Http\Controllers\LeavesController;
+use App\Http\Controllers\ShiftsController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -558,3 +559,15 @@ Route::prefix('holidays')->name('holidays.')->group(function () {
     Route::put('/{holiday}/restore', [HolidayController::class, 'restore'])->name('restore');
 });
 
+Route::prefix('workforce-shifts')->name('shifts.')->group(function () {
+    Route::get('/', [ShiftsController::class, 'index'])->name('index');
+    Route::get('/fetch', [ShiftsController::class, 'fetchShifts'])->name('fetch');
+    
+    Route::post('/', [ShiftsController::class, 'store']);
+    Route::put('/{id}', [ShiftsController::class, 'update']);
+    
+    Route::patch('/{id}/archive', [ShiftsController::class, 'archive']);
+    Route::patch('/{id}/restore', [ShiftsController::class, 'restore']);
+    
+    Route::delete('/{id}', [ShiftsController::class, 'destroy']);
+});
