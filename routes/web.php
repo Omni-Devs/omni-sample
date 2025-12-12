@@ -29,6 +29,7 @@ use App\Http\Controllers\PosSessionController;
 use App\Http\Controllers\RemarkController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\AccountReceivableController;
+use App\Http\Controllers\AllowancesController;
 use App\Http\Controllers\DesignationController;
 use App\Models\CashEquivalent;
 use App\Models\User;
@@ -500,7 +501,32 @@ Route::patch('/accounts-receivable/{id}/due-date', [AccountReceivableController:
 Route::get('/pos-clossing', [PosClossingController::class, 'index'])->name('pos-clossing.index');
 Route::get('/pos-clossing/closed', [PosClossingController::class, 'getClosed'])->name('pos-clossing.closed');
 
-Route::get('/leaves', [LeavesController::class, 'index'])->name('leaves.index');
+Route::prefix('workforce-leaves')->name('leaves.')->group(function () {
+    Route::get('/', [LeavesController::class, 'index'])->name('index');
+    Route::get('/fetch', [LeavesController::class, 'fetchLeaves'])->name('fetch');
+    
+    Route::post('/', [LeavesController::class, 'store']);
+    Route::put('/{id}', [LeavesController::class, 'update']);
+    
+    Route::patch('/{id}/archive', [LeavesController::class, 'archive']);
+    Route::patch('/{id}/restore', [LeavesController::class, 'restore']);
+    
+    Route::delete('/{id}', [LeavesController::class, 'destroy']);
+});
+
+Route::prefix('workforce-allowances')->name('allowances.')->group(function () {
+    Route::get('/', [AllowancesController::class, 'index'])->name('index');
+    Route::get('/fetch', [AllowancesController::class, 'fetchAllowances'])->name('fetch');
+    
+    Route::post('/', [AllowancesController::class, 'store']);
+    Route::put('/{id}', [AllowancesController::class, 'update']);
+    
+    Route::patch('/{id}/archive', [AllowancesController::class, 'archive']);
+    Route::patch('/{id}/restore', [AllowancesController::class, 'restore']);
+    
+    Route::delete('/{id}', [AllowancesController::class, 'destroy']);
+});
+
 
 
 // Night Differentials routes
