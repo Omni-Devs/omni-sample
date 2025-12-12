@@ -385,6 +385,12 @@
                               <span class="item-name">Benefits</span>
                            </a>
                         </li>
+                        <li class="nav-item">
+                           <a href="{{ route('allowances.index') }}">
+                              <i class="nav-icon i-Money-2"></i>
+                              <span class="item-name">Allowances</span>
+                           </a>
+                        </li>
                      </ul>
                   </li>
 

@@ -2,10 +2,10 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
-class WorkforceLeaves extends Model
+class WorkLeave extends Model
 {
     use HasFactory;
 
@@ -18,19 +18,7 @@ class WorkforceLeaves extends Model
         'remarks',
         'status',
     ];
-
-    /**
-     * Always store the name in lowercase.
-     */
-    protected static function boot()
-    {
-        parent::boot();
-
-        static::saving(function ($model) {
-            $model->name = strtolower($model->name);
-        });
-    }
-
+    
     /**
      * Relationship: Created by (User)
      */
