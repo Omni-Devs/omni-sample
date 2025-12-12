@@ -361,6 +361,12 @@
                               <span class="item-name">Status</span>
                            </a>
                         </li>
+                         <li class="nav-item">
+                           <a href="{{ route('shifts.index') }}">
+                              <i class="nav-icon i-Chef"></i>
+                              <span class="item-name">Shifts</span>
+                           </a>
+                        </li>
                         <li class="nav-item">
                            <a href="{{ route('leaves.index') }}">
                               <i class="nav-icon i-Ticket"></i>
