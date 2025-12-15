@@ -167,6 +167,7 @@ Route::prefix('pos/session')->group(function () {
 
 
 Route::get('/users', [UserController::class, 'index'])->name('users.index');
+Route::get('/users/create', [UserController::class, 'create'])->name('users.create');
 Route::post('/users', [UserController::class, 'store'])->name('users.store');
 Route::get('/users/{id}/profile', [UserController::class, 'viewProfile'])->name('users.profile');
 Route::put('/users/{user}/archive', [UserController::class, 'archive'])->name('users.archive');
