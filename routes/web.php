@@ -501,6 +501,8 @@ Route::patch('/accounts-receivable/{id}/due-date', [AccountReceivableController:
 
 Route::get('/pos-clossing', [PosClossingController::class, 'index'])->name('pos-clossing.index');
 Route::get('/pos-clossing/closed', [PosClossingController::class, 'getClosed'])->name('pos-clossing.closed');
+Route::post('/pos-clossing/store', [PosClossingController::class, 'store'])->name('pos-clossing.store');
+Route::get('/pos-clossing/create', [PosClossingController::class, 'create'])->name('pos-clossing.create');
 
 Route::prefix('workforce-leaves')->name('leaves.')->group(function () {
     Route::get('/', [LeavesController::class, 'index'])->name('index');

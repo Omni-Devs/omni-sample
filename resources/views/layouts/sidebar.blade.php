@@ -649,7 +649,7 @@ new Vue({
     // FIX: Round to 2 decimals to kill floating-point bugs
     const cleanAmount = Math.round(amount * 100) / 100;
 
-    console.log('%cCash Sales (clean):', 'color: lime; font-weight: bold;', cleanAmount);
+   //  console.log('%cCash Sales (clean):', 'color: lime; font-weight: bold;', cleanAmount);
     return cleanAmount;
   },
 
@@ -661,7 +661,7 @@ new Vue({
     // FINAL FIX: Round to 2 decimals
     const clean = Math.round(expected * 100) / 100;
 
-    console.log('%cExpected Cash in Drawer:', 'color: gold; font-weight: bold;', clean);
+   //  console.log('%cExpected Cash in Drawer:', 'color: gold; font-weight: bold;', clean);
     return clean;
   },
 
@@ -713,7 +713,7 @@ new Vue({
       const now = new Date();
       this.loginDate = now.toISOString().split('T')[0];
       this.loginTime = now.toTimeString().slice(0, 5);
-      console.log('No datetime → using current time:', this.loginDate, this.loginTime);
+      // console.log('No datetime → using current time:', this.loginDate, this.loginTime);
       return;
     }
 
@@ -825,7 +825,7 @@ new Vue({
       }
 
 // THIS IS THE MISSING LINE!!!
-    console.log('%c[END DAY] No unpaid orders → Loading payment breakdown now!', 'color: lime; font-size: 16px; background: black;');
+   //  console.log('%c[END DAY] No unpaid orders → Loading payment breakdown now!', 'color: lime; font-size: 16px; background: black;');
     await this.fetchAllPayments();
     },
     handleUnpaidOk() {
@@ -875,7 +875,7 @@ async fetchAllPayments() {
     console.error('Status:', err.response?.status);
     
     this.allPayments = [];
-    console.log(this.allPayments)
+   //  console.log(this.allPayments)
   }
 },
 
@@ -1018,6 +1018,8 @@ async fetchAllPayments() {
       d_005:  parseInt(this.denom_005)  || null,
    };
 
+   console.log('%c[END DAY] Closing payload:', 'color: cyan; font-weight: bold;', payload);
+
    try {
       // 🔰 Loading state
       Swal.fire({
@@ -1030,6 +1032,7 @@ async fetchAllPayments() {
       });
 
       const res = await axios.post('/pos/session/close', payload);
+      console.log('%c[END DAY] Close response:', 'color: lime; font-weight: bold;', res.data);
 
       // 🔰 Success alert
       if (res.data.success) {
