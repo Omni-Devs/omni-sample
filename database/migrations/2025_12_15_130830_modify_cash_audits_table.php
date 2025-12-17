@@ -14,14 +14,6 @@ return new class extends Migration
     {
         Schema::table('cash_audits', function (Blueprint $table) {
             $table->string('reference_no')->nullable()->after('id');
-            $table->unsignedBigInteger('transfer_to')->nullable()->after('transfer_amount');
-            if (Schema::hasColumn('cash_audits', 'transfer_to')) {
-                $table->unsignedBigInteger('transfer_to')->nullable()->change();
-                $table->foreign('transfer_to')
-                      ->references('id')
-                      ->on('cash_equivalents')
-                      ->onDelete('set null');
-                      }
         });
     }
 
@@ -32,9 +24,6 @@ return new class extends Migration
     {
         Schema::table('cash_audits', function (Blueprint $table) {
             $table->dropColumn('reference_no');
-            if (Schema::hasColumn('cash_audits', 'transfer_to')) {
-                $table->dropForeign(['transfer_to']);
-            }
         });
     }
 };
