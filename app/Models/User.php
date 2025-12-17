@@ -13,6 +13,9 @@ class User extends Authenticatable
     use HasFactory, Notifiable, HasRoles;
 
     protected $fillable = [
+        'last_name',        // Add last_name
+        'first_name',       // Add first_name
+        'middle_name',      // Add middle_name
         'name',
         'email',
         'password',

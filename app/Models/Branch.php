@@ -9,7 +9,8 @@ class Branch extends Model
 {
     use HasFactory;
 
-    protected $table = 'Branches';
+    // migrations create a `branches` table; ensure model uses the same lower-case table name
+    protected $table = 'branches';
 
     protected $fillable = [
         'name',
@@ -29,6 +30,14 @@ class Branch extends Model
     public function users()
     {
         return $this->belongsToMany(User::class, 'branch_user', 'branch_id', 'user_id');
+    }
+
+    /**
+     * Permissions assigned to this branch (many-to-many with Spatie Permission model).
+     */
+    public function permissions()
+    {
+        return $this->belongsToMany(\Spatie\Permission\Models\Permission::class, 'branch_permission', 'branch_id', 'permission_id');
     }
 
     public function accountsReceivables()

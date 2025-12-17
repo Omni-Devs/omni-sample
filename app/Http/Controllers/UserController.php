@@ -15,9 +15,12 @@ use App\Models\EmployeeWorkInformation;
 use App\Models\WorkforceShift;
 use App\Models\WorkforceAllowance;
 use App\Models\WorkLeave;
+use App\Models\Designation;
+use App\Models\Department;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage; 
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
@@ -26,25 +29,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 
 class UserController extends Controller
 {
-    // Display a listing of users
-    // public function index(Request $request)
-    // {
-    //     $status = $request->get('status', 'active');
-    //     $perPage = $request->get('per_page', 10); // default 10 rows per page
-
-    //     $users = User::with(['roles:id,name', 'branches:id,name'])
-    //         ->where('status', $status)
-    //         ->paginate($perPage)                // 👉 real pagination
-    //         ->appends(['status' => $status]);   // keep status when switching pages
-
-    //     $nextUserId = User::max('id') + 1;
-    //     $roles = Role::all();
-    //     $branches = Branch::all();
-
-    //     return view('users.index', compact('users', 'nextUserId', 'roles', 'branches', 'status', 'perPage'));
-    // }
-
-     public function index(Request $request)
+    public function index(Request $request)
     {
         $status = $request->get('status', 'active'); // default to active
         $perPage = $request->get('per_page', 10);
@@ -79,121 +64,97 @@ class UserController extends Controller
         $shifts = WorkforceShift::all();
         $allowances = WorkforceAllowance::all();
         $leaves = WorkLeave::all();
+        // Salary method options (no dedicated table currently)
+        $salaryMethods = [
+            'cash' => 'Cash',
+            'bank' => 'Bank Transfer',
+            'check' => 'Check',
+            'agency' => 'Agency',
+        ];
+        // HR reference data
+        $designations = Designation::all();
+        $departments = Department::all();
 
-        return view('users.form', compact('roles', 'branches', 'permissions', 'shifts', 'allowances', 'leaves'));
+        return view('users.form', compact('roles', 'branches', 'permissions', 'shifts', 'allowances', 'leaves', 'designations', 'departments', 'salaryMethods'));
     }
 
     // Store a newly created user
-    // public function store(Request $request)
-    // {
-    //     $validated = $request->validate([
-    //     'name' => 'required|string|max:255',
-    //     'username' => 'required|string|max:255|unique:users,username',
-    //     'email' => 'required|string|email|max:255|unique:users,email',
-    //     'password' => 'required|string|min:4',
-    //     'mobile_number' => 'nullable|string|max:20',
-    //     'roles' => 'required|array',
-    //     'roles.*' => 'exists:roles,id', // validate each role ID
-    //     'branches' => 'nullable|array',
-    //     'branches.*' => 'exists:branches,id',
-    //     'image' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:2048',
-    //     'address' => 'nullable|string|max:255',
-    // ]);
-
-    // // 🔹 Handle image upload (optional)
-    // $imagePath = null;
-    // if ($request->hasFile('image')) {
-    //     $imagePath = $request->file('image')->store('users', 'public');
-    // }
-
-    // // 🔹 Create user
-    // $user = User::create([
-    //     'name' => $validated['name'],
-    //     'username' => $validated['username'],
-    //     'email' => $validated['email'],
-    //     'password' => Hash::make($validated['password']),
-    //     'mobile_number' => $validated['mobile_number'] ?? null,
-    //     'address' => $validated['address'] ?? null,
-    //     'image' => $imagePath,
-    //     'active' => true,
-    // ]);
-
-    // // 🔹 Attach roles (pivot table)
-    // $user->roles()->sync($validated['roles']);
-
-    // // 🔹 Attach branches (pivot table)
-    // if ($request->filled('branches')) {
-    //     $user->branches()->sync($request->input('branches', []));
-    // }
-
-    // return redirect()
-    //     ->route('users.index')
-    //     ->with('success', 'User created successfully!');
-    // }
-
-        // Store a newly created user
     public function store(Request $request)
     {
         // Normal processing: handle incoming request and create user
-            // Build validation rules dynamically so basic info can be saved without DB credentials
-            $rules = [
-                'name' => 'required|string|max:255',
-                'username' => 'nullable|string|max:255|unique:users,username',
-                'email' => 'required|string|email|max:255|unique:users,email',
-                'password' => 'nullable|string|min:4',
-                'mobile_number' => 'nullable|string|max:20',
-                'roles' => 'nullable|array',
-                'roles.*' => 'exists:roles,id',
-                'branches' => 'nullable|array',
-                'branches.*' => 'exists:branches,id',
-                'branch_permissions' => 'nullable|array',
-                'branch_permissions.*.branch_id' => 'required_with:branch_permissions|exists:branches,id',
-                'branch_permissions.*.permissions' => 'nullable|array',
-                'branch_permissions.*.permissions.*' => 'exists:permissions,id',
-                'image' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:2048',
-                'avatar' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:2048',
-                'biometric_number' => 'nullable|string|max:255',
-                'id_number' => 'nullable|string|max:255',
-                'date_of_birth' => 'nullable|date',
-                'age' => 'nullable|integer',
-                // after change: these will store string values
-                'gender_id' => 'nullable|string',
-                'tin' => 'nullable|string|max:255',
-                'sss_number' => 'nullable|string|max:255',
-                'phil_health_number' => 'nullable|string|max:255',
-                'pag_ibig_number' => 'nullable|string|max:255',
-                'blood_type_id' => 'nullable|string',
-                'civil_status_id' => 'nullable|string',
-                'landline_number' => 'nullable|string|max:50',
-                'allow_timekeeper_access' => 'nullable|boolean',
-                'allow_prf_access' => 'nullable|boolean',
-                'allow_inventory_request' => 'nullable|boolean',
-                'allow_processed_goods_logging' => 'nullable|boolean',
-                'allow_sales_report' => 'nullable|boolean',
-                'allow_fund_transfer' => 'nullable|boolean',
-                'allow_liquidation' => 'nullable|boolean',
-                'address' => 'nullable|string|max:255',
-                'spouse' => 'nullable|array',
-                'contact_person' => 'nullable|array',
-                'salary_method' => 'nullable|array',
-                'salary_method.shift_id' => 'nullable|exists:workforce_shifts,id',
-                'allowances' => 'nullable|array',
-                'allowances.*.allowance_id' => 'required_with:allowances|exists:workforce_allowances,id',
-                'allowances.*.amount' => 'nullable|numeric',
-                'allowances.*.monthly_count' => 'nullable|integer',
-                'leaves' => 'nullable|array',
-                'leaves.*.leave_id' => 'required_with:leaves|exists:workforce_leaves,id',
-                'leaves.*.days' => 'nullable|integer',
-                'leaves.*.effective_date' => 'nullable|date',
-                'educational_backgrounds' => 'nullable|array',
-                'dependents' => 'nullable|array',
-                'employee_work_informations' => 'nullable|array',
-            ];
+            // Determine if this is an Access-only submission (credentials + branch permissions)
+            $isAccessOnly = $request->has('allow_db_user') || $request->filled('username');
 
-            // If the form intends to create a DB user (checkbox or username provided), require credentials
-            if ($request->has('allow_db_user') || $request->filled('username')) {
-                $rules['username'] = 'required|string|max:255|unique:users,username';
-                $rules['password'] = 'required|string|min:4';
+            if ($isAccessOnly) {
+                // minimal rules for creating DB credentials independently
+                $rules = [
+                    'username' => 'required|string|max:255|unique:users,username',
+                    'password' => 'required|string|min:4',
+                    'branch_permissions' => 'nullable|array',
+                    'branch_permissions.*.branch_id' => 'required_with:branch_permissions|exists:branches,id',
+                    'branch_permissions.*.permissions' => 'nullable|array',
+                    'branch_permissions.*.permissions.*' => 'exists:permissions,id',
+                    'image' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:2048',
+                    'avatar' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:2048',
+                ];
+            } else {
+                // Build validation rules for full/basic creation
+                $rules = [
+                    'last_name' => 'required|string|max:255',
+                    'first_name' => 'required|string|max:255',
+                    'middle_name' => 'nullable|string|max:255',
+                    // 'name' is not required; we build a display name from first/last if absent
+                    'username' => 'nullable|string|max:255|unique:users,username',
+                    'email' => 'required|string|email|max:255|unique:users,email',
+                    'password' => 'nullable|string|min:4',
+                    'mobile_number' => 'nullable|string|max:20',
+                    'roles' => 'nullable|array',
+                    'roles.*' => 'exists:roles,id',
+                    'branches' => 'nullable|array',
+                    'branches.*' => 'exists:branches,id',
+                    'branch_permissions' => 'nullable|array',
+                    'branch_permissions.*.branch_id' => 'required_with:branch_permissions|exists:branches,id',
+                    'branch_permissions.*.permissions' => 'nullable|array',
+                    'branch_permissions.*.permissions.*' => 'exists:permissions,id',
+                    'image' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:2048',
+                    'avatar' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:2048',
+                    'biometric_number' => 'nullable|string|max:255',
+                    'id_number' => 'nullable|string|max:255',
+                    'date_of_birth' => 'nullable|date',
+                    'age' => 'nullable|integer',
+                    // after change: these will store string values
+                    'gender_id' => 'nullable|string',
+                    'tin' => 'nullable|string|max:255',
+                    'sss_number' => 'nullable|string|max:255',
+                    'phil_health_number' => 'nullable|string|max:255',
+                    'pag_ibig_number' => 'nullable|string|max:255',
+                    'blood_type_id' => 'nullable|string',
+                    'civil_status_id' => 'nullable|string',
+                    'landline_number' => 'nullable|string|max:50',
+                    'allow_timekeeper_access' => 'nullable|boolean',
+                    'allow_prf_access' => 'nullable|boolean',
+                    'allow_inventory_request' => 'nullable|boolean',
+                    'allow_processed_goods_logging' => 'nullable|boolean',
+                    'allow_sales_report' => 'nullable|boolean',
+                    'allow_fund_transfer' => 'nullable|boolean',
+                    'allow_liquidation' => 'nullable|boolean',
+                    'address' => 'nullable|string|max:255',
+                    'spouse' => 'nullable|array',
+                    'contact_person' => 'nullable|array',
+                    'salary_method' => 'nullable|array',
+                    'salary_method.shift_id' => 'nullable|exists:workforce_shifts,id',
+                    'allowances' => 'nullable|array',
+                    'allowances.*.allowance_id' => 'required_with:allowances|exists:workforce_allowances,id',
+                    'allowances.*.amount' => 'nullable|numeric',
+                    'allowances.*.monthly_count' => 'nullable|integer',
+                    'leaves' => 'nullable|array',
+                    'leaves.*.leave_id' => 'nullable|exists:workforce_leaves,id',
+                    'leaves.*.days' => 'nullable|integer',
+                    'leaves.*.effective_date' => 'nullable|date',
+                    'educational_backgrounds' => 'nullable|array',
+                    'dependents' => 'nullable|array',
+                    'employee_work_informations' => 'nullable|array',
+                ];
             }
 
             // log incoming request keys for debugging (will go to storage/logs/laravel.log)
@@ -236,17 +197,40 @@ class UserController extends Controller
                 $input['allowances'] = $alFiltered;
             }
 
+            // Normalize leaves: drop rows where leave_id is empty (checkbox not checked)
+            if (!empty($input['leaves']) && is_array($input['leaves'])) {
+                $lvFiltered = [];
+                foreach ($input['leaves'] as $lv) {
+                    $hasLeave = isset($lv['leave_id']) && $lv['leave_id'] !== '' && $lv['leave_id'] !== null;
+                    $hasDays = isset($lv['days']) && $lv['days'] !== '';
+                    $hasEffective = isset($lv['effective_date']) && $lv['effective_date'] !== '';
+                    if ($hasLeave || $hasDays || $hasEffective) {
+                        // if leave_id empty but days/effective set, we still keep the row so validation can catch it
+                        $lvFiltered[] = $lv;
+                    }
+                }
+                $input['leaves'] = $lvFiltered;
+            }
+
             // You can add similar filters for dependents/leaves/educational_backgrounds if needed.
 
             // Validate using the cleaned input so blank UI rows are ignored
-            try {
-                $validator = Validator::make($input, $rules);
-                $validated = $validator->validate();
-            } catch (ValidationException $e) {
-                // log validation errors for debugging and rethrow so normal behavior (redirect back) occurs
-                try { Log::warning('users.store - validation_failed', ['errors' => $e->errors()]); } catch (\Throwable $ex) {}
-                throw $e;
+            $validator = Validator::make($input, $rules);
+            if ($validator->fails()) {
+                $errors = array_keys($validator->errors()->toArray());
+                // decide which tab to show based on error keys
+                $tab = 'basic';
+                foreach ($errors as $k) {
+                    if (Str::startsWith($k, 'branch_permissions') || Str::startsWith($k, 'username') || Str::startsWith($k, 'password')) {
+                        $tab = 'access';
+                        break;
+                    }
+                }
+                try { Log::warning('users.store - validation_failed', ['errors' => $validator->errors()->toArray()]); } catch (\Throwable $ex) {}
+                return redirect()->back()->withErrors($validator)->withInput()->with('active_tab', $tab);
             }
+
+            $validated = $validator->validated();
 
         // Handle image upload
         $imagePath = null;
@@ -260,11 +244,11 @@ class UserController extends Controller
         }
 
         // Create user
-        // If username or password not provided (basic info flow), generate safe fallbacks so DB insert succeeds.
+        // Determine username and password to save
         $usernameToSave = $validated['username'] ?? null;
         if (!$usernameToSave) {
             // create a unique fallback username
-            $base = Str::slug($validated['name'] ?? 'user');
+            $base = Str::slug($validated['name'] ?? ($validated['first_name'] ?? 'user'));
             $candidate = $base ?: 'user';
             $i = 0;
             while (User::where('username', $candidate . ($i ? "-{$i}" : ''))->exists()) {
@@ -275,10 +259,25 @@ class UserController extends Controller
 
         $passwordToSave = isset($validated['password']) ? Hash::make($validated['password']) : Hash::make(Str::random(12));
 
+        // Build a display name: prefer provided name, else first+last, else username
+        $nameToSave = $validated['name'] ?? null;
+        if (empty($nameToSave)) {
+            $parts = [];
+            if (!empty($validated['first_name'])) $parts[] = $validated['first_name'];
+            if (!empty($validated['last_name'])) $parts[] = $validated['last_name'];
+            $nameToSave = count($parts) ? implode(' ', $parts) : $usernameToSave;
+        }
+
+        // ensure we have an email value to avoid DB NOT NULL constraint
+        $emailToSave = $validated['email'] ?? ($usernameToSave . '@gmail.com');
+
         $user = User::create([
-            'name' => $validated['name'],
+            'last_name' => $validated['last_name'] ?? null,
+            'first_name' => $validated['first_name'] ?? null,
+            'middle_name' => $validated['middle_name'] ?? null,
+            'name' => $nameToSave,
             'username' => $usernameToSave,
-            'email' => $validated['email'],
+            'email' => $emailToSave,
             'password' => $passwordToSave,
             'mobile_number' => $validated['mobile_number'] ?? null,
             'address' => $validated['address'] ?? null,
@@ -327,6 +326,30 @@ class UserController extends Controller
             $user->branches()->sync(array_values(array_unique($branchIds)));
         } elseif (!empty($validated['branches'])) {
             $user->branches()->sync($validated['branches']);
+        }
+
+        // Persist branch -> permission assignments into branch_permission pivot table
+        if (!empty($validated['branch_permissions'])) {
+            foreach ($validated['branch_permissions'] as $row) {
+                $branchId = $row['branch_id'] ?? null;
+                $perms = $row['permissions'] ?? [];
+                if (empty($branchId) || !is_array($perms) || empty($perms)) continue;
+                foreach ($perms as $permId) {
+                    if (empty($permId)) continue;
+                    $exists = DB::table('branch_permission')
+                        ->where('branch_id', $branchId)
+                        ->where('permission_id', $permId)
+                        ->exists();
+                    if (!$exists) {
+                        DB::table('branch_permission')->insert([
+                            'branch_id' => $branchId,
+                            'permission_id' => $permId,
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]);
+                    }
+                }
+            }
         }
 
         // Spouse: only create if there is meaningful data
@@ -461,6 +484,9 @@ public function update(Request $request, $id)
     $user = User::findOrFail($id);
 
     $validated = $request->validate([
+        'last_name' => 'required|string|max:255',
+        'first_name' => 'required|string|max:255',
+        'middle_name' => 'nullable|string|max:255',
         'name' => 'required|string|max:255',
         'username' => 'required|string|max:255|unique:users,username,' . $id,
         'email' => 'required|email|max:255|unique:users,email,' . $id,
@@ -499,7 +525,7 @@ public function update(Request $request, $id)
     {
         $user = User::findOrFail($id);
         $user->delete();
-         return redirect()
+            return redirect()
         ->route('users.index') 
         ->with('success', 'User deleted successfully.');
     }
