@@ -19,6 +19,67 @@
         </div>
         <div class="separator-breadcrumb border-top"></div>
     </div>
+    <div class="modal fade" id="cashAuditRecordsModal" tabindex="-1" aria-labelledby="cashAuditRecordsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="cashAuditRecordsModalLabel">
+                        Cash Audit Record Details
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <table id="vgt-table"  class="table-hover tableOne vgt-table">
+                        <colgroup>
+                            <col id="col-0">
+                            <col id="col-1">
+                            <col id="col-2">
+                            <col id="col-3">
+                            <col id="col-4">
+                            <col id="col-5">
+                            <col id="col-6">
+                            <col id="col-7">
+                            <col id="col-8">
+                        </colgroup>
+                        <thead>
+                        <tr>
+                            <!----> 
+                            <th>Date and Time Created</th>
+                            <th>Reference #</th>
+                            <th>Cashier</th>
+                            <th>Transfered To</th>
+                            <th>Transfer Amount</th>
+                            <th>Cash</th>
+                            <th>Gcash</th>
+                            <th>Debit</th>
+                            <th>Credit</th>
+                            <th>Status</th>
+                        </tr>
+                        <!---->
+                        </thead>
+                        <tbody>
+                            <tr v-for="row in modalChildren" :key="row.id">
+                                <td>@{{ formatDateTime(row.closed_at) }}</td>
+                                <td>@{{ row.reference_no }}</td>
+                                <td>@{{ row.cashier?.name ?? 'N/A' }}</td>
+                                <td>@{{ row.transfer_to ? row.transfer_to.account_number : 'N/A' }}</td>
+                                <td>@{{ row.transfer_amount }}</td>
+                                <td>@{{ getPaymentTotal(row.payment_breakdown, 'cash') }}</td>
+                                <td>@{{ getPaymentTotal(row.payment_breakdown, 'gcash') }}</td>
+                                <td>@{{ getPaymentTotal(row.payment_breakdown, 'debit_card') }}</td>
+                                <td>@{{ getPaymentTotal(row.payment_breakdown, 'credit_card') }}</td>
+                                <td>
+                                    <span class="badge badge-success">
+                                        @{{ row.status }}
+                                    </span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>      
     <div class="wrapper">
         <div class="card mt-4">
         <div class="card-body">
@@ -67,9 +128,14 @@
                                             </li>
                                         </ul>
                                     </div>
-                                    <a href="#" class="btn btn-primary btn-icon m-1">
+                                    <button class="btn btn-primary"
+                                            :disabled="selectedRecords.length === 0"
+                                            @click="goToCreate">
+                                        Close Selected
+                                    </button>
+                                    {{-- <a href="/pos-clossing/create" class="btn btn-primary btn-icon m-1">
                                     Close
-                                    </a>
+                                    </a> --}}
                                 </div>
                             </div>
                         </div>
@@ -86,64 +152,121 @@
                                     <col id="col-5">
                                     <col id="col-6">
                                     <col id="col-7">
+                                    <col id="col-8">
+                                    <col id="col-9">
                                 </colgroup>
                                 <thead>
-                                <tr>
-                                    <!----> 
-                                    <th scope="col" class="vgt-checkbox-col"><input type="checkbox"></th>
-                                    <th scope="col" aria-sort="descending" aria-controls="col-0" class="vgt-left-align text-left w-190px sortable" style="min-width: auto; width: auto;"><span>Date and Time Created</span> <button><span class="sr-only">
-                                        Sort table by Date Created in descending order
-                                        </span></button>
-                                    </th>
-                                    <th scope="col" aria-sort="descending" aria-controls="col-1" class="vgt-left-align text-left w-220px sortable" style="min-width: auto; width: auto;"><span>Reference #</span> <button><span class="sr-only">
-                                        Sort table by Reference # in descending order
-                                        </span></button>
-                                    </th>
-                                    <th scope="col" aria-sort="descending" aria-controls="col-2" class="vgt-left-align text-left w-160px sortable" style="min-width: auto; width: auto;"><span>From</span> <button><span class="sr-only">
-                                        Sort table by From in descending order
-                                        </span></button>
-                                    </th>
-                                    <th scope="col" aria-sort="descending" aria-controls="col-3" class="vgt-left-align text-left w-160px sortable" style="min-width: auto; width: auto;"><span>To</span> <button><span class="sr-only">
-                                        Sort table by To in descending order
-                                        </span></button>
-                                    </th>
-                                    <th scope="col" aria-sort="descending" aria-controls="col-3" class="vgt-left-align text-left w-160px sortable" style="min-width: auto; width: auto;"><span>Method of Transfer</span> <button><span class="sr-only">
-                                        Sort table by To in descending order
-                                        </span></button>
-                                    </th>
-                                    <th scope="col" aria-sort="descending" aria-controls="col-3" class="vgt-left-align text-left w-160px sortable" style="min-width: auto; width: auto;"><span>Created By</span> <button><span class="sr-only">
-                                        Sort table by To in descending order
-                                        </span></button>
-                                    </th>
-                                    <th scope="col" aria-sort="descending" aria-controls="col-3" class="vgt-left-align text-left w-160px sortable" style="min-width: auto; width: auto;"><span>Amount</span> <button><span class="sr-only">
-                                        Sort table by To in descending order
-                                        </span></button>
-                                    </th>
-                                    <!----><!----><!----><!----><!----><!----><!----><!---->
-                                    <th scope="col" aria-sort="descending" aria-controls="col-23" class="vgt-left-align text-right" style="min-width: auto; width: auto;">
-                                        <span>Action</span> <!---->
-                                    </th>
-                                </tr>
-                                <!---->
+                                    <tr>
+                                        <!----> 
+                                        <th scope="col" class="vgt-checkbox-col"><input type="checkbox"></th>
+                                        <th>Date and Time Created</th>
+                                        <th>Reference #</th>
+                                        <template v-if="statusFilter === 'pending'">
+                                            <th>Cashier</th>
+                                        </template>
+                                        <template v-if="statusFilter === 'completed'">
+                                            <th>Submitted By</th>
+                                        </template>
+                                        <th>Transfered To</th>
+                                        <th>Transfer Amount</th>
+
+                                        <!-- PENDING -->
+                                        <template v-if="statusFilter === 'pending'">
+                                            <th>Cash</th>
+                                            <th>Gcash</th>
+                                            <th>Debit</th>
+                                            <th>Credit</th>
+                                            <th>Status</th>
+                                        </template>
+
+                                        <!-- COMPLETED -->
+                                        <template v-else>
+                                            <th>Action</th>
+                                        </template>
+                                    </tr>
+                                    <!---->
                                 </thead>
                                 <tbody>
-                                    <tr v-for="row in records" :key="row.id">
+                                    <tr v-for="row in filteredRecords" :key="row.id">
                                         <td class="vgt-checkbox-col">
-                                            <input type="checkbox" :value="row.id">
-                                        </td>
-                                        <td class="vgt-left-align text-left w-190px"> @{{formatDateTime(row.closed_at)}}</td>
-                                        <td class="vgt-left-align text-left w-220px">Reference Static</td>
-                                        <td class="vgt-left-align text-left w-160px">@{{row.cashier.name}}</td>
-                                        <td class="vgt-left-align text-left w-160px">To Static</td>
-                                        <td class="vgt-left-align text-left">Method Static</td>
-                                        <td class="vgt-left-align text-left w-160px">@{{row.cashier.name}}</td>
-                                        <td class="vgt-left-align text-left w-160px">@{{row.transfer_amount}}</td>
-                                        <td class="vgt-left-align text-right">
-                                            <actions-dropdown :row="row"></actions-dropdown>
+                                            <input
+                                                v-if="row.status === 'pending'"
+                                                type="checkbox"
+                                                :value="row"
+                                                v-model="selectedRecords"
+                                            >
                                         </td>
 
-                                    <tr v-if="records.length === 0">
-                                        <td colspan="8" class="text-center text-muted">No data available.</td>
+                                        <!-- DATE -->
+                                        <td>
+                                            @{{ formatDateTime(
+                                                row.status === 'completed'
+                                                    ? row.audit_record.entry_datetime
+                                                    : row.closed_at
+                                            ) }}
+                                        </td>
+
+                                        <!-- REFERENCE -->
+                                        <td>
+                                            @{{ row.status === 'completed'
+                                                ? row.audit_record.reference_no
+                                                : row.reference_no
+                                            }}
+                                        </td>
+
+                                        <!-- CASHIER -->
+                                        <td>
+                                            @{{ row.status === 'completed'
+                                                ? row.audit_record.submitted_by.name
+                                                : row.cashier.name
+                                            }}
+                                        </td>
+
+                                        <!-- TRANSFER TO -->
+                                        <td>
+                                            @{{ row.status === 'completed'
+                                                ? row.audit_record.transfer_to.account_number
+                                                : (row.transfer_to ? row.transfer_to.account_number : 'N/A')
+                                            }}
+                                        </td>
+
+                                        <!-- TRANSFER AMOUNT -->
+                                        <td>
+                                            @{{ row.status === 'completed'
+                                                ? row.audit_record.transfer_amount
+                                                : row.transfer_amount
+                                            }}
+                                        </td>
+
+                                        <!-- PAYMENT BREAKDOWN (ONLY FOR PENDING) -->
+                                        <template v-if="row.status === 'pending'">
+                                            <td>@{{ getPaymentTotal(row.payment_breakdown, 'cash') }}</td>
+                                            <td>@{{ getPaymentTotal(row.payment_breakdown, 'gcash') }}</td>
+                                            <td>@{{ getPaymentTotal(row.payment_breakdown, 'credit_card') }}</td>
+                                            <td>@{{ getPaymentTotal(row.payment_breakdown, 'debit_card') }}</td>
+                                            <!-- STATUS -->
+                                        <td>
+                                            <span class="badge badge-warning">
+                                                Pending
+                                            </span>
+                                        </td>
+                                        </template>
+                                        
+
+                                        <!-- COMPLETED PLACEHOLDER -->
+                                        <template v-else>
+                                            <td class="text-center">
+                                                <button class="btn btn-sm btn-outline-primary" @click="viewClosing(row)">
+                                                    View
+                                                </button>
+                                            </td>
+                                        </template>
+                                    </tr>
+
+                                    <tr v-if="filteredRecords.length === 0">
+                                        <td colspan="11" class="text-center text-muted">
+                                            No data available.
+                                        </td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -228,54 +351,6 @@ Vue.component("actions-dropdown", {
         handleClickOutside(event) {
             if (!this.$refs.dropdown?.contains(event.target)) this.isOpen = false;
         },
-        async changeStatus(id, status) {
-            const labels = {
-                approved: 'APPROVE',
-                disapproved: 'DISAPPROVE',
-                completed: 'MARK AS COMPLETED',
-                archived: 'ARCHIVE',
-                pending: 'RESTORE TO PENDING'
-            };
-
-            const result = await Swal.fire({
-                title: 'Are you sure?',
-                text: `You are about to ${labels[status] || status.toUpperCase()} this receivable.`,
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'Yes, proceed',
-                cancelButtonText: 'Cancel'
-            });
-
-            if (!result.isConfirmed) return;
-
-            try {
-                const res = await axios.post(`/accounts-receivable/${id}/status`, { status });
-                const rec = this.$parent.records.find(r => r.id === id);
-                if (rec) {
-                    rec.status = status;
-                    rec.updated_at = res.data.updated_at || new Date();
-                }
-                this.$parent.fetchRecords(this.$parent.pagination.current_page);
-                this.isOpen = false;
-                this.$emit('status-updated');
-
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Success!',
-                    text: `Receivable has been ${status}.`,
-                    timer: 2000,
-                    showConfirmButton: false
-                });
-            } catch (err) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: err.response?.data?.message || 'Something went wrong!'
-                });
-            }
-        }
     },
     mounted() {
         document.addEventListener("click", this.handleClickOutside);
@@ -304,6 +379,8 @@ new Vue({
                 { label: 'Pending', value: 'pending' },
                 { label: 'Completed', value: 'completed' },
             ],
+            selectedRecords: [],
+            modalChildren: [],
         }
     },
 
@@ -350,6 +427,19 @@ new Vue({
                 console.error("❌ Error fetching records:", error);
             });
         },
+        viewClosing(row) {
+            console.log("👁 Viewing closing for parent row:", row);
+
+            // If completed → use grouped children
+            if (row.children && row.children.length) {
+                this.modalChildren = row.children;
+            } else {
+                // Fallback (pending or single row)
+                this.modalChildren = [row];
+            }
+
+            $('#cashAuditRecordsModal').modal('show');
+        },
         formatDateTime(datetime) {
             if (!datetime) return '';
 
@@ -372,13 +462,58 @@ new Vue({
             this.statusFilter = status;
             this.fetchRecords(1);
         },
-        computed: {
-            filteredRecords() {
-                return this.records.filter(r => r.status === this.statusFilter);
+        getPaymentTotal(paymentBreakdown, type) {
+            if (!paymentBreakdown) return 0;
+            let parsed;
+            try {
+                parsed = typeof paymentBreakdown === 'string' ? JSON.parse(paymentBreakdown) : paymentBreakdown;
+            } catch (e) {
+                console.error('Invalid payment breakdown JSON', e);
+                return 0;
             }
+            return parsed[type]?.total || 0;
+        },
+        goToCreate() {
+            localStorage.setItem(
+                'selected_cash_audits',
+                JSON.stringify(this.selectedRecords)
+            )
+
+            window.location.href = '/pos-clossing/create'
+        },
+    },
+        computed: {
+    filteredRecords() {
+        // Pending = show child rows normally
+        if (this.statusFilter === 'pending') {
+            return this.records.filter(r => r.status === 'pending');
         }
 
-    },
+        // Completed = group by parent (cash_audit_record)
+        const grouped = {};
+
+        this.records
+            .filter(r => r.status === 'completed' && r.audit_record)
+            .forEach(row => {
+                const parentId = row.audit_record.id;
+
+                if (!grouped[parentId]) {
+                    grouped[parentId] = {
+                        ...row,
+                        // keep parent as source of truth
+                        audit_record: row.audit_record,
+                        // attach children for "View" action
+                        children: []
+                    };
+                }
+
+                grouped[parentId].children.push(row);
+            });
+
+        // Return ONE row per parent
+        return Object.values(grouped);
+    }
+}
 
 });
 </script>

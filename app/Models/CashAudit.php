@@ -15,6 +15,7 @@ class CashAudit extends Model
         'branch_id',
         'cashier_id',
         'terminal_no',
+        'reference_no',
 
         // Combined datetime field
         'transaction_datetime',
@@ -101,5 +102,13 @@ class CashAudit extends Model
     public function cashier()
     {
         return $this->belongsTo(User::class, 'cashier_id');
+    }
+    public function transferTo()
+    {
+        return $this->belongsTo(CashEquivalent::class, 'transfer_to');
+    }
+    public function auditRecord()
+    {
+        return $this->belongsTo(CashAuditRecord::class, 'cash_audit_record_id');
     }
 }
