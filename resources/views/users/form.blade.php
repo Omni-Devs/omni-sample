@@ -66,10 +66,28 @@
                                     </div>
                                     <div class="col-md-4">
                                         <div class="form-group">
+                                            <label for="last_name">Last Name</label>
+                                            <input type="text" name="last_name" id="last_name" class="form-control" value="{{ old('last_name') }}">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label for="first_name">First Name</label>
+                                            <input type="text" name="first_name" id="first_name" class="form-control" value="{{ old('first_name') }}">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label for="middle_name">Middle Name</label>
+                                            <input type="text" name="middle_name" id="middle_name" class="form-control" value="{{ old('middle_name') }}">
+                                        </div>
+                                    </div>
+                                    {{-- <div class="col-md-4">
+                                        <div class="form-group">
                                             <label for="name">User Name</label>
                                             <input type="text" name="name" id="name" class="form-control" value="{{ old('name') }}" required>
                                         </div>
-                                    </div>
+                                    </div> --}}
                                 </div>
 
                                 <div class="row">
@@ -81,7 +99,7 @@
                                     </div>
                                     <div class="col-md-4">
                                         <div class="form-group">
-                                            <label for="tin">TIN</label>
+                                            <label for="tin">TIN #</label>
                                             <input type="text" name="tin" id="tin" class="form-control" value="{{ old('tin') }}">
                                         </div>
                                     </div>
@@ -123,7 +141,13 @@
                                     </div>
                                     <div class="col-md-4">
                                         <div class="form-group">
-                                            <label for="pag_ibig_number">PAG-IBIG</label>
+                                            <label for="pag_ibig_number">PhilHealth #</label>
+                                            <input type="text" name="phil_health_number" id="phil_health_number" class="form-control" value="{{ old('phil_health_number') }}">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label for="pag_ibig_number">PAG-IBIG #</label>
                                             <input type="text" name="pag_ibig_number" id="pag_ibig_number" class="form-control" value="{{ old('pag_ibig_number') }}">
                                         </div>
                                     </div>
@@ -131,7 +155,7 @@
 
                                 <div class="form-group">
                                     <label for="email">Email</label>
-                                    <input type="email" name="email" id="email" class="form-control" value="{{ old('email') }}" required>
+                                    <input type="email" name="email" id="email" class="form-control" value="{{ old('email') }}">
                                 </div>
                                 <div class="row">
                                     <div class="col-md-4">
@@ -182,8 +206,24 @@
                                                 <div class="col-md-3"><input type="text" name="dependents[0][name]" class="form-control" placeholder="Name"></div>
                                                 <div class="col-md-2"><input type="date" name="dependents[0][birthdate]" class="form-control" placeholder="Birthdate"></div>
                                                 <div class="col-md-1"><input type="number" name="dependents[0][age]" class="form-control" placeholder="Age"></div>
-                                                <div class="col-md-3"><input type="text" name="dependents[0][gender]" class="form-control" placeholder="Gender"></div>
-                                                <div class="col-md-2"><input type="text" name="dependents[0][relationship]" class="form-control" placeholder="Relationship"></div>
+                                                <div class="col-md-3">
+                                                    <select name="dependents[0][gender]" class="form-control">
+                                                        <option value="">-- Select Gender --</option>
+                                                        <option value="Male">Male</option>
+                                                        <option value="Female">Female</option>
+                                                        <option value="Other">Other</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <select name="dependents[0][relationship]" class="form-control">
+                                                        <option value="">-- Relationship --</option>
+                                                        <option value="Son">Son</option>
+                                                        <option value="Daughter">Daughter</option>
+                                                        <option value="Parent">Parent</option>
+                                                        <option value="Spouse">Spouse</option>
+                                                        <option value="Other">Other</option>
+                                                    </select>
+                                                </div>
                                                 <div class="col-md-1"><button type="button" class="btn btn-sm btn-outline-danger remove-dependent">-</button></div>
                                             </div>
                                         </div>
@@ -228,16 +268,6 @@
                     <div class="tab-pane fade" id="access" role="tabpanel" aria-labelledby="access-tab">
                         <div class="row">
                             <div class="col-md-6">
-                                {{-- <div class="form-group">
-                                    <label for="roles">Roles</label>
-                                    <select name="roles[]" id="roles" class="form-control" multiple required>
-                                        @foreach($roles as $role)
-                                            <option value="{{ $role->id }}">{{ $role->name }}</option>
-                                        @endforeach
-                                    </select>
-                                    <small class="form-text text-muted">Hold Ctrl (Windows) / Cmd (Mac) to select multiple.</small>
-                                </div> --}}
-
                                 <div class="form-group form-check">
                                     <input type="checkbox" name="allow_db_user" id="allow_db_user" class="form-check-input" value="1" {{ old('allow_db_user') ? 'checked' : '' }}>
                                     <label for="allow_db_user" class="form-check-label">Allow employee to be Database User</label>
@@ -272,7 +302,7 @@
                                         </div>
                                         <div class="col-md-6">
                                             <label class="sr-only">Permissions</label>
-                                            <select name="branch_permissions[0][permissions][]" class="form-control">
+                                            <select name="branch_permissions[0][permissions][]" class="form-control" multiple>
                                                 <option value="">Select permissions</option>
                                                 @foreach($permissions as $perm)
                                                     <option value="{{ $perm->id }}">{{ $perm->name }}</option>
@@ -325,8 +355,22 @@
                                         <div class="col-md-3 form-group"><label>Hire Date</label><input type="date" id="wi_hire_date" class="form-control"></div>
                                         <div class="col-md-2 form-group"><label>Status</label><input type="text" id="wi_status" class="form-control" placeholder="Status"></div>
                                         <div class="col-md-2 form-group"><label>Regularization</label><input type="date" id="wi_regularization" class="form-control"></div>
-                                        <div class="col-md-2 form-group"><label>Designation</label><input type="text" id="wi_designation" class="form-control" placeholder="Designation"></div>
-                                        <div class="col-md-2 form-group"><label>Department</label><input type="text" id="wi_department" class="form-control" placeholder="Department"></div>
+                                        <div class="col-md-2 form-group"><label>Designation</label>
+                                            <select id="wi_designation" class="form-control">
+                                                <option value="">-- Select Designation --</option>
+                                                @foreach($designations as $des)
+                                                    <option value="{{ $des->id }}">{{ $des->name }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        <div class="col-md-2 form-group"><label>Department</label>
+                                            <select id="wi_department" class="form-control">
+                                                <option value="">-- Select Department --</option>
+                                                @foreach($departments as $d)
+                                                    <option value="{{ $d->id }}">{{ $d->name }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
                                     </div>
                                     <div class="row">
                                         <div class="col-md-3 form-group"><label>Supervisor (user id)</label><input type="number" id="wi_supervisor" class="form-control" placeholder="Supervisor id"></div>
@@ -345,15 +389,14 @@
                                 <h6>Salary Method</h6>
                                 <div class="row mb-3">
                                     <div class="col-md-3 form-group">
-                                        <label>Salary Method</label>
-                                        <select name="salary_method[method_id]" class="form-control">
-                                            <option value="">-- Select Method --</option>
-                                            <option value="cash">Cash</option>
-                                            <option value="bank">Bank Transfer</option>
-                                            <option value="check">Check</option>
-                                            <option value="agency">Agency</option>
-                                        </select>
-                                    </div>
+                                            <label>Salary Method</label>
+                                            <select name="salary_method[method_id]" class="form-control">
+                                                <option value="">-- Select Method --</option>
+                                                @foreach($salaryMethods as $key => $label)
+                                                    <option value="{{ $key }}">{{ $label }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
                                     <div class="col-md-3 form-group">
                                         <label>Salary Period</label>
                                         <select name="salary_method[period_id]" class="form-control">
@@ -381,14 +424,14 @@
                                 <h6 class="mt-3">Allowances</h6>
                                 <div id="allowances-list">
                                     <div class="allowance-row d-flex mb-2 align-items-center">
-                                        <select name="allowances[0][allowance_id]" class="form-control mr-2" style="width:40%">
+                                        <select name="allowances[0][allowance_id]" class="form-control mr-2 allowance-select" style="width:40%">
                                             <option value="">-- Select allowance --</option>
                                             @foreach($allowances as $al)
                                                 <option value="{{ $al->id }}">{{ $al->name }}</option>
                                             @endforeach
                                         </select>
-                                        <input type="number" name="allowances[0][amount]" class="form-control mr-2 allowance-amount" placeholder="Amount">
-                                        <input type="number" name="allowances[0][monthly_count]" class="form-control mr-2 allowance-count" placeholder="Monthly count">
+                                        <input type="number" name="allowances[0][amount]" class="form-control mr-2 allowance-amount" placeholder="Amount" style="display:none;" disabled>
+                                        <input type="number" name="allowances[0][monthly_count]" class="form-control mr-2 allowance-count" placeholder="Monthly count" style="display:none;" disabled>
                                         <button type="button" class="btn btn-sm btn-outline-danger remove-allowance">Remove</button>
                                     </div>
                                 </div>
@@ -397,15 +440,16 @@
                                 <h6 class="mt-3">Leaves</h6>
                                 <div id="leaves-list">
                                     @foreach($leaves as $i => $lv)
-                                    <div class="form-row align-items-center mb-2">
+                                    <div class="form-row align-items-center mb-2 leave-row">
                                         <div class="col-md-5">
                                             <div class="form-check">
-                                                <input class="form-check-input" type="checkbox" name="leaves[{{ $i }}][leave_id]" value="{{ $lv->id }}" id="leave_{{ $lv->id }}">
+                                                <input class="form-check-input leave-checkbox" type="checkbox" name="leaves[{{ $i }}][leave_id]" value="{{ $lv->id }}" id="leave_{{ $lv->id }}">
                                                 <label class="form-check-label" for="leave_{{ $lv->id }}">{{ $lv->name }}</label>
                                             </div>
                                         </div>
-                                        <div class="col-md-2"><input type="number" name="leaves[{{ $i }}][days]" class="form-control" placeholder="Days"></div>
-                                        <div class="col-md-3"><input type="date" name="leaves[{{ $i }}][effective_date]" class="form-control"></div>
+                                        <div class="col-md-2"><input type="number" name="leaves[{{ $i }}][days]" class="form-control leave-days" placeholder="Days" disabled></div>
+                                        <div class="col-md-3"><input type="date" name="leaves[{{ $i }}][effective_date]" class="form-control leave-effective" disabled></div>
+                                        <div class="col-md-1"><button type="button" class="btn btn-sm btn-outline-danger remove-leave">Remove</button></div>
                                     </div>
                                     @endforeach
                                 </div>
@@ -512,11 +556,30 @@ document.getElementById('avatar')?.addEventListener('change', function(e){
     });
 })();
 
-// Allowances add/remove
+// Allowances add/remove and conditional inputs
 (() => {
     let aIndex = 1;
     const addAllowanceBtn = document.getElementById('add-allowance');
     const allowancesContainer = document.getElementById('allowances-list');
+
+    // show/hide amount inputs when select changes
+    allowancesContainer?.addEventListener('change', function(e){
+        if(e.target && e.target.classList.contains('allowance-select')){
+            const sel = e.target;
+            const row = sel.closest('.allowance-row');
+            if(!row) return;
+            const amt = row.querySelector('.allowance-amount');
+            const cnt = row.querySelector('.allowance-count');
+            if(sel.value){
+                if(amt){ amt.style.display=''; amt.disabled = false; }
+                if(cnt){ cnt.style.display=''; cnt.disabled = false; }
+            } else {
+                if(amt){ amt.style.display='none'; amt.disabled = true; amt.value = ''; }
+                if(cnt){ cnt.style.display='none'; cnt.disabled = true; cnt.value = ''; }
+            }
+        }
+    });
+
     addAllowanceBtn?.addEventListener('click', function(){
         const row = document.createElement('div');
         row.className = 'allowance-row d-flex mb-2 align-items-center';
@@ -524,7 +587,7 @@ document.getElementById('avatar')?.addEventListener('change', function(e){
         @foreach($allowances as $al)
             options += `\n                                                <option value="{{ $al->id }}">{{ addslashes($al->name) }}</option>`;
         @endforeach
-        row.innerHTML = `\n            <select name="allowances[${aIndex}][allowance_id]" class="form-control mr-2" style="width:40%">${options}</select>\n            <input type="number" name="allowances[${aIndex}][amount]" class="form-control mr-2 allowance-amount" placeholder="Amount">\n            <input type="number" name="allowances[${aIndex}][monthly_count]" class="form-control mr-2 allowance-count" placeholder="Monthly count">\n            <button type="button" class="btn btn-sm btn-outline-danger remove-allowance">Remove</button>`;
+        row.innerHTML = `\n            <select name="allowances[${aIndex}][allowance_id]" class="form-control mr-2 allowance-select" style="width:40%">${options}</select>\n            <input type="number" name="allowances[${aIndex}][amount]" class="form-control mr-2 allowance-amount" placeholder="Amount" style="display:none;" disabled>\n            <input type="number" name="allowances[${aIndex}][monthly_count]" class="form-control mr-2 allowance-count" placeholder="Monthly count" style="display:none;" disabled>\n            <button type="button" class="btn btn-sm btn-outline-danger remove-allowance">Remove</button>`;
         allowancesContainer.appendChild(row);
         aIndex++;
     });
@@ -532,6 +595,41 @@ document.getElementById('avatar')?.addEventListener('change', function(e){
     allowancesContainer?.addEventListener('click', function(e){
         if(e.target.classList.contains('remove-allowance')){
             e.target.closest('.allowance-row').remove();
+        }
+    });
+
+    // initialize existing rows visibility
+    document.querySelectorAll('#allowances-list .allowance-row').forEach(function(row){
+        const sel = row.querySelector('.allowance-select');
+        if(sel){
+            sel.dispatchEvent(new Event('change'));
+        }
+    });
+})();
+
+(function(){
+    // Leaves toggle enable/disable and remove
+    const leavesContainer = document.getElementById('leaves-list');
+    leavesContainer?.addEventListener('change', function(e){
+        if(e.target && e.target.classList.contains('leave-checkbox')){
+            const cb = e.target;
+            const row = cb.closest('.leave-row');
+            if(!row) return;
+            const days = row.querySelector('.leave-days');
+            const eff = row.querySelector('.leave-effective');
+            if(cb.checked){
+                if(days){ days.disabled = false; }
+                if(eff){ eff.disabled = false; }
+            } else {
+                if(days){ days.disabled = true; days.value = ''; }
+                if(eff){ eff.disabled = true; eff.value = ''; }
+            }
+        }
+    });
+    leavesContainer?.addEventListener('click', function(e){
+        if(e.target && e.target.classList.contains('remove-leave')){
+            const row = e.target.closest('.leave-row');
+            if(row) row.remove();
         }
     });
 })();
@@ -554,14 +652,18 @@ document.getElementById('avatar')?.addEventListener('change', function(e){
         ['wi_hire_date','wi_status','wi_regularization','wi_designation','wi_department','wi_supervisor','wi_monthly_rate','wi_daily_rate','wi_hourly_rate'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
     });
 
+    // track editing state
+    let editingRow = null;
     saveBtn?.addEventListener('click', function(){
         // read values
         const data = {
             hire_date: document.getElementById('wi_hire_date')?.value || '',
             employment_status: document.getElementById('wi_status')?.value || '',
             regularization: document.getElementById('wi_regularization')?.value || '',
-            designation: document.getElementById('wi_designation')?.value || '',
-            department: document.getElementById('wi_department')?.value || '',
+            designation_id: document.getElementById('wi_designation')?.value || '',
+            designation_text: document.getElementById('wi_designation')?.selectedOptions?.[0]?.text || '',
+            department_id: document.getElementById('wi_department')?.value || '',
+            department_text: document.getElementById('wi_department')?.selectedOptions?.[0]?.text || '',
             supervisor: document.getElementById('wi_supervisor')?.value || '',
             monthly_rate: document.getElementById('wi_monthly_rate')?.value || '',
             daily_rate: document.getElementById('wi_daily_rate')?.value || '',
@@ -571,22 +673,38 @@ document.getElementById('avatar')?.addEventListener('change', function(e){
         // simple validation: require hire_date
         if(!data.hire_date){ alert('Please enter Hire Date'); return; }
 
-        // create table row with visible text and hidden inputs
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td>${data.hire_date}<input type="hidden" name="employee_work_informations[${wiIndex}][hire_date]" value="${data.hire_date}"></td>
-            <td>${data.employment_status}<input type="hidden" name="employee_work_informations[${wiIndex}][employment_status_id]" value="${data.employment_status}"></td>
-            <td>${data.regularization}<input type="hidden" name="employee_work_informations[${wiIndex}][regularization]" value="${data.regularization}"></td>
-            <td>${data.designation}<input type="hidden" name="employee_work_informations[${wiIndex}][designation_id]" value="${data.designation}"></td>
-            <td>${data.department}<input type="hidden" name="employee_work_informations[${wiIndex}][department_id]" value="${data.department}"></td>
-            <td>${data.supervisor}<input type="hidden" name="employee_work_informations[${wiIndex}][direct_supervisor]" value="${data.supervisor}"></td>
-            <td>${data.monthly_rate}<input type="hidden" name="employee_work_informations[${wiIndex}][monthly_rate]" value="${data.monthly_rate}"></td>
-            <td>${data.daily_rate}<input type="hidden" name="employee_work_informations[${wiIndex}][daily_rate]" value="${data.daily_rate}"></td>
-            <td>${data.hourly_rate}<input type="hidden" name="employee_work_informations[${wiIndex}][hourly_rate]" value="${data.hourly_rate}"></td>
-            <td><button type="button" class="btn btn-sm btn-outline-danger remove-workinfo-row">Remove</button></td>
+        // create or update table row with visible text and hidden inputs
+        const renderRow = (index) => {
+            return `
+            <td>${data.hire_date}<input type="hidden" name="employee_work_informations[${index}][hire_date]" value="${data.hire_date}"></td>
+            <td>${data.employment_status}<input type="hidden" name="employee_work_informations[${index}][employment_status_id]" value="${data.employment_status}"></td>
+            <td>${data.regularization}<input type="hidden" name="employee_work_informations[${index}][regularization]" value="${data.regularization}"></td>
+            <td>${data.designation_text}<input type="hidden" name="employee_work_informations[${index}][designation_id]" value="${data.designation_id}"></td>
+            <td>${data.department_text}<input type="hidden" name="employee_work_informations[${index}][department_id]" value="${data.department_id}"></td>
+            <td>${data.supervisor}<input type="hidden" name="employee_work_informations[${index}][direct_supervisor]" value="${data.supervisor}"></td>
+            <td>${data.monthly_rate}<input type="hidden" name="employee_work_informations[${index}][monthly_rate]" value="${data.monthly_rate}"></td>
+            <td>${data.daily_rate}<input type="hidden" name="employee_work_informations[${index}][daily_rate]" value="${data.daily_rate}"></td>
+            <td>${data.hourly_rate}<input type="hidden" name="employee_work_informations[${index}][hourly_rate]" value="${data.hourly_rate}"></td>
+            <td>
+                <button type="button" class="btn btn-sm btn-outline-secondary edit-workinfo-row">Edit</button>
+                <button type="button" class="btn btn-sm btn-outline-danger remove-workinfo-row">Remove</button>
+            </td>
         `;
-        tableBody.appendChild(tr);
-        wiIndex++;
+        };
+
+        if (editingRow) {
+            // replace existing
+            const idx = editingRow.getAttribute('data-wi-index');
+            editingRow.innerHTML = renderRow(idx);
+            editingRow.removeAttribute('data-editing');
+            editingRow = null;
+        } else {
+            const tr = document.createElement('tr');
+            tr.innerHTML = renderRow(wiIndex);
+            tr.setAttribute('data-wi-index', wiIndex);
+            tableBody.appendChild(tr);
+            wiIndex++;
+        }
 
         // hide form and clear
         cancelBtn.click();
@@ -596,6 +714,35 @@ document.getElementById('avatar')?.addEventListener('change', function(e){
     document.querySelector('#workinfo-table')?.addEventListener('click', function(e){
         if(e.target.classList.contains('remove-workinfo-row')){
             e.target.closest('tr').remove();
+        }
+        if(e.target.classList.contains('edit-workinfo-row')){
+            // populate form with values from the row for editing
+            const tr = e.target.closest('tr');
+            if(!tr) return;
+            const inputs = tr.querySelectorAll('input[type="hidden"]');
+            // helper to find hidden input for a given suffix name
+            const getVal = (suffix) => {
+                for(const inp of inputs){
+                    if(inp.name && inp.name.endsWith(suffix)) return inp.value;
+                }
+                return '';
+            };
+            document.getElementById('wi_hire_date').value = getVal('[hire_date]') || '';
+            document.getElementById('wi_status').value = getVal('[employment_status_id]') || '';
+            document.getElementById('wi_regularization').value = getVal('[regularization]') || '';
+            const desId = getVal('[designation_id]') || '';
+            const depId = getVal('[department_id]') || '';
+            if(document.getElementById('wi_designation')) document.getElementById('wi_designation').value = desId;
+            if(document.getElementById('wi_department')) document.getElementById('wi_department').value = depId;
+            document.getElementById('wi_supervisor').value = getVal('[direct_supervisor]') || '';
+            document.getElementById('wi_monthly_rate').value = getVal('[monthly_rate]') || '';
+            document.getElementById('wi_daily_rate').value = getVal('[daily_rate]') || '';
+            document.getElementById('wi_hourly_rate').value = getVal('[hourly_rate]') || '';
+            // set editing marker
+            tr.setAttribute('data-editing', '1');
+            editingRow = tr;
+            // show the form
+            document.getElementById('workinfo-form').style.display = '';
         }
     });
 })();
@@ -636,6 +783,11 @@ document.getElementById('avatar')?.addEventListener('change', function(e){
     // on load
     document.addEventListener('DOMContentLoaded', function(){
         activateTabFromHash(window.location.hash);
+        // server can request an active tab after validation via session('active_tab')
+        try {
+            var serverTab = "{{ session('active_tab', '') }}";
+            if(serverTab) activateTabFromHash('#' + serverTab);
+        } catch(e){}
     });
 
     // when the hash changes (back/forward or link click)
@@ -655,8 +807,24 @@ document.getElementById('avatar')?.addEventListener('change', function(e){
             <div class="col-md-3"><input type="text" name="dependents[${depIndex}][name]" class="form-control" placeholder="Name"></div>\
             <div class="col-md-2"><input type="date" name="dependents[${depIndex}][birthdate]" class="form-control"></div>\
             <div class="col-md-1"><input type="number" name="dependents[${depIndex}][age]" class="form-control" placeholder="Age"></div>\
-            <div class="col-md-3"><input type="text" name="dependents[${depIndex}][gender]" class="form-control" placeholder="Gender"></div>\
-            <div class="col-md-2"><input type="text" name="dependents[${depIndex}][relationship]" class="form-control" placeholder="Relationship"></div>\
+            <div class="col-md-3">\
+                <select name="dependents[${depIndex}][gender]" class="form-control">\
+                    <option value="">-- Select Gender --</option>\
+                    <option value="Male">Male</option>\
+                    <option value="Female">Female</option>\
+                    <option value="Other">Other</option>\
+                </select>\
+            </div>\
+            <div class="col-md-2">\
+                <select name="dependents[${depIndex}][relationship]" class="form-control">\
+                    <option value="">-- Relationship --</option>\
+                    <option value="Son">Son</option>\
+                    <option value="Daughter">Daughter</option>\
+                    <option value="Parent">Parent</option>\
+                    <option value="Spouse">Spouse</option>\
+                    <option value="Other">Other</option>\
+                </select>\
+            </div>\
             <div class="col-md-1"><button type="button" class="btn btn-sm btn-outline-danger remove-dependent">-</button></div>`;
         container.appendChild(row);
         depIndex++;
