@@ -37,6 +37,7 @@ use App\Http\Controllers\FundTransferController;
 use App\Http\Controllers\StatusController;
 use App\Http\Controllers\BenefitController;
 use App\Http\Controllers\HolidayController;
+use App\Http\Controllers\InventoryTransferController;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Http\Request;
 use App\Http\Controllers\TaxController;
@@ -573,3 +574,26 @@ Route::prefix('workforce-shifts')->name('shifts.')->group(function () {
     
     Route::delete('/{id}', [ShiftsController::class, 'destroy']);
 });
+
+Route::prefix('inventory/transfer')->name('transfers.')->group(function () {
+    Route::get('/', [InventoryTransferController::class, 'index'])->name('index');
+    Route::get('/fetch', [InventoryTransferController::class, 'fetchTransfers'])->name('fetch');
+    
+    Route::get('/create', [InventoryTransferController::class, 'create'])->name('create');
+    Route::get('/create/request', fn () => redirect()->route('transfers.create', ['transfer_type' => 'request']));
+    Route::get('/create/send', fn () => redirect()->route('transfers.create', ['transfer_type' => 'send']));
+
+
+    Route::post('/', [InventoryTransferController::class, 'store']);
+    Route::get('/{id}/edit', [InventoryTransferController::class, 'edit'])->name('edit');
+    Route::put('/{id}', [InventoryTransferController::class, 'update']);
+    Route::put('/{id}/update-status', [InventoryTransferController::class, 'updateStatus']);
+    
+    Route::patch('/{id}/archive', [InventoryTransferController::class, 'archive']);
+    Route::patch('/{id}/restore', [InventoryTransferController::class, 'restore']);
+    
+    Route::delete('/{id}', [InventoryTransferController::class, 'destroy']);
+});
+
+
+

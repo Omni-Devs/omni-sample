@@ -250,7 +250,7 @@
         <span class="item-name">PO - Purchase Orders</span>
     </a>
 </li>
-            <li class="nav-item"><a href="/app/inventory/purchase-deliveries" class=""><i class="nav-icon i-Ambulance"></i> <span class="item-name">Transfer</span></a></li>
+            <li class="nav-item"><a href="/inventory/transfer" class=""><i class="nav-icon i-Ambulance"></i> <span class="item-name">Inventory Transfer</span></a></li>
             {{-- <li class="nav-item"><a href="/app/inventory/transfers" class=""><i class="nav-icon i-Jeep-2"></i> <span class="item-name">Warehouse to Warehouse (Inbound)</span></a></li> --}}
             {{-- <li class="nav-item"><a href="/app/inventory/warehouse-transfers" class=""><i class="nav-icon i-Jeep-2"></i> <span class="item-name">Warehouse to Warehouse (Outbound)</span></a></li> --}}
             {{-- <li class="nav-item"><a href="/app/inventory/stock-requests" class=""><i class="nav-icon i-Safe-Box"></i> <span class="item-name">Branch to Branch (Inbound)</span></a></li> --}}
