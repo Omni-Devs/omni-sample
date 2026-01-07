@@ -94,7 +94,7 @@ class InventoryAuditController extends Controller
     switch ($type) {
         case 'components':
             $items = Component::with(['category:id,name', 'subcategory:id,name'])
-                ->select('id', 'code', 'name', 'status', 'category_id', 'subcategory_id')
+                ->select('id', 'code', 'name', 'status', 'category_id', 'subcategory_id', 'onhand', 'unit')
                 ->get();
             break;
 
