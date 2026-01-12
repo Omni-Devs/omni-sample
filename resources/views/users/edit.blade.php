@@ -1,0 +1,1011 @@
+@extends('layouts.app')
+
+@section('content')
+<div class="main-content">
+    <div class="breadcrumb">
+        <h1 class="mr-3">Edit Employee</h1>
+        <ul>
+            <li><a href="{{ route('users.index') }}">People</a></li>
+            <li>Employees</li>
+            <li>Edit</li>
+        </ul>
+    </div>
+
+    <div class="separator-breadcrumb border-top"></div>
+
+    <div class="card">
+        <div class="card-header p-0">
+            <ul class="nav nav-tabs card-header-tabs" id="userEditTabs" role="tablist">
+                <li class="nav-item">
+                    <a class="nav-link active" id="basic-tab" data-toggle="tab" href="#basic" role="tab" aria-controls="basic" aria-selected="true">Basic Information</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="access-tab" data-toggle="tab" href="#access" role="tab" aria-controls="access" aria-selected="false">Access Credentials</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="work-tab" data-toggle="tab" href="#work" role="tab" aria-controls="work" aria-selected="false">Work Information</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="educ-tab" data-toggle="tab" href="#educ" role="tab" aria-controls="educ" aria-selected="false">Educational Background</a>
+                </li>
+            </ul>
+        </div>
+
+        <form action="{{ route('users.update', $user->id) }}" method="POST" enctype="multipart/form-data">
+            @csrf
+            @method('PUT')
+
+            <div class="card-body">
+                @if ($errors->any())
+                    <div class="alert alert-danger">
+                        <ul class="mb-0">
+                            @foreach ($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+                @if (session('success'))
+                    <div class="alert alert-success">{{ session('success') }}</div>
+                @endif
+
+                <div class="tab-content" id="userEditTabContent">
+                    <!-- Basic Information -->
+                    <div class="tab-pane fade show active" id="basic" role="tabpanel" aria-labelledby="basic-tab">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="row">
+                                    <div class="col-md-2">
+                                        <div class="form-group">
+                                            <label for="biometric_number">Biometric Number</label>
+                                            <input type="text" name="biometric_number" id="biometric_number" class="form-control" value="{{ old('biometric_number', $user->biometric_number) }}">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="form-group">
+                                            <label for="id_number">ID Number</label>
+                                            <input type="text" name="id_number" id="id_number" class="form-control" value="{{ old('id_number', $user->id_number) }}">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="form-group">
+                                            <label for="last_name">Last Name</label>
+                                            <input type="text" name="last_name" id="last_name" class="form-control" value="{{ old('last_name', $user->last_name) }}" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="form-group">
+                                            <label for="first_name">First Name</label>
+                                            <input type="text" name="first_name" id="first_name" class="form-control" value="{{ old('first_name', $user->first_name) }}" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="form-group">
+                                            <label for="middle_name">Middle Name</label>
+                                            <input type="text" name="middle_name" id="middle_name" class="form-control" value="{{ old('middle_name', $user->middle_name) }}">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label for="date_of_birth">Date of Birth</label>
+                                            <input type="date" name="date_of_birth" id="date_of_birth" class="form-control" value="{{ old('date_of_birth', $user->date_of_birth) }}">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label for="tin">TIN #</label>
+                                            <input type="text" name="tin" id="tin" class="form-control" value="{{ old('tin', $user->tin) }}">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label for="gender_id">Gender</label>
+                                            <select name="gender_id" id="gender_id" class="form-control">
+                                                <option value="">-- Select Gender --</option>
+                                                <option value="Male" {{ old('gender_id', $user->gender_id) == 'Male' ? 'selected' : '' }}>Male</option>
+                                                <option value="Female" {{ old('gender_id', $user->gender_id) == 'Female' ? 'selected' : '' }}>Female</option>
+                                                <option value="Other" {{ old('gender_id', $user->gender_id) == 'Other' ? 'selected' : '' }}>Other</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label for="blood_type_id">Blood Type</label>
+                                            <select name="blood_type_id" id="blood_type_id" class="form-control">
+                                                <option value="">-- Select Blood Type --</option>
+                                                @foreach(['A+','A-','B+','B-','AB+','AB-','O+','O-'] as $type)
+                                                    <option value="{{ $type }}" {{ old('blood_type_id', $user->blood_type_id) == $type ? 'selected' : '' }}>{{ $type }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label for="mobile_number">Mobile #</label>
+                                            <input type="text" name="mobile_number" id="mobile_number" class="form-control" value="{{ old('mobile_number', $user->mobile_number) }}">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label for="phil_health_number">PhilHealth #</label>
+                                            <input type="text" name="phil_health_number" id="phil_health_number" class="form-control" value="{{ old('phil_health_number', $user->phil_health_number) }}">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label for="pag_ibig_number">PAG-IBIG #</label>
+                                            <input type="text" name="pag_ibig_number" id="pag_ibig_number" class="form-control" value="{{ old('pag_ibig_number', $user->pag_ibig_number) }}">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="email">Email</label>
+                                    <input type="email" name="email" id="email" class="form-control" value="{{ old('email', $user->email) }}" required>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label for="civil_status_id">Civil Status</label>
+                                            <select name="civil_status_id" id="civil_status_id" class="form-control">
+                                                <option value="">-- Select Civil Status --</option>
+                                                @foreach(['Single','Married','Widowed','Separated','Divorced'] as $status)
+                                                    <option value="{{ $status }}" {{ old('civil_status_id', $user->civil_status_id) == $status ? 'selected' : '' }}>{{ $status }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-8">
+                                        <div class="form-group">
+                                            <label for="address">Address</label>
+                                            <textarea name="address" id="address" class="form-control">{{ old('address', $user->address) }}</textarea>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Spouse details -->
+                                <div class="card mt-3">
+                                    <div class="card-body">
+                                        <h6 class="mb-3">Spouse Details</h6>
+                                        <div class="row">
+                                            <div class="col-md-6 form-group">
+                                                <input type="text" name="spouse[name]" class="form-control" placeholder="Full Name" value="{{ old('spouse.name', $spouse->name ?? '') }}">
+                                            </div>
+                                            <div class="col-md-3 form-group">
+                                                <input type="date" name="spouse[date_of_birth]" class="form-control" value="{{ old('spouse.date_of_birth', $spouse->date_of_birth ?? '') }}">
+                                            </div>
+                                            <div class="col-md-3 form-group">
+                                                <input type="number" name="spouse[age]" class="form-control" placeholder="Age" value="{{ old('spouse.age', $spouse->age ?? '') }}">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Dependents -->
+                                <div class="card mt-3">
+                                    <div class="card-body">
+                                        <h6 class="mb-3">Dependents (Optional)</h6>
+                                        <div id="dependents-list">
+                                            @if(old('dependents'))
+                                                @foreach(old('dependents') as $index => $dep)
+                                                    <div class="dependent-row row mb-2">
+                                                        <div class="col-md-3"><input type="text" name="dependents[{{ $index }}][name]" class="form-control" value="{{ $dep['name'] ?? '' }}" placeholder="Name"></div>
+                                                        <div class="col-md-2"><input type="date" name="dependents[{{ $index }}][birthdate]" class="form-control" value="{{ $dep['birthdate'] ?? '' }}"></div>
+                                                        <div class="col-md-1"><input type="number" name="dependents[{{ $index }}][age]" class="form-control" value="{{ $dep['age'] ?? '' }}" placeholder="Age"></div>
+                                                        <div class="col-md-3">
+                                                            <select name="dependents[{{ $index }}][gender]" class="form-control">
+                                                                <option value="">-- Select Gender --</option>
+                                                                <option value="Male" {{ ($dep['gender'] ?? '') == 'Male' ? 'selected' : '' }}>Male</option>
+                                                                <option value="Female" {{ ($dep['gender'] ?? '') == 'Female' ? 'selected' : '' }}>Female</option>
+                                                                <option value="Other" {{ ($dep['gender'] ?? '') == 'Other' ? 'selected' : '' }}>Other</option>
+                                                            </select>
+                                                        </div>
+                                                        <div class="col-md-2">
+                                                            <select name="dependents[{{ $index }}][relationship]" class="form-control">
+                                                                <option value="">-- Relationship --</option>
+                                                                <option value="Son" {{ ($dep['relationship'] ?? '') == 'Son' ? 'selected' : '' }}>Son</option>
+                                                                <option value="Daughter" {{ ($dep['relationship'] ?? '') == 'Daughter' ? 'selected' : '' }}>Daughter</option>
+                                                                <option value="Parent" {{ ($dep['relationship'] ?? '') == 'Parent' ? 'selected' : '' }}>Parent</option>
+                                                                <option value="Spouse" {{ ($dep['relationship'] ?? '') == 'Spouse' ? 'selected' : '' }}>Spouse</option>
+                                                                <option value="Other" {{ ($dep['relationship'] ?? '') == 'Other' ? 'selected' : '' }}>Other</option>
+                                                            </select>
+                                                        </div>
+                                                        <div class="col-md-1"><button type="button" class="btn btn-sm btn-outline-danger remove-dependent">-</button></div>
+                                                    </div>
+                                                @endforeach
+                                            @else
+                                                @foreach($dependents as $index => $dep)
+                                                    <div class="dependent-row row mb-2">
+                                                        <div class="col-md-3"><input type="text" name="dependents[{{ $index }}][name]" class="form-control" value="{{ $dep->name }}" placeholder="Name"></div>
+                                                        <div class="col-md-2"><input type="date" name="dependents[{{ $index }}][birthdate]" class="form-control" value="{{ $dep->birthdate }}"></div>
+                                                        <div class="col-md-1"><input type="number" name="dependents[{{ $index }}][age]" class="form-control" value="{{ $dep->age }}" placeholder="Age"></div>
+                                                        <div class="col-md-3">
+                                                            <select name="dependents[{{ $index }}][gender]" class="form-control">
+                                                                <option value="">-- Select Gender --</option>
+                                                                <option value="Male" {{ $dep->gender == 'Male' ? 'selected' : '' }}>Male</option>
+                                                                <option value="Female" {{ $dep->gender == 'Female' ? 'selected' : '' }}>Female</option>
+                                                                <option value="Other" {{ $dep->gender == 'Other' ? 'selected' : '' }}>Other</option>
+                                                            </select>
+                                                        </div>
+                                                        <div class="col-md-2">
+                                                            <select name="dependents[{{ $index }}][relationship]" class="form-control">
+                                                                <option value="">-- Relationship --</option>
+                                                                <option value="Son" {{ $dep->relationship == 'Son' ? 'selected' : '' }}>Son</option>
+                                                                <option value="Daughter" {{ $dep->relationship == 'Daughter' ? 'selected' : '' }}>Daughter</option>
+                                                                <option value="Parent" {{ $dep->relationship == 'Parent' ? 'selected' : '' }}>Parent</option>
+                                                                <option value="Spouse" {{ $dep->relationship == 'Spouse' ? 'selected' : '' }}>Spouse</option>
+                                                                <option value="Other" {{ $dep->relationship == 'Other' ? 'selected' : '' }}>Other</option>
+                                                            </select>
+                                                        </div>
+                                                        <div class="col-md-1"><button type="button" class="btn btn-sm btn-outline-danger remove-dependent">-</button></div>
+                                                    </div>
+                                                @endforeach
+                                            @endif
+                                        </div>
+                                        <button type="button" id="add-dependent" class="btn btn-sm btn-outline-primary">Add dependent</button>
+                                    </div>
+                                </div>
+
+                                <!-- Emergency contact -->
+                                <div class="card mt-3">
+                                    <div class="card-body">
+                                        <h6 class="mb-3">Contact Information In Case of Emergency</h6>
+                                        <div class="row">
+                                            <div class="col-md-6 form-group">
+                                                <input type="text" name="contact_person[name]" class="form-control" placeholder="Full Name" value="{{ old('contact_person.name', $contactPerson->name ?? '') }}">
+                                            </div>
+                                            <div class="col-md-6 form-group">
+                                                <input type="text" name="contact_person[contact_number]" class="form-control" placeholder="Contact Number" value="{{ old('contact_person.contact_number', $contactPerson->contact_number ?? '') }}">
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <input type="text" name="contact_person[address]" class="form-control" placeholder="Address" value="{{ old('contact_person.address', $contactPerson->address ?? '') }}">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <div class="form-group text-center">
+                                    <label>Photo</label>
+                                    @if($user->image)
+                                        <img src="{{ Storage::url($user->image) }}" alt="Current photo" class="img-thumbnail mb-2" style="max-width: 190px;">
+                                    @endif
+                                    <label for="image" id="drop-area" class="upload-box text-center p-3 border rounded d-block" style="cursor:pointer;">
+                                        <i class="fas fa-cloud-upload-alt fa-2x mb-2 text-muted"></i>
+                                        <p class="text-muted">Drag & Drop an image<br><strong>or click to select</strong></p>
+                                        <input type="file" id="image" name="image" class="d-none" accept="image/*">
+                                        <div id="preview-container" class="mt-3"></div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Access Credentials -->
+                    <div class="tab-pane fade" id="access" role="tabpanel" aria-labelledby="access-tab">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group form-check">
+                                    <input type="checkbox" name="allow_db_user" id="allow_db_user" class="form-check-input" value="1" {{ old('allow_db_user', $user->password ? true : false) ? 'checked' : '' }}>
+                                    <label for="allow_db_user" class="form-check-label">Allow employee to be Database User</label>
+                                </div>
+
+                                <div class="form-row">
+                                    <div class="form-group col-md-6">
+                                        <label for="username">Username</label>
+                                        <input type="text" name="username" id="username" class="form-control" value="{{ old('username', $user->username) }}">
+                                    </div>
+                                    <div class="form-group col-md-6">
+                                        <label for="password">New Password (leave blank to keep current)</label>
+                                        <input type="password" name="password" id="password" class="form-control">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <h6>Branch Permissions</h6>
+                                <div id="branch-permissions-list">
+                                    @if(old('branch_permissions'))
+                                        @foreach(old('branch_permissions') as $i => $bp)
+                                            <div class="branch-permission-row form-row align-items-center mb-2">
+                                                <div class="col-md-5">
+                                                    <select name="branch_permissions[{{ $i }}][branch_id]" class="form-control">
+                                                        <option value="">Select branch</option>
+                                                        @foreach($branches as $branch)
+                                                            <option value="{{ $branch->id }}" {{ ($bp['branch_id'] ?? '') == $branch->id ? 'selected' : '' }}>{{ $branch->name }}</option>
+                                                        @endforeach
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <select name="branch_permissions[{{ $i }}][permissions][]" class="form-control" multiple>
+                                                        @foreach($permissions as $perm)
+                                                            <option value="{{ $perm->id }}" {{ in_array($perm->id, $bp['permissions'] ?? []) ? 'selected' : '' }}>{{ $perm->name }}</option>
+                                                        @endforeach
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-1">
+                                                    <button type="button" class="btn btn-sm btn-outline-danger remove-branch">-</button>
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    @else
+                                        @foreach($user->branches as $i => $branch)
+                                            <div class="branch-permission-row form-row align-items-center mb-2">
+                                                <div class="col-md-5">
+                                                    <select name="branch_permissions[{{ $i }}][branch_id]" class="form-control">
+                                                        <option value="">Select branch</option>
+                                                        @foreach($branches as $b)
+                                                            <option value="{{ $b->id }}" {{ $branch->id == $b->id ? 'selected' : '' }}>{{ $b->name }}</option>
+                                                        @endforeach
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <select name="branch_permissions[{{ $i }}][permissions][]" class="form-control" multiple>
+                                                        @foreach($permissions as $perm)
+                                                            <!-- You may need to load actual assigned permissions per branch -->
+                                                            <option value="{{ $perm->id }}">{{ $perm->name }}</option>
+                                                        @endforeach
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-1">
+                                                    <button type="button" class="btn btn-sm btn-outline-danger remove-branch">-</button>
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    @endif
+                                </div>
+                                <button type="button" id="add-branch-permission" class="btn btn-sm btn-outline-primary">Add branch</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Work Information -->
+                    <div class="tab-pane fade" id="work" role="tabpanel" aria-labelledby="work-tab">
+                        <div class="card">
+                            <div class="card-body">
+                                <h6>Work Informations</h6>
+                                <div class="table-responsive mb-3">
+                                    <table class="table table-bordered" id="workinfo-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Date</th>
+                                                <th>Employment Type</th>
+                                                <th>Regularization</th>
+                                                <th>Position</th>
+                                                <th>Department</th>
+                                                <th>Supervisor</th>
+                                                <th>Monthly Rate</th>
+                                                <th>Daily Rate</th>
+                                                <th>Hourly Rate</th>
+                                                <th>Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @if(old('employee_work_informations'))
+                                                @foreach(old('employee_work_informations') as $wi)
+                                                    <tr>
+                                                        <td>{{ $wi['hire_date'] ?? '' }}<input type="hidden" name="employee_work_informations[{{ $loop->index }}][hire_date]" value="{{ $wi['hire_date'] }}"></td>
+                                                        <td>{{ $wi['employment_status_id'] ?? '' }}<input type="hidden" name="employee_work_informations[{{ $loop->index }}][employment_status_id]" value="{{ $wi['employment_status_id'] }}"></td>
+                                                        <td>{{ $wi['regularization'] ?? '' }}<input type="hidden" name="employee_work_informations[{{ $loop->index }}][regularization]" value="{{ $wi['regularization'] }}"></td>
+                                                        <td>{{ $wi['designation_id'] ?? '' }}<input type="hidden" name="employee_work_informations[{{ $loop->index }}][designation_id]" value="{{ $wi['designation_id'] }}"></td>
+                                                        <td>{{ $wi['department_id'] ?? '' }}<input type="hidden" name="employee_work_informations[{{ $loop->index }}][department_id]" value="{{ $wi['department_id'] }}"></td>
+                                                        <td>{{ $wi['direct_supervisor'] ?? '' }}<input type="hidden" name="employee_work_informations[{{ $loop->index }}][direct_supervisor]" value="{{ $wi['direct_supervisor'] }}"></td>
+                                                        <td>{{ $wi['monthly_rate'] ?? '' }}<input type="hidden" name="employee_work_informations[{{ $loop->index }}][monthly_rate]" value="{{ $wi['monthly_rate'] }}"></td>
+                                                        <td>{{ $wi['daily_rate'] ?? '' }}<input type="hidden" name="employee_work_informations[{{ $loop->index }}][daily_rate]" value="{{ $wi['daily_rate'] }}"></td>
+                                                        <td>{{ $wi['hourly_rate'] ?? '' }}<input type="hidden" name="employee_work_informations[{{ $loop->index }}][hourly_rate]" value="{{ $wi['hourly_rate'] }}"></td>
+                                                        <td><button type="button" class="btn btn-sm btn-danger remove-wi">Remove</button></td>
+                                                    </tr>
+                                                @endforeach
+                                            @else
+                                                @foreach($workInformations as $wi)
+                                                    <tr>
+                                                        <td>{{ $wi->hire_date }}<input type="hidden" name="employee_work_informations[{{ $loop->index }}][hire_date]" value="{{ $wi->hire_date }}"></td>
+                                                        <td>{{ $wi->employment_status_id }}<input type="hidden" name="employee_work_informations[{{ $loop->index }}][employment_status_id]" value="{{ $wi->employment_status_id }}"></td>
+                                                        <td>{{ $wi->regularization }}<input type="hidden" name="employee_work_informations[{{ $loop->index }}][regularization]" value="{{ $wi->regularization }}"></td>
+                                                        <td>{{ $wi->designation_id }}<input type="hidden" name="employee_work_informations[{{ $loop->index }}][designation_id]" value="{{ $wi->designation_id }}"></td>
+                                                        <td>{{ $wi->department_id }}<input type="hidden" name="employee_work_informations[{{ $loop->index }}][department_id]" value="{{ $wi->department_id }}"></td>
+                                                        <td>{{ $wi->direct_supervisor }}<input type="hidden" name="employee_work_informations[{{ $loop->index }}][direct_supervisor]" value="{{ $wi->direct_supervisor }}"></td>
+                                                        <td>{{ $wi->monthly_rate }}<input type="hidden" name="employee_work_informations[{{ $loop->index }}][monthly_rate]" value="{{ $wi->monthly_rate }}"></td>
+                                                        <td>{{ $wi->daily_rate }}<input type="hidden" name="employee_work_informations[{{ $loop->index }}][daily_rate]" value="{{ $wi->daily_rate }}"></td>
+                                                        <td>{{ $wi->hourly_rate }}<input type="hidden" name="employee_work_informations[{{ $loop->index }}][hourly_rate]" value="{{ $wi->hourly_rate }}"></td>
+                                                        <td><button type="button" class="btn btn-sm btn-danger remove-wi">Remove</button></td>
+                                                    </tr>
+                                                @endforeach
+                                            @endif
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <button type="button" id="open-workinfo-form" class="btn btn-sm btn-outline-primary mb-3">Add Work Info</button>
+
+                                <!-- Work info form (same as create) -->
+                                <div id="workinfo-form" style="display:none;" class="mb-3">
+                                    <!-- ... copy the work info form fields from your create blade ... -->
+                                    <!-- Make sure IDs and names match the JS logic -->
+                                </div>
+
+                                <!-- Salary Method, Allowances, Leaves sections -->
+                                <!-- Similar pattern: use old() or model data -->
+                                <!-- ... -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Educational Background -->
+                    <div class="tab-pane fade" id="educ" role="tabpanel" aria-labelledby="educ-tab">
+                        <div class="card">
+                            <div class="card-body">
+                                <h6>Educational Background</h6>
+                                <div id="educ-bg-list">
+                                    @if(old('educational_backgrounds'))
+                                        @foreach(old('educational_backgrounds') as $index => $eb)
+                                            <div class="educ-row row mb-2">
+                                                <div class="col-md-5"><input type="text" name="educational_backgrounds[{{ $index }}][name_of_school]" class="form-control" value="{{ $eb['name_of_school'] ?? '' }}" placeholder="Name of school"></div>
+                                                <div class="col-md-2"><input type="number" name="educational_backgrounds[{{ $index }}][level_id]" class="form-control" value="{{ $eb['level_id'] ?? '' }}" placeholder="Level id"></div>
+                                                <div class="col-md-2"><input type="date" name="educational_backgrounds[{{ $index }}][tenure_start]" class="form-control" value="{{ $eb['tenure_start'] ?? '' }}"></div>
+                                                <div class="col-md-2"><input type="date" name="educational_backgrounds[{{ $index }}][tenure_end]" class="form-control" value="{{ $eb['tenure_end'] ?? '' }}"></div>
+                                                <div class="col-md-1"><button type="button" class="btn btn-sm btn-outline-danger remove-educ">-</button></div>
+                                            </div>
+                                        @endforeach
+                                    @else
+                                        @foreach($educationalBackgrounds as $index => $eb)
+                                            <div class="educ-row row mb-2">
+                                                <div class="col-md-5"><input type="text" name="educational_backgrounds[{{ $index }}][name_of_school]" class="form-control" value="{{ $eb->name_of_school }}" placeholder="Name of school"></div>
+                                                <div class="col-md-2"><input type="number" name="educational_backgrounds[{{ $index }}][level_id]" class="form-control" value="{{ $eb->level_id }}" placeholder="Level id"></div>
+                                                <div class="col-md-2"><input type="date" name="educational_backgrounds[{{ $index }}][tenure_start]" class="form-control" value="{{ $eb->tenure_start }}"></div>
+                                                <div class="col-md-2"><input type="date" name="educational_backgrounds[{{ $index }}][tenure_end]" class="form-control" value="{{ $eb->tenure_end }}"></div>
+                                                <div class="col-md-1"><button type="button" class="btn btn-sm btn-outline-danger remove-educ">-</button></div>
+                                            </div>
+                                        @endforeach
+                                    @endif
+                                </div>
+                                <button type="button" id="add-educ" class="btn btn-sm btn-outline-primary">Add education</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-footer d-flex justify-content-between">
+                <div>
+                    <a href="{{ route('users.index') }}" class="btn btn-secondary">Cancel</a>
+                </div>
+                <div>
+                    <button type="submit" class="btn btn-primary">Update</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+@endsection
+
+@section('scripts')
+
+<!-- Your existing scripts here -->
+
+    <!-- ADD THIS BLOCK TO TEST/FIX TABS -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <script>
+        $(document).ready(function(){
+            console.log("jQuery and Bootstrap loaded for tabs");
+
+            // Force activate the Access tab to test
+            $('#access-tab').tab('show');
+
+            // Optional: activate tab from URL hash (e.g. #work)
+            if (window.location.hash) {
+                $('a[href="' + window.location.hash + '"]').tab('show');
+            }
+        });
+    </script>
+    
+<script>
+// Image previews
+document.getElementById('image')?.addEventListener('change', function(e){
+    const file = e.target.files && e.target.files[0];
+    if(!file) return;
+    if(!file.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onload = function(ev){
+        let img = document.getElementById('create-user-image-preview');
+        if(!img){
+            img = document.createElement('img');
+            img.id = 'create-user-image-preview';
+            img.className = 'img-thumbnail mt-2';
+            img.style.maxWidth = '190px';
+            document.getElementById('image').parentNode.appendChild(img);
+        }
+        img.src = ev.target.result;
+    }
+    reader.readAsDataURL(file);
+});
+document.getElementById('avatar')?.addEventListener('change', function(e){
+    const file = e.target.files && e.target.files[0];
+    if(!file) return;
+    if(!file.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onload = function(ev){
+        let img = document.getElementById('create-user-avatar-preview');
+        if(!img){
+            img = document.createElement('img');
+            img.id = 'create-user-avatar-preview';
+            img.className = 'img-thumbnail mt-2';
+            img.style.maxWidth = '190px';
+            document.getElementById('avatar').parentNode.appendChild(img);
+        }
+        img.src = ev.target.result;
+    }
+    reader.readAsDataURL(file);
+});
+
+// Repeatable educational backgrounds
+(() => {
+    let educIndex = 1;
+    document.getElementById('add-educ')?.addEventListener('click', function(){
+        const container = document.getElementById('educ-bg-list');
+        const row = document.createElement('div');
+        row.className = 'educ-row row mb-2';
+        row.innerHTML = `\
+            <div class="col-md-5"><input type="text" name="educational_backgrounds[${educIndex}][name_of_school]" class="form-control" placeholder="Name of school"></div>\
+            <div class="col-md-2"><input type="number" name="educational_backgrounds[${educIndex}][level_id]" class="form-control" placeholder="Level id"></div>\
+            <div class="col-md-2"><input type="date" name="educational_backgrounds[${educIndex}][tenure_start]" class="form-control"></div>\
+            <div class="col-md-2"><input type="date" name="educational_backgrounds[${educIndex}][tenure_end]" class="form-control"></div>\
+            <div class="col-md-1"><button type="button" class="btn btn-sm btn-outline-danger remove-educ">-</button></div>`;
+        container.appendChild(row);
+        educIndex++;
+    });
+    document.getElementById('educ-bg-list')?.addEventListener('click', function(e){
+        if(e.target.classList.contains('remove-educ')){
+            e.target.closest('.educ-row').remove();
+        }
+    });
+})();
+
+// Allowances add/remove and conditional inputs
+(() => {
+    let aIndex = 1;
+    const addAllowanceBtn = document.getElementById('add-allowance');
+    const allowancesContainer = document.getElementById('allowances-list');
+
+    // show/hide amount inputs when select changes
+    allowancesContainer?.addEventListener('change', function(e){
+        if(e.target && e.target.classList.contains('allowance-select')){
+            const sel = e.target;
+            const row = sel.closest('.allowance-row');
+            if(!row) return;
+            const amt = row.querySelector('.allowance-amount');
+            const cnt = row.querySelector('.allowance-count');
+            if(sel.value){
+                if(amt){ amt.style.display=''; amt.disabled = false; }
+                if(cnt){ cnt.style.display=''; cnt.disabled = false; }
+            } else {
+                if(amt){ amt.style.display='none'; amt.disabled = true; amt.value = ''; }
+                if(cnt){ cnt.style.display='none'; cnt.disabled = true; cnt.value = ''; }
+            }
+        }
+    });
+
+    addAllowanceBtn?.addEventListener('click', function(){
+        const row = document.createElement('div');
+        row.className = 'allowance-row d-flex mb-2 align-items-center';
+        let options = `\n                                            <option value="">-- Select allowance --</option>`;
+        @foreach($allowances as $al)
+            options += `\n                                                <option value="{{ $al->id }}">{{ addslashes($al->name) }}</option>`;
+        @endforeach
+        row.innerHTML = `\n            <select name="allowances[${aIndex}][allowance_id]" class="form-control mr-2 allowance-select" style="width:40%">${options}</select>\n            <input type="number" name="allowances[${aIndex}][amount]" class="form-control mr-2 allowance-amount" placeholder="Amount" style="display:none;" disabled>\n            <input type="number" name="allowances[${aIndex}][monthly_count]" class="form-control mr-2 allowance-count" placeholder="Monthly count" style="display:none;" disabled>\n            <button type="button" class="btn btn-sm btn-outline-danger remove-allowance">Remove</button>`;
+        allowancesContainer.appendChild(row);
+        aIndex++;
+    });
+
+    allowancesContainer?.addEventListener('click', function(e){
+        if(e.target.classList.contains('remove-allowance')){
+            e.target.closest('.allowance-row').remove();
+        }
+    });
+
+    // initialize existing rows visibility
+    document.querySelectorAll('#allowances-list .allowance-row').forEach(function(row){
+        const sel = row.querySelector('.allowance-select');
+        if(sel){
+            sel.dispatchEvent(new Event('change'));
+        }
+    });
+})();
+
+let wiIndex = 0;
+
+document.getElementById('save-workinfo').addEventListener('click', function () {
+    const tbody = document.querySelector('#workinfo-table tbody');
+
+    const hireDate = document.getElementById('wi_hire_date').value;
+    if (!hireDate) return alert('Hire date required');
+
+    const row = document.createElement('tr');
+    row.innerHTML = `
+        <td>${hireDate}
+            <input type="hidden" name="employee_work_informations[${wiIndex}][hire_date]" value="${hireDate}">
+        </td>
+        <td>${wi_status.value}
+            <input type="hidden" name="employee_work_informations[${wiIndex}][employment_status_id]" value="${wi_status.value}">
+        </td>
+        <td>${wi_regularization.value}
+            <input type="hidden" name="employee_work_informations[${wiIndex}][regularization]" value="${wi_regularization.value}">
+        </td>
+        <td>${wi_designation.options[wi_designation.selectedIndex].text}
+            <input type="hidden" name="employee_work_informations[${wiIndex}][designation_id]" value="${wi_designation.value}">
+        </td>
+        <td>${wi_department.options[wi_department.selectedIndex].text}
+            <input type="hidden" name="employee_work_informations[${wiIndex}][department_id]" value="${wi_department.value}">
+        </td>
+        <td>${wi_supervisor.value}
+            <input type="hidden" name="employee_work_informations[${wiIndex}][direct_supervisor]" value="${wi_supervisor.value}">
+        </td>
+        <td>${wi_monthly_rate.value}
+            <input type="hidden" name="employee_work_informations[${wiIndex}][monthly_rate]" value="${wi_monthly_rate.value}">
+        </td>
+        <td>${wi_daily_rate.value}
+            <input type="hidden" name="employee_work_informations[${wiIndex}][daily_rate]" value="${wi_daily_rate.value}">
+        </td>
+        <td>${wi_hourly_rate.value}
+            <input type="hidden" name="employee_work_informations[${wiIndex}][hourly_rate]" value="${wi_hourly_rate.value}">
+        </td>
+        <td><button type="button" class="btn btn-sm btn-danger remove-wi">Remove</button></td>
+    `;
+
+    tbody.appendChild(row);
+    wiIndex++;
+});
+
+document.querySelector('form').addEventListener('submit', function () {
+
+    document.querySelectorAll('.allowance-checkbox:checked').forEach(cb => {
+        const row = cb.closest('.allowance-row');
+        row.querySelector('.allowance-amount').disabled = false;
+        row.querySelector('.allowance-count').disabled = false;
+    });
+
+    document.querySelectorAll('.leave-checkbox:checked').forEach(cb => {
+        const row = cb.closest('.leave-row');
+        row.querySelector('.leave-days').disabled = false;
+        row.querySelector('.leave-effective').disabled = false;
+    });
+
+});
+
+(function(){
+    const container = document.getElementById('allowances-list');
+
+    // enable / disable inputs on checkbox toggle
+    container?.addEventListener('change', function(e){
+        if(e.target.classList.contains('allowance-checkbox')){
+            const row = e.target.closest('.allowance-row');
+            if(!row) return;
+
+            const amount = row.querySelector('.allowance-amount');
+            const count  = row.querySelector('.allowance-count');
+
+            if(e.target.checked){
+                amount.disabled = false;
+                count.disabled  = false;
+            } else {
+                amount.disabled = true;
+                count.disabled  = true;
+                amount.value = '';
+                count.value  = '';
+            }
+        }
+    });
+
+    // remove row
+    container?.addEventListener('click', function(e){
+        if(e.target.classList.contains('remove-allowance')){
+            e.target.closest('.allowance-row')?.remove();
+        }
+    });
+})();
+
+(function(){
+    // Leaves toggle enable/disable and remove
+    const leavesContainer = document.getElementById('leaves-list');
+    leavesContainer?.addEventListener('change', function(e){
+        if(e.target && e.target.classList.contains('leave-checkbox')){
+            const cb = e.target;
+            const row = cb.closest('.leave-row');
+            if(!row) return;
+            const days = row.querySelector('.leave-days');
+            const eff = row.querySelector('.leave-effective');
+            if(cb.checked){
+                if(days){ days.disabled = false; }
+                if(eff){ eff.disabled = false; }
+            } else {
+                if(days){ days.disabled = true; days.value = ''; }
+                if(eff){ eff.disabled = true; eff.value = ''; }
+            }
+        }
+    });
+    leavesContainer?.addEventListener('click', function(e){
+        if(e.target && e.target.classList.contains('remove-leave')){
+            const row = e.target.closest('.leave-row');
+            if(row) row.remove();
+        }
+    });
+})();
+
+// Work info add/edit (table + hidden inputs)
+(function(){
+    let wiIndex = 0;
+    const openBtn = document.getElementById('open-workinfo-form');
+    const formPane = document.getElementById('workinfo-form');
+    const cancelBtn = document.getElementById('cancel-workinfo');
+    const saveBtn = document.getElementById('save-workinfo');
+    const tableBody = document.querySelector('#workinfo-table tbody');
+
+    openBtn?.addEventListener('click', function(){
+        formPane.style.display = '';
+    });
+    cancelBtn?.addEventListener('click', function(){
+        formPane.style.display = 'none';
+        // clear inputs
+        ['wi_hire_date','wi_status','wi_regularization','wi_designation','wi_department','wi_supervisor','wi_monthly_rate','wi_daily_rate','wi_hourly_rate'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+    });
+
+    // track editing state
+    let editingRow = null;
+    saveBtn?.addEventListener('click', function(){
+        // read values
+        const data = {
+            hire_date: document.getElementById('wi_hire_date')?.value || '',
+            employment_status: document.getElementById('wi_status')?.value || '',
+            regularization: document.getElementById('wi_regularization')?.value || '',
+            designation_id: document.getElementById('wi_designation')?.value || '',
+            designation_text: document.getElementById('wi_designation')?.selectedOptions?.[0]?.text || '',
+            department_id: document.getElementById('wi_department')?.value || '',
+            department_text: document.getElementById('wi_department')?.selectedOptions?.[0]?.text || '',
+            supervisor: document.getElementById('wi_supervisor')?.value || '',
+            monthly_rate: document.getElementById('wi_monthly_rate')?.value || '',
+            daily_rate: document.getElementById('wi_daily_rate')?.value || '',
+            hourly_rate: document.getElementById('wi_hourly_rate')?.value || '',
+        };
+
+        // simple validation: require hire_date
+        if(!data.hire_date){ alert('Please enter Date'); return; }
+
+        // create or update table row with visible text and hidden inputs
+        const renderRow = (index) => {
+            return `
+            <td>${data.hire_date}<input type="hidden" name="employee_work_informations[${index}][hire_date]" value="${data.hire_date}"></td>
+            <td>${data.employment_status}<input type="hidden" name="employee_work_informations[${index}][employment_status_id]" value="${data.employment_status}"></td>
+            <td>${data.regularization}<input type="hidden" name="employee_work_informations[${index}][regularization]" value="${data.regularization}"></td>
+            <td>${data.designation_text}<input type="hidden" name="employee_work_informations[${index}][designation_id]" value="${data.designation_id}"></td>
+            <td>${data.department_text}<input type="hidden" name="employee_work_informations[${index}][department_id]" value="${data.department_id}"></td>
+            <td>${data.supervisor}<input type="hidden" name="employee_work_informations[${index}][direct_supervisor]" value="${data.supervisor}"></td>
+            <td>${data.monthly_rate}<input type="hidden" name="employee_work_informations[${index}][monthly_rate]" value="${data.monthly_rate}"></td>
+            <td>${data.daily_rate}<input type="hidden" name="employee_work_informations[${index}][daily_rate]" value="${data.daily_rate}"></td>
+            <td>${data.hourly_rate}<input type="hidden" name="employee_work_informations[${index}][hourly_rate]" value="${data.hourly_rate}"></td>
+            <td>
+                <button type="button" class="btn btn-sm btn-outline-secondary edit-workinfo-row">Edit</button>
+                <button type="button" class="btn btn-sm btn-outline-danger remove-workinfo-row">Remove</button>
+            </td>
+        `;
+        };
+
+        if (editingRow) {
+            // replace existing
+            const idx = editingRow.getAttribute('data-wi-index');
+            editingRow.innerHTML = renderRow(idx);
+            editingRow.removeAttribute('data-editing');
+            editingRow = null;
+        } else {
+            const tr = document.createElement('tr');
+            tr.innerHTML = renderRow(wiIndex);
+            tr.setAttribute('data-wi-index', wiIndex);
+            tableBody.appendChild(tr);
+            wiIndex++;
+        }
+
+        // hide form and clear
+        cancelBtn.click();
+    });
+
+    // remove row
+    document.querySelector('#workinfo-table')?.addEventListener('click', function(e){
+        if(e.target.classList.contains('remove-workinfo-row')){
+            e.target.closest('tr').remove();
+        }
+        if(e.target.classList.contains('edit-workinfo-row')){
+            // populate form with values from the row for editing
+            const tr = e.target.closest('tr');
+            if(!tr) return;
+            const inputs = tr.querySelectorAll('input[type="hidden"]');
+            // helper to find hidden input for a given suffix name
+            const getVal = (suffix) => {
+                for(const inp of inputs){
+                    if(inp.name && inp.name.endsWith(suffix)) return inp.value;
+                }
+                return '';
+            };
+            document.getElementById('wi_hire_date').value = getVal('[hire_date]') || '';
+            document.getElementById('wi_status').value = getVal('[employment_status_id]') || '';
+            document.getElementById('wi_regularization').value = getVal('[regularization]') || '';
+            const desId = getVal('[designation_id]') || '';
+            const depId = getVal('[department_id]') || '';
+            if(document.getElementById('wi_designation')) document.getElementById('wi_designation').value = desId;
+            if(document.getElementById('wi_department')) document.getElementById('wi_department').value = depId;
+            document.getElementById('wi_supervisor').value = getVal('[direct_supervisor]') || '';
+            document.getElementById('wi_monthly_rate').value = getVal('[monthly_rate]') || '';
+            document.getElementById('wi_daily_rate').value = getVal('[daily_rate]') || '';
+            document.getElementById('wi_hourly_rate').value = getVal('[hourly_rate]') || '';
+            // set editing marker
+            tr.setAttribute('data-editing', '1');
+            editingRow = tr;
+            // show the form
+            document.getElementById('workinfo-form').style.display = '';
+        }
+    });
+})();
+
+// Activate tab from URL hash (e.g. /users/create#access)
+(function(){
+    function activateTabFromHash(hash){
+        if(!hash) return;
+        try{
+            // prefer selector matching the tab href
+            var selector = 'a.nav-link[href="' + hash + '"]';
+            var tabLink = document.querySelector(selector);
+            if(tabLink){
+                // If jQuery + bootstrap tab plugin available (Bootstrap 4)
+                if(window.jQuery && typeof window.jQuery.fn.tab === 'function'){
+                    window.jQuery(selector).tab('show');
+                    return;
+                }
+                // Bootstrap 5: use the JS API
+                if(window.bootstrap && typeof window.bootstrap.Tab === 'function'){
+                    var tab = new window.bootstrap.Tab(tabLink);
+                    tab.show();
+                    return;
+                }
+                // Fallback: manually activate classes
+                // deactivate active links/panes
+                document.querySelectorAll('.nav-link').forEach(function(el){ el.classList.remove('active'); el.setAttribute('aria-selected','false'); });
+                document.querySelectorAll('.tab-pane').forEach(function(p){ p.classList.remove('show','active'); });
+                tabLink.classList.add('active');
+                tabLink.setAttribute('aria-selected','true');
+                var targetId = tabLink.getAttribute('href');
+                var pane = document.querySelector(targetId);
+                if(pane){ pane.classList.add('show','active'); }
+            }
+        }catch(e){ console.error('activateTabFromHash error', e); }
+    }
+
+    // on load
+    document.addEventListener('DOMContentLoaded', function(){
+        activateTabFromHash(window.location.hash);
+        // server can request an active tab after validation via session('active_tab')
+        try {
+            var serverTab = "{{ session('active_tab', '') }}";
+            if(serverTab) activateTabFromHash('#' + serverTab);
+        } catch(e){}
+    });
+
+    // when the hash changes (back/forward or link click)
+    window.addEventListener('hashchange', function(){
+        activateTabFromHash(window.location.hash);
+    });
+})();
+
+// Repeatable dependents
+(() => {
+    let depIndex = 1;
+    document.getElementById('add-dependent')?.addEventListener('click', function(){
+        const container = document.getElementById('dependents-list');
+        const row = document.createElement('div');
+        row.className = 'dependent-row row mb-2';
+        row.innerHTML = `\
+            <div class="col-md-3"><input type="text" name="dependents[${depIndex}][name]" class="form-control" placeholder="Name"></div>\
+            <div class="col-md-2"><input type="date" name="dependents[${depIndex}][birthdate]" class="form-control"></div>\
+            <div class="col-md-1"><input type="number" name="dependents[${depIndex}][age]" class="form-control" placeholder="Age"></div>\
+            <div class="col-md-3">\
+                <select name="dependents[${depIndex}][gender]" class="form-control">\
+                    <option value="">-- Select Gender --</option>\
+                    <option value="Male">Male</option>\
+                    <option value="Female">Female</option>\
+                    <option value="Other">Other</option>\
+                </select>\
+            </div>\
+            <div class="col-md-2">\
+                <select name="dependents[${depIndex}][relationship]" class="form-control">\
+                    <option value="">-- Relationship --</option>\
+                    <option value="Son">Son</option>\
+                    <option value="Daughter">Daughter</option>\
+                    <option value="Parent">Parent</option>\
+                    <option value="Spouse">Spouse</option>\
+                    <option value="Other">Other</option>\
+                </select>\
+            </div>\
+            <div class="col-md-1"><button type="button" class="btn btn-sm btn-outline-danger remove-dependent">-</button></div>`;
+        container.appendChild(row);
+        depIndex++;
+    });
+    document.getElementById('dependents-list')?.addEventListener('click', function(e){
+        if(e.target.classList.contains('remove-dependent')){
+            e.target.closest('.dependent-row').remove();
+        }
+    });
+})();
+
+// Repeatable work info
+(() => {
+    let wIndex = 1;
+    document.getElementById('add-workinfo')?.addEventListener('click', function(){
+        const container = document.getElementById('workinfo-list');
+        const row = document.createElement('div');
+        row.className = 'workinfo-row row mb-2';
+        row.innerHTML = `\
+            <div class="col-md-3"><input type="date" name="employee_work_informations[${wIndex}][hire_date]" class="form-control"></div>\
+            <div class="col-md-2"><input type="number" name="employee_work_informations[${wIndex}][employment_status_id]" class="form-control"></div>\
+            <div class="col-md-2"><input type="date" name="employee_work_informations[${wIndex}][regularization]" class="form-control"></div>\
+            <div class="col-md-2"><input type="number" name="employee_work_informations[${wIndex}][designation_id]" class="form-control"></div>\
+            <div class="col-md-2"><input type="number" name="employee_work_informations[${wIndex}][department_id]" class="form-control"></div>\
+            <div class="col-md-1"><button type="button" class="btn btn-sm btn-outline-danger remove-workinfo">-</button></div>\
+            <div class="col-12 mt-2">\
+                <div class="row">\
+                    <div class="col-md-4"><input type="number" step="0.01" name="employee_work_informations[${wIndex}][monthly_rate]" class="form-control" placeholder="Monthly rate"></div>\
+                    <div class="col-md-4"><input type="number" step="0.01" name="employee_work_informations[${wIndex}][daily_rate]" class="form-control" placeholder="Daily rate"></div>\
+                    <div class="col-md-4"><input type="number" step="0.01" name="employee_work_informations[${wIndex}][hourly_rate]" class="form-control" placeholder="Hourly rate"></div>\
+                </div>\
+            </div>`;
+        container.appendChild(row);
+        wIndex++;
+    });
+    document.getElementById('workinfo-list')?.addEventListener('click', function(e){
+        if(e.target.classList.contains('remove-workinfo')){
+            e.target.closest('.workinfo-row').remove();
+        }
+    });
+})();
+
+// Repeatable branch-permissions rows
+(() => {
+    let bpIndex = 1; // starting from 1 since initial row is 0
+    const container = document.getElementById('branch-permissions-list');
+    const addBtn = document.getElementById('add-branch-permission');
+    addBtn?.addEventListener('click', function(){
+        const row = document.createElement('div');
+        row.className = 'branch-permission-row form-row align-items-center mb-2';
+        // build branch select options (serialize from server-side values)
+        let branchOptions = `\n                                                <option value="">-- Select branch --</option>`;
+        @foreach($branches as $branch)
+            branchOptions += `\n                                                <option value="{{ $branch->id }}">{{ addslashes($branch->name) }}</option>`;
+        @endforeach
+
+        let permOptions = ``;
+        @foreach($permissions as $perm)
+            permOptions += `\n                                                    <option value="{{ $perm->id }}">{{ addslashes($perm->name) }}</option>`;
+        @endforeach
+
+        row.innerHTML = `\n                <div class="col-md-5">\n                    <select name="branch_permissions[${bpIndex}][branch_id]" class="form-control">${branchOptions}\n                    </select>\n                </div>\n                <div class="col-md-6">\n                    <select name="branch_permissions[${bpIndex}][permissions][]" class="form-control" multiple>\n                        ${permOptions}\n                    </select>\n                </div>\n                <div class="col-md-1">\n                    <button type="button" class="btn btn-sm btn-outline-danger remove-branch">-</button>\n                </div>`;
+
+        container.appendChild(row);
+        bpIndex++;
+    });
+
+    container?.addEventListener('click', function(e){
+        if(e.target.classList.contains('remove-branch')){
+            const row = e.target.closest('.branch-permission-row');
+            if(row) row.remove();
+        }
+    });
+})();
+</script>
+@endsection

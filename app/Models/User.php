@@ -124,4 +124,9 @@ class User extends Authenticatable
     {
         return $this->belongsTo(\App\Models\User::class, 'direct_supervisor');
     }
+
+    public function attachments()
+    {
+        return $this->hasMany(\App\Models\Attachment::class);
+    }
 }

@@ -52,31 +52,31 @@
                         <div class="row">
                             <div class="col-md-8">
                                 <div class="row">
-                                    <div class="col-md-4">
+                                    <div class="col-md-2">
                                         <div class="form-group">
                                             <label for="biometric_number">Biometric Number</label>
                                             <input type="text" name="biometric_number" id="biometric_number" class="form-control" value="{{ old('biometric_number') }}">
                                         </div>
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-md-2">
                                         <div class="form-group">
                                             <label for="id_number">ID Number</label>
                                             <input type="text" name="id_number" id="id_number" class="form-control" value="{{ old('id_number') }}">
                                         </div>
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-md-3">
                                         <div class="form-group">
                                             <label for="last_name">Last Name</label>
                                             <input type="text" name="last_name" id="last_name" class="form-control" value="{{ old('last_name') }}">
                                         </div>
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-md-3">
                                         <div class="form-group">
                                             <label for="first_name">First Name</label>
                                             <input type="text" name="first_name" id="first_name" class="form-control" value="{{ old('first_name') }}">
                                         </div>
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-md-2">
                                         <div class="form-group">
                                             <label for="middle_name">Middle Name</label>
                                             <input type="text" name="middle_name" id="middle_name" class="form-control" value="{{ old('middle_name') }}">
@@ -250,19 +250,36 @@
                                 </div>
                             </div>
 
-                            <div class="col-md-4">
+                    <div class="col-md-4">
                                 <div class="form-group text-center">
                                     <label>Photo</label>
-                                    <div class="border rounded p-3" style="position:relative;min-height:160px;">
-                                        <input type="file" name="image" id="image" class="form-control-file mb-2">
-                                        <input type="file" name="avatar" id="avatar" class="form-control-file mb-2">
-                                        <div id="create-user-image-preview"></div>
-                                        <div id="create-user-avatar-preview"></div>
-                                    </div>
+
+                                    <label 
+                                for="image"
+                                id="drop-area"
+                                class="upload-box text-center p-3 border rounded d-block"
+                                style="cursor:pointer;"
+                            >
+                                <i class="fas fa-cloud-upload-alt fa-2x mb-2 text-muted"></i>
+                                <p class="text-muted">
+                                    Drag & Drop an image<br>
+                                    <strong>or click to select</strong>
+                                </p>
+
+                                <input 
+                                    type="file" 
+                                    id="image" 
+                                    name="image" 
+                                    class="d-none" 
+                                    accept="image/*"
+                                >
+
+                                <div id="preview-container" class="mt-3"></div>
+                            </label>
                                 </div>
                             </div>
-                        </div>
                     </div>
+                </div>
 
                     <!-- Access Credentials -->
                     <div class="tab-pane fade" id="access" role="tabpanel" aria-labelledby="access-tab">
@@ -330,10 +347,10 @@
                                     <table class="table table-bordered" id="workinfo-table">
                                         <thead>
                                             <tr>
-                                                <th>Hire Date</th>
-                                                <th>Status</th>
+                                                <th>Date</th>
+                                                <th>Employment Type</th>
                                                 <th>Regularization</th>
-                                                <th>Designation</th>
+                                                <th>Position</th>
                                                 <th>Department</th>
                                                 <th>Supervisor</th>
                                                 <th>Monthly Rate</th>
@@ -352,12 +369,26 @@
 
                                 <div id="workinfo-form" style="display:none;" class="mb-3">
                                     <div class="row">
-                                        <div class="col-md-3 form-group"><label>Hire Date</label><input type="date" id="wi_hire_date" class="form-control"></div>
-                                        <div class="col-md-2 form-group"><label>Status</label><input type="text" id="wi_status" class="form-control" placeholder="Status"></div>
+                                        {{-- <div class="col-md-3 form-group"><label>Hire Date</label><input type="date" id="wi_hire_date" class="form-control"></div>
+                                        <div class="col-md-2 form-group"><label>Status</label><input type="text" id="wi_status" class="form-control" placeholder="Status"></div> --}}
+
+                                        <div class="col-md-3 form-group"><label>Date</label><input type="date" id="wi_hire_date" class="form-control"></div>
+                                        <div class="col-md-2 form-group">
+                                            <label>Employment Type</label>
+                                            <select id="wi_status" class="form-control">
+                                                <option value="">Select Employment Type</option>
+                                                <option value="probationary">Probationary Period</option>
+                                                <option value="regularization">Regularization</option>
+                                                <option value="promotion">Promotion</option>
+                                                <option value="contractual">Contractual</option>
+                                                <option value="resigned">Resigned</option>
+                                            </select>
+                                        </div>
+                                        
                                         <div class="col-md-2 form-group"><label>Regularization</label><input type="date" id="wi_regularization" class="form-control"></div>
-                                        <div class="col-md-2 form-group"><label>Designation</label>
+                                        <div class="col-md-2 form-group"><label>Position</label>
                                             <select id="wi_designation" class="form-control">
-                                                <option value="">-- Select Designation --</option>
+                                                <option value="">Select Position</option>
                                                 @foreach($designations as $des)
                                                     <option value="{{ $des->id }}">{{ $des->name }}</option>
                                                 @endforeach
@@ -365,7 +396,7 @@
                                         </div>
                                         <div class="col-md-2 form-group"><label>Department</label>
                                             <select id="wi_department" class="form-control">
-                                                <option value="">-- Select Department --</option>
+                                                <option value="">Select Department</option>
                                                 @foreach($departments as $d)
                                                     <option value="{{ $d->id }}">{{ $d->name }}</option>
                                                 @endforeach
@@ -373,7 +404,18 @@
                                         </div>
                                     </div>
                                     <div class="row">
-                                        <div class="col-md-3 form-group"><label>Supervisor (user id)</label><input type="number" id="wi_supervisor" class="form-control" placeholder="Supervisor id"></div>
+                                        {{-- <div class="col-md-3 form-group"><label>Supervisor (user id)</label><input type="number" id="wi_supervisor" class="form-control" placeholder="Supervisor id"></div> --}}
+                                        <div class="col-md-3 form-group">
+    <label>Supervisor</label>
+    <select id="wi_supervisor" class="form-control">
+        <option value="">Select Supervisor</option>
+        @foreach($users as $u)
+            <option value="{{ $u->username }}">
+                {{ $u->username }}
+            </option>
+        @endforeach
+    </select>
+</div>
                                         <div class="col-md-3 form-group"><label>Monthly Rate</label><input type="number" step="0.01" id="wi_monthly_rate" class="form-control"></div>
                                         <div class="col-md-3 form-group"><label>Daily Rate</label><input type="number" step="0.01" id="wi_daily_rate" class="form-control"></div>
                                         <div class="col-md-3 form-group"><label>Hourly Rate</label><input type="number" step="0.01" id="wi_hourly_rate" class="form-control"></div>
@@ -388,16 +430,16 @@
 
                                 <h6>Salary Method</h6>
                                 <div class="row mb-3">
-                                    <div class="col-md-3 form-group">
+                                    <div class="col-md-2 form-group">
                                             <label>Salary Method</label>
                                             <select name="salary_method[method_id]" class="form-control">
-                                                <option value="">-- Select Method --</option>
+                                                <option value="">Select Method</option>
                                                 @foreach($salaryMethods as $key => $label)
                                                     <option value="{{ $key }}">{{ $label }}</option>
                                                 @endforeach
                                             </select>
                                         </div>
-                                    <div class="col-md-3 form-group">
+                                    <div class="col-md-2 form-group">
                                         <label>Salary Period</label>
                                         <select name="salary_method[period_id]" class="form-control">
                                             <option value="bi-monthly">Bi-Monthly</option>
@@ -406,38 +448,330 @@
                                             <option value="daily">Daily</option>
                                         </select>
                                     </div>
-                                    <div class="col-md-4 form-group">
+                                    <div class="col-md-2 form-group">
                                         <label>Account Name / Number</label>
                                         <input type="text" name="salary_method[account]" class="form-control">
                                     </div>
-                                    <div class="col-md-2 form-group">
-                                        <label>Shift</label>
-                                        <select name="salary_method[shift_id]" class="form-control">
-                                            <option value="">-- Select Shift --</option>
-                                            @foreach($shifts as $shift)
-                                                <option value="{{ $shift->id }}">{{ $shift->name }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
+
+<!-- Shift Template Selector (remains outside the modal) -->
+<div class="col-md-6 form-group">
+    <label class="fw-bold">Shift Template (Optional)</label>
+    <select id="shift_select" class="form-control mb-2">
+        <option value="">No template / Custom only</option>
+        @foreach($shifts as $shift)
+            <option value="{{ $shift->id }}"
+                    data-shift='@json($shift)'
+                    {{ old('salary_method.shift_id', $user->salaryMethod->shift_id ?? null) == $shift->id ? 'selected' : '' }}>
+                {{ $shift->name }}
+            </option>
+        @endforeach
+    </select>
+
+    <!-- Hidden field to submit the selected template -->
+    <input type="hidden" name="salary_method[shift_id]" id="assigned_shift_id"
+           value="{{ old('salary_method.shift_id', $user->salaryMethod->shift_id ?? null) }}">
+
+    <!-- Small helper text -->
+    <small class="text-muted">Select a template to customize times and view schedule.</small>
+</div>
+
+<!-- Custom Shift Modal -->
+<div class="modal fade" id="shiftModal" tabindex="-1" role="dialog" aria-labelledby="shiftModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold" id="shiftModalLabel">
+                    <span id="modal-shift-name">Custom Shift Settings</span>
+                </h5>
+                <button type="button" class="close btn-close" data-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+
+                <!-- Custom Times (Override Template) -->
+                <h6 class="fw-bold mb-3">Custom Shift Schedule (Overrides Template)</h6>
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <label>Time Start</label>
+                        <input type="time" name="salary_method[custom_time_start]"
+                               class="form-control"
+                               value="{{ old('salary_method.custom_time_start', $user->salaryMethod->custom_time_start ?? '') }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label>Time End</label>
+                        <input type="time" name="salary_method[custom_time_end]"
+                               class="form-control"
+                               value="{{ old('salary_method.custom_time_end', $user->salaryMethod->custom_time_end ?? '') }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label>Break Start</label>
+                        <input type="time" name="salary_method[custom_break_start]"
+                               class="form-control"
+                               value="{{ old('salary_method.custom_break_start', $user->salaryMethod->custom_break_start ?? '') }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label>Break End</label>
+                        <input type="time" name="salary_method[custom_break_end]"
+                               class="form-control"
+                               value="{{ old('salary_method.custom_break_end', $user->salaryMethod->custom_break_end ?? '') }}">
+                    </div>
+                </div>
+
+                <!-- Preview Card -->
+                <div class="card mt-4">
+                    <div class="card-body">
+                        <h6 class="fw-bold mb-4">Current Shift Preview</h6>
+
+                        <!-- Time Preview -->
+                        <div class="row mb-4">
+                            <div class="col-md-3">
+                                <strong>Start:</strong> <span id="pv-start" class="text-primary fw-bold">-</span>
+                            </div>
+                            <div class="col-md-3">
+                                <strong>End:</strong> <span id="pv-end" class="text-primary fw-bold">-</span>
+                            </div>
+                            <div class="col-md-3">
+                                <strong>Break Start:</strong> <span id="pv-break-start" class="text-primary fw-bold">-</span>
+                            </div>
+                            <div class="col-md-3">
+                                <strong>Break End:</strong> <span id="pv-break-end" class="text-primary fw-bold">-</span>
+                            </div>
+                        </div>
+
+                        <!-- Weekly Schedule Table with Radio Buttons -->
+                   <h6 class="fw-bold mb-3">Weekly Schedule (Customizable)</h6>
+<div class="table-responsive">
+    <table class="table table-bordered text-center align-middle mb-0">
+        <thead class="table-light">
+            <tr>
+                <th scope="col" class="fw-bold">Day</th>
+                <th scope="col" class="fw-bold">Work Day</th>
+                <th scope="col" class="fw-bold">Rest Day</th>
+                <th scope="col" class="fw-bold">Open Time</th>
+            </tr>
+        </thead>
+        <tbody id="weekly-schedule-table">
+            <!-- Filled by JavaScript -->
+        </tbody>
+    </table>
+</div>
+
+<!-- Hidden inputs to submit custom weekly schedule -->
+<input type="hidden" name="salary_method[custom_work_days]" id="custom_work_days_input" value="">
+<input type="hidden" name="salary_method[custom_rest_days]" id="custom_rest_days_input" value="">
+<input type="hidden" name="salary_method[custom_open_time]" id="custom_open_time_input" value="">
+
+<small class="text-muted d-block mt-3">
+    <strong>You can override the template schedule here.</strong><br>
+    Changes apply only to this employee and do not affect the original shift template.
+</small>
+
+                        <style>
+                        /* Red filled radio buttons when checked */
+                        #weekly-schedule-table .form-check-input:checked {
+                            background-color: #dc3545 !important;
+                            border-color: #dc3545 !important;
+                            box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+                        }
+
+                        /* Make disabled radios look clean */
+                        #weekly-schedule-table .form-check-input {
+                            cursor: not-allowed;
+                            opacity: 0.9;
+                        }
+
+                        /* Optional: subtle hover effect on rows */
+                        #weekly-schedule-table tbody tr:hover {
+                            background-color: #f8f9fa;
+                        }
+
+                        .btn-orange {
+                            background-color: #fd7e14; /* Vibrant orange */
+                            border-color: #fd7e14;
+                            color: white;
+                            transition: background-color 0.2s ease;
+                        }
+
+                        .btn-orange:hover {
+                            background-color: #e06b00; /* Slightly darker on hover */
+                            border-color: #e06b00;
+                            color: white;
+                        }
+
+                        .btn-orange:active {
+                            background-color: #c85f00 !important; /* Even darker when clicked */
+                            border-color: #c85f00 !important;
+                        }
+
+                        /* Ensure buttons look good when disabled */
+                        .btn-orange:disabled {
+                            opacity: 0.6;
+                            cursor: not-allowed;
+                        }
+
+                        .border-orange {
+                            border-left: 4px solid #fd7e14 !important;
+                        }
+                        .text-orange {
+                            color: #fd7e14;
+                        }
+                        </style>
+
+
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" data-dismiss="modal">Save Changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
                                 </div>
 
-                                <h6 class="mt-3">Allowances</h6>
-                                <div id="allowances-list">
-                                    <div class="allowance-row d-flex mb-2 align-items-center">
-                                        <select name="allowances[0][allowance_id]" class="form-control mr-2 allowance-select" style="width:40%">
-                                            <option value="">-- Select allowance --</option>
-                                            @foreach($allowances as $al)
-                                                <option value="{{ $al->id }}">{{ $al->name }}</option>
-                                            @endforeach
-                                        </select>
-                                        <input type="number" name="allowances[0][amount]" class="form-control mr-2 allowance-amount" placeholder="Amount" style="display:none;" disabled>
-                                        <input type="number" name="allowances[0][monthly_count]" class="form-control mr-2 allowance-count" placeholder="Monthly count" style="display:none;" disabled>
-                                        <button type="button" class="btn btn-sm btn-outline-danger remove-allowance">Remove</button>
-                                    </div>
-                                </div>
-                                <button type="button" id="add-allowance" class="btn btn-sm btn-outline-primary">Add allowance</button>
+                      <h6 class="mt-3">Allowances</h6>
+<div id="allowances-list">
+    @foreach($allowances as $i => $al)
+    <div class="form-row align-items-center mb-2 allowance-row">
+        <!-- Checkbox + Allowance name -->
+        <div class="col-md-5">
+            <div class="form-check">
+                <input
+                    class="form-check-input allowance-checkbox"
+                    type="checkbox"
+                    name="allowances[{{ $i }}][allowance_id]"
+                    value="{{ $al->id }}"
+                    id="allowance_{{ $al->id }}"
+                >
+                <label class="form-check-label" for="allowance_{{ $al->id }}">
+                    {{ $al->name }}
+                </label>
+            </div>
+        </div>
 
-                                <h6 class="mt-3">Leaves</h6>
+        <!-- Amount -->
+        {{-- <div class="col-md-2">
+            <input
+                type="number"
+                name="allowances[{{ $i }}][amount]"
+                class="form-control allowance-amount"
+                placeholder="Amount"
+                disabled
+            >
+        </div>
+
+        <!-- Monthly count -->
+        <div class="col-md-3">
+            <input
+                type="number"
+                name="allowances[{{ $i }}][monthly_count]"
+                class="form-control allowance-count"
+                placeholder="Monthly count"
+                disabled
+            >
+        </div> --}}
+
+        {{-- <!-- Amount with + / - buttons -->
+    <div class="col-md-3">
+        <div class="input-group">
+            <div class="input-group-prepend">
+                <button type="button" class="btn btn-outline-secondary btn-sm decrement-amount" tabindex="-1">-</button>
+            </div>
+            <input
+                type="number"
+                name="allowances[{{ $i }}][amount]"
+                class="form-control allowance-amount text-center"
+                placeholder="Amount"
+                step="100"
+                min="0"
+                value="{{ old("allowances.$i.amount") }}"
+                disabled
+            >
+            <div class="input-group-append">
+                <button type="button" class="btn btn-outline-secondary btn-sm increment-amount" tabindex="-1">+</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Monthly count with + / - buttons -->
+    <div class="col-md-3">
+        <div class="input-group">
+            <div class="input-group-prepend">
+                <button type="button" class="btn btn-outline-secondary btn-sm decrement-count" tabindex="-1">-</button>
+            </div>
+            <input
+                type="number"
+                name="allowances[{{ $i }}][monthly_count]"
+                class="form-control allowance-count text-center"
+                placeholder="Count"
+                step="1"
+                min="0"
+                value="{{ old("allowances.$i.monthly_count") }}"
+                disabled
+            >
+            <div class="input-group-append">
+                <button type="button" class="btn btn-outline-secondary btn-sm increment-count" tabindex="-1">+</button>
+            </div>
+        </div>
+    </div> --}}
+
+     <!-- Amount with + / - buttons (orange background) -->
+    <div class="col-md-3">
+        <div class="input-group">
+            <div class="input-group-prepend">
+                <button type="button" class="btn btn-sm btn-orange decrement-amount" tabindex="-1">-</button>
+            </div>
+            <input
+                type="number"
+                name="allowances[{{ $i }}][amount]"
+                class="form-control allowance-amount text-center"
+                placeholder="Amount"
+                step="100"
+                min="0"
+                value="{{ old("allowances.$i.amount") }}"
+                disabled
+            >
+            <div class="input-group-append">
+                <button type="button" class="btn btn-sm btn-orange increment-amount" tabindex="-1">+</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Monthly count with + / - buttons (orange background) -->
+    <div class="col-md-3">
+        <div class="input-group">
+            <div class="input-group-prepend">
+                <button type="button" class="btn btn-sm btn-orange decrement-count" tabindex="-1">-</button>
+            </div>
+            <input
+                type="number"
+                name="allowances[{{ $i }}][monthly_count]"
+                class="form-control allowance-count text-center"
+                placeholder="Count"
+                step="1"
+                min="0"
+                value="{{ old("allowances.$i.monthly_count") }}"
+                disabled
+            >
+            <div class="input-group-append">
+                <button type="button" class="btn btn-sm btn-orange increment-count" tabindex="-1">+</button>
+            </div>
+        </div>
+    </div>
+
+        <!-- Remove -->
+        <div class="col-md-1">
+            <button type="button" class="btn btn-sm btn-outline-danger remove-allowance">
+                Remove
+            </button>
+        </div>
+    </div>
+    @endforeach
+</div>
+
+                                <h6 class="mt-5">Leaves</h6>
                                 <div id="leaves-list">
                                     @foreach($leaves as $i => $lv)
                                     <div class="form-row align-items-center mb-2 leave-row">
@@ -447,8 +781,42 @@
                                                 <label class="form-check-label" for="leave_{{ $lv->id }}">{{ $lv->name }}</label>
                                             </div>
                                         </div>
-                                        <div class="col-md-2"><input type="number" name="leaves[{{ $i }}][days]" class="form-control leave-days" placeholder="Days" disabled></div>
-                                        <div class="col-md-3"><input type="date" name="leaves[{{ $i }}][effective_date]" class="form-control leave-effective" disabled></div>
+                                        {{-- <div class="col-md-2"><input type="number" name="leaves[{{ $i }}][days]" class="form-control leave-days" placeholder="Days" disabled></div>
+                                        <div class="col-md-3"><input type="date" name="leaves[{{ $i }}][effective_date]" class="form-control leave-effective" disabled></div> --}}
+
+                                        <!-- Days with + / - buttons (orange) -->
+        <div class="col-md-3">
+            <div class="input-group">
+                <div class="input-group-prepend">
+                    <button type="button" class="btn btn-sm btn-orange decrement-days" tabindex="-1">-</button>
+                </div>
+                <input 
+                    type="number" 
+                    name="leaves[{{ $i }}][days]" 
+                    class="form-control leave-days text-center" 
+                    placeholder="Days" 
+                    step="1" 
+                    min="0" 
+                    value="{{ old("leaves.$i.days") }}"
+                    disabled
+                >
+                <div class="input-group-append">
+                    <button type="button" class="btn btn-sm btn-orange increment-days" tabindex="-1">+</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Effective Date (no +/– buttons since it's a date picker, but kept clean) -->
+        <div class="col-md-3">
+            <input 
+                type="date" 
+                name="leaves[{{ $i }}][effective_date]" 
+                class="form-control leave-effective" 
+                value="{{ old("leaves.$i.effective_date") }}"
+                disabled
+            >
+        </div>
+        
                                         <div class="col-md-1"><button type="button" class="btn btn-sm btn-outline-danger remove-leave">Remove</button></div>
                                     </div>
                                     @endforeach
@@ -458,26 +826,103 @@
                         </div>
                     </div>
 
-                    <!-- Educational Background -->
-                    <div class="tab-pane fade" id="educ" role="tabpanel" aria-labelledby="educ-tab">
-                        <div class="card">
-                            <div class="card-body">
-                                <h6>Educational Background</h6>
-                                <div id="educ-bg-list">
-                                    <div class="educ-row row mb-2">
-                                        <div class="col-md-5"><input type="text" name="educational_backgrounds[0][name_of_school]" class="form-control" placeholder="Name of school"></div>
-                                        <div class="col-md-2"><input type="number" name="educational_backgrounds[0][level_id]" class="form-control" placeholder="Level id"></div>
-                                        <div class="col-md-2"><input type="date" name="educational_backgrounds[0][tenure_start]" class="form-control"></div>
-                                        <div class="col-md-2"><input type="date" name="educational_backgrounds[0][tenure_end]" class="form-control"></div>
-                                        <div class="col-md-1"><button type="button" class="btn btn-sm btn-outline-danger remove-educ">-</button></div>
+                   <!-- Educational Background -->
+<div class="tab-pane fade" id="educ" role="tabpanel" aria-labelledby="educ-tab">
+    <div class="card">
+        <div class="card-body">
+            <h6>Educational Background</h6>
+            <div id="educ-bg-list">
+                <div class="educ-row row mb-2">
+                    <div class="col-md-5"><input type="text" name="educational_backgrounds[0][name_of_school]" class="form-control" placeholder="Name of school"></div>
+                    <div class="col-md-2">
+                        <select name="educational_backgrounds[0][level_id]" class="form-control">
+                            <option value="">Select Level</option>
+                            <option value="Elementary">Elementary</option>
+                            <option value="High School">High School</option>
+                            <option value="Vocational">Vocational</option>
+                            <option value="College">College</option>
+                            <option value="Graduate">Graduate</option>
+                            <option value="Post Graduate">Post Graduate</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2"><input type="date" name="educational_backgrounds[0][tenure_start]" class="form-control" placeholder="From"></div>
+                    <div class="col-md-2"><input type="date" name="educational_backgrounds[0][tenure_end]" class="form-control" placeholder="To"></div>
+                    <div class="col-md-1"><button type="button" class="btn btn-sm btn-outline-danger remove-educ">-</button></div>
+                </div>
+            </div>
+            <button type="button" id="add-educ" class="btn btn-sm btn-outline-primary mb-4">Add education</button>
+
+            <!-- Attachments - ONLY IN EDUCATIONAL BACKGROUND TAB -->
+            <div class="card mt-4 border-orange">
+                <div class="card-body">
+                    <h6 class="mb-4 text-orange">Attachments</h6>
+                    <div id="attachments-list">
+                        @php
+                            $commonAttachments = [
+                                'Birth Certificate',
+                                'Valid ID',
+                                'Marriage Contract',
+                                'Health Card',
+                                'NBI',
+                                'Resume',
+                                'Location Sketch',
+                                '2x2',
+                                'Police Clearance',
+                                'police clearance',
+                                'NBI',
+                                'GSIS',
+                                'HMO',
+                            ];
+                        @endphp
+
+                        @foreach($commonAttachments as $index => $name)
+                        <div class="attachment-row row align-items-center mb-3">
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    <input 
+                                        class="form-check-input attachment-checkbox" 
+                                        type="checkbox" 
+                                        id="attach_{{ $index }}"
+                                        value="{{ $name }}"
+                                    >
+                                    <label class="form-check-label" for="attach_{{ $index }}">
+                                        {{ $name }}
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="input-group">
+                                    <div class="custom-file">
+                                        <input 
+                                            type="file" 
+                                            class="custom-file-input attachment-file" 
+                                            name="attachments[{{ $index }}]"
+                                            id="file_{{ $index }}"
+                                            accept=".pdf,.jpg,.jpeg,.png"
+                                            disabled
+                                        >
+                                        <label class="custom-file-label text-truncate" for="file_{{ $index }}">
+                                            Choose file...
+                                        </label>
                                     </div>
                                 </div>
-                                <button type="button" id="add-educ" class="btn btn-sm btn-outline-primary">Add education</button>
+                                <!-- Hidden input to store the name -->
+                                <input type="hidden" name="attachment_names[{{ $index }}]" class="attachment-name" value="{{ $name }}" disabled>
+                            </div>
+                            <div class="col-md-2 text-right">
+                                <button type="button" class="btn btn-sm btn-danger remove-attachment" disabled>
+                                    Remove
+                                </button>
                             </div>
                         </div>
+                        @endforeach
                     </div>
                 </div>
             </div>
+            <!-- End of Attachments -->
+        </div>
+    </div>
+</div>
 
             <div class="card-footer d-flex justify-content-between">
                 <div>
@@ -607,6 +1052,98 @@ document.getElementById('avatar')?.addEventListener('change', function(e){
     });
 })();
 
+let wiIndex = 0;
+
+document.getElementById('save-workinfo').addEventListener('click', function () {
+    const tbody = document.querySelector('#workinfo-table tbody');
+
+    const hireDate = document.getElementById('wi_hire_date').value;
+    if (!hireDate) return alert('Hire date required');
+
+    const row = document.createElement('tr');
+    row.innerHTML = `
+        <td>${hireDate}
+            <input type="hidden" name="employee_work_informations[${wiIndex}][hire_date]" value="${hireDate}">
+        </td>
+        <td>${wi_status.value}
+            <input type="hidden" name="employee_work_informations[${wiIndex}][employment_status_id]" value="${wi_status.value}">
+        </td>
+        <td>${wi_regularization.value}
+            <input type="hidden" name="employee_work_informations[${wiIndex}][regularization]" value="${wi_regularization.value}">
+        </td>
+        <td>${wi_designation.options[wi_designation.selectedIndex].text}
+            <input type="hidden" name="employee_work_informations[${wiIndex}][designation_id]" value="${wi_designation.value}">
+        </td>
+        <td>${wi_department.options[wi_department.selectedIndex].text}
+            <input type="hidden" name="employee_work_informations[${wiIndex}][department_id]" value="${wi_department.value}">
+        </td>
+        <td>${wi_supervisor.value}
+            <input type="hidden" name="employee_work_informations[${wiIndex}][direct_supervisor]" value="${wi_supervisor.value}">
+        </td>
+        <td>${wi_monthly_rate.value}
+            <input type="hidden" name="employee_work_informations[${wiIndex}][monthly_rate]" value="${wi_monthly_rate.value}">
+        </td>
+        <td>${wi_daily_rate.value}
+            <input type="hidden" name="employee_work_informations[${wiIndex}][daily_rate]" value="${wi_daily_rate.value}">
+        </td>
+        <td>${wi_hourly_rate.value}
+            <input type="hidden" name="employee_work_informations[${wiIndex}][hourly_rate]" value="${wi_hourly_rate.value}">
+        </td>
+        <td><button type="button" class="btn btn-sm btn-danger remove-wi">Remove</button></td>
+    `;
+
+    tbody.appendChild(row);
+    wiIndex++;
+});
+
+document.querySelector('form').addEventListener('submit', function () {
+
+    document.querySelectorAll('.allowance-checkbox:checked').forEach(cb => {
+        const row = cb.closest('.allowance-row');
+        row.querySelector('.allowance-amount').disabled = false;
+        row.querySelector('.allowance-count').disabled = false;
+    });
+
+    document.querySelectorAll('.leave-checkbox:checked').forEach(cb => {
+        const row = cb.closest('.leave-row');
+        row.querySelector('.leave-days').disabled = false;
+        row.querySelector('.leave-effective').disabled = false;
+    });
+
+});
+
+(function(){
+    const container = document.getElementById('allowances-list');
+
+    // enable / disable inputs on checkbox toggle
+    container?.addEventListener('change', function(e){
+        if(e.target.classList.contains('allowance-checkbox')){
+            const row = e.target.closest('.allowance-row');
+            if(!row) return;
+
+            const amount = row.querySelector('.allowance-amount');
+            const count  = row.querySelector('.allowance-count');
+
+            if(e.target.checked){
+                amount.disabled = false;
+                count.disabled  = false;
+            } else {
+                amount.disabled = true;
+                count.disabled  = true;
+                amount.value = '';
+                count.value  = '';
+            }
+        }
+    });
+
+    // remove row
+    container?.addEventListener('click', function(e){
+        if(e.target.classList.contains('remove-allowance')){
+            e.target.closest('.allowance-row')?.remove();
+        }
+    });
+})();
+
 (function(){
     // Leaves toggle enable/disable and remove
     const leavesContainer = document.getElementById('leaves-list');
@@ -671,7 +1208,7 @@ document.getElementById('avatar')?.addEventListener('change', function(e){
         };
 
         // simple validation: require hire_date
-        if(!data.hire_date){ alert('Please enter Hire Date'); return; }
+        if(!data.hire_date){ alert('Please enter Date'); return; }
 
         // create or update table row with visible text and hidden inputs
         const renderRow = (index) => {
@@ -899,6 +1436,330 @@ document.getElementById('avatar')?.addEventListener('change', function(e){
         }
     });
 })();
+</script>
+
+
+<script>
+
+let customWorkDays = [];
+let customRestDays = [];
+let customOpenTime = [];
+
+// Load existing custom values on page load (for edit mode)
+@php
+    $sm = $user->salaryMethod ?? null;
+@endphp
+@if($sm)
+    customWorkDays = @json($sm->custom_work_days ?? []);
+    customRestDays = @json($sm->custom_rest_days ?? []);
+    customOpenTime = @json($sm->custom_open_time ?? []);
+@endif
+// Also respect old() input on validation error
+@if(old('salary_method.custom_work_days'))
+    customWorkDays = @json(old('salary_method.custom_work_days'));
+    customRestDays = @json(old('salary_method.custom_rest_days'));
+    customOpenTime = @json(old('salary_method.custom_open_time'));
+@endif
+
+function updateHiddenInputs() {
+    document.getElementById('custom_work_days_input').value = JSON.stringify(customWorkDays);
+    document.getElementById('custom_rest_days_input').value = JSON.stringify(customRestDays);
+    document.getElementById('custom_open_time_input').value = JSON.stringify(customOpenTime);
+}
+
+document.getElementById('shift_select').addEventListener('change', function () {
+    const option = this.options[this.selectedIndex];
+    const modal = $('#shiftModal');
+    const shiftId = option.value;
+
+    document.getElementById('assigned_shift_id').value = shiftId || '';
+
+    if (!shiftId) {
+        modal.modal('hide');
+        return;
+    }
+
+    const shift = JSON.parse(option.dataset.shift);
+
+    // Update modal title
+    document.getElementById('modal-shift-name').textContent = shift.name + ' - Customize';
+
+    // Reset preview times from template
+    document.getElementById('pv-start').textContent = shift.time_start?.slice(0,5) || 'N/A';
+    document.getElementById('pv-end').textContent = shift.time_end?.slice(0,5) || 'N/A';
+    document.getElementById('pv-break-start').textContent = shift.break_start?.slice(0,5) || 'N/A';
+    document.getElementById('pv-break-end').textContent = shift.break_end?.slice(0,5) || 'N/A';
+
+    // === Build Editable Weekly Schedule Table ===
+    const tableBody = document.getElementById('weekly-schedule-table');
+    tableBody.innerHTML = '';
+
+    const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+    days.forEach(day => {
+        // Use custom values if exist, otherwise fall back to template
+        const isWork = customWorkDays.includes(day) || (!customWorkDays.length && shift.work_days?.includes(day));
+        const isRest = customRestDays.includes(day) || (!customRestDays.length && shift.rest_days?.includes(day));
+        const isOpen = customOpenTime.includes(day) || (!customOpenTime.length && shift.open_time?.includes(day));
+
+        const checkedWork = isWork ? 'checked' : '';
+        const checkedRest = isRest ? 'checked' : '';
+        const checkedOpen = isOpen ? 'checked' : '';
+
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td class="fw-bold py-3">${day}</td>
+            <td>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="weekly_${day}" value="work" ${checkedWork}>
+                </div>
+            </td>
+            <td>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="weekly_${day}" value="rest" ${checkedRest}>
+                </div>
+            </td>
+            <td>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="weekly_${day}" value="open" ${checkedOpen}>
+                </div>
+            </td>
+        `;
+        tableBody.appendChild(row);
+    });
+
+    // Attach event listeners to radios
+    tableBody.querySelectorAll('input[type="radio"]').forEach(radio => {
+        radio.addEventListener('change', function () {
+            const day = this.name.replace('weekly_', '');
+            const value = this.value;
+
+            // Clear day from all arrays first
+            customWorkDays = customWorkDays.filter(d => d !== day);
+            customRestDays = customRestDays.filter(d => d !== day);
+            customOpenTime = customOpenTime.filter(d => d !== day);
+
+            // Add to correct array
+            if (value === 'work') customWorkDays.push(day);
+            else if (value === 'rest') customRestDays.push(day);
+            else if (value === 'open') customOpenTime.push(day);
+
+            updateHiddenInputs();
+        });
+    });
+
+    modal.modal('show');
+});
+
+// Live update time preview from custom inputs
+document.querySelectorAll('#shiftModal input[type="time"]').forEach(input => {
+    input.addEventListener('input', function () {
+        const map = {
+            'salary_method[custom_time_start]': 'pv-start',
+            'salary_method[custom_time_end]': 'pv-end',
+            'salary_method[custom_break_start]': 'pv-break-start',
+            'salary_method[custom_break_end]': 'pv-break-end',
+        };
+        const targetId = map[this.name];
+        if (targetId) {
+            document.getElementById(targetId).textContent = this.value || '-';
+        }
+    });
+});
+
+// Auto-open modal + load existing custom data on edit/validation
+$(document).ready(function () {
+    const hasShift = {{ old('salary_method.shift_id') ? 'true' : ($user->salaryMethod->shift_id ?? null ? 'true' : 'false') }};
+
+    if (hasShift) {
+        $('#shift_select').trigger('change');
+
+        // Trigger input events to update preview from existing custom times
+        $('#shiftModal input[type="time"]').each(function() {
+            if (this.value) $(this).trigger('input');
+        });
+    }
+
+    // Initialize hidden inputs with current custom weekly data
+    updateHiddenInputs();
+});
+
+// Enable/disable inputs when checkbox is toggled
+document.getElementById('allowances-list').addEventListener('change', function(e) {
+    if (e.target.classList.contains('allowance-checkbox')) {
+        const row = e.target.closest('.allowance-row');
+        const amountInput = row.querySelector('.allowance-amount');
+        const countInput = row.querySelector('.allowance-count');
+        const buttons = row.querySelectorAll('button.increment-amount, button.decrement-amount, button.increment-count, button.decrement-count');
+
+        if (e.target.checked) {
+            amountInput.disabled = false;
+            countInput.disabled = false;
+            buttons.forEach(btn => btn.disabled = false);
+        } else {
+            amountInput.disabled = true;
+            countInput.disabled = true;
+            buttons.forEach(btn => btn.disabled = true);
+            amountInput.value = '';
+            countInput.value = '';
+        }
+    }
+});
+
+// + / - buttons for Amount
+document.getElementById('allowances-list').addEventListener('click', function(e) {
+    if (e.target.classList.contains('increment-amount') || e.target.classList.contains('decrement-amount')) {
+        const input = e.target.closest('.input-group').querySelector('.allowance-amount');
+        if (input.disabled) return;
+
+        let value = parseFloat(input.value) || 0;
+        const step = parseFloat(input.step) || 100;
+
+        if (e.target.classList.contains('increment-amount')) {
+            value += step;
+        } else if (e.target.classList.contains('decrement-amount') && value > 0) {
+            value = Math.max(0, value - step);
+        }
+
+        input.value = value;
+    }
+
+    // + / - buttons for Monthly Count
+    if (e.target.classList.contains('increment-count') || e.target.classList.contains('decrement-count')) {
+        const input = e.target.closest('.input-group').querySelector('.allowance-count');
+        if (input.disabled) return;
+
+        let value = parseInt(input.value) || 0;
+        const step = parseInt(input.step) || 1;
+
+        if (e.target.classList.contains('increment-count')) {
+            value += step;
+        } else if (e.target.classList.contains('decrement-count') && value > 0) {
+            value = Math.max(0, value - step);
+        }
+
+        input.value = value;
+    }
+});
+
+// Initialize state on page load (important for validation errors with old input)
+document.querySelectorAll('.allowance-checkbox').forEach(checkbox => {
+    if (checkbox.checked) {
+        const row = checkbox.closest('.allowance-row');
+        row.querySelectorAll('.allowance-amount, .allowance-count').forEach(input => input.disabled = false);
+        row.querySelectorAll('button.increment-amount, button.decrement-amount, button.increment-count, button.decrement-count')
+            .forEach(btn => btn.disabled = false);
+    }
+});
+
+// Leaves: Enable/disable + button handling
+document.getElementById('leaves-list').addEventListener('change', function(e) {
+    if (e.target.classList.contains('leave-checkbox')) {
+        const row = e.target.closest('.leave-row');
+        const daysInput = row.querySelector('.leave-days');
+        const dateInput = row.querySelector('.leave-effective');
+        const buttons = row.querySelectorAll('.increment-days, .decrement-days');
+
+        if (e.target.checked) {
+            daysInput.disabled = false;
+            dateInput.disabled = false;
+            buttons.forEach(btn => btn.disabled = false);
+        } else {
+            daysInput.disabled = true;
+            dateInput.disabled = true;
+            buttons.forEach(btn => btn.disabled = true);
+            daysInput.value = '';
+            dateInput.value = '';
+        }
+    }
+});
+
+// + / - buttons for Days
+document.getElementById('leaves-list').addEventListener('click', function(e) {
+    if (e.target.classList.contains('increment-days') || e.target.classList.contains('decrement-days')) {
+        const input = e.target.closest('.input-group').querySelector('.leave-days');
+        if (input.disabled) return;
+
+        let value = parseInt(input.value) || 0;
+        const step = parseInt(input.step) || 1;
+
+        if (e.target.classList.contains('increment-days')) {
+            value += step;
+        } else if (e.target.classList.contains('decrement-days') && value > 0) {
+            value = Math.max(0, value - step);
+        }
+
+        input.value = value;
+    }
+});
+
+// Initialize on page load (for old input / validation errors)
+document.querySelectorAll('.leave-checkbox').forEach(checkbox => {
+    if (checkbox.checked) {
+        const row = checkbox.closest('.leave-row');
+        row.querySelectorAll('.leave-days, .leave-effective').forEach(input => input.disabled = false);
+        row.querySelectorAll('.increment-days, .decrement-days').forEach(btn => btn.disabled = false);
+    }
+});
+
+// Attachments: checkbox → enable file input + remove button
+document.getElementById('attachments-list').addEventListener('change', function(e) {
+    if (e.target.classList.contains('attachment-checkbox')) {
+        const row = e.target.closest('.attachment-row');
+        const fileInput = row.querySelector('.attachment-file');
+        const fileLabel = row.querySelector('.custom-file-label');
+        const removeBtn = row.querySelector('.remove-attachment');
+        const nameInput = row.querySelector('.attachment-name');
+
+        if (e.target.checked) {
+            fileInput.disabled = false;
+            removeBtn.disabled = false;
+            nameInput.disabled = false;
+        } else {
+            fileInput.disabled = true;
+            fileInput.value = '';
+            fileLabel.textContent = 'Choose file...';
+            removeBtn.disabled = true;
+            nameInput.disabled = true;
+        }
+    }
+});
+
+// Update file label when file selected
+document.getElementById('attachments-list').addEventListener('change', function(e) {
+    if (e.target.classList.contains('attachment-file')) {
+        const label = e.target.closest('.input-group').querySelector('.custom-file-label');
+        if (e.target.files.length > 0) {
+            label.textContent = e.target.files[0].name;
+        } else {
+            label.textContent = 'Choose file...';
+        }
+    }
+});
+
+// Remove button (clears checkbox and file)
+document.getElementById('attachments-list').addEventListener('click', function(e) {
+    if (e.target.classList.contains('remove-attachment')) {
+        const row = e.target.closest('.attachment-row');
+        const checkbox = row.querySelector('.attachment-checkbox');
+        const fileInput = row.querySelector('.attachment-file');
+        const label = row.querySelector('.custom-file-label');
+
+        checkbox.checked = false;
+        fileInput.value = '';
+        label.textContent = 'Choose file...';
+        fileInput.disabled = true;
+        e.target.disabled = true;
+    }
+});
+
+// Initialize on load (for edit form with old values)
+document.querySelectorAll('.attachment-checkbox').forEach(cb => {
+    if (cb.checked) {
+        const row = cb.closest('.attachment-row');
+        row.querySelectorAll('.attachment-file, .remove-attachment').forEach(el => el.disabled = false);
+    }
+});
 </script>
 @endsection
 

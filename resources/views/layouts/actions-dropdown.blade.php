@@ -33,6 +33,14 @@
         </li>
         @endisset
 
+        @isset($userEditRoute)
+          <li role="presentation">
+            <a class="dropdown-item" href="{{ $userEditRoute }}">
+                <i class="nav-icon i-Pen-2 font-weight-bold mr-2"></i> Edit Profile
+            </a>
+        </li>
+        @endisset
+
         @isset($branchEditRoute)
         <li role="presentation">
             <a class="dropdown-item"

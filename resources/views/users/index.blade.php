@@ -216,7 +216,7 @@
                                 <td class="text-right">
                                     @include('layouts.actions-dropdown', [
                                         'id' => $user->id,
-                                        'userEditRoute' => '#',
+                                        'userEditRoute' => route('users.edit', $user->id),
                                         'archiveRoute' => route('users.archive', $user->id),
                                         'resignRoute' => route('users.updateStatus', [$user->id, 'resigned']),
                                         'terminateRoute' => route('users.updateStatus', [$user->id, 'terminated']),

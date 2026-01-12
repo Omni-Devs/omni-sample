@@ -172,8 +172,10 @@ Route::post('/users', [UserController::class, 'store'])->name('users.store');
 Route::get('/users/{id}/profile', [UserController::class, 'viewProfile'])->name('users.profile');
 Route::put('/users/{user}/archive', [UserController::class, 'archive'])->name('users.archive');
 Route::put('/users/{user}/restore', [UserController::class, 'restore'])->name('users.restore');
-Route::get('/users/{id}/edit', [UserController::class, 'edit'])->name('users.edit');
-Route::put('/users/{id}', [UserController::class, 'update'])->name('users.update');
+// Route::get('/users/{id}/edit', [UserController::class, 'edit'])->name('users.edit');
+// Route::put('/users/{id}', [UserController::class, 'update'])->name('users.update');
+Route::get('/users/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
+Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
 Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
 Route::put('/users/{user}/status/{status}', [UserController::class, 'updateStatus'])->name('users.updateStatus');
 
