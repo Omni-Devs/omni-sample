@@ -13,31 +13,103 @@ use Illuminate\Support\Facades\Storage;
 
 class ComponentController extends Controller
 {
-    public function index(Request $request)
-    {
-    $status = $request->get('status', 'active');
-    $perPage = $request->get('perPage', 10);
-    $search = $request->get('search'); // ✅ get the search input
+    // public function index(Request $request)
+    // {
+    // $status = $request->get('status', 'active');
+    // $perPage = $request->get('perPage', 10);
+    // $search = $request->get('search'); // ✅ get the search input
 
-    $components = Component::with(['category', 'subcategory'])
-        ->where('status', $status)
-        ->when($search, function ($query, $search) {
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                  ->orWhereHas('category', function ($q) use ($search) {
-                      $q->where('name', 'like', "%{$search}%");
-                  })
-                  ->orWhereHas('subcategory', function ($q) use ($search) {
-                      $q->where('name', 'like', "%{$search}%");
-                  });
-            });
-        })
-        ->orderBy('created_at', 'desc')
-        ->paginate($perPage)
-        ->appends(['search' => $search, 'perPage' => $perPage]); // ✅ keep search and perPage on pagination links
+    // $components = Component::with(['category', 'subcategory'])
+    //     ->where('status', $status)
+    //     ->when($search, function ($query, $search) {
+    //         $query->where(function ($q) use ($search) {
+    //             $q->where('name', 'like', "%{$search}%")
+    //               ->orWhereHas('category', function ($q) use ($search) {
+    //                   $q->where('name', 'like', "%{$search}%");
+    //               })
+    //               ->orWhereHas('subcategory', function ($q) use ($search) {
+    //                   $q->where('name', 'like', "%{$search}%");
+    //               });
+    //         });
+    //     })
+    //     ->orderBy('created_at', 'desc')
+    //     ->paginate($perPage)
+    //     ->appends(['search' => $search, 'perPage' => $perPage]); // ✅ keep search and perPage on pagination links
+
+    // return view('components.index', compact('components', 'status', 'search'));
+    // }
+
+    public function index(Request $request)
+{
+    $status  = $request->get('status', 'active');
+    $perPage = $request->get('perPage', 10);
+    $search  = $request->get('search');
+
+    // ✅ Use current_branch() instead of auth()->user()
+    $branchId = current_branch_id();
+
+    /**
+     |--------------------------------------------------
+     | MAIN BRANCH (branch_id = 1)
+     |--------------------------------------------------
+     */
+    if ($branchId == 1) {
+
+        $components = Component::with(['category', 'subcategory'])
+            ->where('status', $status)
+            ->when($search, function ($query, $search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                      ->orWhereHas('category', fn ($q) =>
+                          $q->where('name', 'like', "%{$search}%")
+                      )
+                      ->orWhereHas('subcategory', fn ($q) =>
+                          $q->where('name', 'like', "%{$search}%")
+                      );
+                });
+            })
+            ->orderBy('components.created_at', 'desc')
+            ->paginate($perPage)
+            ->appends(compact('search', 'perPage'));
+
+    /**
+     |--------------------------------------------------
+     | OTHER BRANCHES (branch-aware inventory)
+     |--------------------------------------------------
+     */
+    } else {
+
+        $components = Component::query()
+            ->select([
+                'components.*',
+                'bc.onhand',
+                'bc.cost',
+                'bc.price',
+                'bc.for_sale',
+                'bc.status as status'
+            ])
+            ->join('branch_components as bc', 'bc.component_id', '=', 'components.id')
+            ->where('bc.branch_id', $branchId)
+            ->where('components.status', $status)
+            ->with(['category', 'subcategory'])
+            ->when($search, function ($query, $search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('components.name', 'like', "%{$search}%")
+                      ->orWhereHas('category', fn ($q) =>
+                          $q->where('name', 'like', "%{$search}%")
+                      )
+                      ->orWhereHas('subcategory', fn ($q) =>
+                          $q->where('name', 'like', "%{$search}%")
+                      );
+                });
+            })
+            ->orderBy('components.created_at', 'desc')
+            ->paginate($perPage)
+            ->appends(compact('search', 'perPage'));
+    }
 
     return view('components.index', compact('components', 'status', 'search'));
-    }
+}
 
     public function create()
     {
@@ -226,6 +298,59 @@ class ComponentController extends Controller
         ];
     });
 
+    /* -------------------------------------------------------------
+ | 4) TRANSFERS (SEND OUT ONLY — SOURCE BRANCH)
+ ------------------------------------------------------------- */
+$transferMovements = \App\Models\InventoryTransferSendOut::whereHas(
+        'transfer',
+        fn ($q) => $q->whereIn('status', ['in_transit', 'completed'])
+    )
+    ->get()
+    ->flatMap(function ($sendOut) use ($id, $component) {
+
+        $rows = [];
+
+        foreach ($sendOut->items_onload as $item) {
+
+            // Only components
+            if (data_get($item, 'type') !== 'component') {
+                continue;
+            }
+
+            $newOnhand = data_get($item, 'new_onhand');
+
+            // Skip legacy records safely
+            if ($newOnhand === null) {
+                continue;
+            }
+
+            $transferItemId = data_get($item, 'inventory_transfer_item_id');
+
+            if (!$transferItemId) {
+                continue;
+            }
+
+            $transferItem = \App\Models\InventoryTransferItem::find($transferItemId);
+
+            if (!$transferItem || $transferItem->component_id != $id) {
+                continue;
+            }
+
+            $rows[] = [
+                "entry_datetime" => $sendOut->created_at,
+                "activity"       => "TRANSFER OUT",
+                "reference_no"   => $sendOut->delivery_request_no,
+                "qty_balance"    => (float) $newOnhand,
+                "cost_per_unit"  => $component->cost ?? 0,
+            ];
+        }
+
+        return $rows;
+    });
+
+
+
+
 
     /* -------------------------------------------------------------
      | 4) Merge ALL movements by date ascending
@@ -233,6 +358,7 @@ class ComponentController extends Controller
     $movements = $auditItems
         ->concat($deductions)
         ->concat($poDetails)
+        ->concat($transferMovements)
         ->sortBy('entry_datetime')
         ->values();
 

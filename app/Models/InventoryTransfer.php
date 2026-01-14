@@ -25,6 +25,14 @@ class InventoryTransfer extends Model
         'status',
         'approved_by',
         'approved_datetime',
+        'disapproved_by',
+        'disapproved_datetime',
+        'in_transit_by',
+        'in_transit_datetime',
+        'completed_by',
+        'completed_datetime',
+        'archived_by',
+        'archived_datetime',
     ];
 
     /**
@@ -33,6 +41,13 @@ class InventoryTransfer extends Model
     protected $casts = [
         'requested_datetime' => 'datetime',
     ];
+
+    protected $dates = [
+    'in_transit_datetime',
+    'completed_datetime',
+    'disapproved_datetime',
+    'archived_datetime',
+];
 
     /**
      * Relationship: Source Branch
@@ -94,9 +109,24 @@ class InventoryTransfer extends Model
         return true; // allowed
     }
 
-    public function approver()
-    {
-        return $this->belongsTo(User::class, 'approved_by');
-    }
+    public function approvedBy() {
+    return $this->belongsTo(User::class, 'approved_by');
+}
+
+public function inTransitBy() {
+    return $this->belongsTo(User::class, 'in_transit_by');
+}
+
+public function completedBy() {
+    return $this->belongsTo(User::class, 'completed_by');
+}
+
+public function disapprovedBy() {
+    return $this->belongsTo(User::class, 'disapproved_by');
+}
+
+public function archivedBy() {
+    return $this->belongsTo(User::class, 'archived_by');
+}
 
 }
