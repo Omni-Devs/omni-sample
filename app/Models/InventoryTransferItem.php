@@ -13,8 +13,15 @@ class InventoryTransferItem extends Model
         'inventory_transfer_id',
         'product_id',
         'component_id',
-        'quantity',
+        'quantity_requested',
+        'quantity_sent'
+        
     ];
+
+    protected $casts = [
+    'quantity_requested' => 'decimal:2',
+    'quantity_sent'      => 'decimal:2',
+];
 
     /**
      * The parent inventory transfer.

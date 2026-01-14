@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Branch;
 use App\Models\InventoryTransfer;
 use App\Models\InventoryTransferItem;
+use App\Models\InventoryTransferSendOut;
+use App\Models\BranchComponent;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -18,7 +20,25 @@ class InventoryTransferController extends Controller
     
     public function fetchTransfers(Request $request)
     {
-        $query = InventoryTransfer::with(['sourceBranch', 'destinationBranch', 'requester']);
+        $currentBranchId = current_branch_id();
+
+        $query = InventoryTransfer::with([
+    'sourceBranch',
+    'destinationBranch',
+    'requester',
+    'approvedBy',
+    'inTransitBy',
+    'completedBy',
+    'disapprovedBy',
+    'archivedBy',
+    'items'
+]);
+
+// ✅ Branch visibility filter
+    $query->where(function ($q) use ($currentBranchId) {
+        $q->where('source_id', $currentBranchId)
+          ->orWhere('destination_id', $currentBranchId);
+    });
 
         if ($request->filled('status')) {
             $query->where('status', $request->status);
@@ -51,23 +71,68 @@ class InventoryTransferController extends Controller
         $transfers->getCollection()->transform(function ($transfer) {
     $currentBranchId = current_branch_id();
 
-    return [
-        'id' => $transfer->id,
-        'reference_no' => $transfer->reference_no,
-        'requested_by' => $transfer->requester?->name,
-        'transfer_type' => $transfer->transfer_type,
-        'status' => $transfer->status,
-        'requested_datetime' => $transfer->requested_datetime?->format('Y-m-d H:i:s'),
-        'source_branch' => $transfer->sourceBranch?->name,
-        'destination_branch' => $transfer->destinationBranch?->name,
-        'attached_file' => $transfer->attached_file,
-        'created_at' => $transfer->created_at->format('Y-m-d H:i:s'),
-        'updated_at' => $transfer->updated_at->format('Y-m-d H:i:s'),
+    $totalRequested = $transfer->items->sum('quantity_requested');
+    $totalSent = $transfer->items->sum('quantity_sent');
 
-        // 🔥 Add this
-        'can_approve' => $transfer->canApproveForBranch($currentBranchId),
-    ];
+    $canAddStocks = (
+        $transfer->status === 'in_transit'
+        && (int) $transfer->destination_id === (int) $currentBranchId
+        && $totalSent > 0
+    );
+
+    $canSendStocks = (
+        $transfer->status === 'approved'
+        && (int) $transfer->source_id === (int) $currentBranchId
+    );
+
+    $canSendAdditionalStocks = (
+        $transfer->status === 'in_transit'
+        && (int) $transfer->source_id === (int) $currentBranchId
+        && $totalSent < $totalRequested
+    );
+
+    return [
+    'id' => $transfer->id,
+    'reference_no' => $transfer->reference_no,
+
+    // 🔹 Base
+    'requested_by' => $transfer->requester?->name,
+    'requested_datetime' => optional($transfer->requested_datetime)->format('Y-m-d H:i:s'),
+
+    // 🔹 Dynamic "BY" names
+    'approved_by_name'     => $transfer->approvedBy?->name,
+    'in_transit_by_name'   => $transfer->inTransitBy?->name,
+    'completed_by_name'    => $transfer->completedBy?->name,
+    'disapproved_by_name'  => $transfer->disapprovedBy?->name,
+    'archived_by_name'     => $transfer->archivedBy?->name,
+
+    'transfer_type' => $transfer->transfer_type,
+    'status' => $transfer->status,
+
+    'total_requested' => $totalRequested,
+    'total_sent' => $totalSent,
+
+    'is_partial' => (
+        $transfer->status === 'in_transit'
+        && $totalSent > 0
+        && $totalSent < $totalRequested
+    ),
+
+    'source_branch' => $transfer->sourceBranch?->name,
+    'destination_branch' => $transfer->destinationBranch?->name,
+    'attached_file' => $transfer->attached_file,
+
+    'created_at' => $transfer->created_at->format('Y-m-d H:i:s'),
+    'updated_at' => $transfer->updated_at->format('Y-m-d H:i:s'),
+
+    'can_approve' => $transfer->canApproveForBranch($currentBranchId),
+    'can_add_stocks' => $canAddStocks,
+    'can_send_stocks' => $canSendStocks,
+    'can_send_additional_stocks' => $canSendAdditionalStocks,
+];
 });
+
+
 
 
         return response()->json($transfers);
@@ -130,7 +195,9 @@ class InventoryTransferController extends Controller
         'items' => 'required|array|min:1',
         'items.*.product_id' => 'nullable|exists:products,id',
         'items.*.component_id' => 'nullable|exists:components,id',
-        'items.*.quantity' => 'required|integer|min:1',
+
+        // ✅ allow decimal, NOT integer
+        'items.*.quantity' => 'required|numeric|min:0.01',
     ];
 
     // Conditional rules
@@ -165,9 +232,9 @@ class InventoryTransferController extends Controller
         ]);
 
         foreach ($validated['items'] as $item) {
-            if (
-                empty($item['product_id']) === empty($item['component_id'])
-            ) {
+
+            // 🔒 Ensure only ONE of product/component
+            if (empty($item['product_id']) === empty($item['component_id'])) {
                 throw new \Exception(
                     'Each item must have either product_id or component_id.'
                 );
@@ -177,13 +244,26 @@ class InventoryTransferController extends Controller
                 'inventory_transfer_id' => $transfer->id,
                 'product_id' => $item['product_id'] ?? null,
                 'component_id' => $item['component_id'] ?? null,
-                'quantity' => $item['quantity'],
+
+                // ✅ NEW CORRECT COLUMNS
+                'quantity_requested' => number_format(
+                    (float) $item['quantity'],
+                    2,
+                    '.',
+                    ''
+                ),
+
+                // ✅ always initialize
+                'quantity_sent' => '0.00',
             ]);
         }
     });
 
-    return response()->json(['message' => 'Transfer created successfully']);
+    return response()->json([
+        'message' => 'Transfer created successfully'
+    ]);
 }
+
 
 
 
@@ -301,33 +381,301 @@ class InventoryTransferController extends Controller
         'status' => 'required|in:pending,approved,in_transit,completed,disapproved,archived',
     ]);
 
-    if ($validated['status'] === 'approved') {
-        $transfer->update([
-            'status' => 'approved',
-            'approved_by' => auth()->id(),
-            'approved_datetime' => now(),
-        ]);
-    } else {
-        $transfer->update([
-            'status' => $validated['status'],
-            'approved_by' => null,
-            'approved_datetime' => null,
-        ]);
+    $userId = auth()->id();
+    $now = now();
+
+    $updateData = [
+        'status' => $validated['status'],
+    ];
+
+    $byName = null;
+    $formattedTime = null;
+
+    switch ($validated['status']) {
+        case 'approved':
+            $updateData['approved_by'] = $userId;
+            $updateData['approved_datetime'] = $now;
+            $byName = auth()->user()->name;
+            $formattedTime = $now->format('g:i A');
+            break;
+
+        case 'in_transit':
+            $updateData['in_transit_by'] = $userId;
+            $updateData['in_transit_datetime'] = $now;
+            $byName = auth()->user()->name;
+            $formattedTime = $now->format('g:i A');
+            break;
+
+        case 'completed':
+            $updateData['completed_by'] = $userId;
+            $updateData['completed_datetime'] = $now;
+            $byName = auth()->user()->name;
+            $formattedTime = $now->format('g:i A');
+            break;
+
+        case 'disapproved':
+            $updateData['disapproved_by'] = $userId;
+            $updateData['disapproved_datetime'] = $now;
+            $byName = auth()->user()->name;
+            $formattedTime = $now->format('g:i A');
+            break;
+
+        case 'archived':
+            $updateData['archived_by'] = $userId;
+            $updateData['archived_datetime'] = $now;
+            $byName = auth()->user()->name;
+            $formattedTime = $now->format('g:i A');
+            break;
     }
 
-    // Refresh model and load approver relation
-    $transfer->refresh()->load('approver');
-
-    // Format approved_datetime to 12-hour format
-    $approvedTime = $transfer->approved_datetime 
-        ? Carbon::parse($transfer->approved_datetime)->format('g:i A') 
-        : null;
+    $transfer->update($updateData);
 
     return response()->json([
         'message' => 'Transfer status updated successfully',
-        'status' => $transfer->status,
-        'approved_by_name' => $transfer->approver?->name,
-        'approved_datetime' => $approvedTime,
+        'status' => $validated['status'],
+        'by_name' => $byName,
+        'datetime' => $formattedTime,
     ]);
 }
+
+public function sendOutForm($id)
+{
+   $transfer = InventoryTransfer::with([
+            'items.product.category',
+            'items.component.category',
+        ])->findOrFail($id);
+
+    // ✅ ACTIVE branch (from header / session)
+        $currentBranchId = current_branch_id();
+
+
+        // Get next AUTO_INCREMENT value
+        $nextId = DB::table('information_schema.TABLES')
+            ->where('TABLE_SCHEMA', DB::getDatabaseName())
+            ->where('TABLE_NAME', 'inventory_transfer_send_outs')
+            ->value('AUTO_INCREMENT');
+
+        $delivery_no = sprintf(
+            '%s-%02d-%05d',
+            'DR',
+            $currentBranchId,
+            $nextId
+        );
+
+   return view('inventory.transfer.send_out_form', [
+            'reference_no' => $transfer->reference_no,
+            'requested_datetime' => $transfer->requested_datetime,
+            'destination_name' => $transfer->destinationBranch?->name,
+            'delivery_no' => $delivery_no,
+            'transfer' => $transfer, // contains items with product/component
+        ]);
+}
+
+   public function storeSendOut(Request $request, $id)
+{
+    $data = $request->validate([
+        'inventory_transfer_id' => 'required|exists:inventory_transfers,id',
+        'delivery_request_no'   => 'required|string|unique:inventory_transfer_send_outs,delivery_request_no',
+        'personel_name'         => 'required|string',
+        'items_onload'          => 'required|array|min:1',
+        'items_onload.*.inventory_transfer_item_id' => 'required|exists:inventory_transfer_items,id',
+        'items_onload.*.type'   => 'required|in:product,component',
+        'items_onload.*.quantity' => 'required|numeric|min:0',
+    ]);
+
+    $hasAtLeastOnePositiveQty = collect($data['items_onload'])
+        ->contains(fn ($item) => bccomp(
+            number_format((float) $item['quantity'], 2, '.', ''),
+            '0',
+            2
+        ) === 1);
+
+    if (!$hasAtLeastOnePositiveQty) {
+        abort(422, 'At least one item must have a quantity greater than 0.');
+    }
+
+    return DB::transaction(function () use ($data, $id) {
+
+        /** ✅ INIT */
+        $itemsOnloadWithStock = [];
+
+        foreach ($data['items_onload'] as $itemData) {
+
+            $qtyToSend = number_format((float) $itemData['quantity'], 2, '.', '');
+
+            if (bccomp($qtyToSend, '0', 2) <= 0) {
+                continue;
+            }
+
+            $transferItem = InventoryTransferItem::with('component')
+                ->lockForUpdate()
+                ->findOrFail($itemData['inventory_transfer_item_id']);
+
+            $currentSent = number_format(
+                (float) ($transferItem->quantity_sent ?? 0),
+                2,
+                '.',
+                ''
+            );
+
+            $newSent = bcadd($currentSent, $qtyToSend, 2);
+
+            if (bccomp($newSent, $transferItem->quantity_requested, 2) === 1) {
+                abort(422, "Quantity exceeds requested amount for item ID {$transferItem->id}");
+            }
+
+            $transferItem->update([
+                'quantity_sent' => $newSent,
+            ]);
+
+            $prevOnhand = null;
+            $newOnhand  = null;
+
+            /** 🔻 COMPONENT STOCK */
+            if ($itemData['type'] === 'component') {
+
+                $component = $transferItem->component;
+
+                if (!$component) {
+                    abort(404, 'Component not found.');
+                }
+
+                /** ✅ SNAPSHOT BEFORE MUTATION */
+                $prevOnhand = number_format(
+                    (float) $component->getOriginal('onhand'),
+                    2,
+                    '.',
+                    ''
+                );
+
+                if (bccomp($prevOnhand, $qtyToSend, 2) < 0) {
+                    abort(422, "Insufficient stock for component: {$component->name}");
+                }
+
+                $newOnhand = bcsub($prevOnhand, $qtyToSend, 2);
+
+                $component->onhand = $newOnhand;
+                $component->save();
+            }
+
+            /** ✅ ENRICH JSON */
+            $itemsOnloadWithStock[] = array_merge($itemData, [
+                'prev_onhand' => $prevOnhand,
+                'new_onhand'  => $newOnhand,
+            ]);
+        }
+
+        /** ✅ CREATE SEND-OUT WITH FINAL JSON */
+        $sendOut = InventoryTransferSendOut::create([
+            'inventory_transfer_id' => $data['inventory_transfer_id'],
+            'delivery_request_no'   => $data['delivery_request_no'],
+            'personel_name'         => $data['personel_name'],
+            'items_onload'          => $itemsOnloadWithStock,
+        ]);
+
+        /** 🔁 REFRESH TRANSFER */
+        $transfer = InventoryTransfer::with('items')
+            ->lockForUpdate()
+            ->findOrFail($id);
+
+        $totalRequested = $transfer->items->sum('quantity_requested');
+        $totalSent      = $transfer->items->sum('quantity_sent');
+
+        $isFullyMet = $transfer->items->every(
+            fn ($item) => bccomp(
+                (string) ($item->quantity_sent ?? 0),
+                (string) $item->quantity_requested,
+                2
+            ) >= 0
+        );
+
+        $updateData = ['status' => 'in_transit'];
+
+        if (is_null($transfer->in_transit_by)) {
+            $updateData['in_transit_by'] = auth()->id();
+            $updateData['in_transit_datetime'] = now();
+        }
+
+        $transfer->update($updateData);
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'send_out'       => $sendOut,
+                'total_sent'     => $totalSent,
+                'total_request'  => $totalRequested,
+                'status'         => $isFullyMet ? 'in_transit' : 'in_transit:partial',
+                'fully_met'      => $isFullyMet,
+            ]
+        ]);
+    });
+}
+
+
+
+public function receiveTransfer($id)
+{
+    $sendOut = DB::transaction(function () use ($id) {
+
+        $transfer = InventoryTransfer::with('items')
+            ->lockForUpdate()
+            ->findOrFail($id);
+
+        if (
+            $transfer->status !== 'in_transit'
+            || (int) $transfer->destination_id !== (int) current_branch_id()
+        ) {
+            abort(403, 'Cannot receive this transfer.');
+        }
+
+        foreach ($transfer->items as $item) {
+            $sentQty = number_format((float) $item->quantity_sent, 2, '.', '');
+
+            if (bccomp($sentQty, '0', 2) <= 0) continue;
+
+            $branchComponent = BranchComponent::firstOrCreate(
+                [
+                    'branch_id'    => $transfer->destination_id,
+                    'component_id' => $item->component_id,
+                ],
+                ['onhand' => '0.00']
+            );
+
+            $branchComponent->onhand = bcadd(
+                number_format((float) $branchComponent->onhand, 2, '.', ''),
+                $sentQty,
+                2
+            );
+
+            $branchComponent->save();
+        }
+
+        // Ensure send-out exists
+        $sendOut = InventoryTransferSendOut::firstOrCreate(
+            ['inventory_transfer_id' => $transfer->id],
+            [
+                'delivery_request_no' => $transfer->reference_no,
+                'personel_name'      => $transfer->requester?->name ?? 'N/A',
+                'items_onload'       => $transfer->items->map(fn($i) => [
+                    'component_id'  => $i->component_id,
+                    'quantity_sent' => $i->quantity_sent,
+                ])->toArray(),
+            ]
+        );
+
+        $sendOut->update([
+            'received_by'       => auth()->id(),
+            'received_datetime' => now(),
+        ]);
+
+        return $sendOut;
+    });
+
+    return response()->json([
+        'message' => 'Stocks successfully added to inventory.',
+        'send_out_id' => $sendOut->id,
+    ]);
+}
+
+
 }

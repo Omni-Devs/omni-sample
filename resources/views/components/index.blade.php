@@ -277,7 +277,7 @@
                            </tr>
                            @empty
                            <tr>
-                              <td colspan="5" class="vgt-center-align vgt-text-disabled">
+                              <td colspan="9" class="vgt-center-align vgt-text-disabled">
                                  No data for table
                               </td>
                            </tr>

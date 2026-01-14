@@ -35,4 +35,14 @@ class Branch extends Model
     {
         return $this->hasMany(AccountsReceivables::class, 'branch_id');
     }
+
+    public function products()
+    {
+        return $this->hasMany(BranchProduct::class);
+    }
+
+    public function components()
+    {
+        return $this->hasMany(BranchComponent::class);
+    }
 }

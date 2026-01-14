@@ -13,6 +13,10 @@ class Component extends Model
         'name', 'code', 'cost', 'price', 'unit', 'onhand', 'status', 'image', 'for_sale', 'category_id', 'subcategory_id', 'supplier_id'
     ];
 
+    protected $casts = [
+        'onhand' => 'string',
+    ];
+
     public function category() {
         return $this->belongsTo(Category::class);
     }
@@ -34,6 +38,11 @@ class Component extends Model
     public function supplier()
     {
         return $this->belongsTo(Supplier::class, 'supplier_id');
+    }
+
+    public function branchStocks()
+    {
+        return $this->hasMany(BranchComponent::class);
     }
 
 }

@@ -34,4 +34,9 @@ class Product extends Model
     {
         return $this->hasMany(Remark::class);
     }
+
+    public function branchStocks()
+    {
+        return $this->hasMany(BranchProduct::class);
+    }
 }

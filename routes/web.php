@@ -591,6 +591,10 @@ Route::prefix('inventory/transfer')->name('transfers.')->group(function () {
     
     Route::patch('/{id}/archive', [InventoryTransferController::class, 'archive']);
     Route::patch('/{id}/restore', [InventoryTransferController::class, 'restore']);
+
+    Route::get('/{id}/send-out', [InventoryTransferController::class, 'sendOutForm'])->name('sendOutForm');
+    Route::post('/{id}/send', [InventoryTransferController::class, 'storeSendOut']);
+    Route::post('/{id}/receive', [InventoryTransferController::class, 'receiveTransfer']);
     
     Route::delete('/{id}', [InventoryTransferController::class, 'destroy']);
 });
