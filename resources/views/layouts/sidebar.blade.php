@@ -204,18 +204,18 @@
             <li class="nav-item"><a href="/app/reports/y-reading" class=""><i class="nav-icon i-Library"></i> <span class="item-name">Workforce</span></a> </li>
             <li class="nav-item"><a href="/app/reports/y-reading" class=""><i class="nav-icon i-Receipt-3"></i> <span class="item-name">Accounting</span></a> </li>
          </ul>
-         {{-- <ul data-parent="Workforce" class="childNav d-none">
-            <li class="nav-item"><a href="/app/workforce/upload-files" class=""><i class="nav-icon i-Upload-Window"></i> <span class="item-name">Upload Employee Files</span></a></li>
+         <ul data-parent="Workforce" class="childNav d-none">
+            {{-- <li class="nav-item"><a href="/app/workforce/upload-files" class=""><i class="nav-icon i-Upload-Window"></i> <span class="item-name">Upload Employee Files</span></a></li>
             <li class="nav-item"><a href="/app/workforce/assign-shifts" class=""><i class="nav-icon i-Business-Mens"></i> <span class="item-name">Assign Shifts</span></a></li>
             <li class="nav-item"><a href="/app/workforce/assign-leaves" class=""><i class="nav-icon i-Ticket"></i> <span class="item-name">Assign Leaves</span></a></li>
             <li class="nav-item"><a href="/app/workforce/assign-benefits" class=""><i class="nav-icon i-Betvibes"></i> <span class="item-name">Assign Benefits</span></a></li>
-            <li class="nav-item"><a href="/app/workforce/assign-allowances" class=""><i class="nav-icon i-Money-2"></i> <span class="item-name">Assign Allowances</span></a></li>
+            <li class="nav-item"><a href="/app/workforce/assign-allowances" class=""><i class="nav-icon i-Money-2"></i> <span class="item-name">Assign Allowances</span></a></li> --}}
             <li class="nav-item"><a href="/app/workforce/leave-requests" class=""><i class="nav-icon i-Blinklist"></i> <span class="item-name">Request For Leaves</span></a></li>
             <li class="nav-item"><a href="/app/workforce/overtime-requests" class=""><i class="nav-icon i-Over-Time"></i> <span class="item-name">Request for Regular Overtime</span></a></li>
-            <li class="nav-item"><a href="/app/workforce/restday-overtime-requests" class=""><i class="nav-icon i-Over-Time"></i> <span class="item-name">Request for Restday Overtime</span></a></li>
+            {{-- <li class="nav-item"><a href="/app/workforce/restday-overtime-requests" class=""><i class="nav-icon i-Over-Time"></i> <span class="item-name">Request for Restday Overtime</span></a></li> --}}
             <li class="nav-item"><a href="/app/workforce/salary-loans" class=""><i class="nav-icon i-Credit-Card"></i> <span class="item-name">Salary Loan</span></a></li>
             <li class="nav-item"><a href="/app/workforce/payrolls" class=""><i class="nav-icon i-Receipt-4"></i> <span class="item-name">Process Payroll</span></a></li>
-            <li class="nav-item"><a href="/app/workforce/time-keeper" class=""><i class="nav-icon i-Time-Machine"></i> <span class="item-name">Time Keeper</span></a></li>
+            {{-- <li class="nav-item"><a href="/app/workforce/time-keeper" class=""><i class="nav-icon i-Time-Machine"></i> <span class="item-name">Time Keeper</span></a></li>
             <li class="nav-item"><a href="/app/workforce/incident-reports" class=""><i class="nav-icon i-Link-2"></i> <span class="item-name">Create Incident Report</span></a></li>
             <li class="nav-item"><a href="/app/workforce/disciplinary-actions" class=""><i class="nav-icon i-Financial"></i> <span class="item-name">Create Disciplinary Actions</span></a></li>
             <li class="nav-item"><a href="/app/workforce/generate-workforce-labels" class=""><i class="nav-icon i-Network-Window"></i> <span class="item-name">Generate Workforce Labels</span></a></li>
@@ -238,8 +238,8 @@
                   <li><a href="/app/workforce/settings/commission-models" class=""><i class="nav-icon i-Tag-5"></i> <span class="item-name">Commission Models</span></a></li>
                   <li><a href="/app/workforce/settings/disciplinary-actions" class=""><i class="nav-icon i-Financial"></i> <span class="item-name">Disciplinary Actions</span></a></li>
                </ul>
-            </li>
-         </ul> --}}
+            </li> --}}
+         </ul>
          <ul data-parent="Inventory" class="childNav d-none">
             <li class="nav-item"><a href="/products" class=""><i class="nav-icon i-Posterous"></i> <span class="item-name">Products and Components</span></a></li>
             <li class="nav-item"><a href="/app/inventory/adjustments" class=""><i class="nav-icon i-Laptop-Secure"></i> <span class="item-name">Inventory Adjustments</span></a></li>
