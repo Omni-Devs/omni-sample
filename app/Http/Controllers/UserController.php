@@ -75,6 +75,8 @@ class UserController extends Controller
         // HR reference data
         $designations = Designation::all();
         $departments = Department::all();
+
+        // list of users for selects (supervisor etc.)
         $users = User::orderBy('username')->get();
 
         return view('users.form', compact('roles', 'branches', 'permissions', 'shifts', 'allowances', 'leaves', 'designations', 'departments', 'salaryMethods', 'users'));
@@ -350,13 +352,16 @@ class UserController extends Controller
         }
 
         // Persist branch -> permission assignments into branch_permission pivot table
+        // Also collect permission ids so we can assign those permissions to the user
         if (!empty($validated['branch_permissions'])) {
+            $collectedPermIds = [];
             foreach ($validated['branch_permissions'] as $row) {
                 $branchId = $row['branch_id'] ?? null;
                 $perms = $row['permissions'] ?? [];
                 if (empty($branchId) || !is_array($perms) || empty($perms)) continue;
                 foreach ($perms as $permId) {
                     if (empty($permId)) continue;
+                    $collectedPermIds[] = $permId;
                     $exists = DB::table('branch_permission')
                         ->where('branch_id', $branchId)
                         ->where('permission_id', $permId)
@@ -369,6 +374,24 @@ class UserController extends Controller
                             'updated_at' => now(),
                         ]);
                     }
+                }
+            }
+
+            // Assign collected permissions to the user so global permission checks (e.g. sidebar @can / ->can)
+            // succeed. This is a pragmatic short-term fix: it grants the selected permissions directly
+            // to the user (not scoped by branch). For branch-scoped enforcement, implement branch-aware
+            // middleware or adjust view checks to consult branch_permission.
+            $collectedPermIds = array_values(array_unique(array_filter($collectedPermIds)));
+            if (!empty($collectedPermIds)) {
+                try {
+                    $permNames = Permission::whereIn('id', $collectedPermIds)->pluck('name')->toArray();
+                    if (!empty($permNames)) {
+                        // givePermissionTo accepts names or Permission models
+                        $user->givePermissionTo($permNames);
+                    }
+                } catch (\Throwable $e) {
+                    // log but don't break user creation
+                    try { Log::warning('users.store - givePermissionTo failed', ['error' => $e->getMessage()]); } catch (\Throwable $_) {}
                 }
             }
         }
@@ -574,6 +597,7 @@ if (!empty($validated['salary_method'])) {
         ];
         $designations = Designation::all();
         $departments = Department::all();
+        $users = User::orderBy('username')->get();
 
         // Extract related data for the view
         $spouse = $user->spouseDetail;
@@ -582,22 +606,23 @@ if (!empty($validated['salary_method'])) {
         $educationalBackgrounds = $user->educationalBackgrounds;
         $workInformations = $user->employeeWorkInformations;
 
-        return view('users.edit', compact(
-            'user',
-            'branches',
-            'permissions',
-            'shifts',
-            'allowances',
-            'leaves',
-            'salaryMethods',
-            'designations',
-            'departments',
-            'spouse',
-            'contactPerson',
-            'dependents',
-            'educationalBackgrounds',
-            'workInformations'
-        ));
+        return view('users.edit', [
+            'user' => $user,
+            'branches' => $branches,
+            'permissions' => $permissions,
+            'shifts' => $shifts,
+            'allowances' => $allowances,
+            'leaves' => $leaves,
+            'salaryMethods' => $salaryMethods,
+            'designations' => $designations,
+            'departments' => $departments,
+            'users' => $users,
+            'spouse' => $spouse,
+            'contactPerson' => $contactPerson,
+            'dependents' => $dependents,
+            'educationalBackgrounds' => $educationalBackgrounds,
+            'workInformations' => $workInformations,
+        ]);
     }
 
     // PUT/PATCH: Save the updated data

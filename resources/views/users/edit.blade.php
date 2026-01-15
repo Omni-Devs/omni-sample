@@ -426,15 +426,240 @@
 
                                 <button type="button" id="open-workinfo-form" class="btn btn-sm btn-outline-primary mb-3">Add Work Info</button>
 
-                                <!-- Work info form (same as create) -->
+                                <!-- Work info form (copied from create) -->
                                 <div id="workinfo-form" style="display:none;" class="mb-3">
-                                    <!-- ... copy the work info form fields from your create blade ... -->
-                                    <!-- Make sure IDs and names match the JS logic -->
+                                    <div class="row">
+                                        <div class="col-md-3 form-group"><label>Date</label><input type="date" id="wi_hire_date" class="form-control"></div>
+                                        <div class="col-md-2 form-group">
+                                            <label>Employment Type</label>
+                                            <select id="wi_status" class="form-control">
+                                                <option value="">Select Employment Type</option>
+                                                <option value="probationary">Probationary Period</option>
+                                                <option value="regularization">Regularization</option>
+                                                <option value="promotion">Promotion</option>
+                                                <option value="contractual">Contractual</option>
+                                                <option value="resigned">Resigned</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-2 form-group"><label>Regularization</label><input type="date" id="wi_regularization" class="form-control"></div>
+                                        <div class="col-md-2 form-group"><label>Position</label>
+                                            <select id="wi_designation" class="form-control">
+                                                <option value="">Select Position</option>
+                                                @foreach($designations as $des)
+                                                    <option value="{{ $des->id }}" {{ (old('wi_designation') == $des->id) || (isset($workInformations) && $workInformations->firstWhere('designation_id',$des->id)) ? 'selected' : '' }}>{{ $des->name }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        <div class="col-md-2 form-group"><label>Department</label>
+                                            <select id="wi_department" class="form-control">
+                                                <option value="">Select Department</option>
+                                                @foreach($departments as $d)
+                                                    <option value="{{ $d->id }}" {{ (old('wi_department') == $d->id) || (isset($workInformations) && $workInformations->firstWhere('department_id',$d->id)) ? 'selected' : '' }}>{{ $d->name }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-3 form-group">
+                                            <label>Supervisor</label>
+                                            <select id="wi_supervisor" class="form-control">
+                                                <option value="">Select Supervisor</option>
+                                                @foreach($users as $u)
+                                                    <option value="{{ $u->username }}" {{ old('wi_supervisor') == $u->username ? 'selected' : '' }}>{{ $u->username }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3 form-group"><label>Monthly Rate</label><input type="number" step="0.01" id="wi_monthly_rate" class="form-control"></div>
+                                        <div class="col-md-3 form-group"><label>Daily Rate</label><input type="number" step="0.01" id="wi_daily_rate" class="form-control"></div>
+                                        <div class="col-md-3 form-group"><label>Hourly Rate</label><input type="number" step="0.01" id="wi_hourly_rate" class="form-control"></div>
+                                    </div>
+                                    <div>
+                                        <button type="button" id="save-workinfo" class="btn btn-primary btn-sm">Save</button>
+                                        <button type="button" id="cancel-workinfo" class="btn btn-secondary btn-sm">Cancel</button>
+                                    </div>
                                 </div>
 
-                                <!-- Salary Method, Allowances, Leaves sections -->
-                                <!-- Similar pattern: use old() or model data -->
-                                <!-- ... -->
+                                <hr>
+
+                                <h6>Salary Method</h6>
+                                <div class="row mb-3">
+                                    <div class="col-md-2 form-group">
+                                        <label>Salary Method</label>
+                                        <select name="salary_method[method_id]" class="form-control">
+                                            <option value="">Select Method</option>
+                                            @foreach($salaryMethods as $key => $label)
+                                                <option value="{{ $key }}" {{ old('salary_method.method_id', $user->salaryMethod->method_id ?? '') == $key ? 'selected' : '' }}>{{ $label }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2 form-group">
+                                        <label>Salary Period</label>
+                                        <select name="salary_method[period_id]" class="form-control">
+                                            <option value="bi-monthly" {{ old('salary_method.period_id', $user->salaryMethod->period_id ?? '') == 'bi-monthly' ? 'selected' : '' }}>Bi-Monthly</option>
+                                            <option value="monthly" {{ old('salary_method.period_id', $user->salaryMethod->period_id ?? '') == 'monthly' ? 'selected' : '' }}>Monthly</option>
+                                            <option value="weekly" {{ old('salary_method.period_id', $user->salaryMethod->period_id ?? '') == 'weekly' ? 'selected' : '' }}>Weekly</option>
+                                            <option value="daily" {{ old('salary_method.period_id', $user->salaryMethod->period_id ?? '') == 'daily' ? 'selected' : '' }}>Daily</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2 form-group">
+                                        <label>Account Name / Number</label>
+                                        <input type="text" name="salary_method[account]" class="form-control" value="{{ old('salary_method.account', $user->salaryMethod->account ?? '') }}">
+                                    </div>
+
+                                    <div class="col-md-6 form-group">
+                                        <label class="fw-bold">Shift Template (Optional)</label>
+                                        <select id="shift_select" class="form-control mb-2">
+                                            <option value="">No template / Custom only</option>
+                                            @foreach($shifts as $shift)
+                                                <option value="{{ $shift->id }}"
+                                                        data-shift='@json($shift)'
+                                                        {{ old('salary_method.shift_id', $user->salaryMethod->shift_id ?? null) == $shift->id ? 'selected' : '' }}>
+                                                    {{ $shift->name }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+
+                                        <input type="hidden" name="salary_method[shift_id]" id="assigned_shift_id" value="{{ old('salary_method.shift_id', $user->salaryMethod->shift_id ?? null) }}">
+
+                                        <small class="text-muted">Select a template to customize times and view schedule.</small>
+                                    </div>
+                                </div>
+
+                                <!-- Custom Shift Modal -->
+                                <div class="modal fade" id="shiftModal" tabindex="-1" role="dialog" aria-labelledby="shiftModalLabel" aria-hidden="true">
+                                    <div class="modal-dialog modal-lg" role="document">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title fw-bold" id="shiftModalLabel">
+                                                    <span id="modal-shift-name">Custom Shift Settings</span>
+                                                </h5>
+                                                <button type="button" class="close btn-close" data-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <!-- NOTE: visible Custom Shift Schedule inputs removed. Hidden inputs inserted below will be populated by JS when saving the modal. -->
+                                                <input type="hidden" name="salary_method[custom_time_start]" id="custom_time_start_input" value="{{ old('salary_method.custom_time_start', $user->salaryMethod->custom_time_start ?? '') }}">
+                                                <input type="hidden" name="salary_method[custom_time_end]" id="custom_time_end_input" value="{{ old('salary_method.custom_time_end', $user->salaryMethod->custom_time_end ?? '') }}">
+                                                <input type="hidden" name="salary_method[custom_break_start]" id="custom_break_start_input" value="{{ old('salary_method.custom_break_start', $user->salaryMethod->custom_break_start ?? '') }}">
+                                                <input type="hidden" name="salary_method[custom_break_end]" id="custom_break_end_input" value="{{ old('salary_method.custom_break_end', $user->salaryMethod->custom_break_end ?? '') }}">
+
+                                                <!-- Preset date range for template schedule -->
+                                                <div class="row mb-3">
+                                                    <div class="col-md-6">
+                                                        <label>Preset Schedule Start</label>
+                                                        <input type="date" id="preset_start" name="salary_method[preset_start]" class="form-control" value="{{ old('salary_method.preset_start') }}">
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <label>Preset Schedule End</label>
+                                                        <input type="date" id="preset_end" name="salary_method[preset_end]" class="form-control" value="{{ old('salary_method.preset_end') }}">
+                                                    </div>
+                                                </div>
+
+                                                <!-- Generated per-date schedule preview -->
+                                                <div id="preset-dates-list" class="mb-3">
+                                                    <!-- JS will render date cards here -->
+                                                </div>
+
+                                                <div class="card mt-4">
+                                                    <div class="card-body">
+                                                        <h6 class="fw-bold mb-4">Current Shift Preview</h6>
+                                                        <div class="row mb-4">
+                                                            <div class="col-md-3"><strong>Start:</strong> <span id="pv-start" class="text-primary fw-bold">-</span></div>
+                                                            <div class="col-md-3"><strong>End:</strong> <span id="pv-end" class="text-primary fw-bold">-</span></div>
+                                                            <div class="col-md-3"><strong>Break Start:</strong> <span id="pv-break-start" class="text-primary fw-bold">-</span></div>
+                                                            <div class="col-md-3"><strong>Break End:</strong> <span id="pv-break-end" class="text-primary fw-bold">-</span></div>
+                                                        </div>
+
+                                                        <h6 class="fw-bold mb-3">Weekly / Preset Selection</h6>
+                                                        <!-- Weekly table removed — per-date selections will be used. -->
+                                                        <!-- Hidden array inputs for server, populated by JS on Save -->
+                                                        <input type="hidden" name="salary_method[custom_work_days]" id="custom_work_days_input" value="{{ old('salary_method.custom_work_days', json_encode($user->salaryMethod->custom_work_days ?? [])) }}">
+                                                        <input type="hidden" name="salary_method[custom_rest_days]" id="custom_rest_days_input" value="{{ old('salary_method.custom_rest_days', json_encode($user->salaryMethod->custom_rest_days ?? [])) }}">
+                                                        <input type="hidden" name="salary_method[custom_open_time]" id="custom_open_time_input" value="{{ old('salary_method.custom_open_time', json_encode($user->salaryMethod->custom_open_time ?? [])) }}">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                                <button type="button" id="apply-preset-btn" class="btn btn-primary mr-2">Apply</button>
+                                                <button type="button" id="save-shift-modal-btn" class="btn btn-primary">Save Changes</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <h6 class="mt-3">Allowances</h6>
+                                <div id="allowances-list">
+                                    @foreach($allowances as $i => $al)
+                                    <div class="form-row align-items-center mb-2 allowance-row">
+                                        <div class="col-md-5">
+                                            <div class="form-check">
+                                                <input class="form-check-input allowance-checkbox" type="checkbox" name="allowances[{{ $i }}][allowance_id]" value="{{ $al->id }}" id="allowance_{{ $al->id }}" {{ (isset($user) && $user->allowances->contains($al->id)) ? 'checked' : '' }}>
+                                                <label class="form-check-label" for="allowance_{{ $al->id }}">{{ $al->name }}</label>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-md-3">
+                                            <div class="input-group">
+                                                <div class="input-group-prepend">
+                                                    <button type="button" class="btn btn-sm btn-orange decrement-amount" tabindex="-1">-</button>
+                                                </div>
+                                                <input type="number" name="allowances[{{ $i }}][amount]" class="form-control allowance-amount text-center" placeholder="Amount" step="100" min="0" value="{{ old("allowances.$i.amount", optional($user->allowances->firstWhere('id',$al->id))->pivot->amount ?? '') }}" {{ !(isset($user) && $user->allowances->contains($al->id)) ? 'disabled' : '' }}>
+                                                <div class="input-group-append">
+                                                    <button type="button" class="btn btn-sm btn-orange increment-amount" tabindex="-1">+</button>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-md-3">
+                                            <div class="input-group">
+                                                <div class="input-group-prepend">
+                                                    <button type="button" class="btn btn-sm btn-orange decrement-count" tabindex="-1">-</button>
+                                                </div>
+                                                <input type="number" name="allowances[{{ $i }}][monthly_count]" class="form-control allowance-count text-center" placeholder="Count" step="1" min="0" value="{{ old("allowances.$i.monthly_count", optional($user->allowances->firstWhere('id',$al->id))->pivot->monthly_count ?? '') }}" {{ !(isset($user) && $user->allowances->contains($al->id)) ? 'disabled' : '' }}>
+                                                <div class="input-group-append">
+                                                    <button type="button" class="btn btn-sm btn-orange increment-count" tabindex="-1">+</button>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-md-1">
+                                            <button type="button" class="btn btn-sm btn-outline-danger remove-allowance">Remove</button>
+                                        </div>
+                                    </div>
+                                    @endforeach
+                                </div>
+
+                                <h6 class="mt-5">Leaves</h6>
+                                <div id="leaves-list">
+                                    @foreach($leaves as $i => $lv)
+                                    <div class="form-row align-items-center mb-2 leave-row">
+                                        <div class="col-md-5">
+                                            <div class="form-check">
+                                                <input class="form-check-input leave-checkbox" type="checkbox" name="leaves[{{ $i }}][leave_id]" value="{{ $lv->id }}" id="leave_{{ $lv->id }}" {{ (isset($user) && $user->leaves->contains($lv->id)) ? 'checked' : '' }}>
+                                                <label class="form-check-label" for="leave_{{ $lv->id }}">{{ $lv->name }}</label>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-md-3">
+                                            <div class="input-group">
+                                                <div class="input-group-prepend">
+                                                    <button type="button" class="btn btn-sm btn-orange decrement-days" tabindex="-1">-</button>
+                                                </div>
+                                                <input type="number" name="leaves[{{ $i }}][days]" class="form-control leave-days text-center" placeholder="Days" step="1" min="0" value="{{ old("leaves.$i.days", optional($user->leaves->firstWhere('id',$lv->id))->pivot->days ?? '') }}" {{ !(isset($user) && $user->leaves->contains($lv->id)) ? 'disabled' : '' }}>
+                                                <div class="input-group-append">
+                                                    <button type="button" class="btn btn-sm btn-orange increment-days" tabindex="-1">+</button>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-md-3">
+                                            <input type="date" name="leaves[{{ $i }}][effective_date]" class="form-control leave-effective" value="{{ old("leaves.$i.effective_date", optional($user->leaves->firstWhere('id',$lv->id))->pivot->effective_date ?? '') }}" {{ !(isset($user) && $user->leaves->contains($lv->id)) ? 'disabled' : '' }}>
+                                        </div>
+
+                                        <div class="col-md-1"><button type="button" class="btn btn-sm btn-outline-danger remove-leave">Remove</button></div>
+                                    </div>
+                                    @endforeach
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -468,6 +693,55 @@
                                     @endif
                                 </div>
                                 <button type="button" id="add-educ" class="btn btn-sm btn-outline-primary">Add education</button>
+
+                                <!-- Attachments (copied from create) -->
+                                <div class="card mt-4 border-orange">
+                                    <div class="card-body">
+                                        <h6 class="mb-4 text-orange">Attachments</h6>
+                                        <div id="attachments-list">
+                                            @php
+                                                $commonAttachments = [
+                                                    'Birth Certificate',
+                                                    'Valid ID',
+                                                    'Marriage Contract',
+                                                    'Health Card',
+                                                    'NBI',
+                                                    'Resume',
+                                                    'Location Sketch',
+                                                    '2x2',
+                                                    'Police Clearance',
+                                                    'police clearance',
+                                                    'NBI',
+                                                    'GSIS',
+                                                    'HMO',
+                                                ];
+                                            @endphp
+
+                                            @foreach($commonAttachments as $index => $name)
+                                            <div class="attachment-row row align-items-center mb-3">
+                                                <div class="col-md-4">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input attachment-checkbox" type="checkbox" id="attach_{{ $index }}" value="{{ $name }}">
+                                                        <label class="form-check-label" for="attach_{{ $index }}">{{ $name }}</label>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="input-group">
+                                                        <div class="custom-file">
+                                                            <input type="file" class="custom-file-input attachment-file" name="attachments[{{ $index }}]" id="file_{{ $index }}" accept=".pdf,.jpg,.jpeg,.png" disabled>
+                                                            <label class="custom-file-label text-truncate" for="file_{{ $index }}">Choose file...</label>
+                                                        </div>
+                                                    </div>
+                                                    <input type="hidden" name="attachment_names[{{ $index }}]" class="attachment-name" value="{{ $name }}" disabled>
+                                                </div>
+                                                <div class="col-md-2 text-right">
+                                                    <button type="button" class="btn btn-sm btn-danger remove-attachment" disabled>Remove</button>
+                                                </div>
+                                            </div>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1007,5 +1281,191 @@ document.querySelector('form').addEventListener('submit', function () {
         }
     });
 })();
+
+// Attachments: checkbox → enable file input + remove button
+document.getElementById('attachments-list')?.addEventListener('change', function(e) {
+    if (e.target.classList.contains('attachment-checkbox')) {
+        const row = e.target.closest('.attachment-row');
+        const fileInput = row.querySelector('.attachment-file');
+        const fileLabel = row.querySelector('.custom-file-label');
+        const removeBtn = row.querySelector('.remove-attachment');
+        const nameInput = row.querySelector('.attachment-name');
+
+        if (e.target.checked) {
+            fileInput.disabled = false;
+            removeBtn.disabled = false;
+            nameInput.disabled = false;
+        } else {
+            fileInput.disabled = true;
+            fileInput.value = '';
+            if(fileLabel) fileLabel.textContent = 'Choose file...';
+            removeBtn.disabled = true;
+            nameInput.disabled = true;
+        }
+    }
+});
+
+// Update file label when file selected
+document.getElementById('attachments-list')?.addEventListener('change', function(e) {
+    if (e.target.classList.contains('attachment-file')) {
+        const label = e.target.closest('.input-group').querySelector('.custom-file-label');
+        if (e.target.files.length > 0) {
+            label.textContent = e.target.files[0].name;
+        } else {
+            label.textContent = 'Choose file...';
+        }
+    }
+});
+
+// Remove button (clears checkbox and file)
+document.getElementById('attachments-list')?.addEventListener('click', function(e) {
+    if (e.target.classList.contains('remove-attachment')) {
+        const row = e.target.closest('.attachment-row');
+        const checkbox = row.querySelector('.attachment-checkbox');
+        const fileInput = row.querySelector('.attachment-file');
+        const label = row.querySelector('.custom-file-label');
+
+        if(checkbox) checkbox.checked = false;
+        if(fileInput) fileInput.value = '';
+        if(label) label.textContent = 'Choose file...';
+        if(fileInput) fileInput.disabled = true;
+        e.target.disabled = true;
+    }
+});
+
+// Initialize on load (for edit form with old values)
+document.querySelectorAll('.attachment-checkbox').forEach(cb => {
+    if (cb.checked) {
+        const row = cb.closest('.attachment-row');
+        row.querySelectorAll('.attachment-file, .remove-attachment').forEach(el => el.disabled = false);
+    }
+});
+
+// Shift preset date rendering helpers
+function renderPresetDates(shift){
+    const container = document.getElementById('preset-dates-list');
+    if(!container) return;
+    container.innerHTML = '';
+    const start = document.getElementById('preset_start')?.value;
+    const end = document.getElementById('preset_end')?.value;
+    if(!start || !end) return;
+    const s = new Date(start);
+    const e = new Date(end);
+    if(s > e) return;
+
+    const fmt = (d) => d.toISOString().slice(0,10);
+    const human = (d) => d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric', weekday: 'long' });
+    let idx = 0;
+    for(let dt = new Date(s); dt <= e; dt.setDate(dt.getDate()+1)){
+        const dateStr = fmt(dt);
+        const card = document.createElement('div');
+        card.className = 'card mb-2';
+        card.innerHTML = `
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div><strong>${human(new Date(dt))}</strong></div>
+                    <div class="text-muted small">${dateStr}</div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-md-3"><label>Start</label><input type="time" name="salary_method[preset_dates][${idx}][time_start]" class="form-control" value="${shift.time_start ? shift.time_start.slice(0,5) : ''}"></div>
+                    <div class="col-md-3"><label>End</label><input type="time" name="salary_method[preset_dates][${idx}][time_end]" class="form-control" value="${shift.time_end ? shift.time_end.slice(0,5) : ''}"></div>
+                    <div class="col-md-3"><label>Lunch Start</label><input type="time" name="salary_method[preset_dates][${idx}][lunch_start]" class="form-control" value="${shift.break_start ? shift.break_start.slice(0,5) : ''}"></div>
+                    <div class="col-md-3"><label>Lunch End</label><input type="time" name="salary_method[preset_dates][${idx}][lunch_end]" class="form-control" value="${shift.break_end ? shift.break_end.slice(0,5) : ''}"></div>
+                </div>
+                <input type="hidden" name="salary_method[preset_dates][${idx}][date]" value="${dateStr}">
+            </div>
+        `;
+        container.appendChild(card);
+        idx++;
+    }
+}
+
+// wire shift select to update assigned_shift_id and render preset dates
+document.getElementById('shift_select')?.addEventListener('change', function(){
+    const opt = this.selectedOptions[0];
+    let shift = {};
+    if(opt && opt.dataset && opt.dataset.shift){
+        try{ shift = JSON.parse(opt.dataset.shift); }catch(e){ shift = {}; }
+    }
+    window.currentShiftInModal = shift;
+    const assigned = document.getElementById('assigned_shift_id'); if(assigned) assigned.value = this.value || '';
+    renderPresetDates(shift);
+});
+
+// Call render when preset dates change
+document.getElementById('preset_start')?.addEventListener('change', function(){ renderPresetDates(window.currentShiftInModal || {}); });
+document.getElementById('preset_end')?.addEventListener('change', function(){ renderPresetDates(window.currentShiftInModal || {}); });
+// Apply button: explicitly render per-day preset cards when clicked (keeps modal open)
+document.getElementById('apply-preset-btn')?.addEventListener('click', function(){
+    renderPresetDates(window.currentShiftInModal || {});
+});
+
+// Aggregate per-date preset values into the hidden fields expected by the server
+function aggregateShiftModalAndPopulateHidden(){
+    const container = document.getElementById('preset-dates-list');
+    if(!container) return;
+    const cards = container.querySelectorAll('.card');
+    const work = [], rest = [], openTimes = [];
+    let first_time_start = '';
+    let first_time_end = '';
+    let first_lunch_start = '';
+    let first_lunch_end = '';
+
+    cards.forEach(card => {
+        const dateInp = card.querySelector('input[name$="[date]"]');
+        const date = dateInp ? dateInp.value : null;
+        const tstart = card.querySelector('input[name$="[time_start]"]');
+        const tend = card.querySelector('input[name$="[time_end]"]');
+        const lstart = card.querySelector('input[name$="[lunch_start]"]');
+        const lend = card.querySelector('input[name$="[lunch_end]"]');
+        const dayType = card.querySelector('input[type="radio"][name$="[day_type]"]:checked');
+        const type = dayType ? dayType.value : 'work';
+
+        if(date){
+            if(type === 'work') work.push(date);
+            else if(type === 'rest') rest.push(date);
+            else if(type === 'open') openTimes.push(date);
+        }
+
+        if(!first_time_start && tstart && tstart.value) first_time_start = tstart.value;
+        if(!first_time_end && tend && tend.value) first_time_end = tend.value;
+        if(!first_lunch_start && lstart && lstart.value) first_lunch_start = lstart.value;
+        if(!first_lunch_end && lend && lend.value) first_lunch_end = lend.value;
+    });
+
+    const shift = window.currentShiftInModal || {};
+    if(!first_time_start && shift.time_start) first_time_start = (shift.time_start||'').slice(0,5);
+    if(!first_time_end && shift.time_end) first_time_end = (shift.time_end||'').slice(0,5);
+    if(!first_lunch_start && shift.break_start) first_lunch_start = (shift.break_start||'').slice(0,5);
+    if(!first_lunch_end && shift.break_end) first_lunch_end = (shift.break_end||'').slice(0,5);
+
+    document.getElementById('custom_time_start_input').value = first_time_start || '';
+    document.getElementById('custom_time_end_input').value = first_time_end || '';
+    document.getElementById('custom_break_start_input').value = first_lunch_start || '';
+    document.getElementById('custom_break_end_input').value = first_lunch_end || '';
+
+    document.getElementById('custom_work_days_input').value = JSON.stringify(work);
+    document.getElementById('custom_rest_days_input').value = JSON.stringify(rest);
+    document.getElementById('custom_open_time_input').value = JSON.stringify(openTimes);
+
+    // update preview display (if present)
+    const pvStart = document.getElementById('pv-start'); if(pvStart) pvStart.textContent = first_time_start || '-';
+    const pvEnd = document.getElementById('pv-end'); if(pvEnd) pvEnd.textContent = first_time_end || '-';
+    const pvBS = document.getElementById('pv-break-start'); if(pvBS) pvBS.textContent = first_lunch_start || '-';
+    const pvBE = document.getElementById('pv-break-end'); if(pvBE) pvBE.textContent = first_lunch_end || '-';
+}
+
+// Save changes button: aggregate values then close modal
+document.getElementById('save-shift-modal-btn')?.addEventListener('click', function(){
+    aggregateShiftModalAndPopulateHidden();
+    try{ $('#shiftModal').modal('hide'); } catch(e){ }
+});
+
+// live-update preview + hidden fields while editing per-date times
+document.getElementById('preset-dates-list')?.addEventListener('input', function(e){
+    if(e.target && e.target.matches('input[type="time"]')){
+        aggregateShiftModalAndPopulateHidden();
+    }
+});
 </script>
 @endsection
