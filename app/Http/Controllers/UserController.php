@@ -87,7 +87,13 @@ class UserController extends Controller
     {
         // Normal processing: handle incoming request and create user
             // Determine if this is an Access-only submission (credentials + branch permissions)
-            $isAccessOnly = $request->has('allow_db_user') || $request->filled('username');
+            // Previous heuristic treated any request with a username or the allow_db_user checkbox
+            // as access-only which made full "basic" fields (first_name/last_name/email) get
+            // ignored and stored as null. Instead, only treat the request as access-only when
+            // admin explicitly provided DB credentials but did NOT supply any basic identity
+            // fields. This covers the UI where the Access tab may be used standalone.
+            $hasBasicIdentity = $request->filled('name') || $request->filled('first_name') || $request->filled('last_name') || $request->filled('email');
+            $isAccessOnly = ($request->has('allow_db_user') || $request->filled('username')) && !$hasBasicIdentity;
 
             if ($isAccessOnly) {
                 // minimal rules for creating DB credentials independently
@@ -197,10 +203,21 @@ class UserController extends Controller
                     $hasBranch = isset($row['branch_id']) && $row['branch_id'] !== '' && $row['branch_id'] !== null;
                     $hasPerms = isset($row['permissions']) && is_array($row['permissions']) && count(array_filter($row['permissions'], function($v){ return $v !== null && $v !== ''; })) > 0;
                     if ($hasBranch || $hasPerms) {
-                        // remove empty permission values
-                        $row['permissions'] = array_values(array_filter($row['permissions'] ?? [], function($v){ return $v !== null && $v !== ''; }));
-                        $bpFiltered[] = $row;
-                    }
+                            // normalize permissions: accept either an array or a comma-separated string
+                            $permsRaw = $row['permissions'] ?? [];
+                            if (!is_array($permsRaw)) {
+                                // might be a comma-separated string from the JS widget
+                                if (is_string($permsRaw)) {
+                                    $permsArr = array_filter(array_map('trim', explode(',', $permsRaw)), function($v){ return $v !== null && $v !== ''; });
+                                } else {
+                                    $permsArr = [];
+                                }
+                            } else {
+                                $permsArr = array_filter($permsRaw, function($v){ return $v !== null && $v !== ''; });
+                            }
+                            $row['permissions'] = array_values($permsArr);
+                            $bpFiltered[] = $row;
+                        }
                 }
                 $input['branch_permissions'] = $bpFiltered;
             }
@@ -535,7 +552,6 @@ if (!empty($validated['salary_method'])) {
         }
 
         // Employee work informations
-        if (!empty($validated['employee_work_informations'])) {
 
             $statusMap = [
                 'probationary' => 1,
@@ -562,7 +578,6 @@ if (!empty($validated['salary_method'])) {
                     'hourly_rate' => $wi['hourly_rate'] ?? null,
                     'position' => $wi['position'] ?? null,
                 ]);
-            }
         }
 
         return redirect()->route('users.index')->with('success', 'User created successfully!');
@@ -606,6 +621,16 @@ if (!empty($validated['salary_method'])) {
         $educationalBackgrounds = $user->educationalBackgrounds;
         $workInformations = $user->employeeWorkInformations;
 
+        // entries for the branch and the user's direct permissions.
+        $userPermissionIds = $user->getDirectPermissions()->pluck('id')->toArray();
+        $userBranchPermissions = [];
+        foreach ($user->branches as $b) {
+            $bpIds = DB::table('branch_permission')->where('branch_id', $b->id)->pluck('permission_id')->toArray();
+            $userBranchPermissions[$b->id] = array_values(array_intersect($bpIds, $userPermissionIds));
+        }
+        
+        // (no work info creation should happen in edit() — it's handled on store/update flows)
+
         return view('users.edit', [
             'user' => $user,
             'branches' => $branches,
@@ -622,6 +647,7 @@ if (!empty($validated['salary_method'])) {
             'dependents' => $dependents,
             'educationalBackgrounds' => $educationalBackgrounds,
             'workInformations' => $workInformations,
+            'userBranchPermissions' => $userBranchPermissions,
         ]);
     }
 
@@ -634,12 +660,16 @@ if (!empty($validated['salary_method'])) {
         $user = User::findOrFail($id);
 
         // Validation rules (same as store, but add unique ignore for email/username)
+        // Make basic identity fields nullable on update so users who were
+        // created via access-only flows (or missing name/email) can still
+        // update other tabs (like Work Information) without being blocked
+        // by strict validation here.
         $rules = [
-            'first_name' => 'required|string|max:255',
-            'last_name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . $id,
+            'first_name' => 'nullable|string|max:255',
+            'last_name' => 'nullable|string|max:255',
+            'email' => 'nullable|email|unique:users,email,' . $id,
             'username' => 'nullable|unique:users,username,' . $id,
-            // ... add other rules like in store()
+            // ... add other rules like in store() if needed
         ];
 
         $request->validate($rules);
@@ -651,6 +681,12 @@ if (!empty($validated['salary_method'])) {
             'tin', 'phil_health_number', 'pag_ibig_number', 'blood_type_id',
             'civil_status_id', 'address'
         ]));
+
+
+        // Employee work informations are handled later in the update() flow using
+        // a delete + recreate strategy to ensure the DB matches the submitted
+        // indexed inputs from the form. This avoids duplicate/contradictory
+        // update logic.
 
         // Handle image
         if ($request->hasFile('image')) {
@@ -718,8 +754,102 @@ if (!empty($validated['salary_method'])) {
             }
         }
 
-        // Branch Permissions, Allowances, Leaves, etc. → same as store but sync/update
+        // === Branch Permissions (update) ===
+        // Normalize branch_permissions: drop entries that are completely empty
+        $input = $request->all();
+        $bpFiltered = [];
+        if (!empty($input['branch_permissions']) && is_array($input['branch_permissions'])) {
+            foreach ($input['branch_permissions'] as $row) {
+                $hasBranch = isset($row['branch_id']) && $row['branch_id'] !== '' && $row['branch_id'] !== null;
+                $hasPerms = false;
+                // permissions may be provided as an array or as a comma-separated string
+                if (isset($row['permissions'])) {
+                    if (is_array($row['permissions'])) {
+                        $hasPerms = count(array_filter($row['permissions'], function($v){ return $v !== null && $v !== ''; })) > 0;
+                    } elseif (is_string($row['permissions'])) {
+                        $tmp = array_filter(array_map('trim', explode(',', $row['permissions'])), function($v){ return $v !== null && $v !== ''; });
+                        $hasPerms = count($tmp) > 0;
+                    }
+                }
 
+                if ($hasBranch || $hasPerms) {
+                    // normalize permissions into an array of non-empty values
+                    $permsRaw = $row['permissions'] ?? [];
+                    if (!is_array($permsRaw)) {
+                        if (is_string($permsRaw)) {
+                            $permsArr = array_filter(array_map('trim', explode(',', $permsRaw)), function($v){ return $v !== null && $v !== ''; });
+                        } else {
+                            $permsArr = [];
+                        }
+                    } else {
+                        $permsArr = array_filter($permsRaw, function($v){ return $v !== null && $v !== ''; });
+                    }
+                    $row['permissions'] = array_values($permsArr);
+                    $bpFiltered[] = $row;
+                }
+            }
+        }
+
+        // If branch_permissions were provided, sync branches and permissions
+        if ($request->has('branch_permissions')) {
+            if (!empty($bpFiltered)) {
+                $branchIds = [];
+                $collectedPermIds = [];
+                foreach ($bpFiltered as $row) {
+                    if (!empty($row['branch_id'])) {
+                        $branchIds[] = $row['branch_id'];
+                    }
+                    $perms = $row['permissions'] ?? [];
+                    if (!empty($perms) && is_array($perms)) {
+                        foreach ($perms as $permId) {
+                            if (empty($permId)) continue;
+                            $collectedPermIds[] = $permId;
+                            $exists = DB::table('branch_permission')
+                                ->where('branch_id', $row['branch_id'])
+                                ->where('permission_id', $permId)
+                                ->exists();
+                            if (!$exists) {
+                                DB::table('branch_permission')->insert([
+                                    'branch_id' => $row['branch_id'],
+                                    'permission_id' => $permId,
+                                    'created_at' => now(),
+                                    'updated_at' => now(),
+                                ]);
+                            }
+                        }
+                    }
+                }
+
+                // sync branches for the user
+                if (!empty($branchIds)) {
+                    $user->branches()->sync(array_values(array_unique($branchIds)));
+                } else {
+                    $user->branches()->sync([]);
+                }
+
+                // sync direct permissions for the user to match the selected ones
+                $collectedPermIds = array_values(array_unique(array_filter($collectedPermIds)));
+                if (!empty($collectedPermIds)) {
+                    $permNames = Permission::whereIn('id', $collectedPermIds)->pluck('name')->toArray();
+                    // replace user's direct permissions with the selected ones
+                    try {
+                        $user->syncPermissions($permNames);
+                    } catch (\Throwable $e) {
+                        try { Log::warning('users.update - syncPermissions failed', ['error' => $e->getMessage()]); } catch (\Throwable $_) {}
+                    }
+                } else {
+                    // no permissions selected for branches: remove any direct permissions granted via branch selection
+                    try { $user->syncPermissions([]); } catch (\Throwable $_) {}
+                }
+            } else {
+                // branch_permissions submitted but empty -> clear branches and branch-scoped permissions
+                $user->branches()->sync([]);
+                try { $user->syncPermissions([]); } catch (\Throwable $_) {}
+            }
+        } elseif ($request->has('branches')) {
+            // fallback: sync raw branches[] input if provided
+            $user->branches()->sync($request->input('branches', []));
+        }
         return redirect()->route('users.index')->with('success', 'Employee updated successfully!');
     }
 

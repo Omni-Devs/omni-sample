@@ -384,6 +384,7 @@
                                             <select id="wi_status" class="form-control">
                                                 <option value="">Select Employment Type</option>
                                                 <option value="probationary">Probationary Period</option>
+                                                <option value="regularization">Regularization</option>
                                                 <option value="promotion">Promotion</option>
                                                 <option value="contractual">Contractual</option>
                                                 <option value="resigned">Resigned</option>
@@ -931,6 +932,10 @@ document.getElementById('avatar')?.addEventListener('change', function(e){
 
 document.querySelector('form').addEventListener('submit', function () {
 
+    // Ensure any edits inside the Shift modal are aggregated into the hidden
+    // inputs before the form is submitted (saves per-date open times/work days)
+    try { aggregateShiftModalAndPopulateHidden(); } catch (e) { /* ignore */ }
+
     document.querySelectorAll('.allowance-checkbox:checked').forEach(cb => {
         const row = cb.closest('.allowance-row');
         row.querySelector('.allowance-amount').disabled = false;
@@ -1459,7 +1464,7 @@ function aggregateShiftModalAndPopulateHidden(){
     const container = document.getElementById('preset-dates-list');
     if(!container) return;
     const cards = container.querySelectorAll('.card');
-    const work = [], rest = [], openTimes = [];
+    const work = [], rest = [], openTimes = {};
     let first_time_start = '';
     let first_time_end = '';
     let first_lunch_start = '';
@@ -1476,9 +1481,20 @@ function aggregateShiftModalAndPopulateHidden(){
         const type = dayType ? dayType.value : 'work';
 
         if(date){
+            // Record the date into the appropriate work/rest arrays
             if(type === 'work') work.push(date);
             else if(type === 'rest') rest.push(date);
-            else if(type === 'open') openTimes.push(date);
+
+            // Always record per-date time details (so server receives the
+            // full preset schedule for every date). Include the day_type so
+            // consumers can still tell work/rest/open per date.
+            openTimes[date] = {
+                start: tstart && tstart.value ? tstart.value : null,
+                end: tend && tend.value ? tend.value : null,
+                lunch_start: lstart && lstart.value ? lstart.value : null,
+                lunch_end: lend && lend.value ? lend.value : null,
+                day_type: type
+            };
         }
 
         if(!first_time_start && tstart && tstart.value) first_time_start = tstart.value;
@@ -1500,6 +1516,7 @@ function aggregateShiftModalAndPopulateHidden(){
 
     document.getElementById('custom_work_days_input').value = JSON.stringify(work);
     document.getElementById('custom_rest_days_input').value = JSON.stringify(rest);
+    // custom_open_time is an object keyed by date → details; controller will json_decode
     document.getElementById('custom_open_time_input').value = JSON.stringify(openTimes);
 
     // update preview display

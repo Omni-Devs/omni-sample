@@ -350,8 +350,8 @@
                                                 <div class="col-md-6">
                                                     <select name="branch_permissions[{{ $i }}][permissions][]" class="form-control" multiple>
                                                         @foreach($permissions as $perm)
-                                                            <!-- You may need to load actual assigned permissions per branch -->
-                                                            <option value="{{ $perm->id }}">{{ $perm->name }}</option>
+                                                            {{-- mark selected if this permission is in the user's permissions for this branch --}}
+                                                            <option value="{{ $perm->id }}" {{ (isset($userBranchPermissions[$branch->id]) && in_array($perm->id, $userBranchPermissions[$branch->id])) ? 'selected' : '' }}>{{ $perm->name }}</option>
                                                         @endforeach
                                                     </select>
                                                 </div>
@@ -378,7 +378,6 @@
                                             <tr>
                                                 <th>Date</th>
                                                 <th>Employment Type</th>
-                                                <th>Regularization</th>
                                                 <th>Position</th>
                                                 <th>Department</th>
                                                 <th>Supervisor</th>
@@ -391,7 +390,7 @@
                                         <tbody>
                                             @if(old('employee_work_informations'))
                                                 @foreach(old('employee_work_informations') as $wi)
-                                                    <tr>
+                                                    <tr data-wi-index="{{ $loop->index }}">
                                                         <td>{{ $wi['hire_date'] ?? '' }}<input type="hidden" name="employee_work_informations[{{ $loop->index }}][hire_date]" value="{{ $wi['hire_date'] }}"></td>
                                                         <td>{{ $wi['employment_status_id'] ?? '' }}<input type="hidden" name="employee_work_informations[{{ $loop->index }}][employment_status_id]" value="{{ $wi['employment_status_id'] }}"></td>
                                                         <td>{{ $wi['regularization'] ?? '' }}<input type="hidden" name="employee_work_informations[{{ $loop->index }}][regularization]" value="{{ $wi['regularization'] }}"></td>
@@ -401,14 +400,27 @@
                                                         <td>{{ $wi['monthly_rate'] ?? '' }}<input type="hidden" name="employee_work_informations[{{ $loop->index }}][monthly_rate]" value="{{ $wi['monthly_rate'] }}"></td>
                                                         <td>{{ $wi['daily_rate'] ?? '' }}<input type="hidden" name="employee_work_informations[{{ $loop->index }}][daily_rate]" value="{{ $wi['daily_rate'] }}"></td>
                                                         <td>{{ $wi['hourly_rate'] ?? '' }}<input type="hidden" name="employee_work_informations[{{ $loop->index }}][hourly_rate]" value="{{ $wi['hourly_rate'] }}"></td>
-                                                        <td><button type="button" class="btn btn-sm btn-danger remove-wi">Remove</button></td>
+                                                        <td>
+                                                            <button type="button" class="btn btn-sm btn-outline-secondary edit-workinfo-row">Edit</button>
+                                                            <button type="button" class="btn btn-sm btn-danger remove-workinfo-row">Remove</button>
+                                                        </td>
                                                     </tr>
                                                 @endforeach
                                             @else
                                                 @foreach($workInformations as $wi)
-                                                    <tr>
+                                                    <tr data-wi-index="{{ $loop->index }}">
                                                         <td>{{ $wi->hire_date }}<input type="hidden" name="employee_work_informations[{{ $loop->index }}][hire_date]" value="{{ $wi->hire_date }}"></td>
-                                                        <td>{{ $wi->employment_status_id }}<input type="hidden" name="employee_work_informations[{{ $loop->index }}][employment_status_id]" value="{{ $wi->employment_status_id }}"></td>
+                                                        <td>
+    {{ match($wi->employment_status_id) {
+        1 => 'Probationary Period',
+        2 => 'Regular',
+        3 => 'Promotion',
+        4 => 'Contractual',
+        5 => 'Resigned',
+        default => $wi->employment_status_id ?: '—'
+    } }}
+    <input type="hidden" name="employee_work_informations[{{ $loop->index }}][employment_status_id]" value="{{ $wi->employment_status_id }}">
+</td>
                                                         <td>{{ $wi->regularization }}<input type="hidden" name="employee_work_informations[{{ $loop->index }}][regularization]" value="{{ $wi->regularization }}"></td>
                                                         <td>{{ $wi->designation_id }}<input type="hidden" name="employee_work_informations[{{ $loop->index }}][designation_id]" value="{{ $wi->designation_id }}"></td>
                                                         <td>{{ $wi->department_id }}<input type="hidden" name="employee_work_informations[{{ $loop->index }}][department_id]" value="{{ $wi->department_id }}"></td>
@@ -416,7 +428,10 @@
                                                         <td>{{ $wi->monthly_rate }}<input type="hidden" name="employee_work_informations[{{ $loop->index }}][monthly_rate]" value="{{ $wi->monthly_rate }}"></td>
                                                         <td>{{ $wi->daily_rate }}<input type="hidden" name="employee_work_informations[{{ $loop->index }}][daily_rate]" value="{{ $wi->daily_rate }}"></td>
                                                         <td>{{ $wi->hourly_rate }}<input type="hidden" name="employee_work_informations[{{ $loop->index }}][hourly_rate]" value="{{ $wi->hourly_rate }}"></td>
-                                                        <td><button type="button" class="btn btn-sm btn-danger remove-wi">Remove</button></td>
+                                                        <td>
+                                                            <button type="button" class="btn btn-sm btn-outline-secondary edit-workinfo-row">Edit</button>
+                                                            <button type="button" class="btn btn-sm btn-danger remove-workinfo-row">Remove</button>
+                                                        </td>
                                                     </tr>
                                                 @endforeach
                                             @endif
@@ -434,14 +449,13 @@
                                             <label>Employment Type</label>
                                             <select id="wi_status" class="form-control">
                                                 <option value="">Select Employment Type</option>
-                                                <option value="probationary">Probationary Period</option>
-                                                <option value="regularization">Regularization</option>
-                                                <option value="promotion">Promotion</option>
-                                                <option value="contractual">Contractual</option>
-                                                <option value="resigned">Resigned</option>
+                                                <option value="1">Probationary Period</option>
+                                                <option value="2">Regular</option>
+                                                <option value="3">Promotion</option>
+                                                <option value="4">Contractual</option>
+                                                <option value="5">Resigned</option>
                                             </select>
                                         </div>
-                                        <div class="col-md-2 form-group"><label>Regularization</label><input type="date" id="wi_regularization" class="form-control"></div>
                                         <div class="col-md-2 form-group"><label>Position</label>
                                             <select id="wi_designation" class="form-control">
                                                 <option value="">Select Position</option>
@@ -897,51 +911,15 @@ document.getElementById('avatar')?.addEventListener('change', function(e){
     });
 })();
 
-let wiIndex = 0;
-
-document.getElementById('save-workinfo').addEventListener('click', function () {
-    const tbody = document.querySelector('#workinfo-table tbody');
-
-    const hireDate = document.getElementById('wi_hire_date').value;
-    if (!hireDate) return alert('Hire date required');
-
-    const row = document.createElement('tr');
-    row.innerHTML = `
-        <td>${hireDate}
-            <input type="hidden" name="employee_work_informations[${wiIndex}][hire_date]" value="${hireDate}">
-        </td>
-        <td>${wi_status.value}
-            <input type="hidden" name="employee_work_informations[${wiIndex}][employment_status_id]" value="${wi_status.value}">
-        </td>
-        <td>${wi_regularization.value}
-            <input type="hidden" name="employee_work_informations[${wiIndex}][regularization]" value="${wi_regularization.value}">
-        </td>
-        <td>${wi_designation.options[wi_designation.selectedIndex].text}
-            <input type="hidden" name="employee_work_informations[${wiIndex}][designation_id]" value="${wi_designation.value}">
-        </td>
-        <td>${wi_department.options[wi_department.selectedIndex].text}
-            <input type="hidden" name="employee_work_informations[${wiIndex}][department_id]" value="${wi_department.value}">
-        </td>
-        <td>${wi_supervisor.value}
-            <input type="hidden" name="employee_work_informations[${wiIndex}][direct_supervisor]" value="${wi_supervisor.value}">
-        </td>
-        <td>${wi_monthly_rate.value}
-            <input type="hidden" name="employee_work_informations[${wiIndex}][monthly_rate]" value="${wi_monthly_rate.value}">
-        </td>
-        <td>${wi_daily_rate.value}
-            <input type="hidden" name="employee_work_informations[${wiIndex}][daily_rate]" value="${wi_daily_rate.value}">
-        </td>
-        <td>${wi_hourly_rate.value}
-            <input type="hidden" name="employee_work_informations[${wiIndex}][hourly_rate]" value="${wi_hourly_rate.value}">
-        </td>
-        <td><button type="button" class="btn btn-sm btn-danger remove-wi">Remove</button></td>
-    `;
-
-    tbody.appendChild(row);
-    wiIndex++;
-});
+// NOTE: workinfo add/edit is handled in the IIFE further below which provides
+// edit + remove behavior. The earlier simple handler was removed to avoid
+// duplicate listeners and index collisions.
 
 document.querySelector('form').addEventListener('submit', function () {
+
+    // Ensure any edits inside the Shift modal are aggregated into the hidden
+    // inputs before the form is submitted
+    try { aggregateShiftModalAndPopulateHidden(); } catch (e) { /* ignore */ }
 
     document.querySelectorAll('.allowance-checkbox:checked').forEach(cb => {
         const row = cb.closest('.allowance-row');
@@ -1018,7 +996,22 @@ document.querySelector('form').addEventListener('submit', function () {
 
 // Work info add/edit (table + hidden inputs)
 (function(){
-    let wiIndex = 0;
+    // Compute starting index from existing hidden inputs so newly-added rows
+    // don't collide with server-rendered indices (which use $loop->index).
+    let wiIndex = (function(){
+        try {
+            const inputs = document.querySelectorAll('#workinfo-table tbody input[name^="employee_work_informations["]');
+            let max = -1;
+            inputs.forEach(inp => {
+                const m = inp.name.match(/^employee_work_informations\[(\d+)\]/);
+                if (m && m[1]) {
+                    const idx = parseInt(m[1], 10);
+                    if (!isNaN(idx) && idx > max) max = idx;
+                }
+            });
+            return max + 1;
+        } catch(e) { return 0; }
+    })();
     const openBtn = document.getElementById('open-workinfo-form');
     const formPane = document.getElementById('workinfo-form');
     const cancelBtn = document.getElementById('cancel-workinfo');
@@ -1251,9 +1244,28 @@ document.querySelector('form').addEventListener('submit', function () {
 
 // Repeatable branch-permissions rows
 (() => {
-    let bpIndex = 1; // starting from 1 since initial row is 0
     const container = document.getElementById('branch-permissions-list');
     const addBtn = document.getElementById('add-branch-permission');
+
+    // Determine a safe starting index for new rows to avoid colliding
+    // with existing server-rendered inputs. We parse current input names
+    // and pick the next integer index.
+    const computeStartingIndex = () => {
+        if (!container) return 0;
+        const selects = container.querySelectorAll('select[name^="branch_permissions["]');
+        let maxIndex = -1;
+        selects.forEach(sel => {
+            const m = sel.name.match(/^branch_permissions\[(\d+)\]/);
+            if (m && m[1]) {
+                const idx = parseInt(m[1], 10);
+                if (!isNaN(idx) && idx > maxIndex) maxIndex = idx;
+            }
+        });
+        return maxIndex + 1;
+    };
+
+    let bpIndex = computeStartingIndex();
+
     addBtn?.addEventListener('click', function(){
         const row = document.createElement('div');
         row.className = 'branch-permission-row form-row align-items-center mb-2';
@@ -1341,10 +1353,107 @@ document.querySelectorAll('.attachment-checkbox').forEach(cb => {
     }
 });
 
+// Track which shift id originally had the saved custom values (if any).
+// This prevents applying a previously-saved custom time blob to a different
+// template when the user selects another shift.
+window.__initialAssignedShiftId = document.getElementById('assigned_shift_id')?.value || '';
+
+// When the shift selector changes, prepare the modal view-model. Prefer the
+// saved custom blob only when it belongs to the same shift template.
+document.getElementById('shift_select')?.addEventListener('change', function () {
+    const option = this.options[this.selectedIndex];
+    const modal = $('#shiftModal');
+    const shiftId = option.value;
+
+    // set assigned shift hidden input so form submits the chosen template
+    document.getElementById('assigned_shift_id').value = shiftId || '';
+
+    // if no template selected, just hide modal and return
+    if (!shiftId) {
+        modal.modal('hide');
+        return;
+    }
+
+    const shift = JSON.parse(option.dataset.shift);
+    // Update modal title
+    document.getElementById('modal-shift-name').textContent = shift.name + ' - Customize';
+
+    // Only prefer existing saved custom values when those custom values belong
+    // to the same shift template. This prevents a previous template's custom
+    // blob from overriding the selected template's times.
+    const initialAssigned = window.__initialAssignedShiftId || '';
+    let useCustom = false;
+    try { useCustom = initialAssigned && initialAssigned.toString() === shiftId.toString(); } catch (e) { useCustom = false; }
+
+    const customTs = useCustom ? (document.getElementById('custom_time_start_input')?.value || '') : '';
+    const customTe = useCustom ? (document.getElementById('custom_time_end_input')?.value || '') : '';
+    const customBs = useCustom ? (document.getElementById('custom_break_start_input')?.value || '') : '';
+    const customBe = useCustom ? (document.getElementById('custom_break_end_input')?.value || '') : '';
+    let customWorkDays = useCustom ? (document.getElementById('custom_work_days_input')?.value || '') : '';
+    let customRestDays = useCustom ? (document.getElementById('custom_rest_days_input')?.value || '') : '';
+    let customOpenTime = useCustom ? (document.getElementById('custom_open_time_input')?.value || '') : '';
+
+    try { customWorkDays = customWorkDays ? JSON.parse(customWorkDays) : []; } catch(e){ customWorkDays = []; }
+    try { customRestDays = customRestDays ? JSON.parse(customRestDays) : []; } catch(e){ customRestDays = []; }
+    try { customOpenTime = customOpenTime ? JSON.parse(customOpenTime) : []; } catch(e){ customOpenTime = []; }
+
+    // Build a view-model for the modal that prefers saved custom values only when
+    // they belong to the same shift template.
+    window.currentShiftInModal = Object.assign({}, shift, {
+        time_start: customTs || shift.time_start,
+        time_end: customTe || shift.time_end,
+        break_start: customBs || shift.break_start,
+        break_end: customBe || shift.break_end,
+        work_days: (Array.isArray(customWorkDays) && customWorkDays.length) ? customWorkDays : (shift.work_days || []),
+        rest_days: (Array.isArray(customRestDays) && customRestDays.length) ? customRestDays : (shift.rest_days || []),
+        open_time: (Array.isArray(customOpenTime) && customOpenTime.length) ? customOpenTime : (shift.open_time || []),
+    });
+
+    // Reset preview times from the modal view-model (may be custom)
+    document.getElementById('pv-start').textContent = (window.currentShiftInModal.time_start || '').slice(0,5) || 'N/A';
+    document.getElementById('pv-end').textContent = (window.currentShiftInModal.time_end || '').slice(0,5) || 'N/A';
+    document.getElementById('pv-break-start').textContent = (window.currentShiftInModal.break_start || '').slice(0,5) || 'N/A';
+    document.getElementById('pv-break-end').textContent = (window.currentShiftInModal.break_end || '').slice(0,5) || 'N/A';
+
+    // render preset-per-date cards if a date range is already set
+    if(document.getElementById('preset_start') && document.getElementById('preset_end')){
+        const container = document.getElementById('preset-dates-list');
+        // If the user already generated/edited per-date cards (they exist in DOM),
+        // avoid overwriting them when re-opening the modal — keep the edits and
+        // refresh the preview/hidden inputs instead. Otherwise render new cards
+        // using the modal view-model (which prefers saved custom values).
+        // If the existing generated preset cards belong to a different shift,
+        // clear them (and the preset date inputs) so the newly-selected template
+        // starts with its own preset range. This prevents a previously-generated
+        // range from one template (e.g. Graveyard) being shown for another.
+        const generatedFor = container?.dataset?.generatedFor || '';
+        if (generatedFor && generatedFor.toString() !== (shiftId || '').toString()) {
+            container.innerHTML = '';
+            const ps = document.getElementById('preset_start');
+            const pe = document.getElementById('preset_end');
+            if(ps) ps.value = '';
+            if(pe) pe.value = '';
+        }
+
+        if (!container || container.children.length === 0) {
+            renderPresetDates(window.currentShiftInModal || shift);
+        } else {
+            // ensure preview and hidden inputs reflect any existing edits
+            try { aggregateShiftModalAndPopulateHidden(); } catch(e) { /* ignore */ }
+        }
+    }
+
+    modal.modal('show');
+});
+
 // Shift preset date rendering helpers
+/**
+ * Render per-date schedule cards for the given preset start/end range.
+ * Creates inputs named salary_method[preset_dates][i][date|time_start|time_end|lunch_start|lunch_end]
+ */
 function renderPresetDates(shift){
     const container = document.getElementById('preset-dates-list');
-    if(!container) return;
+    if(!container) return; 
     container.innerHTML = '';
     const start = document.getElementById('preset_start')?.value;
     const end = document.getElementById('preset_end')?.value;
@@ -1353,11 +1462,25 @@ function renderPresetDates(shift){
     const e = new Date(end);
     if(s > e) return;
 
+    // format helper
     const fmt = (d) => d.toISOString().slice(0,10);
     const human = (d) => d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric', weekday: 'long' });
+
     let idx = 0;
     for(let dt = new Date(s); dt <= e; dt.setDate(dt.getDate()+1)){
         const dateStr = fmt(dt);
+
+        // determine weekday name (e.g. 'Thursday') to default the per-date radio
+        const weekday = new Date(dt).toLocaleDateString(undefined, { weekday: 'long' });
+        let checkedWork = '';
+        let checkedRest = '';
+        let checkedOpen = '';
+        try {
+            if (shift && Array.isArray(shift.work_days) && shift.work_days.includes(weekday)) checkedWork = 'checked';
+            else if (shift && Array.isArray(shift.rest_days) && shift.rest_days.includes(weekday)) checkedRest = 'checked';
+            else if (shift && Array.isArray(shift.open_time) && shift.open_time.includes(weekday)) checkedOpen = 'checked';
+        } catch (e) { /* ignore */ }
+
         const card = document.createElement('div');
         card.className = 'card mb-2';
         card.innerHTML = `
@@ -1372,29 +1495,42 @@ function renderPresetDates(shift){
                     <div class="col-md-3"><label>Lunch Start</label><input type="time" name="salary_method[preset_dates][${idx}][lunch_start]" class="form-control" value="${shift.break_start ? shift.break_start.slice(0,5) : ''}"></div>
                     <div class="col-md-3"><label>Lunch End</label><input type="time" name="salary_method[preset_dates][${idx}][lunch_end]" class="form-control" value="${shift.break_end ? shift.break_end.slice(0,5) : ''}"></div>
                 </div>
+                <div class="mb-2"><strong>Breaks</strong></div>
+
+                <!-- Per-date customizable type: Work Day / Rest Day / Open Time -->
+                <div class="mb-2">
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" id="preset_${idx}_work" name="salary_method[preset_dates][${idx}][day_type]" value="work" ${checkedWork}>
+                        <label class="form-check-label" for="preset_${idx}_work">Work Day</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" id="preset_${idx}_rest" name="salary_method[preset_dates][${idx}][day_type]" value="rest" ${checkedRest}>
+                        <label class="form-check-label" for="preset_${idx}_rest">Rest Day</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" id="preset_${idx}_open" name="salary_method[preset_dates][${idx}][day_type]" value="open" ${checkedOpen}>
+                        <label class="form-check-label" for="preset_${idx}_open">Open Time</label>
+                    </div>
+                </div>
+
                 <input type="hidden" name="salary_method[preset_dates][${idx}][date]" value="${dateStr}">
             </div>
         `;
         container.appendChild(card);
         idx++;
     }
+
+    // mark which shift these generated cards belong to so switching templates can clear them
+    try {
+        const ownerId = (shift && (shift.id || shift.ID)) ? (shift.id || shift.ID).toString() : (document.getElementById('assigned_shift_id')?.value || '');
+        container.dataset.generatedFor = ownerId || '';
+    } catch(e) { /* ignore */ }
 }
 
-// wire shift select to update assigned_shift_id and render preset dates
-document.getElementById('shift_select')?.addEventListener('change', function(){
-    const opt = this.selectedOptions[0];
-    let shift = {};
-    if(opt && opt.dataset && opt.dataset.shift){
-        try{ shift = JSON.parse(opt.dataset.shift); }catch(e){ shift = {}; }
-    }
-    window.currentShiftInModal = shift;
-    const assigned = document.getElementById('assigned_shift_id'); if(assigned) assigned.value = this.value || '';
-    renderPresetDates(shift);
-});
-
-// Call render when preset dates change
+// Call render when the preset date inputs change
 document.getElementById('preset_start')?.addEventListener('change', function(){ renderPresetDates(window.currentShiftInModal || {}); });
 document.getElementById('preset_end')?.addEventListener('change', function(){ renderPresetDates(window.currentShiftInModal || {}); });
+
 // Apply button: explicitly render per-day preset cards when clicked (keeps modal open)
 document.getElementById('apply-preset-btn')?.addEventListener('click', function(){
     renderPresetDates(window.currentShiftInModal || {});
@@ -1405,7 +1541,7 @@ function aggregateShiftModalAndPopulateHidden(){
     const container = document.getElementById('preset-dates-list');
     if(!container) return;
     const cards = container.querySelectorAll('.card');
-    const work = [], rest = [], openTimes = [];
+    const work = [], rest = [], openTimes = {};
     let first_time_start = '';
     let first_time_end = '';
     let first_lunch_start = '';
@@ -1418,13 +1554,24 @@ function aggregateShiftModalAndPopulateHidden(){
         const tend = card.querySelector('input[name$="[time_end]"]');
         const lstart = card.querySelector('input[name$="[lunch_start]"]');
         const lend = card.querySelector('input[name$="[lunch_end]"]');
-        const dayType = card.querySelector('input[type="radio"][name$="[day_type]"]:checked');
+        const dayType = card.querySelector('input[type="radio"][name$="[day_type]":checked]') || card.querySelector('input[type="radio"][name$="[day_type]"]:checked');
         const type = dayType ? dayType.value : 'work';
 
         if(date){
+            // Record the date into the appropriate work/rest arrays
             if(type === 'work') work.push(date);
             else if(type === 'rest') rest.push(date);
-            else if(type === 'open') openTimes.push(date);
+
+            // Always record per-date time details (so server receives the
+            // full preset schedule for every date). Include the day_type so
+            // consumers can still tell work/rest/open per date.
+            openTimes[date] = {
+                start: tstart && tstart.value ? tstart.value : null,
+                end: tend && tend.value ? tend.value : null,
+                lunch_start: lstart && lstart.value ? lstart.value : null,
+                lunch_end: lend && lend.value ? lend.value : null,
+                day_type: type
+            };
         }
 
         if(!first_time_start && tstart && tstart.value) first_time_start = tstart.value;
@@ -1446,18 +1593,32 @@ function aggregateShiftModalAndPopulateHidden(){
 
     document.getElementById('custom_work_days_input').value = JSON.stringify(work);
     document.getElementById('custom_rest_days_input').value = JSON.stringify(rest);
+    // custom_open_time is an object keyed by date → details; controller will json_decode
     document.getElementById('custom_open_time_input').value = JSON.stringify(openTimes);
 
-    // update preview display (if present)
-    const pvStart = document.getElementById('pv-start'); if(pvStart) pvStart.textContent = first_time_start || '-';
-    const pvEnd = document.getElementById('pv-end'); if(pvEnd) pvEnd.textContent = first_time_end || '-';
-    const pvBS = document.getElementById('pv-break-start'); if(pvBS) pvBS.textContent = first_lunch_start || '-';
-    const pvBE = document.getElementById('pv-break-end'); if(pvBE) pvBE.textContent = first_lunch_end || '-';
+    // update preview display
+    document.getElementById('pv-start').textContent = first_time_start || '-';
+    document.getElementById('pv-end').textContent = first_time_end || '-';
+    document.getElementById('pv-break-start').textContent = first_lunch_start || '-';
+    document.getElementById('pv-break-end').textContent = first_lunch_end || '-';
 }
 
 // Save changes button: aggregate values then close modal
 document.getElementById('save-shift-modal-btn')?.addEventListener('click', function(){
     aggregateShiftModalAndPopulateHidden();
+    // remember that the current assigned_shift now has the saved custom blob
+    try {
+        window.__initialAssignedShiftId = document.getElementById('assigned_shift_id')?.value || window.__initialAssignedShiftId;
+    } catch(e) {}
+
+    // also persist which shift the custom blob belongs to so server can receive it
+    try {
+        const assigned = document.getElementById('assigned_shift_id')?.value || '';
+        if(document.getElementById('custom_for_shift_input')){
+            document.getElementById('custom_for_shift_input').value = assigned;
+        }
+    } catch(e) {}
+
     try{ $('#shiftModal').modal('hide'); } catch(e){ }
 });
 
@@ -1467,5 +1628,70 @@ document.getElementById('preset-dates-list')?.addEventListener('input', function
         aggregateShiftModalAndPopulateHidden();
     }
 });
+
+// Live update time preview from custom inputs
+document.querySelectorAll('#shiftModal input[type="time"]').forEach(input => {
+    input.addEventListener('input', function () {
+        const map = {
+            'salary_method[custom_time_start]': 'pv-start',
+            'salary_method[custom_time_end]': 'pv-end',
+            'salary_method[custom_break_start]': 'pv-break-start',
+            'salary_method[custom_break_end]': 'pv-break-end',
+        };
+        const targetId = map[this.name];
+        if (targetId) {
+            document.getElementById(targetId).textContent = this.value || '-';
+        }
+    });
+});
+
+// Auto-open modal + load existing custom data on edit/validation
+$(document).ready(function () {
+    const hasShift = {{ old('salary_method.shift_id') ? 'true' : (isset($user) && $user->salaryMethod && $user->salaryMethod->shift_id ? 'true' : 'false') }};
+
+    if (hasShift) {
+        $('#shift_select').trigger('change');
+
+        // Trigger input events to update preview from existing custom times
+        $('#shiftModal input[type="time"]').each(function() {
+            if (this.value) $(this).trigger('input');
+        });
+    }
+
+});
+
+// Ensure empty input fields get populated from server user object when present.
+// This helps when old() returns an empty string and hides existing DB values.
+(function(){
+    try {
+        const serverUser = {!! json_encode($user ?? null) !!};
+        if (!serverUser) return;
+        const fields = [
+            'first_name','last_name','middle_name','name','email','username','mobile_number',
+            'biometric_number','id_number','date_of_birth','address','tin','sss_number','phil_health_number',
+            'pag_ibig_number','blood_type_id','civil_status_id'
+        ];
+
+        fields.forEach(f => {
+            try {
+                const el = document.querySelector(`[name="${f}"]`);
+                if (!el) return;
+                // for inputs/selects: if empty (strictly === '') then set server value
+                if ((el.value === '' || el.value === null || typeof el.value === 'undefined') && typeof serverUser[f] !== 'undefined' && serverUser[f] !== null) {
+                    el.value = serverUser[f];
+                }
+            } catch(e) { /* ignore per-field errors */ }
+        });
+
+        // Special: populate name if empty
+        const nameEl = document.querySelector('[name="name"]');
+        if (nameEl && (nameEl.value === '' || nameEl.value === null) && serverUser.name) {
+            nameEl.value = serverUser.name;
+        }
+    } catch(e) {
+        // ignore JSON/script errors
+        console.error('populateFromServer error', e);
+    }
+})();
 </script>
 @endsection
