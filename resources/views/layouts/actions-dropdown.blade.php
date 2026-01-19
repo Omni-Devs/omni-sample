@@ -36,7 +36,7 @@
         @isset($userEditRoute)
           <li role="presentation">
             <a class="dropdown-item" href="{{ $userEditRoute }}">
-                <i class="nav-icon i-Pen-2 font-weight-bold mr-2"></i> Edit Profile
+                <i class="nav-icon i-Pen-2 font-weight-bold mr-2"></i> Edit
             </a>
         </li>
         @endisset
