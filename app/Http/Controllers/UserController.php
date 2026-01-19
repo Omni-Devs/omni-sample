@@ -744,6 +744,60 @@ if (!empty($validated['salary_method'])) {
             }
         }
 
+        // === SALARY METHOD WITH CUSTOM SHIFT & WEEKLY SCHEDULE ===
+        if ($request->has('salary_method')) {
+            $sm = $request->input('salary_method', []);
+
+            $customWorkDays = !empty($sm['custom_work_days']) ? json_decode($sm['custom_work_days'], true) : null;
+            $customRestDays = !empty($sm['custom_rest_days']) ? json_decode($sm['custom_rest_days'], true) : null;
+            $customOpenTime = !empty($sm['custom_open_time']) ? json_decode($sm['custom_open_time'], true) : null;
+
+            SalaryMethod::updateOrCreate(
+                ['user_id' => $user->id],
+                [
+                    'method_id'   => $sm['method_id'] ?? null,
+                    'period_id'   => $sm['period_id'] ?? null,
+                    'account'     => $sm['account'] ?? null,
+                    'shift_id'    => $sm['shift_id'] ?? null,
+
+                    'custom_time_start'   => $sm['custom_time_start'] ?? null,
+                    'custom_time_end'     => $sm['custom_time_end'] ?? null,
+                    'custom_break_start'  => $sm['custom_break_start'] ?? null,
+                    'custom_break_end'    => $sm['custom_break_end'] ?? null,
+
+                    'custom_work_days' => $customWorkDays ? json_encode($customWorkDays) : null,
+                    'custom_rest_days' => $customRestDays ? json_encode($customRestDays) : null,
+                    'custom_open_time' => $customOpenTime ? json_encode($customOpenTime) : null,
+                ]
+            );
+        }
+
+        // Allowances (pivot)
+        if ($request->has('allowances')) {
+            $syncAllowances = [];
+            foreach ($request->input('allowances', []) as $al) {
+                if (empty($al['allowance_id'])) continue;
+                $syncAllowances[$al['allowance_id']] = [
+                    'amount' => isset($al['amount']) ? $al['amount'] : null,
+                    'monthly_count' => isset($al['monthly_count']) ? $al['monthly_count'] : null,
+                ];
+            }
+            $user->allowances()->sync($syncAllowances);
+        }
+
+        // Leaves (pivot)
+        if ($request->has('leaves')) {
+            $syncLeaves = [];
+            foreach ($request->input('leaves', []) as $lv) {
+                if (empty($lv['leave_id'])) continue;
+                $syncLeaves[$lv['leave_id']] = [
+                    'days' => isset($lv['days']) ? $lv['days'] : null,
+                    'effective_date' => isset($lv['effective_date']) ? $lv['effective_date'] : null,
+                ];
+            }
+            $user->leaves()->sync($syncLeaves);
+        }
+
         // Work Informations
         $user->employeeWorkInformations()->delete();
         if ($request->has('employee_work_informations')) {
