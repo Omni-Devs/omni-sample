@@ -176,7 +176,7 @@ class UserController extends Controller
                     'allowances.*.monthly_count' => 'nullable|integer',
                     'leaves' => 'nullable|array',
                     'leaves.*.leave_id' => 'nullable|exists:workforce_leaves,id',
-                    'leaves.*.days' => 'nullable|integer',
+                    'leaves.*.assigned_days' => 'nullable|integer',
                     'leaves.*.effective_date' => 'nullable|date',
         
                     'educational_backgrounds' => 'nullable|array',
@@ -241,10 +241,10 @@ class UserController extends Controller
                 $lvFiltered = [];
                 foreach ($input['leaves'] as $lv) {
                     $hasLeave = isset($lv['leave_id']) && $lv['leave_id'] !== '' && $lv['leave_id'] !== null;
-                    $hasDays = isset($lv['days']) && $lv['days'] !== '';
+                    $hasAssigned = isset($lv['assigned_days']) && $lv['assigned_days'] !== '';
                     $hasEffective = isset($lv['effective_date']) && $lv['effective_date'] !== '';
-                    if ($hasLeave || $hasDays || $hasEffective) {
-                        // if leave_id empty but days/effective set, we still keep the row so validation can catch it
+                    if ($hasLeave || $hasAssigned || $hasEffective) {
+                        // if leave_id empty but assigned_days/effective set, we still keep the row so validation can catch it
                         $lvFiltered[] = $lv;
                     }
                 }
@@ -492,7 +492,12 @@ if (!empty($validated['salary_method'])) {
             foreach ($validated['leaves'] as $lv) {
                 if (empty($lv['leave_id'])) continue;
                 $syncLeaves[$lv['leave_id']] = [
-                    'days' => isset($lv['days']) ? $lv['days'] : null,
+                    // renamed column from 'days' -> 'assigned_days' and default to 0
+                    'assigned_days' => isset($lv['assigned_days']) ? (int)$lv['assigned_days'] : 0,
+                    // tracking columns (defaults to 0 when not provided)
+                    'earn' => isset($lv['earn']) ? (int)$lv['earn'] : 0,
+                    'used' => isset($lv['used']) ? (int)$lv['used'] : 0,
+                    'balance' => isset($lv['balance']) ? (int)$lv['balance'] : 0,
                     'effective_date' => isset($lv['effective_date']) ? $lv['effective_date'] : null,
                 ];
             }
@@ -560,7 +565,7 @@ if (!empty($validated['salary_method'])) {
                 'contractual'  => 4,
                 'resigned'     => 5,
             ];
-            foreach ($validated['employee_work_informations'] as $wi) {
+            foreach ($validated['employee_work_informations'] ?? [] as $wi) {
 
                 $employmentStatusId = $statusMap[$wi['employment_status_id']] ?? null;
 
@@ -791,7 +796,10 @@ if (!empty($validated['salary_method'])) {
             foreach ($request->input('leaves', []) as $lv) {
                 if (empty($lv['leave_id'])) continue;
                 $syncLeaves[$lv['leave_id']] = [
-                    'days' => isset($lv['days']) ? $lv['days'] : null,
+                    'assigned_days' => isset($lv['assigned_days']) ? (int)$lv['assigned_days'] : 0,
+                    'earn' => isset($lv['earn']) ? (int)$lv['earn'] : 0,
+                    'used' => isset($lv['used']) ? (int)$lv['used'] : 0,
+                    'balance' => isset($lv['balance']) ? (int)$lv['balance'] : 0,
                     'effective_date' => isset($lv['effective_date']) ? $lv['effective_date'] : null,
                 ];
             }

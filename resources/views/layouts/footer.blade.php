@@ -194,7 +194,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const original = this.innerHTML;
         this.innerHTML = '<i class="fa fa-spinner fa-spin mr-1"></i> Clearing...';
 
-        axios.post('{{ route("clear-cache") }}')
+        axios.post('/clear-cache')
             .then(() => {
                 Swal.fire({
                     icon: 'success',
@@ -229,7 +229,7 @@ function switchBranch(branchId, branchName) {
     const oldName = nameEl.textContent.trim();
     nameEl.textContent = 'Switching...';
 
-    fetch('{{ route("switch-branch") }}', {
+    fetch('/switch-branch', {
         method: 'POST',
         headers: {
             'X-CSRF-TOKEN': '{{ csrf_token() }}',

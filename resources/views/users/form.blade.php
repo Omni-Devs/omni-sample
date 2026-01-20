@@ -668,12 +668,13 @@
                 </div>
                 <input 
                     type="number" 
-                    name="leaves[{{ $i }}][days]" 
+                    name="leaves[{{ $i }}][assigned_days]" 
                     class="form-control leave-days text-center" 
-                    placeholder="Days" 
+                    placeholder="
+                    Assigned Days" 
                     step="1" 
                     min="0" 
-                    value="{{ old("leaves.$i.days") }}"
+                    value="{{ old("leaves.$i.assigned_days") }}"
                     disabled
                 >
                 <div class="input-group-append">

@@ -659,7 +659,7 @@
                                                 <div class="input-group-prepend">
                                                     <button type="button" class="btn btn-sm btn-orange decrement-days" tabindex="-1">-</button>
                                                 </div>
-                                                <input type="number" name="leaves[{{ $i }}][days]" class="form-control leave-days text-center" placeholder="Days" step="1" min="0" value="{{ old("leaves.$i.days", optional($user->leaves->firstWhere('id',$lv->id))->pivot->days ?? '') }}" {{ !(isset($user) && $user->leaves->contains($lv->id)) ? 'disabled' : '' }}>
+                                                <input type="number" name="leaves[{{ $i }}][assigned_days]" class="form-control leave-days text-center" placeholder="Days" step="1" min="0" value="{{ old("leaves.$i.assigned_days", optional($user->leaves->firstWhere('id',$lv->id))->pivot->assigned_days ?? '') }}" {{ !(isset($user) && $user->leaves->contains($lv->id)) ? 'disabled' : '' }}>
                                                 <div class="input-group-append">
                                                     <button type="button" class="btn btn-sm btn-orange increment-days" tabindex="-1">+</button>
                                                 </div>
