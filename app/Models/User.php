@@ -114,8 +114,9 @@ class User extends Authenticatable
      */
     public function leaves()
     {
+        // pivot now stores assigned_days plus tracking columns earn/used/balance
         return $this->belongsToMany(\App\Models\WorkLeave::class, 'user_leaves', 'user_id', 'leave_id')
-                    ->withPivot('days', 'effective_date')
+                    ->withPivot('assigned_days', 'earn', 'used', 'balance', 'effective_date')
                     ->withTimestamps();
     }
 
