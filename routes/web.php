@@ -46,6 +46,7 @@ use Illuminate\Support\Facades\View;
 use App\Http\Controllers\PosClossingController;
 use App\Http\Controllers\LeavesController;
 use App\Http\Controllers\ShiftsController;
+use App\Http\Controllers\DailyTimeRecordController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -577,6 +578,17 @@ Route::prefix('workforce-shifts')->name('shifts.')->group(function () {
     Route::patch('/{id}/restore', [ShiftsController::class, 'restore']);
     
     Route::delete('/{id}', [ShiftsController::class, 'destroy']);
+});
+
+Route::prefix('daily-time-records')->name('dtr.')->group(function () {
+
+    Route::get('/', [DailyTimeRecordController::class, 'index'])->name('index');
+    Route::post('/', [DailyTimeRecordController::class, 'store'])->name('store');
+
+    Route::get('/{dtr}/edit', [DailyTimeRecordController::class, 'edit'])->name('edit');
+    Route::put('/{dtr}', [DailyTimeRecordController::class, 'update'])->name('update');
+    Route::delete('/{dtr}', [DailyTimeRecordController::class, 'destroy'])->name('destroy');
+
 });
 
 Route::prefix('inventory/transfer')->name('transfers.')->group(function () {

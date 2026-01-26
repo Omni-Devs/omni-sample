@@ -34,12 +34,54 @@
         @endisset
 
         @isset($userEditRoute)
-          <li role="presentation">
-            <a class="dropdown-item" href="{{ $userEditRoute }}">
-                <i class="nav-icon i-Pen-2 font-weight-bold mr-2"></i> Edit
-            </a>
-        </li>
+                <li role="presentation">
+                <a class="dropdown-item" href="{{ $userEditRoute }}">
+                    <i class="nav-icon i-Pen-2 font-weight-bold mr-2"></i> Edit
+                </a>
+            </li>
         @endisset
+
+        <!-- Show Restore as Active only for resigned -->
+        @isset($restoreRoute)
+            @if(isset($status) && $status === 'resigned')
+                <li>
+                    <form action="{{ $restoreRoute }}" method="POST"
+                        class="swal-confirm"
+                        data-title="Restore as Active?"
+                        data-text="This will change the user status back to Active."
+                        data-confirm-button="Restore as Active"
+                        style="display:inline;">
+                        @csrf
+                        @method('PUT')
+                        <button type="submit" class="dropdown-item">  <!-- removed text-success -->
+                            <i class="nav-icon i-Eye font-weight-bold mr-2"></i>
+                            Restore as Active
+                        </button>
+                    </form>
+                </li>
+            @endif
+        @endisset
+
+        @if($status === 'resigned')
+            @isset($deleteRoute)
+                <li role="presentation">
+                    <form action="{{ $deleteRoute }}" method="POST" class="swal-confirm"
+                        data-title="Permanently Delete User?"
+                        data-text="This action will permanently remove this user and cannot be undone."
+                        data-confirm-button="Yes, Delete Permanently"
+                        style="display:inline;">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="dropdown-item text-danger">
+                            <i class="nav-icon i-Letter-Close font-weight-bold mr-2"></i>
+                            Permanently Delete
+                        </button>
+                    </form>
+                </li>
+            @endisset
+
+            <li><hr class="dropdown-divider"></li>
+        @endif
 
         @isset($branchEditRoute)
         <li role="presentation">
@@ -175,13 +217,13 @@
         @endisset
 
         <!-- Edit for Users-->
-        @isset($userEditRoute)
+        {{-- @isset($userEditRoute)
         <li role="presentation">
             <a class="dropdown-item" onclick="openEditUserModal({{ $user }})">
                 <i class="i-Pen-2 me-1"></i> Edit
             </a>
         </li>
-        @endisset
+        @endisset --}}
 
         <!-- View Stock Card -->
         @isset($stockCardRoute)
@@ -298,13 +340,13 @@
     </li>
     @endif
 
-    @if(isset($profileRoute))
-    <li>
-        <a href="{{ $profileRoute }}" target="_blank" class="dropdown-item">
-            <i class="i-Eye me-1"></i> View Profile
-        </a>
-    </li>
-    @endif
+        {{-- @if(isset($profileRoute))
+        <li>
+            <a href="{{ $profileRoute }}" target="_blank" class="dropdown-item">
+                <i class="i-Eye me-1"></i> View Profile
+            </a>
+        </li>
+        @endif --}}
 
         <!-- Restore -->
         @if(isset($status) && $status === 'archived' && isset($restoreRoute))

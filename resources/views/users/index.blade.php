@@ -217,7 +217,6 @@
                                     @include('layouts.actions-dropdown', [
                                         'id' => $user->id,
                                         'userEditRoute' => route('users.edit', $user->id),
-                                        'archiveRoute' => route('users.archive', $user->id),
                                         'resignRoute' => route('users.updateStatus', [$user->id, 'resigned']),
                                         'terminateRoute' => route('users.updateStatus', [$user->id, 'terminated']),
                                         'logsRoute' => '#',
@@ -225,7 +224,7 @@
                                         'remarksRoute' => '#',
                                         'status' => request('status', 'active'),
                                         'restoreRoute' => route('users.restore', $user->id),
-                                        'deleteRoute' => route('users.destroy', $user->id)
+                                        'deleteRoute'   => route('users.destroy', $user->id),
                                     ])
                                 </td>
                             </tr>

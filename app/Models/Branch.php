@@ -35,9 +35,14 @@ class Branch extends Model
     /**
      * Permissions assigned to this branch (many-to-many with Spatie Permission model).
      */
-    public function permissions()
+    /**
+     * Roles assigned to this branch (many-to-many with Role model).
+     *
+     * Replaces the legacy branch -> permission pivot with branch -> role pivot.
+     */
+    public function roles()
     {
-        return $this->belongsToMany(\Spatie\Permission\Models\Permission::class, 'branch_permission', 'branch_id', 'permission_id');
+        return $this->belongsToMany(\App\Models\Role::class, 'branch_role', 'branch_id', 'role_id');
     }
 
     public function accountsReceivables()

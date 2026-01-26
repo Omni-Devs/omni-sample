@@ -13,6 +13,7 @@
     <div class="separator-breadcrumb border-top"></div>
 
     <div class="card">
+        <div id="branch-permissions-list">
         <div class="card-header p-0">
             <ul class="nav nav-tabs card-header-tabs" id="userCreateTabs" role="tablist">
                 <li class="nav-item">
@@ -146,9 +147,33 @@
                                         </div>
                                     </div>
                                     <div class="col-md-4">
-                                        <div class="form-group">
-                                            <label for="pag_ibig_number">PAG-IBIG #</label>
-                                            <input type="text" name="pag_ibig_number" id="pag_ibig_number" class="form-control" value="{{ old('pag_ibig_number') }}">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="form-group">
+                                                    <label for="pag_ibig_number">PAG-IBIG #</label>
+                                                    <input type="text" name="pag_ibig_number" id="pag_ibig_number" class="form-control" value="{{ old('pag_ibig_number') }}">
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="form-group">
+                                                    <label class="fw-bold">Primary Branch</label>
+                                                    {{-- <select name="branches[]" class="form-control">
+                                                        <option value="">Select branch</option>
+                                                        @foreach($branches as $b)
+                                                            <option value="{{ $b->id }}" {{ (old('branches.0') == $b->id) ? 'selected' : '' }}>{{ $b->name }}</option>
+                                                        @endforeach
+                                                    </select> --}}
+                                                    <select name="branch_id" class="form-control">
+                                                        <option value="">Select Branch</option>
+                                                        @foreach($branches as $b)
+                                                            <option value="{{ $b->id }}"
+                                                                    {{ old('branch_id', $user?->branch_id ?? '') == $b->id ? 'selected' : '' }}>
+                                                                {{ $b->name }}
+                                                            </option>
+                                                        @endforeach
+                                                    </select>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -304,8 +329,8 @@
                             </div>
 
                          <div class="col-md-6">
-    <h6>Branch Permissions</h6>
-    <p class="text-muted">Assign multiple permissions per branch.</p>
+    <h6>Branch Roles</h6>
+    <p class="text-muted">Assign one or more roles per branch (select role names).</p>
 
     <div id="branch-permissions-list">
         <div class="branch-permission-row form-row align-items-center mb-2">
@@ -324,8 +349,8 @@
                     class="form-control"
                     multiple
                 >
-                    @foreach($permissions as $perm)
-                        <option value="{{ $perm->id }}">{{ $perm->name }}</option>
+                    @foreach($roles as $role)
+                        <option value="{{ $role->id }}">{{ $role->name }}</option>
                     @endforeach
                 </select>
             </div>
@@ -708,11 +733,21 @@
     <div class="card">
         <div class="card-body">
             <h6>Educational Background</h6>
+
+            <!-- Table-like header row -->
+            <div class="row fw-bold mb-2">
+                <div class="col-md-5">Name of School*</div>
+                <div class="col-md-2">Level*</div>
+                <div class="col-md-2">From</div>
+                <div class="col-md-2">To</div>
+                <div class="col-md-1"></div> <!-- empty space for remove button -->
+            </div>
+
             <div id="educ-bg-list">
                 <div class="educ-row row mb-2">
                     <div class="col-md-5"><input type="text" name="educational_backgrounds[0][name_of_school]" class="form-control" placeholder="Name of school"></div>
                     <div class="col-md-2">
-                        <select name="educational_backgrounds[0][level_id]" class="form-control">
+                        <select name="educational_backgrounds[0][level]" class="form-control">
                             <option value="">Select Level</option>
                             <option value="Elementary">Elementary</option>
                             <option value="High School">High School</option>
@@ -804,8 +839,6 @@
             <div class="card-footer d-flex justify-content-between">
                 <div>
                     <a href="{{ route('users.index') }}" class="btn btn-secondary">Cancel</a>
-                </div>
-                <div>
                     <button type="submit" class="btn btn-primary">Submit</button>
                 </div>
             </div>
@@ -864,7 +897,7 @@ document.getElementById('avatar')?.addEventListener('change', function(e){
         row.className = 'educ-row row mb-2';
         row.innerHTML = `\
             <div class="col-md-5"><input type="text" name="educational_backgrounds[${educIndex}][name_of_school]" class="form-control" placeholder="Name of school"></div>\
-            <div class="col-md-2"><input type="number" name="educational_backgrounds[${educIndex}][level_id]" class="form-control" placeholder="Level id"></div>\
+            <div class="col-md-2"><input type="number" name="educational_backgrounds[${educIndex}][level]" class="form-control" placeholder="Level id"></div>\
             <div class="col-md-2"><input type="date" name="educational_backgrounds[${educIndex}][tenure_start]" class="form-control"></div>\
             <div class="col-md-2"><input type="date" name="educational_backgrounds[${educIndex}][tenure_end]" class="form-control"></div>\
             <div class="col-md-1"><button type="button" class="btn btn-sm btn-outline-danger remove-educ">-</button></div>`;
@@ -1254,8 +1287,8 @@ document.querySelector('form').addEventListener('submit', function () {
         @endforeach
 
         let permOptions = ``;
-        @foreach($permissions as $perm)
-            permOptions += `\n                                                    <option value="{{ $perm->id }}">{{ addslashes($perm->name) }}</option>`;
+        @foreach($roles as $role)
+            permOptions += `\n                                                    <option value="{{ $role->id }}">{{ addslashes($role->name) }}</option>`;
         @endforeach
 
         row.innerHTML = `\n                <div class="col-md-5">\n                    <select name="branch_permissions[${bpIndex}][branch_id]" class="form-control">${branchOptions}\n                    </select>\n                </div>\n                <div class="col-md-6">\n                    <select name="branch_permissions[${bpIndex}][permissions][]" class="form-control" multiple>\n                        ${permOptions}\n                    </select>\n                </div>\n                <div class="col-md-1">\n                    <button type="button" class="btn btn-sm btn-outline-danger remove-branch">-</button>\n                </div>`;
@@ -1273,10 +1306,7 @@ document.querySelector('form').addEventListener('submit', function () {
 })();
 </script>
 
-
-
 <script>
-
 // Track which shift id originally had the saved custom values (if any).
 // This prevents applying a previously-saved custom time blob to a different
 // template when the user selects another shift.
