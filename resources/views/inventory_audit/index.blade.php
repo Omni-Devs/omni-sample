@@ -1,5 +1,10 @@
 @extends('layouts.app')
 @section('content')
+<style>
+     .dropdown-menu {
+        position: relative;
+    }
+</style>
 <div class="main-content" id="app">
     <div>
         <div class="breadcrumb">

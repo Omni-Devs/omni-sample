@@ -124,12 +124,13 @@
                                             <th>Category</th>
                                             <th>Subcategory</th>
                                             <th>Quantity</th>
+                                            <th>Unit</th>
                                             <th class="text-right">Action</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         <tr v-if="selectedItems.length === 0">
-                                            <td colspan="6" class="text-center">No Selected Items</td>
+                                            <td colspan="7" class="text-center">No Selected Items</td>
                                         </tr>
                                         <tr v-for="item in selectedItems" :key="item.id">
                                             <td>@{{ item.name }}</td>
@@ -149,6 +150,7 @@
                                                 </div>
                                                 </div>
                                             </td>
+                                            <td>@{{ item.unit || 'N/A' }}</td>
                                             <td class="vgt-left-align text-right">
                                                 <div role="group" class="btn-group btn-group-sm">
                                                 <button type="button" class="btn btn-danger" @click="removeItem(item)">Remove</button>
@@ -410,7 +412,10 @@ new Vue({
             title: 'Saved',
             text: response.data.message || 'Audit saved',
             timer: 2000,
-            showConfirmButton: false
+            showConfirmButton: false,
+            willClose: () => {
+                window.location.href = '/inventory/audits';
+            }
         });
 
         if (this.mode === 'create') this.resetForm();
