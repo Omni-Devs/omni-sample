@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class EducationalBackground extends Model
 {
-    protected $fillable = ['user_id', 'name_of_school', 'level_id', 'tenure_start', 'tenure_end'];
+    protected $fillable = ['user_id', 'name_of_school', 'level', 'tenure_start', 'tenure_end'];
 
     public function user()
     {

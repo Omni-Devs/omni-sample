@@ -34,16 +34,24 @@ class UserController extends Controller
     {
         $status = $request->get('status', 'active'); // default to active
         $perPage = $request->get('per_page', 10);
+    // prefer explicit query param, otherwise fall back to the application's
+    // currently-selected branch (if any). This makes the users index show
+    // users for the active branch by default.
+    $branchId = $request->get('branch_id') ?: (function_exists('current_branch_id') ? current_branch_id() : null);
 
         $validStatuses = ['active', 'resigned', 'terminated'];
         if (!in_array($status, $validStatuses)) {
             $status = 'active';
         }
 
-        $users = User::with(['roles:id,name', 'branches:id,name'])
-            ->where('status', $status)
-            ->paginate($perPage)
-            ->appends(['status' => $status]);
+        $query = User::with(['roles:id,name', 'branches:id,name'])
+            ->where('status', $status);
+
+        if (!empty($branchId)) {
+            $query->where('branch_id', $branchId);
+        }
+
+        $users = $query->paginate($perPage)->appends(array_filter(['status' => $status, 'branch_id' => $branchId]));
 
         $nextUserId = User::max('id') + 1;
         $roles = Role::all();
@@ -86,12 +94,6 @@ class UserController extends Controller
     public function store(Request $request)
     {
         // Normal processing: handle incoming request and create user
-            // Determine if this is an Access-only submission (credentials + branch permissions)
-            // Previous heuristic treated any request with a username or the allow_db_user checkbox
-            // as access-only which made full "basic" fields (first_name/last_name/email) get
-            // ignored and stored as null. Instead, only treat the request as access-only when
-            // admin explicitly provided DB credentials but did NOT supply any basic identity
-            // fields. This covers the UI where the Access tab may be used standalone.
             $hasBasicIdentity = $request->filled('name') || $request->filled('first_name') || $request->filled('last_name') || $request->filled('email');
             $isAccessOnly = ($request->has('allow_db_user') || $request->filled('username')) && !$hasBasicIdentity;
 
@@ -103,7 +105,8 @@ class UserController extends Controller
                     'branch_permissions' => 'nullable|array',
                     'branch_permissions.*.branch_id' => 'required_with:branch_permissions|exists:branches,id',
                     'branch_permissions.*.permissions' => 'nullable|array',
-                    'branch_permissions.*.permissions.*' => 'exists:permissions,id',
+                    'branch_permissions.*.permissions.*' => 'exists:roles,id',
+                    'branch_id' => 'nullable|exists:branches,id',
                     'image' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:2048',
                     'avatar' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:2048',
                 ];
@@ -125,7 +128,8 @@ class UserController extends Controller
                     'branch_permissions' => 'nullable|array',
                     'branch_permissions.*.branch_id' => 'required_with:branch_permissions|exists:branches,id',
                     'branch_permissions.*.permissions' => 'nullable|array',
-                    'branch_permissions.*.permissions.*' => 'exists:permissions,id',
+                    'branch_permissions.*.permissions.*' => 'exists:roles,id',
+                    'branch_id' => 'nullable|exists:branches,id',
                     'image' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:2048',
                     'avatar' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:2048',
                     'biometric_number' => 'nullable|string|max:255',
@@ -312,6 +316,7 @@ class UserController extends Controller
         $emailToSave = $validated['email'] ?? ($usernameToSave . '@gmail.com');
 
         $user = User::create([
+            'branch_id' => $validated['branch_id'] ?? null,
             'last_name' => $validated['last_name'] ?? null,
             'first_name' => $validated['first_name'] ?? null,
             'middle_name' => $validated['middle_name'] ?? null,
@@ -345,6 +350,11 @@ class UserController extends Controller
             'status' => 'active', // default status
         ]);
 
+        if (!empty($validated['branch_id'])) {
+        $user->branches()->syncWithoutDetaching([$validated['branch_id']]);
+        // syncWithoutDetaching → adds it if missing, doesn't remove others
+    }
+
         try {
             Log::info('users.store - created_user', ['id' => $user->id, 'username' => $user->username]);
         } catch (\Throwable $e) {}
@@ -368,25 +378,25 @@ class UserController extends Controller
             $user->branches()->sync($validated['branches']);
         }
 
-        // Persist branch -> permission assignments into branch_permission pivot table
-        // Also collect permission ids so we can assign those permissions to the user
+        // Persist branch -> role assignments into branch_role pivot table
+        // Also collect role ids so we can assign those roles to the user
         if (!empty($validated['branch_permissions'])) {
-            $collectedPermIds = [];
+            $collectedRoleIds = [];
             foreach ($validated['branch_permissions'] as $row) {
                 $branchId = $row['branch_id'] ?? null;
-                $perms = $row['permissions'] ?? [];
-                if (empty($branchId) || !is_array($perms) || empty($perms)) continue;
-                foreach ($perms as $permId) {
-                    if (empty($permId)) continue;
-                    $collectedPermIds[] = $permId;
-                    $exists = DB::table('branch_permission')
+                $rolesForBranch = $row['permissions'] ?? [];
+                if (empty($branchId) || !is_array($rolesForBranch) || empty($rolesForBranch)) continue;
+                foreach ($rolesForBranch as $roleId) {
+                    if (empty($roleId)) continue;
+                    $collectedRoleIds[] = $roleId;
+                    $exists = DB::table('branch_role')
                         ->where('branch_id', $branchId)
-                        ->where('permission_id', $permId)
+                        ->where('role_id', $roleId)
                         ->exists();
                     if (!$exists) {
-                        DB::table('branch_permission')->insert([
+                        DB::table('branch_role')->insert([
                             'branch_id' => $branchId,
-                            'permission_id' => $permId,
+                            'role_id' => $roleId,
                             'created_at' => now(),
                             'updated_at' => now(),
                         ]);
@@ -394,22 +404,16 @@ class UserController extends Controller
                 }
             }
 
-            // Assign collected permissions to the user so global permission checks (e.g. sidebar @can / ->can)
-            // succeed. This is a pragmatic short-term fix: it grants the selected permissions directly
-            // to the user (not scoped by branch). For branch-scoped enforcement, implement branch-aware
-            // middleware or adjust view checks to consult branch_permission.
-            $collectedPermIds = array_values(array_unique(array_filter($collectedPermIds)));
-            if (!empty($collectedPermIds)) {
-                try {
-                    $permNames = Permission::whereIn('id', $collectedPermIds)->pluck('name')->toArray();
-                    if (!empty($permNames)) {
-                        // givePermissionTo accepts names or Permission models
-                        $user->givePermissionTo($permNames);
-                    }
-                } catch (\Throwable $e) {
-                    // log but don't break user creation
-                    try { Log::warning('users.store - givePermissionTo failed', ['error' => $e->getMessage()]); } catch (\Throwable $_) {}
+            // Sync user's roles with any roles selected globally plus roles selected per-branch.
+            $collectedRoleIds = array_values(array_unique(array_filter($collectedRoleIds)));
+            try {
+                $existingRoles = $user->roles()->pluck('id')->toArray();
+                $finalRoleIds = array_values(array_unique(array_merge($existingRoles, $collectedRoleIds)));
+                if (!empty($finalRoleIds)) {
+                    $user->roles()->sync($finalRoleIds);
                 }
+            } catch (\Throwable $e) {
+                try { Log::warning('users.store - syncRoles failed', ['error' => $e->getMessage()]); } catch (\Throwable $_) {}
             }
         }
 
@@ -511,7 +515,7 @@ if (!empty($validated['salary_method'])) {
                 EducationalBackground::create([
                     'user_id' => $user->id,
                     'name_of_school' => $eb['name_of_school'] ?? null,
-                    'level_id' => $eb['level_id'] ?? null,
+                    'level' => $eb['level'] ?? null,
                     'tenure_start' => $eb['tenure_start'] ?? null,
                     'tenure_end' => $eb['tenure_end'] ?? null,
                 ]);
@@ -604,8 +608,8 @@ if (!empty($validated['salary_method'])) {
         ])->findOrFail($id);
 
         // Same data as create()
-        $branches = Branch::all();
-        $permissions = Permission::all();
+    $branches = Branch::all();
+    $roles = Role::all();
         $shifts = WorkforceShift::all();
         $allowances = WorkforceAllowance::all();
         $leaves = WorkLeave::all();
@@ -626,12 +630,12 @@ if (!empty($validated['salary_method'])) {
         $educationalBackgrounds = $user->educationalBackgrounds;
         $workInformations = $user->employeeWorkInformations;
 
-        // entries for the branch and the user's direct permissions.
-        $userPermissionIds = $user->getDirectPermissions()->pluck('id')->toArray();
+        // entries for the branch and the user's direct roles.
+        $userRoleIds = $user->roles()->pluck('id')->toArray();
         $userBranchPermissions = [];
         foreach ($user->branches as $b) {
-            $bpIds = DB::table('branch_permission')->where('branch_id', $b->id)->pluck('permission_id')->toArray();
-            $userBranchPermissions[$b->id] = array_values(array_intersect($bpIds, $userPermissionIds));
+            $bpIds = DB::table('branch_role')->where('branch_id', $b->id)->pluck('role_id')->toArray();
+            $userBranchPermissions[$b->id] = array_values(array_intersect($bpIds, $userRoleIds));
         }
         
         // (no work info creation should happen in edit() — it's handled on store/update flows)
@@ -639,7 +643,7 @@ if (!empty($validated['salary_method'])) {
         return view('users.edit', [
             'user' => $user,
             'branches' => $branches,
-            'permissions' => $permissions,
+            'roles' => $roles,
             'shifts' => $shifts,
             'allowances' => $allowances,
             'leaves' => $leaves,
@@ -664,16 +668,13 @@ if (!empty($validated['salary_method'])) {
 
         $user = User::findOrFail($id);
 
-        // Validation rules (same as store, but add unique ignore for email/username)
-        // Make basic identity fields nullable on update so users who were
-        // created via access-only flows (or missing name/email) can still
-        // update other tabs (like Work Information) without being blocked
         // by strict validation here.
         $rules = [
             'first_name' => 'nullable|string|max:255',
             'last_name' => 'nullable|string|max:255',
             'email' => 'nullable|email|unique:users,email,' . $id,
             'username' => 'nullable|unique:users,username,' . $id,
+            'branch_id' => 'nullable|exists:branches,id',
             // ... add other rules like in store() if needed
         ];
 
@@ -684,14 +685,13 @@ if (!empty($validated['salary_method'])) {
             'first_name', 'last_name', 'middle_name', 'email', 'mobile_number',
             'biometric_number', 'id_number', 'date_of_birth', 'gender_id',
             'tin', 'phil_health_number', 'pag_ibig_number', 'blood_type_id',
-            'civil_status_id', 'address'
+            'civil_status_id', 'address', 'branch_id',
         ]));
 
-
-        // Employee work informations are handled later in the update() flow using
-        // a delete + recreate strategy to ensure the DB matches the submitted
-        // indexed inputs from the form. This avoids duplicate/contradictory
-        // update logic.
+        // Add this after update
+    if ($request->filled('branch_id')) {
+        $user->branches()->syncWithoutDetaching([$request->input('branch_id')]);
+    }
 
         // Handle image
         if ($request->hasFile('image')) {
@@ -711,6 +711,40 @@ if (!empty($validated['salary_method'])) {
             $user->password = Hash::make($request->password);
         }
         $user->save();
+
+      // === Attachments handling on update ===
+$checkedNames = $request->input('attachment_checked', []); // array of checked names like ['Birth Certificate', 'Valid ID']
+
+// 1. Delete attachments that are no longer checked
+$user->attachments()
+     ->whereNotIn('name', $checkedNames)
+     ->delete();
+
+// 2. Handle new/replaced uploads
+if ($request->hasFile('attachments')) {
+    foreach ($request->file('attachments') as $index => $file) {
+        if (!$file->isValid()) continue;
+
+        $name = $request->input("attachment_names.$index");
+        if (!$name || !in_array($name, $checkedNames)) continue;
+
+        $filename = $file->getClientOriginalName();
+        $path = $file->storeAs('attachments', $user->id . '_' . time() . '_' . $filename, 'public');
+
+        // Replace or create new attachment record
+        Attachment::updateOrCreate(
+            [
+                'user_id' => $user->id,
+                'name'    => $name,
+            ],
+            [
+                'file_path' => $path,
+                'file_name' => $filename,
+                'mime_type' => $file->getMimeType(),
+            ]
+        );
+    }
+}
 
         // Update related models (same logic as store, but use updateOrCreate)
         // Spouse
@@ -816,102 +850,66 @@ if (!empty($validated['salary_method'])) {
             }
         }
 
-        // === Branch Permissions (update) ===
-        // Normalize branch_permissions: drop entries that are completely empty
-        $input = $request->all();
-        $bpFiltered = [];
-        if (!empty($input['branch_permissions']) && is_array($input['branch_permissions'])) {
-            foreach ($input['branch_permissions'] as $row) {
-                $hasBranch = isset($row['branch_id']) && $row['branch_id'] !== '' && $row['branch_id'] !== null;
-                $hasPerms = false;
-                // permissions may be provided as an array or as a comma-separated string
-                if (isset($row['permissions'])) {
-                    if (is_array($row['permissions'])) {
-                        $hasPerms = count(array_filter($row['permissions'], function($v){ return $v !== null && $v !== ''; })) > 0;
-                    } elseif (is_string($row['permissions'])) {
-                        $tmp = array_filter(array_map('trim', explode(',', $row['permissions'])), function($v){ return $v !== null && $v !== ''; });
-                        $hasPerms = count($tmp) > 0;
-                    }
-                }
+       // === Branch Permissions & Primary Branch handling ===
+$input = $request->all();
 
-                if ($hasBranch || $hasPerms) {
-                    // normalize permissions into an array of non-empty values
-                    $permsRaw = $row['permissions'] ?? [];
-                    if (!is_array($permsRaw)) {
-                        if (is_string($permsRaw)) {
-                            $permsArr = array_filter(array_map('trim', explode(',', $permsRaw)), function($v){ return $v !== null && $v !== ''; });
-                        } else {
-                            $permsArr = [];
-                        }
-                    } else {
-                        $permsArr = array_filter($permsRaw, function($v){ return $v !== null && $v !== ''; });
-                    }
-                    $row['permissions'] = array_values($permsArr);
-                    $bpFiltered[] = $row;
-                }
-            }
+// 1. Handle branch_permissions (multi-branch + roles) if submitted meaningfully
+$bpFiltered = [];
+if (!empty($input['branch_permissions']) && is_array($input['branch_permissions'])) {
+    foreach ($input['branch_permissions'] as $row) {
+        $hasBranch = !empty($row['branch_id']);
+        $hasPerms = !empty($row['permissions']) && (
+            (is_array($row['permissions']) && count(array_filter($row['permissions']))) ||
+            (is_string($row['permissions']) && trim($row['permissions']))
+        );
+
+        if ($hasBranch || $hasPerms) {
+            // Normalize permissions
+            $permsRaw = $row['permissions'] ?? [];
+            $permsArr = is_array($permsRaw)
+                ? array_filter($permsRaw)
+                : array_filter(array_map('trim', explode(',', $permsRaw ?? '')));
+
+            $row['permissions'] = array_values($permsArr);
+            $bpFiltered[] = $row;
         }
+    }
+}
 
-        // If branch_permissions were provided, sync branches and permissions
-        if ($request->has('branch_permissions')) {
-            if (!empty($bpFiltered)) {
-                $branchIds = [];
-                $collectedPermIds = [];
-                foreach ($bpFiltered as $row) {
-                    if (!empty($row['branch_id'])) {
-                        $branchIds[] = $row['branch_id'];
-                    }
-                    $perms = $row['permissions'] ?? [];
-                    if (!empty($perms) && is_array($perms)) {
-                        foreach ($perms as $permId) {
-                            if (empty($permId)) continue;
-                            $collectedPermIds[] = $permId;
-                            $exists = DB::table('branch_permission')
-                                ->where('branch_id', $row['branch_id'])
-                                ->where('permission_id', $permId)
-                                ->exists();
-                            if (!$exists) {
-                                DB::table('branch_permission')->insert([
-                                    'branch_id' => $row['branch_id'],
-                                    'permission_id' => $permId,
-                                    'created_at' => now(),
-                                    'updated_at' => now(),
-                                ]);
-                            }
-                        }
-                    }
-                }
+// 2. Collect branches to sync
+$branchesToSync = [];
 
-                // sync branches for the user
-                if (!empty($branchIds)) {
-                    $user->branches()->sync(array_values(array_unique($branchIds)));
-                } else {
-                    $user->branches()->sync([]);
-                }
-
-                // sync direct permissions for the user to match the selected ones
-                $collectedPermIds = array_values(array_unique(array_filter($collectedPermIds)));
-                if (!empty($collectedPermIds)) {
-                    $permNames = Permission::whereIn('id', $collectedPermIds)->pluck('name')->toArray();
-                    // replace user's direct permissions with the selected ones
-                    try {
-                        $user->syncPermissions($permNames);
-                    } catch (\Throwable $e) {
-                        try { Log::warning('users.update - syncPermissions failed', ['error' => $e->getMessage()]); } catch (\Throwable $_) {}
-                    }
-                } else {
-                    // no permissions selected for branches: remove any direct permissions granted via branch selection
-                    try { $user->syncPermissions([]); } catch (\Throwable $_) {}
-                }
-            } else {
-                // branch_permissions submitted but empty -> clear branches and branch-scoped permissions
-                $user->branches()->sync([]);
-                try { $user->syncPermissions([]); } catch (\Throwable $_) {}
-            }
-        } elseif ($request->has('branches')) {
-            // fallback: sync raw branches[] input if provided
-            $user->branches()->sync($request->input('branches', []));
+// If branch_permissions were used meaningfully
+if (!empty($bpFiltered)) {
+    foreach ($bpFiltered as $row) {
+        if (!empty($row['branch_id'])) {
+            $branchesToSync[] = $row['branch_id'];
         }
+    }
+    // Also sync any direct branches[] if present (rare case)
+    if ($request->has('branches')) {
+        $branchesToSync = array_merge($branchesToSync, $request->input('branches', []));
+    }
+}
+// Fallback: use branches[] directly (most common case when only primary branch is changed)
+elseif ($request->has('branches')) {
+    $branchesToSync = $request->input('branches', []);
+}
+
+// 3. Actually sync branches (only if we have something to sync)
+if (!empty($branchesToSync)) {
+    $user->branches()->sync(array_unique($branchesToSync));
+}
+
+// 4. Update primary branch_id column (always, if submitted)
+if ($request->filled('branch_id')) {
+    $user->branch_id = $request->input('branch_id');
+    $user->save();
+} elseif ($request->has('branches') && count($request->input('branches')) === 1) {
+    // If only one branch was sent via branches[], set it as primary
+    $user->branch_id = $request->input('branches')[0];
+    $user->save();
+}
         return redirect()->route('users.index')->with('success', 'Employee updated successfully!');
     }
 
@@ -922,46 +920,6 @@ if (!empty($validated['salary_method'])) {
 
     return view('users.show', compact('user'));
     }
-
-    // // Update the specified user
-    // public function update(Request $request, $id)
-    // {
-    //     $user = User::findOrFail($id);
-
-    //     $validated = $request->validate([
-    //         'last_name' => 'required|string|max:255',
-    //         'first_name' => 'required|string|max:255',
-    //         'middle_name' => 'nullable|string|max:255',
-    //         'name' => 'required|string|max:255',
-    //         'username' => 'required|string|max:255|unique:users,username,' . $id,
-    //         'email' => 'required|email|max:255|unique:users,email,' . $id,
-    //         'mobile_number' => 'nullable|string|max:20',
-    //         'address' => 'nullable|string|max:255',
-    //         'image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
-    //         'branches' => 'nullable|array',
-    //         'branches.*' => 'exists:branches,id',
-    //     ]);
-
-    //     // Handle image upload if new one is uploaded
-    //     if ($request->hasFile('image')) {
-    //         $imagePath = $request->file('image')->store('users', 'public');
-    //         $validated['image'] = $imagePath;
-    //     }
-
-    //     $user->update($validated);
-
-    //     // Update roles using pivot sync so numeric IDs are handled correctly
-    //     if ($request->has('roles')) {
-    //         $user->roles()->sync($request->input('roles', []));
-    //     }
-
-    //     // Update branches (pivot)
-    //     if ($request->has('branches')) {
-    //         $user->branches()->sync($request->input('branches', []));
-    //     }
-
-    //     return redirect()->back()->with('success', 'User updated successfully.');
-    // }
 
     // Remove the specified user
     public function destroy($id)

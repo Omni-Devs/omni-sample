@@ -56,13 +56,13 @@
                                 <i class="i-Add"></i> Add
                             </button> <!---->
 
-                            <!-- Add Branch Modal -->
+                            <!-- Add Category Modal -->
     <div class="modal fade" id="New_Branch" tabindex="-1" role="dialog" aria-labelledby="New_BranchLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
             
             <div class="modal-header">
-                <h5 class="modal-title" id="New_BranchLabel">Add Branch</h5>
+                <h5 class="modal-title" id="New_BranchLabel">Add Category</h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                 <span aria-hidden="true">&times;</span>
                 </button>

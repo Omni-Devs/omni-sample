@@ -13,9 +13,9 @@ class User extends Authenticatable
     use HasFactory, Notifiable, HasRoles;
 
     protected $fillable = [
-        'last_name',        // Add last_name
-        'first_name',       // Add first_name
-        'middle_name',      // Add middle_name
+        'last_name',
+        'first_name',
+        'middle_name',
         'name',
         'email',
         'password',
@@ -24,7 +24,6 @@ class User extends Authenticatable
         'mobile_number',
         'address',
         'status',
-        // profile / HR fields
         'avatar',
         'biometric_number',
         'id_number',
@@ -45,6 +44,7 @@ class User extends Authenticatable
         'allow_liquidation',
         'landline_number',
         'gender_id',
+        'branch_id',
     ];
 
     protected $hidden = [
@@ -68,35 +68,47 @@ class User extends Authenticatable
         return $this->belongsToMany(Branch::class, 'branch_user', 'user_id', 'branch_id');
     }
 
+    // In User model
+    public function primaryBranch()
+    {
+        return $this->belongsTo(Branch::class, 'branch_id');
+    }
+
+    // Optional: scope for filtering by primary branch
+    public function scopeInPrimaryBranch($query, $branchId)
+    {
+        return $query->where('branch_id', $branchId);
+    }
+
     // HR related relationships
     public function spouseDetail()
     {
-        return $this->hasOne(\App\Models\SpouseDetail::class);
+        return $this->hasOne(SpouseDetail::class);
     }
 
     public function contactPerson()
     {
-        return $this->hasOne(\App\Models\ContactPerson::class);
+        return $this->hasOne(ContactPerson::class);
     }
 
     public function salaryMethod()
     {
-        return $this->hasOne(\App\Models\SalaryMethod::class);
+        return $this->hasOne(SalaryMethod::class);
     }
 
     public function educationalBackgrounds()
     {
-        return $this->hasMany(\App\Models\EducationalBackground::class);
+        return $this->hasMany(EducationalBackground::class);
     }
 
     public function dependents()
     {
-        return $this->hasMany(\App\Models\Dependent::class);
+        return $this->hasMany(Dependent::class);
     }
 
     public function employeeWorkInformations()
     {
-        return $this->hasMany(\App\Models\EmployeeWorkInformation::class);
+        return $this->hasMany(EmployeeWorkInformation::class);
     }
 
     /**
@@ -104,7 +116,7 @@ class User extends Authenticatable
      */
     public function allowances()
     {
-        return $this->belongsToMany(\App\Models\WorkforceAllowance::class, 'user_allowances', 'user_id', 'allowance_id')
+        return $this->belongsToMany(WorkforceAllowance::class, 'user_allowances', 'user_id', 'allowance_id')
                     ->withPivot('amount', 'monthly_count')
                     ->withTimestamps();
     }
@@ -115,7 +127,7 @@ class User extends Authenticatable
     public function leaves()
     {
         // pivot now stores assigned_days plus tracking columns earn/used/balance
-        return $this->belongsToMany(\App\Models\WorkLeave::class, 'user_leaves', 'user_id', 'leave_id')
+        return $this->belongsToMany(WorkLeave::class, 'user_leaves', 'user_id', 'leave_id')
                     ->withPivot('assigned_days', 'earn', 'used', 'balance', 'effective_date')
                     ->withTimestamps();
     }
@@ -123,11 +135,11 @@ class User extends Authenticatable
     // direct supervisor relationship (employee_work_informations uses direct_supervisor id)
     public function supervisor()
     {
-        return $this->belongsTo(\App\Models\User::class, 'direct_supervisor');
+        return $this->belongsTo(User::class, 'direct_supervisor');
     }
 
     public function attachments()
     {
-        return $this->hasMany(\App\Models\Attachment::class);
+        return $this->hasMany(Attachment::class);
     }
 }

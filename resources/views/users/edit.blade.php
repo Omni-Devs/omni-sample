@@ -137,10 +137,43 @@
                                             <input type="text" name="phil_health_number" id="phil_health_number" class="form-control" value="{{ old('phil_health_number', $user->phil_health_number) }}">
                                         </div>
                                     </div>
+                                    <!-- PAG-IBIG and Primary Branch are rendered together in the next column -->
                                     <div class="col-md-4">
-                                        <div class="form-group">
-                                            <label for="pag_ibig_number">PAG-IBIG #</label>
-                                            <input type="text" name="pag_ibig_number" id="pag_ibig_number" class="form-control" value="{{ old('pag_ibig_number', $user->pag_ibig_number) }}">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="form-group">
+                                                    <label for="pag_ibig_number">PAG-IBIG #</label>
+                                                    <input type="text" name="pag_ibig_number" id="pag_ibig_number" class="form-control" value="{{ old('pag_ibig_number', $user->pag_ibig_number) }}">
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                              <div class="form-group">
+        <label class="fw-bold">Primary Branch</label>
+        <select name="branches[]" class="form-control">
+            <option value="">-- Select Primary Branch --</option>
+            @foreach($branches as $b)
+                <?php
+                    // Determine which value to compare against
+                    $selectedBranchId = old('branches.0'); // after failed validation
+                    if (empty($selectedBranchId)) {
+                        // On initial edit load: prefer branch_id, then first pivot branch
+                        $selectedBranchId = $user?->branch_id ?? $user?->branches?->first()?->id ?? '';
+                    }
+                ?>
+                <option value="{{ $b->id }}"
+                        {{ $selectedBranchId == $b->id ? 'selected' : '' }}>
+                    {{ $b->name }}
+                </option>
+            @endforeach
+        </select>
+        @error('branches.0')
+            <span class="text-danger small">{{ $message }}</span>
+        @enderror
+        @error('branches.*')
+            <span class="text-danger small">{{ $message }}</span>
+        @enderror
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -311,7 +344,7 @@
                             </div>
 
                             <div class="col-md-6">
-                                <h6>Branch Permissions</h6>
+                                <h6>Branch Roles</h6>
                                 <div id="branch-permissions-list">
                                     @if(old('branch_permissions'))
                                         @foreach(old('branch_permissions') as $i => $bp)
@@ -326,8 +359,8 @@
                                                 </div>
                                                 <div class="col-md-6">
                                                     <select name="branch_permissions[{{ $i }}][permissions][]" class="form-control" multiple>
-                                                        @foreach($permissions as $perm)
-                                                            <option value="{{ $perm->id }}" {{ in_array($perm->id, $bp['permissions'] ?? []) ? 'selected' : '' }}>{{ $perm->name }}</option>
+                                                        @foreach($roles as $role)
+                                                            <option value="{{ $role->id }}" {{ in_array($role->id, $bp['permissions'] ?? []) ? 'selected' : '' }}>{{ $role->name }}</option>
                                                         @endforeach
                                                     </select>
                                                 </div>
@@ -349,9 +382,9 @@
                                                 </div>
                                                 <div class="col-md-6">
                                                     <select name="branch_permissions[{{ $i }}][permissions][]" class="form-control" multiple>
-                                                        @foreach($permissions as $perm)
-                                                            {{-- mark selected if this permission is in the user's permissions for this branch --}}
-                                                            <option value="{{ $perm->id }}" {{ (isset($userBranchPermissions[$branch->id]) && in_array($perm->id, $userBranchPermissions[$branch->id])) ? 'selected' : '' }}>{{ $perm->name }}</option>
+                                                        @foreach($roles as $role)
+                                                            {{-- mark selected if this role is in the user's roles for this branch --}}
+                                                            <option value="{{ $role->id }}" {{ (isset($userBranchPermissions[$branch->id]) && in_array($role->id, $userBranchPermissions[$branch->id])) ? 'selected' : '' }}>{{ $role->name }}</option>
                                                         @endforeach
                                                     </select>
                                                 </div>
@@ -683,12 +716,32 @@
                         <div class="card">
                             <div class="card-body">
                                 <h6>Educational Background</h6>
+
+                                <!-- Table-like header row -->
+                                <div class="row fw-bold mb-2">
+                                    <div class="col-md-5">Name of School*</div>
+                                    <div class="col-md-2">Level*</div>
+                                    <div class="col-md-2">From</div>
+                                    <div class="col-md-2">To</div>
+                                    <div class="col-md-1"></div> <!-- empty space for remove button -->
+                                </div>
+
                                 <div id="educ-bg-list">
                                     @if(old('educational_backgrounds'))
                                         @foreach(old('educational_backgrounds') as $index => $eb)
                                             <div class="educ-row row mb-2">
                                                 <div class="col-md-5"><input type="text" name="educational_backgrounds[{{ $index }}][name_of_school]" class="form-control" value="{{ $eb['name_of_school'] ?? '' }}" placeholder="Name of school"></div>
-                                                <div class="col-md-2"><input type="number" name="educational_backgrounds[{{ $index }}][level_id]" class="form-control" value="{{ $eb['level_id'] ?? '' }}" placeholder="Level id"></div>
+                                                <div class="col-md-2">
+                                                    <select name="educational_backgrounds[{{ $index }}][level]" class="form-control">
+                                                        <option value="">Select Level</option>
+                                                        <option value="Elementary"    {{ ($eb['level'] ?? '') === 'Elementary'    ? 'selected' : '' }}>Elementary</option>
+                                                        <option value="High School"   {{ ($eb['level'] ?? '') === 'High School'   ? 'selected' : '' }}>High School</option>
+                                                        <option value="Vocational"    {{ ($eb['level'] ?? '') === 'Vocational'    ? 'selected' : '' }}>Vocational</option>
+                                                        <option value="College"       {{ ($eb['level'] ?? '') === 'College'       ? 'selected' : '' }}>College</option>
+                                                        <option value="Graduate"      {{ ($eb['level'] ?? '') === 'Graduate'      ? 'selected' : '' }}>Graduate</option>
+                                                        <option value="Post Graduate" {{ ($eb['level'] ?? '') === 'Post Graduate' ? 'selected' : '' }}>Post Graduate</option>
+                                                    </select>
+                                                </div>
                                                 <div class="col-md-2"><input type="date" name="educational_backgrounds[{{ $index }}][tenure_start]" class="form-control" value="{{ $eb['tenure_start'] ?? '' }}"></div>
                                                 <div class="col-md-2"><input type="date" name="educational_backgrounds[{{ $index }}][tenure_end]" class="form-control" value="{{ $eb['tenure_end'] ?? '' }}"></div>
                                                 <div class="col-md-1"><button type="button" class="btn btn-sm btn-outline-danger remove-educ">-</button></div>
@@ -698,7 +751,17 @@
                                         @foreach($educationalBackgrounds as $index => $eb)
                                             <div class="educ-row row mb-2">
                                                 <div class="col-md-5"><input type="text" name="educational_backgrounds[{{ $index }}][name_of_school]" class="form-control" value="{{ $eb->name_of_school }}" placeholder="Name of school"></div>
-                                                <div class="col-md-2"><input type="number" name="educational_backgrounds[{{ $index }}][level_id]" class="form-control" value="{{ $eb->level_id }}" placeholder="Level id"></div>
+                                                <div class="col-md-2">
+                                <select name="educational_backgrounds[{{ $index }}][level]" class="form-control">
+                                    <option value="">Select Level</option>
+                                    <option value="Elementary"    {{ $eb->level === 'Elementary'    ? 'selected' : '' }}>Elementary</option>
+                                    <option value="High School"   {{ $eb->level === 'High School'   ? 'selected' : '' }}>High School</option>
+                                    <option value="Vocational"    {{ $eb->level === 'Vocational'    ? 'selected' : '' }}>Vocational</option>
+                                    <option value="College"       {{ $eb->level === 'College'       ? 'selected' : '' }}>College</option>
+                                    <option value="Graduate"      {{ $eb->level === 'Graduate'      ? 'selected' : '' }}>Graduate</option>
+                                    <option value="Post Graduate" {{ $eb->level === 'Post Graduate' ? 'selected' : '' }}>Post Graduate</option>
+                                </select>
+                            </div>
                                                 <div class="col-md-2"><input type="date" name="educational_backgrounds[{{ $index }}][tenure_start]" class="form-control" value="{{ $eb->tenure_start }}"></div>
                                                 <div class="col-md-2"><input type="date" name="educational_backgrounds[{{ $index }}][tenure_end]" class="form-control" value="{{ $eb->tenure_end }}"></div>
                                                 <div class="col-md-1"><button type="button" class="btn btn-sm btn-outline-danger remove-educ">-</button></div>
@@ -735,7 +798,14 @@
                                             <div class="attachment-row row align-items-center mb-3">
                                                 <div class="col-md-4">
                                                     <div class="form-check">
-                                                        <input class="form-check-input attachment-checkbox" type="checkbox" id="attach_{{ $index }}" value="{{ $name }}">
+                                                        {{-- <input class="form-check-input attachment-checkbox" type="checkbox" id="attach_{{ $index }}" value="{{ $name }}"> --}}
+                                                        <input 
+    class="form-check-input attachment-checkbox" 
+    type="checkbox" 
+    id="attach_{{ $index }}"
+    name="attachment_checked[{{ $index }}]" 
+    value="{{ $name }}"
+>
                                                         <label class="form-check-label" for="attach_{{ $index }}">{{ $name }}</label>
                                                     </div>
                                                 </div>
@@ -765,8 +835,6 @@
             <div class="card-footer d-flex justify-content-between">
                 <div>
                     <a href="{{ route('users.index') }}" class="btn btn-secondary">Cancel</a>
-                </div>
-                <div>
                     <button type="submit" class="btn btn-primary">Update</button>
                 </div>
             </div>
@@ -784,7 +852,7 @@
     <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 
-    <script>
+    {{-- <script>
         $(document).ready(function(){
             console.log("jQuery and Bootstrap loaded for tabs");
 
@@ -796,7 +864,7 @@
                 $('a[href="' + window.location.hash + '"]').tab('show');
             }
         });
-    </script>
+    </script> --}}
     
 <script>
 // Image previews
@@ -846,7 +914,17 @@ document.getElementById('avatar')?.addEventListener('change', function(e){
         row.className = 'educ-row row mb-2';
         row.innerHTML = `\
             <div class="col-md-5"><input type="text" name="educational_backgrounds[${educIndex}][name_of_school]" class="form-control" placeholder="Name of school"></div>\
-            <div class="col-md-2"><input type="number" name="educational_backgrounds[${educIndex}][level_id]" class="form-control" placeholder="Level id"></div>\
+            <div class="col-md-2">
+            <select name="educational_backgrounds[${educIndex}][level]" class="form-control">
+                <option value="">Select Level</option>
+                <option value="Elementary">Elementary</option>
+                <option value="High School">High School</option>
+                <option value="Vocational">Vocational</option>
+                <option value="College">College</option>
+                <option value="Graduate">Graduate</option>
+                <option value="Post Graduate">Post Graduate</option>
+            </select>
+        </div>
             <div class="col-md-2"><input type="date" name="educational_backgrounds[${educIndex}][tenure_start]" class="form-control"></div>\
             <div class="col-md-2"><input type="date" name="educational_backgrounds[${educIndex}][tenure_end]" class="form-control"></div>\
             <div class="col-md-1"><button type="button" class="btn btn-sm btn-outline-danger remove-educ">-</button></div>`;
@@ -1276,8 +1354,8 @@ document.querySelector('form').addEventListener('submit', function () {
         @endforeach
 
         let permOptions = ``;
-        @foreach($permissions as $perm)
-            permOptions += `\n                                                    <option value="{{ $perm->id }}">{{ addslashes($perm->name) }}</option>`;
+        @foreach($roles as $role)
+            permOptions += `\n                                                    <option value="{{ $role->id }}">{{ addslashes($role->name) }}</option>`;
         @endforeach
 
         row.innerHTML = `\n                <div class="col-md-5">\n                    <select name="branch_permissions[${bpIndex}][branch_id]" class="form-control">${branchOptions}\n                    </select>\n                </div>\n                <div class="col-md-6">\n                    <select name="branch_permissions[${bpIndex}][permissions][]" class="form-control" multiple>\n                        ${permOptions}\n                    </select>\n                </div>\n                <div class="col-md-1">\n                    <button type="button" class="btn btn-sm btn-outline-danger remove-branch">-</button>\n                </div>`;
@@ -1314,6 +1392,14 @@ document.getElementById('attachments-list')?.addEventListener('change', function
             removeBtn.disabled = true;
             nameInput.disabled = true;
         }
+
+        document.querySelectorAll('.attachment-checkbox:checked').forEach(checkbox => {
+            const row = checkbox.closest('.attachment-row');
+            const fileInput = row.querySelector('.attachment-file');
+            const removeBtn = row.querySelector('.remove-attachment');
+            if (fileInput) fileInput.disabled = false;
+            if (removeBtn) removeBtn.disabled = false;
+        });
     }
 });
 
@@ -1419,12 +1505,6 @@ document.getElementById('shift_select')?.addEventListener('change', function () 
     if(document.getElementById('preset_start') && document.getElementById('preset_end')){
         const container = document.getElementById('preset-dates-list');
         // If the user already generated/edited per-date cards (they exist in DOM),
-        // avoid overwriting them when re-opening the modal — keep the edits and
-        // refresh the preview/hidden inputs instead. Otherwise render new cards
-        // using the modal view-model (which prefers saved custom values).
-        // If the existing generated preset cards belong to a different shift,
-        // clear them (and the preset date inputs) so the newly-selected template
-        // starts with its own preset range. This prevents a previously-generated
         // range from one template (e.g. Graveyard) being shown for another.
         const generatedFor = container?.dataset?.generatedFor || '';
         if (generatedFor && generatedFor.toString() !== (shiftId || '').toString()) {
