@@ -38,6 +38,7 @@ use App\Http\Controllers\StatusController;
 use App\Http\Controllers\BenefitController;
 use App\Http\Controllers\HolidayController;
 use App\Http\Controllers\InventoryTransferController;
+use App\Http\Controllers\LeaveRequestController;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Http\Request;
 use App\Http\Controllers\TaxController;
@@ -602,5 +603,13 @@ Route::prefix('inventory/transfer')->name('transfers.')->group(function () {
     Route::delete('/{id}', [InventoryTransferController::class, 'destroy']);
 });
 
+Route::prefix('workforce/leave-requests')->name('leave-requests.')->group(function () {
+    Route::get('/', [LeaveRequestController::class, 'index'])->name('index');
+    Route::get('/fetch', [LeaveRequestController::class, 'fetchLeaveRequests'])->name('fetch');
+    Route::post('/', [LeaveRequestController::class, 'store'])->name('store');
+    Route::put('/{id}/update-status', [LeaveRequestController::class, 'updateStatus']);
+    Route::get('/{id}/edit', [LeaveRequestController::class, 'edit'])->name('leave-requests.edit');
+    Route::put('/{id}', [LeaveRequestController::class, 'update'])->name('leave-requests.update');
+});
 
 
