@@ -7,71 +7,285 @@ use App\Models\SalaryMethod;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class DailyTimeRecordController extends Controller
 {
-    public function index(Request $request)
-    {
-        $year = $request->get('year', Carbon::now()->year);
-        $month = $request->get('month', Carbon::now()->month);
+// 2nd of the correct versions
+// public function index(Request $request)
+// {
+//     $year = $request->year ?? now()->year;
+//     $month = $request->month ?? now()->month;
+//     $perPage = $request->get('perPage', 10);
+//     $search = $request->get('search');
 
-        $query = DailyTimeRecord::with(['user', 'salaryMethod.shift'])
-            ->whereYear('date', $year)
-            ->whereMonth('date', $month)
-            ->orderBy('date', 'desc');
+//     $employees = User::where('status', 'active')->with('salaryMethod.shift')->get();
 
-        $records = $query->get();
+//     $records = [];
 
-        // pass list of employees and salary methods for add/edit modal selects
-        $employees = User::select('id', 'username', 'name')->where('status', 'active')->get();
-        $salaryMethods = SalaryMethod::with('shift')->get();
+//     foreach ($employees as $user) {
+//         $salaryMethod = $user->salaryMethod;
 
-        return view('dtr.index', compact('records', 'employees', 'salaryMethods', 'year', 'month'));
-    }
+//         $daysInMonth = \Carbon\Carbon::create($year, $month)->daysInMonth;
 
-    public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'date' => 'required|date',
-            'user_id' => 'required|exists:users,id',
-            'salary_method_id' => 'nullable|exists:salary_methods,id',
-            'activity' => 'required|string|max:255',
-            'time' => 'required',
-            'status' => 'nullable|in:rest_day,absent,late,under_time,worked',
-        ]);
+//         $dtrs = DailyTimeRecord::where('user_id', $user->id)
+//             ->whereYear('date', $year)
+//             ->whereMonth('date', $month)
+//             ->get()
+//             ->keyBy(fn($dtr) => $dtr->date->format('Y-m-d'));
 
-        $validated['created_by'] = auth()->id();
+//         for ($day = 1; $day <= $daysInMonth; $day++) {
+//             $date = \Carbon\Carbon::create($year, $month, $day)->format('Y-m-d');
+//             $dtr = $dtrs[$date] ?? null;
 
-        $record = DailyTimeRecord::create($validated);
+//             $timeOfShift = '-';
+//             if ($salaryMethod) {
+//                 if ($salaryMethod->custom_open_time) {
+//                     $customTimes = json_decode($salaryMethod->custom_open_time, true);
+//                     $timeOfShift = $customTimes[$date] ?? array_values($customTimes)[0];
+//                 } elseif ($salaryMethod->custom_time_start && $salaryMethod->custom_time_end) {
+//                     $timeOfShift = $salaryMethod->custom_time_start . '-' . $salaryMethod->custom_time_end;
+//                 }
+//             }
 
-        if ($request->expectsJson()) {
-            return response()->json($record);
+//             $records[] = (object)[
+//                 'id' => $dtr?->id,
+//                 'is_virtual' => !$dtr,
+//                 'user_id' => $user->id,
+//                 'user_name' => $user->name,
+//                 'employee_number' => $user->id,
+//                 'date' => \Carbon\Carbon::parse($date),
+//                 'salary_method_id' => $salaryMethod?->id,
+//                 'salary_method_name' => $salaryMethod?->shift?->name ?? 'Shift #' . ($salaryMethod?->shift_id ?? '-'),
+//                 'shift_id' => $salaryMethod?->shift_id,
+//                 'time_of_shift' => $timeOfShift,
+//                 'time_in_reports' => $dtr?->time_in_reports,
+//                 'time_out_reports' => $dtr?->time_out_reports,
+//                 'other_reports' => $dtr?->other_reports,
+//                 'status' => $dtr?->status ?? 'worked',
+//             ];
+//         }
+//     }
+
+//     // ✅ Apply search filter if needed
+//     if ($search) {
+//         $records = collect($records)->filter(function ($record) use ($search) {
+//             return str_contains(strtolower($record->user_name), strtolower($search))
+//                 || str_contains(strtolower($record->employee_number), strtolower($search))
+//                 || str_contains(strtolower($record->salary_method_name), strtolower($search));
+//         })->values();
+//     } else {
+//         $records = collect($records);
+//     }
+
+//     // ✅ Paginate the collection manually
+//     $currentPage = LengthAwarePaginator::resolveCurrentPage();
+//     $paginatedRecords = new LengthAwarePaginator(
+//         $records->forPage($currentPage, $perPage),
+//         $records->count(),
+//         $perPage,
+//         $currentPage,
+//         [
+//             'path' => $request->url(),
+//             'query' => $request->query(),
+//         ]
+//     );
+
+//     return view('dtr.index', [
+//         'records' => $paginatedRecords,
+//         'employees' => $employees,
+//         'salaryMethods' => SalaryMethod::with('shift')->get(),
+//         'perPage' => $perPage,
+//         'search' => $search,
+//         'year' => $year,
+//         'month' => $month,
+//     ]);
+// }
+
+public function index(Request $request)
+{
+    $year = $request->year ?? now()->year;
+    $month = $request->month ?? now()->month;
+    $perPage = $request->get('perPage', 10);
+    $search = $request->get('search');
+
+    $employees = User::where('status', 'active')->with('salaryMethod.shift')->get();
+    $records = [];
+
+    foreach ($employees as $user) {
+        $salaryMethod = $user->salaryMethod;
+
+        // Determine valid work days for this salary method
+        $workDays = [];
+
+        if ($salaryMethod?->custom_open_time) {
+            $customTimes = json_decode($salaryMethod->custom_open_time, true);
+            foreach ($customTimes as $dateStr => $times) {
+                $date = \Carbon\Carbon::parse($dateStr);
+                if ($date->year == $year && $date->month == $month) {
+                    $workDays[$dateStr] = $times; // keep start/end for this day
+                }
+            }
+        } elseif ($salaryMethod?->custom_work_days) {
+            $allWorkDays = json_decode($salaryMethod->custom_work_days, true);
+            foreach ($allWorkDays as $dateStr) {
+                $date = \Carbon\Carbon::parse($dateStr);
+                if ($date->year == $year && $date->month == $month) {
+                    $workDays[$dateStr] = [
+                        'start' => $salaryMethod->custom_time_start,
+                        'end'   => $salaryMethod->custom_time_end,
+                    ];
+                }
+            }
+        } elseif ($salaryMethod && $salaryMethod->custom_time_start && $salaryMethod->custom_time_end) {
+            // fallback: include all days of month
+            $daysInMonth = \Carbon\Carbon::create($year, $month)->daysInMonth;
+            for ($day = 1; $day <= $daysInMonth; $day++) {
+                $dateStr = \Carbon\Carbon::create($year, $month, $day)->format('Y-m-d');
+                $workDays[$dateStr] = [
+                    'start' => $salaryMethod->custom_time_start,
+                    'end'   => $salaryMethod->custom_time_end,
+                ];
+            }
         }
 
-        return redirect()->route('dtr.index')->with('success', 'Time record added.');
+        // Get DTRs for the month
+        $dtrs = DailyTimeRecord::where('user_id', $user->id)
+            ->whereYear('date', $year)
+            ->whereMonth('date', $month)
+            ->get()
+            ->keyBy(fn($dtr) => $dtr->date->format('Y-m-d'));
+
+        foreach ($workDays as $date => $shiftTimes) {
+            $dtr = $dtrs[$date] ?? null;
+
+            $records[] = (object)[
+                'id' => $dtr?->id,
+                'is_virtual' => !$dtr,
+                'user_id' => $user->id,
+                'user_name' => $user->name,
+                'employee_number' => $user->id,
+                'date' => \Carbon\Carbon::parse($date),
+                'salary_method_id' => $salaryMethod?->id,
+                'salary_method_name' => $salaryMethod?->shift?->name ?? 'Shift #' . ($salaryMethod?->shift_id ?? '-'),
+                'shift_id' => $salaryMethod?->shift_id,
+                'time_of_shift' => $shiftTimes, // array with start/end for this day
+                'time_in_reports' => $dtr?->time_in_reports,
+                'time_out_reports' => $dtr?->time_out_reports,
+                'other_reports' => $dtr?->other_reports,
+                'status' => $dtr?->status ?? 'worked',
+            ];
+        }
     }
 
-    public function edit(DailyTimeRecord $dtr)
-    {
-        // return a partial or json used by modal; for simplicity return json
-        return response()->json($dtr->load(['user','salaryMethod.shift']));
+    // Apply search filter
+    if ($search) {
+        $records = collect($records)->filter(function ($record) use ($search) {
+            return str_contains(strtolower($record->user_name), strtolower($search))
+                || str_contains(strtolower($record->employee_number), strtolower($search))
+                || str_contains(strtolower($record->salary_method_name), strtolower($search));
+        })->values();
+    } else {
+        $records = collect($records);
     }
 
-    public function update(Request $request, DailyTimeRecord $dtr)
-    {
-        $validated = $request->validate([
-            'date' => 'required|date',
-            'user_id' => 'required|exists:users,id',
-            'salary_method_id' => 'nullable|exists:salary_methods,id',
-            'activity' => 'required|string|max:255',
-            'time' => 'required',
-            'status' => 'nullable|in:rest_day,absent,late,under_time,worked',
-        ]);
+    // Manual pagination
+    $currentPage = LengthAwarePaginator::resolveCurrentPage();
+    $paginatedRecords = new LengthAwarePaginator(
+        $records->forPage($currentPage, $perPage),
+        $records->count(),
+        $perPage,
+        $currentPage,
+        [
+            'path' => $request->url(),
+            'query' => $request->query(),
+        ]
+    );
 
-        $dtr->update($validated);
+    return view('dtr.index', [
+        'records' => $paginatedRecords,
+        'employees' => $employees,
+        'salaryMethods' => SalaryMethod::with('shift')->get(),
+        'perPage' => $perPage,
+        'search' => $search,
+        'year' => $year,
+        'month' => $month,
+    ]);
+}
 
-        return redirect()->route('dtr.index')->with('success', 'Time record updated.');
-    }
+
+    public function store(Request $request)
+{
+    $validated = $request->validate([
+        'date'             => 'required|date',
+        'user_id'          => 'required|exists:users,id',
+        'salary_method_id' => 'nullable|exists:salary_methods,id',
+        
+        // These are optional now – edit modal doesn't send them
+        'activity'         => 'nullable|string|max:255',
+        'time'             => 'nullable|date_format:H:i',
+
+        'status'           => 'required|in:rest_day,absent,late,under_time,worked',
+
+        // These are the important ones from edit modal
+        'time_in_reports'  => 'nullable|date_format:H:i',
+        'time_out_reports' => 'nullable|date_format:H:i|after_or_equal:time_in_reports', // optional: ensure out ≥ in
+        'other_reports'    => 'nullable|string|max:500',
+    ]);
+
+    $validated['created_by'] = auth()->id() ?? null;
+
+    $record = DailyTimeRecord::create($validated);
+
+    return redirect()->route('dtr.index')
+        ->with('success', 'Time record created successfully.');
+}
+
+// public function update(Request $request, $id)
+// {
+//     $record = DailyTimeRecord::findOrFail($id);
+
+//     // Update only editable fields
+//     $record->time_in_reports = $request->time_in_reports;
+//     $record->time_out_reports = $request->time_out_reports;
+//     $record->other_reports = $request->other_reports;
+//     $record->status = $request->status;
+
+//     // 🔒 Always preserve salary method
+//     if ($request->filled('salary_method_id')) {
+//         $record->salary_method_id = $request->salary_method_id;
+//     }
+
+//     // 🔒 Always preserve time_of_shift (never remove it)
+//     if ($request->filled('shift_start') && $request->filled('shift_end')) {
+//         $record->time_of_shift = json_encode([
+//             'start' => $request->shift_start,
+//             'end'   => $request->shift_end,
+//         ]);
+//     }
+
+//     $record->save();
+
+//     return redirect()->back()->with('success', 'Record updated successfully.');
+// }
+
+public function update(Request $request, $id)
+{
+    $record = DailyTimeRecord::findOrFail($id);
+
+    // Only update fields that are editable in the modal
+    $record->time_in_reports = $request->time_in_reports;
+    $record->time_out_reports = $request->time_out_reports;
+    $record->other_reports = $request->other_reports;
+    $record->status = $request->status;
+
+    // 🔒 DO NOT TOUCH user_id, salary_method_id, or time_of_shift
+    // They are already stored and should remain unchanged
+
+    $record->save();
+
+    return redirect()->back()->with('success', 'Record updated successfully.');
+}
 
     public function destroy(DailyTimeRecord $dtr)
     {
