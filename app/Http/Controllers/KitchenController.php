@@ -17,93 +17,107 @@ use Illuminate\Support\Facades\Validator;
 
 class KitchenController extends Controller
 {
-  public function index(Request $request)
+  public function index()
 {
-    $status = $request->query('status', 'serving');
+    return view('kitchen.index');
+}
+public function fetchItems(Request $request)
+{
+    $status = $request->get('status', 'serving');
+    $year   = $request->get('year');
+    $month  = $request->get('month');
+    $day    = $request->get('day');
 
     $orders = Order::with([
-            'details' => function ($q) use ($status) {
-                // ✅ Only include order details with matching status (default: serving)
-                $q->where('status', $status)
-                  ->with([
-                      'product.category',
-                      'product.recipes.component',
-                      'component.category',
-                  ]);
-            },
-            'user'
-        ])
-        ->orderBy('created_at', 'asc')
-        ->get();
+        'details' => function ($q) use ($status) {
+            $q->where('status', $status)
+              ->with([
+                  'product.category',
+                  'product.recipes.component',
+                  'component.category',
+                  'orderItems.cook', // <-- load cook from order_items
+              ]);
+        },
+        'user'
+    ])
+    ->when($year, fn ($q) => $q->whereYear('created_at', $year))
+    ->when($month, fn ($q) => $q->whereMonth('created_at', $month))
+    ->when($day, fn ($q) => $q->whereDay('created_at', $day))
+    ->orderBy('created_at', 'asc')
+    ->get();
 
-    // ✅ Flatten the order + detail data
+    // Flatten orders → orderItems
     $orderItems = $orders->flatMap(function ($order) {
-    return $order->details->map(function ($detail) use ($order) {
-        $item = $detail->product ?? $detail->component;
+        return $order->details->flatMap(function ($detail) use ($order) {
+            $item = $detail->product ?? $detail->component;
 
-        // ✅ Build recipe list
-        if ($detail->product && $detail->product->recipes) {
-            // Product-based (with recipe)
-            $recipe = $detail->product->recipes->map(function ($r) use ($detail) {
-                return [
-                    'component_id'   => optional($r->component)->id ?? null,
+            // Build recipe
+            $recipe = collect([]);
+            if ($detail->product && $detail->product->recipes) {
+                $recipe = $detail->product->recipes->map(fn($r) => [
+                    'component_id'   => optional($r->component)->id,
                     'component_name' => optional($r->component)->name ?? 'Unknown Component',
                     'quantity'       => $r->quantity * $detail->quantity,
                     'base_quantity'  => $r->quantity,
                     'unit'           => optional($r->component)->unit ?? 'pcs',
                     'loss_type'      => '',
                     'loss_qty'       => 0,
-                    'source'         => 'recipe', // mark where it came from
-                ];
-            })->values();
-        } elseif ($detail->component) {
-            // Component-based (no recipe)
-            $recipe = collect([[
-                'component_id'   => $detail->component->id,
-                'component_name' => $detail->component->name,
-                'quantity'       => $detail->quantity,
-                'base_quantity'  => 1,
-                'unit'           => $detail->component->unit ?? 'pcs',
-                'loss_type'      => '',
-                'loss_qty'       => 0,
-                'source'         => 'component', // mark direct source
-            ]]);
-        } else {
-            // fallback
-            $recipe = collect([]);
-        }
+                    'source'         => 'recipe',
+                ]);
+            } elseif ($detail->component) {
+                $recipe = collect([[
+                    'component_id'   => $detail->component->id,
+                    'component_name' => $detail->component->name,
+                    'quantity'       => $detail->quantity,
+                    'base_quantity'  => 1,
+                    'unit'           => $detail->component->unit ?? 'pcs',
+                    'loss_type'      => '',
+                    'loss_qty'       => 0,
+                    'source'         => 'component',
+                ]]);
+            }
 
-            return [
+            // Get cook info from order_items
+            $orderItem = $detail->orderItems->first(); // assuming one-to-one mapping per detail
+            $cook = $orderItem?->cook;
+            $cookId = $cook?->id;
+            $cookName = $cook?->name ?? null;
+
+            return [[
                 'order_detail_id' => $detail->id,
                 'order_id'        => $order->id,
                 'order_no'        => $order->order_no ?? ('ORD-' . $order->id),
-                'created_at'      => $order->created_at,
-                'time_submitted'  => $order->time_submitted
-                    ? \Carbon\Carbon::parse($order->time_submitted)->format('Y-m-d H:i:s')
-                    : null,
+                'created_at'      => $order->created_at->format('Y-m-d H:i:s'),
+               'time_submitted' => in_array($detail->status, ['served', 'walked','cancelled'])
+                                    ? optional($detail->updated_at)->format('Y-m-d H:i:s')
+                                    : (optional($order->time_submitted)
+                                        ? \Carbon\Carbon::parse($order->time_submitted)->format('Y-m-d H:i:s')
+                                        : null),
                 'code'            => $item->code ?? 'N/A',
                 'name'            => $item->name ?? 'Unnamed Item',
                 'qty'             => $detail->quantity,
                 'station'         => $item->category->name ?? 'N/A',
-                'status'          => $detail->status, // include current status
+                'status'          => $detail->status,
                 'recipe'          => $recipe,
-            ];
+                'cook_id'         => $cookId,
+                'cook_name'       => $cookName,
+            ]];
         });
-    })
-    ->sortBy('created_at')
-    ->values();
+    })->sortBy('created_at')->values();
 
-    // 🧑‍🍳 Fetch all cooks / chefs
+    // Fetch all chefs
     $chefs = User::role(['chef', 'cook'])
         ->select('id', 'name')
         ->orderBy('name')
         ->get();
 
-    return view('kitchen.index', [
+    return response()->json([
         'orderItems' => $orderItems,
         'chefs'      => $chefs,
     ]);
 }
+
+
 
 
    public function updateOrCreate(Request $request)
@@ -224,33 +238,33 @@ class KitchenController extends Controller
 
 
 
-   public function showServed()
-    {
-        $servedDetails = OrderDetail::with([
-            'order:id,time_submitted',
-            'product.category',
-            'component.category',
-            'orderItems.cook' // each detail can have many items; we’ll take the latest one
-        ])
-        ->where('status', 'served')
-        ->orderBy('updated_at', 'desc')
-        ->get();
+//    public function showServed()
+//     {
+//         $servedDetails = OrderDetail::with([
+//             'order:id,time_submitted',
+//             'product.category',
+//             'component.category',
+//             'orderItems.cook' // each detail can have many items; we’ll take the latest one
+//         ])
+//         ->where('status', 'served')
+//         ->orderBy('updated_at', 'desc')
+//         ->get();
 
-        return view('kitchen.served', compact('servedDetails'));
-    }
-    public function showWalked()
-    {
-        $walkedDetails = OrderDetail::with([
-            'order:id,time_submitted',
-            'product.category',
-            'component.category',
-            'orderItems.cook' // each detail can have many items; we’ll take the latest one
-        ])
-        ->where('status', 'walked')
-        ->orderBy('updated_at', 'desc')
-        ->get();
+//         return view('kitchen.served', compact('servedDetails'));
+//     }
+//     public function showWalked()
+//     {
+//         $walkedDetails = OrderDetail::with([
+//             'order:id,time_submitted',
+//             'product.category',
+//             'component.category',
+//             'orderItems.cook' // each detail can have many items; we’ll take the latest one
+//         ])
+//         ->where('status', 'walked')
+//         ->orderBy('updated_at', 'desc')
+//         ->get();
 
-        return view('kitchen.walked', compact('walkedDetails'));
-    }
+//         return view('kitchen.walked', compact('walkedDetails'));
+//     }
 
 }

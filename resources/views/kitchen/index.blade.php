@@ -42,207 +42,254 @@ tr:hover {
   background-color: #f8f9fa;
 }
 
+/* Wrapper keeps button + list together */
+.recipe-wrapper {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Recipe list styling */
+.recipe-list {
+  margin: 0;
+  padding: 10px 14px;
+  list-style-type: disc;
+  background-color: #ffe5e5;
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+
+/* Optional spacing tweaks */
+.recipe-list li {
+  margin-bottom: 4px;
+}
+
+.recipe-name {
+  font-weight: 600;
+}
+
+.recipe-qty {
+  color: #555;
+}
+
+/* 🔥 Transition */
+.slide-fade-enter-active,
+.slide-fade-leave-active {
+  transition: all 0.25s ease;
+}
+
+.slide-fade-enter,
+.slide-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
+}
+
+
 
 </style>
 @section('content')
 <div class="main-content" id="app">
-    <div>
-        <div class="breadcrumb">
-            <h1 class="mr-3">POS</h1>
-            <ul>
-            <li><a href=""> Kitchen </a></li>
-            <!----> <!---->
-            </ul>
-            <div class="breadcrumb-action"></div>
-        </div>
-        <div class="separator-breadcrumb border-top"></div>
-    </div>
+  <div>
+      <div class="breadcrumb">
+          <h1 class="mr-3">POS</h1>
+          <ul>
+          <li><a href=""> Kitchen </a></li>
+          <!----> <!---->
+          </ul>
+          <div class="breadcrumb-action"></div>
+      </div>
+      <div class="separator-breadcrumb border-top"></div>
+  </div>
    <!-- ✅ Update Status Modal -->
-<div class="modal fade" id="updateModal" tabindex="-1" aria-labelledby="updateStatusLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content" v-if="selectedOrder">
+  <div class="modal fade" id="updateModal" tabindex="-1" aria-labelledby="updateStatusLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content" v-if="selectedOrder">
 
-      <!-- Header -->
-      <div class="modal-header">
-        <h5 class="modal-title">Update Status - Order #@{{ selectedOrder.order_no  }}</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal">x</button>
-      </div>
+        <!-- Header -->
+        <div class="modal-header">
+          <h5 class="modal-title">Update Status - Order #@{{ selectedOrder.order_no  }}</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal">x</button>
+        </div>
 
-      <!-- Body -->
-      <div class="modal-body">
-        <form @submit.prevent="submitUpdateStatus">
-          
-          <!-- Order Info -->
-          <div class="border rounded p-3 mb-3">
-            <div class="row g-2">
-              <div class="col-md-3">
-                <label class="form-label">Order No</label>
-                <input type="text" class="form-control" :value="selectedOrder.order_no" readonly>
-              </div>
-              <div class="col-md-3">
-                <label class="form-label">Time Ordered</label>
-                <input type="text" class="form-control" :value="formatTime(selectedOrder.time_submitted)" readonly>
-              </div>
-              <div class="col-md-3">
-                <label class="form-label">SKU</label>
-                <input type="text" class="form-control" :value="selectedOrder.code" readonly>
-              </div>
-              <div class="col-md-3">
-                <label class="form-label">Product Name</label>
-                <input type="text" class="form-control" :value="selectedOrder.name" readonly>
-              </div>
-            </div>
-          </div>
-
-          <!-- Update Fields -->
-          <div class="row mb-3">
-            <div class="col-md-6">
-              <label class="form-label">Chef / Cook</label>
-              <select v-model="selectedOrder.cook_id" class="form-select">
-                <option value="">-- Select Cook --</option>
-                <option v-for="chef in chefs" :key="chef.id" :value="chef.id">
-                  @{{ chef.name }}
-                </option>
-              </select>
-            </div>
-
-            <div class="col-md-6">
-              <label class="form-label">Status</label>
-              <select v-model="selectedOrder.status" class="form-select">
-                <option value="served">Served</option>
-                <option value="walked">Walked</option>
-                <option value="cancelled">Cancelled</option>
-              </select>
-            </div>
-          </div>
-
-            <div v-if="selectedOrder" class="mt-3">
-            <h5>Ingredients for @{{ selectedOrder.name }}</h5>
-
-            <div class="mb-2">
-              <input type="checkbox" v-model="selectedOrder.showLoss"> Wasted Ingredients
-            </div>
-
-            <table class="table table-bordered">
-              <thead>
-                <tr>
-                  <th>Component</th>
-                  <th>Quantity</th>
-                  <th v-if="selectedOrder.showLoss" colspan="3" class="text-center">Inventory Loss</th>
-                </tr>
-                <tr v-if="selectedOrder.showLoss">
-                  <th></th>
-                  <th></th>
-                  <th>Type</th>
-                  <th>Qty</th>
-                  <th>Unit</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="(ingredient, index) in selectedOrder.recipe" :key="index">
-                  <td>@{{ ingredient.component_name }}</td>
-                  <td class="text-end">@{{ ingredient.quantity }}</td>
-
-                  <template v-if="selectedOrder.showLoss">
-                    <td>
-                      <select v-model="ingredient.loss_type" class="form-control">
-                        <option disabled value="" style="color: #aaa;">Select Type</option>
-                        <option value="wastage">Wastage</option>
-                        <option value="spoilage">Spoilage</option>
-                        <option value="theft">Theft</option>
-                      </select>
-                    </td>
-                    <td>
-                      <input type="number" v-model.number="ingredient.loss_qty" step="0.01" class="form-control text-end">
-                    </td>
-                    <td>@{{ ingredient.unit }}</td>
-                  </template>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
+        <!-- Body -->
+        <div class="modal-body">
+          <form @submit.prevent="submitUpdateStatus">
             
-          {{-- </div> --}}
+            <!-- Order Info -->
+            <div class="border rounded p-3 mb-3">
+              <div class="row g-2">
+                <div class="col-md-3">
+                  <label class="form-label">Order No</label>
+                  <input type="text" class="form-control" v-model="selectedOrder.order_no" readonly>
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label">Time Ordered</label>
+                  <input type="text" class="form-control" :value="formatTime(selectedOrder.time_submitted)" readonly>
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label">SKU</label>
+                  <input type="text" class="form-control" v-model="selectedOrder.code" readonly>
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label">Product Name</label>
+                  <input type="text" class="form-control" v-model="selectedOrder.name" readonly>
+                </div>
+              </div>
+            </div>
+<div class="row">
+            <div class="col-md-4">
+  <label class="form-label">Chef / Cook</label>
 
-          <!-- Buttons -->
-          <div class="text-center">
-            <button type="submit" class="btn btn-primary px-4 me-2">
-              <i class="bi bi-check-circle me-1"></i> Submit
-            </button>
-            <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">
-              Cancel
-            </button>
-          </div>
-        </form>
+  <v-select
+    :options="chefs"
+    label="name"
+    :reduce="chef => chef.id"
+    v-model="selectedOrder.cook_id"
+    placeholder="-- Select Cook --"
+    :clearable="true"
+  />
+</div>
+
+
+<div class="col-md-4">
+  <label class="form-label">Status</label>
+
+  <v-select
+    :options="[
+      { label: 'Served', value: 'served' },
+      { label: 'Walked', value: 'walked' },
+      { label: 'Cancelled', value: 'cancelled' }
+    ]"
+    label="label"
+    :reduce="s => s.value"
+    v-model="selectedOrder.status"
+    placeholder="Select Status"
+    :clearable="false"
+  />
+</div>
+</div>
+              <div v-if="selectedOrder" class="mt-3">
+              <h5>Ingredients for @{{ selectedOrder.name }}</h5>
+
+              <div class="mb-2">
+                <input type="checkbox" v-model="selectedOrder.showLoss"> Wasted Ingredients
+              </div>
+
+              <table class="table table-bordered">
+                <thead>
+                  <tr>
+                    <th>Component</th>
+                    <th>Quantity</th>
+                    <th v-if="selectedOrder.showLoss" colspan="3" class="text-center">Inventory Loss</th>
+                  </tr>
+                  <tr v-if="selectedOrder.showLoss">
+                    <th></th>
+                    <th></th>
+                    <th>Type</th>
+                    <th>Qty</th>
+                    <th>Unit</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(ingredient, index) in selectedOrder.recipe" :key="index">
+                    <td>@{{ ingredient.component_name }}</td>
+                    <td class="text-end">@{{ ingredient.quantity }}</td>
+
+                    <template v-if="selectedOrder.showLoss">
+                      <td>
+                        <select v-model="ingredient.loss_type" class="form-control">
+                          <option disabled value="" style="color: #aaa;">Select Type</option>
+                          <option value="wastage">Wastage</option>
+                          <option value="spoilage">Spoilage</option>
+                          <option value="theft">Theft</option>
+                        </select>
+                      </td>
+                      <td>
+                        <input type="number" v-model.number="ingredient.loss_qty" step="0.01" class="form-control text-end">
+                      </td>
+                      <td>@{{ ingredient.unit }}</td>
+                    </template>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+              
+            {{-- </div> --}}
+
+            <!-- Buttons -->
+            <div class="text-center">
+              <button type="submit" class="btn btn-primary px-4 me-2">
+                <i class="bi bi-check-circle me-1"></i> Submit
+              </button>
+              <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+
       </div>
-
     </div>
   </div>
-</div>
 
 
     <div class="wrapper">
         <div class="card mt-4">
             <nav class="card-header">
                 <ul class="nav nav-tabs card-header-tabs">
-                    <li class="nav-item">
-                        <a href="/kitchen" 
-                            class="nav-link active">
-                            Preparing
-                        </a>
-                    </li>
-
-                    <li class="nav-item">
-                        <a href="/kitchen/served" 
-                            class="nav-link">
-                            Served
-                        </a>
-                    </li>
-
-                    <li class="nav-item">
-                        <a href="/kitchen/walked"
-                            class="nav-link">
-                            Walked
-                        </a>
-                    </li>
-
-                    <li class="nav-item">
-                        <a href="#"
-                            class="nav-link">
-                            Cancelled
-                        </a>
-                    </li>
+                  <li class="nav-item" v-for="status in statusList" :key="status.value">
+                      <a href="#"
+                        class="nav-link"
+                        :class="{ active: statusFilter === status.value }"
+                        @click.prevent="setStatus(status.value)">
+                      @{{ status.label }}
+                      </a>
+                  </li>
                 </ul>
             </nav>
             <div class="card-body">
                 <div class="vgt-wrap ">
-                  <div class="row mb-3 align-items-center">
-                  <div class="col-md-2">
-                    <label class="form-label fw-bold">Year</label>
-                    <select v-model="selectedYear" class="form-select">
-                      <option v-for="year in years" :value="year">@{{ year }}</option>
-                    </select>
-                  </div>
+                  <div class="row">
+                    <div class="col-sm-12 col-md-3">
+                      <fieldset class="form-group">
+                          <legend class="col-form-label pt-0">Year</legend>
+                          <v-select
+                          v-model="selectedYear"
+                          :options="years"
+                          :clearable="false"
+                          label="label"
+                          ></v-select>
+                      </fieldset>
+                    </div>
 
-                  <div class="col-md-2">
-                    <label class="form-label fw-bold">Month</label>
-                    <select v-model="selectedMonth" class="form-select">
-                      <option v-for="(m, i) in months" :value="i + 1">@{{ m }}</option>
-                    </select>
-                  </div>
+                    <div class="col-sm-12 col-md-3">
+                      <fieldset class="form-group">
+                          <legend class="col-form-label pt-0">Month</legend>
+                          <v-select
+                          v-model="selectedMonth"
+                          :options="monthOptions"
+                          label="label"
+                          :reduce="m => m.value"
+                          :clearable="false"
+                          ></v-select>
+                      </fieldset>
+                    </div>
 
-                  <div class="col-md-2">
-                    <label class="form-label fw-bold">Day</label>
-                    <select v-model="selectedDay" class="form-select">
-                      <option v-for="d in daysInMonth" :value="d">@{{ d }}</option>
-                    </select>
-                  </div>
+                    <div class="col-sm-12 col-md-3">
+                      <fieldset class="form-group">
+                        <legend class="col-form-label pt-0">Day</legend>
+                        <v-select
+                          v-model="selectedDay"
+                          :options="daysInMonth"
+                          :clearable="false"
+                        ></v-select>
+                      </fieldset>
+                    </div>
 
-                  <div class="col-md-3 mt-3 mt-md-4">
-                    <button class="btn btn-primary w-100" @click="resetToToday">Today’s Orders</button>
+                    <div class="col-md-3 mt-3 mt-md-4">
+                      <button class="btn btn-primary w-100" @click="resetToToday">Today’s Orders</button>
+                    </div>
                   </div>
-                </div>
 
                 <div class="vgt-inner-wrap">
                     <div class="vgt-fixed-header">
@@ -301,45 +348,95 @@ tr:hover {
                                 <i :class="getSortIcon('station')" class="ms-1"></i>
                               </th>
 
-                              <th scope="col" class="vgt-left-align text-right sortable" @click="sortTable('running_time')">
-                                <span>Running Time</span>
-                                <i :class="getSortIcon('running_time')" class="ms-1"></i>
+                              <th scope="col" class="vgt-left-align text-right sortable"  @click="sortTable('time_submitted')">
+                                <span>@{{ dynamicHeaderLabel }}</span>
+                                <i :class="getSortIcon('time_submitted')" class="ms-1"></i>
                               </th>
 
-                              <th scope="col" class="vgt-left-align text-right sortable">
+                              <th
+                                v-if="statusFilter !== 'serving'"
+                                scope="col"
+                                class="vgt-left-align text-right sortable"
+                                @click="sortTable('cook_name')"
+                              >
+                                <span>Chef, Cook</span>
+                                <i :class="getSortIcon('cook_name')" class="ms-1"></i>
+                              </th>
+
+                              {{-- <th scope="col" class="vgt-left-align text-right sortable" @click="sortTable('running_time')">
+                                <span>Running Time</span>
+                                <i :class="getSortIcon('running_time')" class="ms-1"></i>
+                              </th> --}}
+
+                              <th scope="col" class="vgt-left-align text-right sortable" v-if="statusFilter == 'serving'">
                                 <span>Recipe</span>
                               </th>
 
-                              <th scope="col" class="vgt-left-align text-right">
+                              <th v-if="statusFilter == 'serving'" scope="col" class="vgt-left-align text-right">
                                 <span>Action</span>
                               </th>
                             </tr>
 
                             </thead>
                             <tbody>
-                              <tr v-for="(item, index) in filteredOrders" 
-                                  :key="index" 
-                                  :style="{ backgroundColor: getOrderColor(item.time_submitted) }">
+                              <tr
+  v-for="(item, index) in filteredOrders"
+  :key="index"
+  :style="statusFilter === 'serving'
+    ? { backgroundColor: getOrderColor(item.time_submitted) }
+    : {}"
+>
                                 <td class="text-left fw-bold text-primary">#@{{ item.order_no }}</td>
-                                <td class="text-left">@{{ formatTime(item.time_submitted) }}</td>
+                                <td class="text-left">@{{ formatAMPM(item.created_at) }}</td>
                                 <td class="text-left fw-semibold">@{{ item.code }}</td>
                                 <td class="text-left">@{{ item.name }}</td>
                                 <td class="text-end">@{{ item.qty }}</td>
                                 <td class="text-end">@{{ item.station }}</td>
-                                <td class="text-end fw-bold" 
-                                :class="{'text-danger': (new Date(now) - new Date(item.time_submitted)) / 60000 >= 15}">
-                                  @{{ getRunningTime(item.time_submitted) }}
-                                </td>
+                                <td class="text-end fw-bold"
+    :class="statusFilter === 'serving' 
+    ?{ 'text-danger': (new Date(now) - new Date(item.time_submitted)) / 60000 >= 15 }
+    : {}">
 
-                                <td>
-                                  <button @click="item.showRecipe = !item.showRecipe">View Recipe</button>
-                                  <ul v-if="item.showRecipe">
-                                    <li v-for="r in item.recipe" :key="r.component_name">
-                                      @{{ r.component_name }} — @{{ r.quantity }}
-                                    </li>
-                                  </ul>
-                                </td>
-                                <td class="text-right">
+  @{{ item.status === 'serving'
+      ? getRunningTime(item.time_submitted)
+      : formatAMPM(item.time_submitted)
+  }}
+
+</td>
+
+<td v-if="statusFilter == 'serving'">
+  <div class="recipe-wrapper">
+    <button
+      class="btn btn-primary w-100 mb-2"
+      @click="expandedOrderId = expandedOrderId === item.order_detail_id ? null : item.order_detail_id"
+    >
+      @{{ expandedOrderId === item.order_detail_id ? 'Hide Recipe' : 'View Recipe' }}
+    </button>
+
+    <transition name="slide-fade">
+      <ul
+        v-show="expandedOrderId === item.order_detail_id"
+        class="recipe-list"
+      >
+        <li
+          v-for="r in item.recipe"
+          :key="r.component_id || r.component_name"
+        >
+          <span class="recipe-name">@{{ r.component_name }}</span>
+          <span class="recipe-qty">— @{{ r.quantity }}</span>
+        </li>
+      </ul>
+    </transition>
+  </div>
+</td>
+
+<td v-else>
+  @{{ item.cook_name || 'N/A' }}
+</td>
+
+
+
+                                <td class="text-right" v-if="statusFilter == 'serving'">
                                   <div class="dropdown b-dropdown btn-group">
                                     <button id="dropdownMenu{{ $id ?? uniqid() }}"
                                         type="button"
@@ -374,6 +471,9 @@ tr:hover {
                                   </div>
                                 </td>
                               </tr>
+                              <tr v-if="filteredOrders.length === 0">
+                                  <td colspan="9" class="text-center text-muted">No data available.</td>
+                              </tr>
                             </tbody>
                         </table>
                     </div>
@@ -383,14 +483,34 @@ tr:hover {
     </div>
 </div>
 <script>
+  Vue.component('v-select', VueSelect.VueSelect);
 new Vue({
   el: "#app",
   data: {
-    orderItems: @json($orderItems),
     now: new Date(), // reactive timestamp that updates every second
     selectedOrder: null,
-    selectedStatus: "",
-    chefs: @json($chefs),
+    orderItems: [],
+    expandedOrderId: null,
+    chefs: [],
+    headerLabelMap: {
+        pending: 'Running Time',
+        served: 'Time Served',
+        walked: 'Time Served',
+        cancelled: 'Time Cancelled',
+    },
+    rowFieldMap: {
+        pending: 'time_submitted',
+        served: 'time_submitted',
+        walked: 'time_submitted',
+        cancelled: 'time_submitted',
+    },
+    statusFilter: 'serving',
+    statusList: [
+        { label: 'Preparing', value: 'serving' },
+        { label: 'Served', value: 'served' },
+        { label: 'Walked', value: 'walked' },
+        { label: 'Cancelled', value: 'cancelled' },
+    ],
 
     // 🔹 Date filter state
     selectedYear: new Date().getFullYear(),
@@ -405,11 +525,23 @@ new Vue({
   },
 
   computed: {
+    dynamicHeaderLabel() {
+                return this.headerLabelMap[this.statusFilter] || 'Running Time';
+            },
+            dynamicRowField() {
+                return this.rowFieldMap[this.statusFilter] || '-';
+            },
     // Generate list of last 5 years
     years() {
       const current = new Date().getFullYear();
       return Array.from({ length: 5 }, (_, i) => current - i);
     },
+  monthOptions() {
+    return this.months.map((m, i) => ({
+      label: m,
+      value: i + 1
+    }));
+  },
 
     // Generate days for selected month/year
     daysInMonth() {
@@ -422,14 +554,22 @@ new Vue({
     // 🔹 Filtered + Sorted orders based on selected date
 filteredOrders() {
   // Step 1: Filter by selected date
+  console.log(
+  'RAW WALKED FROM API:',
+  this.orderItems.filter(i => i.status === 'walked')
+);
+console.log('RAW:', this.orderItems);
   let data = this.orderItems.filter(item => {
+    console.log('padung', item)
     const date = new Date(item.time_submitted);
     return (
       date.getFullYear() === this.selectedYear &&
       date.getMonth() + 1 === this.selectedMonth &&
       date.getDate() === this.selectedDay
     );
+     console.log('return', date)
   });
+  console.log('sunod', data)
 
   // Step 2: Sort if a column is selected
   if (this.sortKey) {
@@ -469,21 +609,82 @@ filteredOrders() {
 
   },
 
+  watch: {
+  statusFilter() {
+    this.fetchItems()
+  },
+  selectedYear() {
+    this.fetchItems()
+  },
+  selectedMonth() {
+    this.fetchItems()
+  },
+  selectedDay() {
+    this.fetchItems()
+  }
+},
+
   mounted() {
     // 🕒 Update timer every second
     setInterval(() => {
       this.now = new Date();
     }, 1000);
+    this.fetchItems()
   },
 
   methods: {
+    isServedOrWalked(item) {
+    return ['served', 'walked'].includes(item.status);
+  },
+  formatAMPM(time) {
+    if (!time) return 'N/A'
+    return new Date(time).toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true
+    })
+  },
+    fetchItems() {
+  const currentExpandedId = this.expandedOrderId; // remember which recipe was expanded
+
+  axios.get('/kitchen/fetch', {
+    params: {
+      status: this.statusFilter,
+      year: this.selectedYear,
+      month: this.selectedMonth,
+      day: this.selectedDay
+    }
+  }).then(res => {
+    this.orderItems = res.data.orderItems;
+    this.chefs = res.data.chefs;
+    console.log('res', res.data)
+
+    // Restore expanded recipe if it still exists
+    if (currentExpandedId && this.orderItems.some(i => i.order_detail_id === currentExpandedId)) {
+      this.expandedOrderId = currentExpandedId;
+    } else {
+      this.expandedOrderId = null;
+    }
+
+    console.log('data today:', this.orderItems);
+  }).catch(err => console.error('Failed to fetch items:', err));
+},
+setStatus(status) {
+               this.statusFilter = status;
+   
+                // ✅ Remember last opened tab
+              //  localStorage.setItem('inventory_transfer_last_tab', status);
+              //  this.fetchRecords(1);
+           },
     // Reset dropdowns to today's date
     resetToToday() {
-      const now = new Date();
-      this.selectedYear = now.getFullYear();
-      this.selectedMonth = now.getMonth() + 1;
-      this.selectedDay = now.getDate();
-    },
+  const now = new Date()
+  this.selectedYear = now.getFullYear()
+  this.selectedMonth = now.getMonth() + 1
+  this.selectedDay = now.getDate()
+  this.fetchItems()
+},
 
     // 🕐 Compute live running time in H:M:S format
     getRunningTime(submitted) {
@@ -513,7 +714,8 @@ filteredOrders() {
 
     formatTime(datetime) {
       const local = new Date(datetime + 'Z');
-      return local.toLocaleTimeString('en-US', {
+      return local.toLocaleTimeString('en-PH', {
+        timeZone: 'Asia/Manila',
         hour: '2-digit',
         minute: '2-digit',
         second: '2-digit',
@@ -522,11 +724,41 @@ filteredOrders() {
     },
 
     openUpdateModal(item) {
-      this.selectedOrder = item;
-      this.selectedStatus = item.status || "";
-      const modal = new bootstrap.Modal(document.getElementById("updateModal"));
-      modal.show();
-    },
+  // Deep copy to avoid reference bugs
+  this.selectedOrder = JSON.parse(JSON.stringify(item));
+
+  // 👇 allow placeholder to show
+  this.selectedOrder.status = null;
+
+  // Defaults
+  this.selectedOrder.showLoss = false;
+
+  console.log('data', this.selectedOrder);
+
+  this.$nextTick(() => {
+    const modalEl = document.getElementById('updateModal');
+
+    if (!modalEl) {
+      console.error('❌ updateModal element not found');
+      return;
+    }
+
+    let modal = bootstrap.Modal.getInstance(modalEl);
+
+    if (!modal) {
+      modal = new bootstrap.Modal(modalEl, {
+        backdrop: 'static',
+        keyboard: false
+      });
+    }
+
+    modal.show();
+  });
+},
+
+resetUpdateModal() {
+  this.selectedOrder = null;
+},
 
     sortTable(key) {
     if (this.sortKey === key) {
@@ -541,125 +773,155 @@ filteredOrders() {
     return this.sortAsc ? 'fa fa-sort-up text-primary' : 'fa fa-sort-down text-primary';
   },
 
-    fetchOrders() {
-      axios.get(`/kitchen/served`)
-        .then(res => {
-          this.orderItems = res.data.orderItems;
-        })
-        .catch(err => console.error("❌ Failed to reload orders:", err));
-    },
+    // fetchOrders() {
+    //   axios.get(`/kitchen/served`)
+    //     .then(res => {
+    //       this.orderItems = res.data.orderItems;
+    //     })
+    //     .catch(err => console.error("❌ Failed to reload orders:", err));
+    // },
 
     async submitUpdateStatus() {
-    try {
-      const now = new Date();
-      const timeSubmitted =
-        now.getFullYear() + '-' +
-        String(now.getMonth() + 1).padStart(2, '0') + '-' +
-        String(now.getDate()).padStart(2, '0') + ' ' +
-        now.toLocaleTimeString('en-US', { hour12: false });
+  // 🔒 Show loader immediately
+  Swal.fire({
+    title: 'Updating order...',
+    html: 'Please wait',
+    allowOutsideClick: false,
+    didOpen: () => {
+      Swal.showLoading();
+    }
+  });
 
-      // ✅ Prepare deductions array first
-      const deductions = [];
-      if (['served', 'walked'].includes(this.selectedOrder.status)) {
-        const recipes = this.selectedOrder.recipe || [];
+  try {
+    const now = new Date();
+    const timeSubmitted =
+      now.getFullYear() + '-' +
+      String(now.getMonth() + 1).padStart(2, '0') + '-' +
+      String(now.getDate()).padStart(2, '0') + ' ' +
+      now.toLocaleTimeString('en-US', { hour12: false });
 
-        recipes.forEach(ingredient => {
-          const usedQty = ingredient.quantity || 0;
-          const lossQty = ingredient.loss_qty || 0;
+    // ✅ Prepare deductions
+    const deductions = [];
+    if (['served', 'walked'].includes(this.selectedOrder.status)) {
+      const recipes = this.selectedOrder.recipe || [];
 
-          // ✅ Main served deduction
-          if (usedQty > 0) {
-            deductions.push({
-              component_id: ingredient.component_id,
-              order_detail_id: this.selectedOrder.order_detail_id,
-              quantity_deducted: usedQty,
-              deduction_type: 'served',
-              notes: `Used for order (${this.selectedOrder.status}).`,
-            });
-          }
+      recipes.forEach(ingredient => {
+        const usedQty = ingredient.quantity || 0;
+        const lossQty = ingredient.loss_qty || 0;
 
-          // ✅ Separate wastage/spoilage/theft deduction
-          if (lossQty > 0) {
-            const mappedType = ['wastage', 'spoilage', 'theft'].includes(
-              (ingredient.loss_type || '').toLowerCase()
-            )
-              ? ingredient.loss_type.toLowerCase()
-              : 'wastage';
+        if (usedQty > 0) {
+          deductions.push({
+            component_id: ingredient.component_id,
+            order_detail_id: this.selectedOrder.order_detail_id,
+            quantity_deducted: usedQty,
+            deduction_type: 'served',
+            notes: `Used for order (${this.selectedOrder.status}).`,
+          });
+        }
 
-            deductions.push({
-              component_id: ingredient.component_id,
-              order_detail_id: this.selectedOrder.order_detail_id,
-              quantity_deducted: lossQty,
-              deduction_type: mappedType,
-              notes: `Wasted due to ${mappedType}.`,
-            });
-          }
-        });
-      }
+        if (lossQty > 0) {
+          const mappedType = ['wastage', 'spoilage', 'theft'].includes(
+            (ingredient.loss_type || '').toLowerCase()
+          )
+            ? ingredient.loss_type.toLowerCase()
+            : 'wastage';
 
-      // ✅ Combine deductions with main payload
-      const payload = {
-        order_detail_id: this.selectedOrder.order_detail_id,
-        cook_id: this.selectedOrder.cook_id,
-        time_submitted: timeSubmitted,
-        status: this.selectedOrder.status,
-        recipe: (this.selectedOrder.recipe || []).map(r => ({
-          component_name: r.component_name,
-          quantity: r.quantity ?? 0,
-          loss_type: r.loss_type && r.loss_type !== '' ? r.loss_type : 'served',
-          loss_qty: r.loss_qty ?? 0,
-        })),
-        deductions, // 👈 clean separation, no double count
-      };
+          deductions.push({
+            component_id: ingredient.component_id,
+            order_detail_id: this.selectedOrder.order_detail_id,
+            quantity_deducted: lossQty,
+            deduction_type: mappedType,
+            notes: `Wasted due to ${mappedType}.`,
+          });
+        }
+      });
+    }
 
-      console.log("🛰 Sending payload with deductions:", payload);
+    const payload = {
+      order_detail_id: this.selectedOrder.order_detail_id,
+      cook_id: this.selectedOrder.cook_id,
+      time_submitted: timeSubmitted,
+      status: this.selectedOrder.status,
+      recipe: (this.selectedOrder.recipe || []).map(r => ({
+        component_name: r.component_name,
+        quantity: r.quantity ?? 0,
+        loss_type: r.loss_type && r.loss_type !== '' ? r.loss_type : 'served',
+        loss_qty: r.loss_qty ?? 0,
+      })),
+      deductions,
+    };
 
+    // 🚀 API call
+    const response = await axios.post(`/order-items/update-or-create`, payload);
 
-      // ✅ Send to your controller (handles both order & inventory)
-      const response = await axios.post(`/order-items/update-or-create`, payload);
+    if (!response.data.success) {
+      Swal.fire('Warning', response.data.message || 'Something went wrong.', 'warning');
+      return;
+    }
 
-      if (!response.data.success) {
-        alert("⚠️ " + (response.data.message || "Something went wrong."));
-        return;
-      }
+    // ✅ Success
+Swal.fire({
+  icon: 'success',
+  title: 'Updated!',
+  text: 'Order item updated successfully',
+  timer: 1800,
+  showConfirmButton: false
+});
 
-      alert("✅ Order item updated successfully!");
+const updatedDetail = response.data.data.order_detail;
+const updatedOrderStatus = updatedDetail?.status;
 
-      const updatedDetail = response.data.data.order_detail;
-      const updatedOrderStatus = updatedDetail?.status;
+// 🔄 Update local list
+const index = this.orderItems.findIndex(
+  item => item.order_detail_id === updatedDetail.id
+);
 
-      // ✅ Update local table
-      const index = this.orderItems.findIndex(
-        item => item.order_detail_id === updatedDetail.id
-      );
+if (index !== -1) {
+  this.orderItems[index].status = updatedDetail.status;
+  this.orderItems[index].cook_id = this.selectedOrder.cook_id;
+  this.orderItems[index].time_submitted = timeSubmitted;
+}
 
-      if (index !== -1) {
-        this.orderItems[index].status = updatedDetail.status;
-        this.orderItems[index].cook_id = this.selectedOrder.cook_id;
-        this.orderItems[index].time_submitted = timeSubmitted;
-      }
+// 🔁 REFRESH / REMOVE
+if (['served', 'walked'].includes(updatedOrderStatus)) {
+  this.fetchItems();
+}
 
-      // ✅ Refresh list or remove if done
-      if (['served', 'walked'].includes(updatedOrderStatus)) {
-        this.fetchOrders();
-      }
+if (updatedDetail.status !== 'serving') {
+  this.orderItems = this.orderItems.filter(
+    i => i.order_detail_id !== updatedDetail.id
+  );
+}
 
-      if (updatedDetail.status !== 'serving') {
-        this.orderItems = this.orderItems.filter(
-          i => i.order_detail_id !== updatedDetail.id
-        );
-      }
+/* ✅ ADD THIS BLOCK HERE */
+if (this.selectedOrder?.recipe) {
+  this.selectedOrder.recipe.forEach(r => {
+    r.loss_type = '';
+    r.loss_qty = 0;
+  });
+}
 
-      const modal = bootstrap.Modal.getInstance(document.getElementById("updateModal"));
-      if (modal) modal.hide();
+/* THEN CLOSE MODAL */
+const modal = bootstrap.Modal.getInstance(
+  document.getElementById("updateModal")
+);
+if (modal) modal.hide();
 
   } catch (error) {
     console.error("❌ Update failed:", error.response || error);
-    alert("❌ Failed to update order item. Check console for details.");
+
+    let message = 'Failed to update order item.';
+    if (error.response?.data?.message) {
+      message = error.response.data.message;
+    }
+
+    Swal.fire('Error', message, 'error');
   }
-}
+
+
 
   }
+}
 });
 </script>
 
