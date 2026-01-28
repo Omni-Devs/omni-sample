@@ -116,7 +116,19 @@ Route::post('/orders/update/{id}', [OrderController::class, 'update'])->name('or
 Route::post('/orders/{order}/payment', [OrderController::class, 'payment'])->name('orders.payment');
 Route::get('/reports/sales-journal', [SalesJournalController::class, 'index'])->name('reports.sales-journal');
 
+
+Route::prefix('kitchen')->name('kitchen.')->group(function () {
+    Route::get('/', [KitchenController::class, 'index'])->name('index');
+    Route::get('/fetch', [KitchenController::class, 'fetchItems'])->name('fetch');
+    // Route::post('/', [KitchenController::class, 'store'])->name('store');
+    // Route::put('/{id}/update-status', [KitchenController::class, 'updateStatus']);
+    // Route::get('/{id}/edit', [KitchenController::class, 'edit'])->name('leave-requests.edit');
+    // Route::put('/{id}', [KitchenController::class, 'update'])->name('leave-requests.update');
+});
+
+
 Route::get('/kitchen', [KitchenController::class, 'index'])->name('kitchen.index');
+Route::get('/kitchen/fetch-items', [KitchenController::class, 'fetchItems']);
 Route::get('/kitchen/served', [KitchenController::class, 'showServed'])->name('kitchen.served');
 Route::get('/kitchen/walked', [KitchenController::class, 'showWalked'])->name('kitchen.walked');
 Route::post('/order-items/update-or-create', [KitchenController::class, 'updateOrCreate']);

@@ -61,5 +61,9 @@ class OrderDetail extends Model
     {
         return $this->hasMany(InventoryDeduction::class);
     }
+    public function cook()
+{
+    return $this->belongsTo(User::class, 'cook_id');
+}
 
 }
