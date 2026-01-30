@@ -178,9 +178,9 @@ class UserController extends Controller
                     'allowances.*.allowance_id' => 'required_with:allowances|exists:workforce_allowances,id',
                     'allowances.*.amount' => 'nullable|numeric',
                     'allowances.*.monthly_count' => 'nullable|integer',
-                    'leaves' => 'nullable|array',
-                    'leaves.*.leave_id' => 'nullable|exists:workforce_leaves,id',
-                    'leaves.*.assigned_days' => 'nullable|integer',
+                    'leaves'                  => 'nullable|array',
+                    'leaves.*.leave_id'       => 'required_with:leaves|exists:workforce_leaves,id',
+                    'leaves.*.assigned_days'  => 'nullable|integer|min:0',
                     'leaves.*.effective_date' => 'nullable|date',
         
                     'educational_backgrounds' => 'nullable|array',
@@ -505,7 +505,7 @@ if (!empty($validated['salary_method'])) {
                     'effective_date' => isset($lv['effective_date']) ? $lv['effective_date'] : null,
                 ];
             }
-            $user->leaves()->sync($syncLeaves);
+           $user->leaves()->syncWithoutDetaching($syncLeaves);
         }
 
         // Educational backgrounds
@@ -578,7 +578,6 @@ if (!empty($validated['salary_method'])) {
                     'user_id' => $user->id,
                     'hire_date' => $wi['hire_date'] ?? null,
                     'employment_status_id' => $employmentStatusId,
-                    'regularization' => $wi['regularization'] ?? null,
                     'designation_id' => $wi['designation_id'] ?? null,
                     'department_id' => $wi['department_id'] ?? null,
                     'direct_supervisor' => $wi['direct_supervisor'] ?? null,
@@ -604,7 +603,8 @@ if (!empty($validated['salary_method'])) {
             'employeeWorkInformations',
             'branches',
             'allowances',
-            'leaves'
+            'leaves',
+            'attachments',
         ])->findOrFail($id);
 
         // Same data as create()
@@ -712,39 +712,38 @@ if (!empty($validated['salary_method'])) {
         }
         $user->save();
 
-      // === Attachments handling on update ===
-$checkedNames = $request->input('attachment_checked', []); // array of checked names like ['Birth Certificate', 'Valid ID']
+        $checkedNames = $request->input('attachment_checked', []);
 
-// 1. Delete attachments that are no longer checked
-$user->attachments()
-     ->whereNotIn('name', $checkedNames)
-     ->delete();
+        // Only run delete if the form actually sent the attachment_checked field at all
+        if ($request->filled('attachment_checked') || $request->hasFile('attachments')) {
+            $user->attachments()
+                ->whereNotIn('name', $checkedNames)
+                ->delete();
+        }
 
-// 2. Handle new/replaced uploads
-if ($request->hasFile('attachments')) {
-    foreach ($request->file('attachments') as $index => $file) {
-        if (!$file->isValid()) continue;
+        // Then handle uploads (your existing code)
+        if ($request->hasFile('attachments')) {
+            foreach ($request->file('attachments') as $index => $file) {
+                $name = $request->input("attachment_names.$index");
+                
+                // Only process if name exists AND checkbox was checked (extra safety)
+                if (!$file->isValid() || empty($name) || !in_array($name, $checkedNames)) {
+                    continue;
+                }
 
-        $name = $request->input("attachment_names.$index");
-        if (!$name || !in_array($name, $checkedNames)) continue;
+                $filename = $file->getClientOriginalName();
+                $path = $file->storeAs('attachments', $user->id . '_' . time() . '_' . $filename, 'public');
 
-        $filename = $file->getClientOriginalName();
-        $path = $file->storeAs('attachments', $user->id . '_' . time() . '_' . $filename, 'public');
-
-        // Replace or create new attachment record
-        Attachment::updateOrCreate(
-            [
-                'user_id' => $user->id,
-                'name'    => $name,
-            ],
-            [
-                'file_path' => $path,
-                'file_name' => $filename,
-                'mime_type' => $file->getMimeType(),
-            ]
-        );
-    }
-}
+                Attachment::updateOrCreate(
+                    ['user_id' => $user->id, 'name' => $name],
+                    [
+                        'file_path' => $path,
+                        'file_name' => $filename,
+                        'mime_type' => $file->getMimeType(),
+                    ]
+                );
+            }
+        }
 
         // Update related models (same logic as store, but use updateOrCreate)
         // Spouse
@@ -784,32 +783,44 @@ if ($request->hasFile('attachments')) {
         }
 
         // === SALARY METHOD WITH CUSTOM SHIFT & WEEKLY SCHEDULE ===
-        if ($request->has('salary_method')) {
-            $sm = $request->input('salary_method', []);
+      if ($request->has('salary_method')) {
+    $sm = $request->input('salary_method', []);
 
-            $customWorkDays = !empty($sm['custom_work_days']) ? json_decode($sm['custom_work_days'], true) : null;
-            $customRestDays = !empty($sm['custom_rest_days']) ? json_decode($sm['custom_rest_days'], true) : null;
-            $customOpenTime = !empty($sm['custom_open_time']) ? json_decode($sm['custom_open_time'], true) : null;
+    $newShiftId = $sm['shift_id'] ?? null;
+    $oldShiftId = $user->salaryMethod->shift_id ?? null;
 
-            SalaryMethod::updateOrCreate(
-                ['user_id' => $user->id],
-                [
-                    'method_id'   => $sm['method_id'] ?? null,
-                    'period_id'   => $sm['period_id'] ?? null,
-                    'account'     => $sm['account'] ?? null,
-                    'shift_id'    => $sm['shift_id'] ?? null,
+    $shouldClearCustoms = $newShiftId && $newShiftId != $oldShiftId;
 
-                    'custom_time_start'   => $sm['custom_time_start'] ?? null,
-                    'custom_time_end'     => $sm['custom_time_end'] ?? null,
-                    'custom_break_start'  => $sm['custom_break_start'] ?? null,
-                    'custom_break_end'    => $sm['custom_break_end'] ?? null,
+    $customWorkDays   = !empty($sm['custom_work_days'])   ? json_decode($sm['custom_work_days'], true)   : null;
+    $customRestDays   = !empty($sm['custom_rest_days'])   ? json_decode($sm['custom_rest_days'], true)   : null;
+    $customOpenTime   = !empty($sm['custom_open_time'])   ? json_decode($sm['custom_open_time'], true)   : null;
 
-                    'custom_work_days' => $customWorkDays ? json_encode($customWorkDays) : null,
-                    'custom_rest_days' => $customRestDays ? json_encode($customRestDays) : null,
-                    'custom_open_time' => $customOpenTime ? json_encode($customOpenTime) : null,
-                ]
-            );
-        }
+    // If switching template AND no new custom values were provided → clear them
+    if ($shouldClearCustoms && empty($customWorkDays) && empty($customRestDays) && empty($customOpenTime)) {
+        $customWorkDays = null;
+        $customRestDays = null;
+        $customOpenTime = null;
+    }
+
+    SalaryMethod::updateOrCreate(
+        ['user_id' => $user->id],
+        [
+            'method_id'   => $sm['method_id'] ?? null,
+            'period_id'   => $sm['period_id'] ?? null,
+            'account'     => $sm['account'] ?? null,
+            'shift_id'    => $newShiftId,
+
+            'custom_time_start'   => $sm['custom_time_start'] ?? null,
+            'custom_time_end'     => $sm['custom_time_end'] ?? null,
+            'custom_break_start'  => $sm['custom_break_start'] ?? null,
+            'custom_break_end'    => $sm['custom_break_end'] ?? null,
+
+            'custom_work_days'    => $customWorkDays   ? json_encode($customWorkDays)   : null,
+            'custom_rest_days'    => $customRestDays   ? json_encode($customRestDays)   : null,
+            'custom_open_time'    => $customOpenTime   ? json_encode($customOpenTime)   : null,
+        ]
+    );
+}
 
         // Allowances (pivot)
         if ($request->has('allowances')) {
@@ -824,21 +835,40 @@ if ($request->hasFile('attachments')) {
             $user->allowances()->sync($syncAllowances);
         }
 
-        // Leaves (pivot)
-        if ($request->has('leaves')) {
-            $syncLeaves = [];
-            foreach ($request->input('leaves', []) as $lv) {
-                if (empty($lv['leave_id'])) continue;
-                $syncLeaves[$lv['leave_id']] = [
-                    'assigned_days' => isset($lv['assigned_days']) ? (int)$lv['assigned_days'] : 0,
-                    'earn' => isset($lv['earn']) ? (int)$lv['earn'] : 0,
-                    'used' => isset($lv['used']) ? (int)$lv['used'] : 0,
-                    'balance' => isset($lv['balance']) ? (int)$lv['balance'] : 0,
-                    'effective_date' => isset($lv['effective_date']) ? $lv['effective_date'] : null,
-                ];
-            }
-            $user->leaves()->sync($syncLeaves);
+   // Leaves (pivot table) - FULL replacement on update
+if ($request->has('leaves') || $request->filled('leaves')) {
+    $syncLeaves = [];
+
+    foreach ($request->input('leaves', []) as $lv) {
+        if (empty($lv['leave_id'])) {
+            continue;
         }
+
+        $syncLeaves[$lv['leave_id']] = [
+            'assigned_days'   => (int) ($lv['assigned_days'] ?? 0),
+            'earn'            => (int) ($lv['earn'] ?? 0),
+            'used'            => (int) ($lv['used'] ?? 0),
+            'balance'         => (int) ($lv['balance'] ?? 0),
+            'effective_date'  => $lv['effective_date'] ?? null,
+            // Optional: updated_at if you want to force timestamp update
+            'updated_at'      => now(),
+        ];
+    }
+
+    // This is the KEY CHANGE:
+    // Use sync() → completely replaces the current pivot records with what was submitted
+   $user->leaves()->syncWithoutDetaching($syncLeaves);
+
+    // Optional: recalculate balance if you have business logic
+    foreach ($syncLeaves as $leaveId => $data) {
+        $user->leaves()->updateExistingPivot($leaveId, [
+            'balance' => ($data['assigned_days'] + $data['earn']) - $data['used'],
+        ]);
+    }
+} else {
+    // If no leaves were submitted at all → optionally detach all
+    // $user->leaves()->detach();  // ← only if you want to clear everything when unchecked
+}
 
         // Work Informations
         $user->employeeWorkInformations()->delete();
