@@ -436,16 +436,16 @@
                                     <div class="row">
                                         {{-- <div class="col-md-3 form-group"><label>Supervisor (user id)</label><input type="number" id="wi_supervisor" class="form-control" placeholder="Supervisor id"></div> --}}
                                         <div class="col-md-3 form-group">
-    <label>Supervisor</label>
-    <select id="wi_supervisor" class="form-control">
-        <option value="">Select Supervisor</option>
-        @foreach($users as $u)
-            <option value="{{ $u->username }}">
-                {{ $u->username }}
-            </option>
-        @endforeach
-    </select>
-</div>
+                                            <label>Supervisor</label>
+                                            <select id="wi_supervisor" class="form-control">
+                                                <option value="">Select Supervisor</option>
+                                                @foreach($users as $u)
+                                                    <option value="{{ $u->username }}">
+                                                        {{ $u->username }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </div>
                                         <div class="col-md-3 form-group"><label>Monthly Rate</label><input type="number" step="0.01" id="wi_monthly_rate" class="form-control"></div>
                                         <div class="col-md-3 form-group"><label>Daily Rate</label><input type="number" step="0.01" id="wi_daily_rate" class="form-control"></div>
                                         <div class="col-md-3 form-group"><label>Hourly Rate</label><input type="number" step="0.01" id="wi_hourly_rate" class="form-control"></div>
@@ -484,7 +484,7 @@
                                     </div>
 
 <!-- Shift Template Selector (remains outside the modal) -->
-<div class="col-md-6 form-group">
+<div class="col-md-2 form-group">
     <label class="fw-bold">Shift Template (Optional)</label>
     <select id="shift_select" class="form-control mb-2">
         <option value="">No template / Custom only</option>
@@ -591,6 +591,14 @@
                                 </div>
 
                       <h6 class="mt-3">Allowances</h6>
+
+                      <div class="row mb-2 fw-bold small text-muted">
+    <div class="col-md-5 ps-3 mt-3">
+            </div>
+    <h6>Amount</h6>
+
+    <div class="col-md-3 col-lg-2"></div> <!-- space for remove button -->
+</div>
 <div id="allowances-list">
     @foreach($allowances as $i => $al)
     <div class="form-row align-items-center mb-2 allowance-row">
@@ -619,46 +627,19 @@
 @endpush
 
     <!-- Amount with + / - buttons (orange background) -->
-    <div class="col-md-3">
+
+    <div class="col-md-1">
         <div class="input-group">
-            <div class="input-group-prepend">
-                <button type="button" class="btn btn-sm btn-orange decrement-amount" tabindex="-1">-</button>
-            </div>
             <input
                 type="number"
                 name="allowances[{{ $i }}][amount]"
                 class="form-control allowance-amount text-center"
-                placeholder="Amount"
+                placeholder="Enter Amount Here"
                 step="100"
                 min="0"
                 value="{{ old("allowances.$i.amount") }}"
                 disabled
             >
-            <div class="input-group-append">
-                <button type="button" class="btn btn-sm btn-orange increment-amount" tabindex="-1">+</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Monthly count with + / - buttons (orange background) -->
-    <div class="col-md-3">
-        <div class="input-group">
-            <div class="input-group-prepend">
-                <button type="button" class="btn btn-sm btn-orange decrement-count" tabindex="-1">-</button>
-            </div>
-            <input
-                type="number"
-                name="allowances[{{ $i }}][monthly_count]"
-                class="form-control allowance-count text-center"
-                placeholder="Count"
-                step="1"
-                min="0"
-                value="{{ old("allowances.$i.monthly_count") }}"
-                disabled
-            >
-            <div class="input-group-append">
-                <button type="button" class="btn btn-sm btn-orange increment-count" tabindex="-1">+</button>
-            </div>
         </div>
     </div>
 
@@ -672,57 +653,117 @@
     @endforeach
 </div>
 
-                                <h6 class="mt-5">Leaves</h6>
-                                <div id="leaves-list">
-                                    @foreach($leaves as $i => $lv)
-                                    <div class="form-row align-items-center mb-2 leave-row">
-                                        <div class="col-md-5">
-                                            <div class="form-check">
-                                                <input class="form-check-input leave-checkbox" type="checkbox" name="leaves[{{ $i }}][leave_id]" value="{{ $lv->id }}" id="leave_{{ $lv->id }}">
-                                                <label class="form-check-label" for="leave_{{ $lv->id }}">{{ $lv->name }}</label>
-                                            </div>
-                                        </div>
-                                        {{-- <div class="col-md-2"><input type="number" name="leaves[{{ $i }}][days]" class="form-control leave-days" placeholder="Days" disabled></div>
-                                        <div class="col-md-3"><input type="date" name="leaves[{{ $i }}][effective_date]" class="form-control leave-effective" disabled></div> --}}
+<h6 class="mt-5 mb-3">Leaves</h6>
 
-                                        <!-- Days with + / - buttons (orange) -->
-        <div class="col-md-3">
-            <div class="input-group">
-                <div class="input-group-prepend">
-                    <button type="button" class="btn btn-sm btn-orange decrement-days" tabindex="-1">-</button>
-                </div>
-                <input 
-                    type="number" 
-                    name="leaves[{{ $i }}][assigned_days]" 
-                    class="form-control leave-days text-center" 
-                    placeholder="
-                    Assigned Days" 
-                    step="1" 
-                    min="0" 
-                    value="{{ old("leaves.$i.assigned_days") }}"
-                    disabled
-                >
-                <div class="input-group-append">
-                    <button type="button" class="btn btn-sm btn-orange increment-days" tabindex="-1">+</button>
-                </div>
+<!-- Header -->
+<div class="row fw-bold small text-secondary mb-2">
+    <div class="col-md-5 ps-1">Leave Type</div>
+    <div class="col-md-2 text-center">Leave Credits</div>
+    <div class="col-md-2 text-center">Used Leaves</div>
+    <div class="col-md-2 text-center">Leave Balance</div>
+    <div class="col-md-1 text-center">Action</div>
+</div>
+
+<div id="leaves-list">
+    @foreach($leaves as $i => $lv)
+    <div class="leave-row row align-items-center py-2 border-bottom" data-leave-id="{{ $lv->id }}">
+
+        <!-- Leave Type -->
+        <div class="col-md-5">
+            <div class="form-check">
+                <input class="form-check-input leave-checkbox" type="checkbox"
+                       name="leaves[{{ $i }}][leave_id]" value="{{ $lv->id }}" id="leave_{{ $lv->id }}"
+                       {{ old("leaves.$i.assigned_days") ? 'checked' : '' }}>
+                <label class="form-check-label" for="leave_{{ $lv->id }}">{{ $lv->name }}</label>
             </div>
         </div>
 
-        <!-- Effective Date (no +/– buttons since it's a date picker, but kept clean) -->
-        <div class="col-md-3">
-            <input 
-                type="date" 
-                name="leaves[{{ $i }}][effective_date]" 
-                class="form-control leave-effective" 
-                value="{{ old("leaves.$i.effective_date") }}"
-                disabled
-            >
+        <!-- Credits -->
+        <div class="col-md-2 text-center">
+            <input type="number" name="leaves[{{ $i }}][assigned_days]"
+                   class="form-control form-control-sm leave-days text-center leave-credits"
+                   min="0" step="1" value="{{ old("leaves.$i.assigned_days", 0) }}" disabled>
         </div>
-        
-                                        <div class="col-md-1"><button type="button" class="btn btn-sm btn-outline-danger remove-leave">Remove</button></div>
-                                    </div>
-                                    @endforeach
-                                </div>
+
+        <!-- Used -->
+        <div class="col-md-2 text-center text-muted">
+            <span class="leave-used">0</span>
+        </div>
+
+        <!-- Balance -->
+        <div class="col-md-2 text-center fw-medium">
+            <span class="leave-balance">0</span>
+        </div>
+
+        <!-- Action -->
+        <div class="col-md-1 text-center">
+            <div class="dropdown">
+                <button class="btn btn-sm btn-link text-secondary p-0" type="button"
+                        data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fas fa-ellipsis-v fa-sm"></i>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                    <li>
+                        <a class="dropdown-item assign-leave-inline" href="javascript:void(0)"
+                           data-leave-id="{{ $lv->id }}"
+                           data-leave-name="{{ $lv->name }}">
+                            Assign Leave
+                        </a>
+                    </li>
+                    <!-- You can add Leave History here later -->
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Inline assign form (hidden by default) -->
+    <!-- Inline assign form (hidden by default) -->
+<div id="assign-form-{{ $lv->id }}"
+     class="assign-leave-form row bg-white border border-secondary-subtle p-3 rounded-3 shadow-sm d-none"
+     data-leave-id="{{ $lv->id }}">
+
+    <div class="col-12 mb-3">
+        <h6 class="mb-0 fw-semibold text-dark">
+            Assign Leave to: {{ $lv->name }}
+        </h6>
+    </div>
+
+    <div class="col-md-4 mb-3">
+        <label class="form-label small fw-medium text-muted mb-1 d-block">
+            Number of days
+        </label>
+        <input type="number"
+               class="form-control form-control-sm"
+               id="assign-days-{{ $lv->id }}"
+               min="1"
+               value="1"
+               required>
+    </div>
+
+    <div class="col-md-4 mb-3">
+        <label class="form-label small fw-medium text-muted mb-1 d-block">
+            Effective Date (optional)
+        </label>
+        <input type="date"
+               class="form-control form-control-sm"
+               id="assign-date-{{ $lv->id }}">
+    </div>
+
+    <div class="col-md-4 mb-3 d-flex align-items-end gap-2">
+        <button type="button"
+                class="btn btn-sm btn-primary px-4 save-assign-leave"
+                data-leave-id="{{ $lv->id }}">
+            Save
+        </button>
+        <button type="button"
+                class="btn btn-sm btn-outline-secondary px-4 cancel-assign-leave"
+                data-leave-id="{{ $lv->id }}">
+            Cancel
+        </button>
+    </div>
+</div>
+    @endforeach
+</div>
 
                             </div>
                         </div>
@@ -1887,6 +1928,131 @@ document.addEventListener('click', function(e) {
         });
     }
 });
+
+// Enable/disable credits when checkbox is toggled
+document.getElementById('leaves-list')?.addEventListener('change', function(e) {
+    if (e.target.classList.contains('leave-checkbox')) {
+        const row = e.target.closest('.leave-row');
+        const creditsInput = row?.querySelector('.leave-credits');
+        if (creditsInput) {
+            creditsInput.disabled = !e.target.checked;
+            if (!e.target.checked) {
+                creditsInput.value = '0';
+            }
+        }
+    }
+});
+
+// Show inline form when clicking "Assign Leave"
+// document.addEventListener('click', function(e) {
+//     if (e.target.classList.contains('assign-leave-inline')) {
+//         e.preventDefault();
+
+//         const leaveId = e.target.dataset.leaveId;
+
+//         // Hide any other open forms
+//         document.querySelectorAll('.assign-leave-form').forEach(form => {
+//             form.classList.add('d-none');
+//         });
+
+//         // Show the form for this leave
+//         const form = document.getElementById(`assign-form-${leaveId}`);
+//         if (form) {
+//             form.classList.remove('d-none');
+//             // Optional: focus on days input
+//             form.querySelector(`#assign-days-${leaveId}`).focus();
+//         }
+//     }
+// });
+
+// document.addEventListener('click', function(e) {
+//     if (e.target.classList.contains('assign-leave-inline')) {
+//         e.preventDefault();
+
+//         const leaveId = e.target.dataset.leaveId;
+
+//         // Hide all assign rows
+//         document.querySelectorAll('.assign-row').forEach(row => {
+//             row.classList.add('d-none');
+//         });
+
+//         // Show this leave's row
+//         const assignRow = document.getElementById(`assign-form-${leaveId}`);
+//         if (assignRow) {
+//             assignRow.classList.remove('d-none');
+//             assignRow.querySelector(`#assign-days-${leaveId}`)?.focus();
+//         }
+//     }
+// });
+
+// Save button – update UI (and later can be AJAX)
+document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('save-assign-leave')) {
+        const leaveId = e.target.dataset.leaveId;
+        const daysInput = document.getElementById(`assign-days-${leaveId}`);
+        const dateInput = document.getElementById(`assign-date-${leaveId}`);
+
+        const days = parseInt(daysInput.value) || 0;
+        if (days < 1) {
+            alert('Please enter at least 1 day');
+            return;
+        }
+
+        const row = document.querySelector(`.leave-row[data-leave-id="${leaveId}"]`);
+        if (row) {
+            const creditsInput = row.querySelector('.leave-credits');
+            if (creditsInput) {
+                let current = parseInt(creditsInput.value) || 0;
+                creditsInput.value = current + days;
+            }
+        }
+
+        alert(`Successfully assigned ${days} day(s) to this leave (effective: ${dateInput.value || 'immediately'})`);
+
+        // Hide form
+        document.getElementById(`assign-form-${leaveId}`).classList.add('d-none');
+
+        // Reset values
+        daysInput.value = '1';
+        dateInput.value = '';
+    }
+});
+
+// Cancel button
+document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('cancel-assign-leave')) {
+        const leaveId = e.target.dataset.leaveId;
+        const form = document.getElementById(`assign-form-${leaveId}`);
+        if (form) {
+            form.classList.add('d-none');
+            // Reset
+            form.querySelector(`#assign-days-${leaveId}`).value = '1';
+            form.querySelector(`#assign-date-${leaveId}`).value = '';
+        }
+    }
+});
+</script>
+
+<script>
+    const assignLeaveButtons = document.querySelectorAll('.assign-leave-inline');
+    const assignForms = document.querySelectorAll('.assign-leave-form');
+
+    assignLeaveButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            const leaveId = this.dataset.leaveId;
+            const form = document.getElementById(`assign-form-${leaveId}`);
+
+            // Hide all assign forms
+            assignForms.forEach(form => {
+                form.classList.add('d-none');
+            });
+
+            // Show the specific assign form
+            if (form) {
+                form.classList.remove('d-none');
+            }
+        });
+    });
 </script>
 @endsection
 

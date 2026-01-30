@@ -426,7 +426,7 @@
                                                     <tr data-wi-index="{{ $loop->index }}">
                                                         <td>{{ $wi['hire_date'] ?? '' }}<input type="hidden" name="employee_work_informations[{{ $loop->index }}][hire_date]" value="{{ $wi['hire_date'] }}"></td>
                                                         <td>{{ $wi['employment_status_id'] ?? '' }}<input type="hidden" name="employee_work_informations[{{ $loop->index }}][employment_status_id]" value="{{ $wi['employment_status_id'] }}"></td>
-                                                        <td>{{ $wi['regularization'] ?? '' }}<input type="hidden" name="employee_work_informations[{{ $loop->index }}][regularization]" value="{{ $wi['regularization'] }}"></td>
+
                                                         <td>{{ $wi['designation_id'] ?? '' }}<input type="hidden" name="employee_work_informations[{{ $loop->index }}][designation_id]" value="{{ $wi['designation_id'] }}"></td>
                                                         <td>{{ $wi['department_id'] ?? '' }}<input type="hidden" name="employee_work_informations[{{ $loop->index }}][department_id]" value="{{ $wi['department_id'] }}"></td>
                                                         <td>{{ $wi['direct_supervisor'] ?? '' }}<input type="hidden" name="employee_work_informations[{{ $loop->index }}][direct_supervisor]" value="{{ $wi['direct_supervisor'] }}"></td>
@@ -444,19 +444,25 @@
                                                     <tr data-wi-index="{{ $loop->index }}">
                                                         <td>{{ $wi->hire_date }}<input type="hidden" name="employee_work_informations[{{ $loop->index }}][hire_date]" value="{{ $wi->hire_date }}"></td>
                                                         <td>
-    {{ match($wi->employment_status_id) {
-        1 => 'Probationary Period',
-        2 => 'Regular',
-        3 => 'Promotion',
-        4 => 'Contractual',
-        5 => 'Resigned',
-        default => $wi->employment_status_id ?: '—'
-    } }}
-    <input type="hidden" name="employee_work_informations[{{ $loop->index }}][employment_status_id]" value="{{ $wi->employment_status_id }}">
-</td>
-                                                        <td>{{ $wi->regularization }}<input type="hidden" name="employee_work_informations[{{ $loop->index }}][regularization]" value="{{ $wi->regularization }}"></td>
-                                                        <td>{{ $wi->designation_id }}<input type="hidden" name="employee_work_informations[{{ $loop->index }}][designation_id]" value="{{ $wi->designation_id }}"></td>
-                                                        <td>{{ $wi->department_id }}<input type="hidden" name="employee_work_informations[{{ $loop->index }}][department_id]" value="{{ $wi->department_id }}"></td>
+                                                            {{ match($wi->employment_status_id) {
+                                                                1 => 'Probationary Period',
+                                                                2 => 'Regular',
+                                                                3 => 'Promotion',
+                                                                4 => 'Contractual',
+                                                                5 => 'Resigned',
+                                                                default => $wi->employment_status_id ?: '—'
+                                                            } }}
+                                                            <input type="hidden" name="employee_work_informations[{{ $loop->index }}][employment_status_id]" value="{{ $wi->employment_status_id }}">
+                                                        </td>
+                                                        <td>
+                                                            {{ optional($designations->find($wi->designation_id))->name ?? $wi->designation_id ?? '—' }}
+                                                            <input type="hidden" name="employee_work_informations[{{ $loop->index }}][designation_id]" value="{{ $wi->designation_id }}">
+                                                        </td>
+
+                                                        <td>
+                                                            {{ optional($departments->find($wi->department_id))->name ?? $wi->department_id ?? '—' }}
+                                                            <input type="hidden" name="employee_work_informations[{{ $loop->index }}][department_id]" value="{{ $wi->department_id }}">
+                                                        </td>
                                                         <td>{{ $wi->direct_supervisor }}<input type="hidden" name="employee_work_informations[{{ $loop->index }}][direct_supervisor]" value="{{ $wi->direct_supervisor }}"></td>
                                                         <td>{{ $wi->monthly_rate }}<input type="hidden" name="employee_work_informations[{{ $loop->index }}][monthly_rate]" value="{{ $wi->monthly_rate }}"></td>
                                                         <td>{{ $wi->daily_rate }}<input type="hidden" name="employee_work_informations[{{ $loop->index }}][daily_rate]" value="{{ $wi->daily_rate }}"></td>
@@ -553,7 +559,7 @@
                                         <input type="text" name="salary_method[account]" class="form-control" value="{{ old('salary_method.account', $user->salaryMethod->account ?? '') }}">
                                     </div>
 
-                                    <div class="col-md-6 form-group">
+                                    <div class="col-md-2 form-group">
                                         <label class="fw-bold">Shift Template (Optional)</label>
                                         <select id="shift_select" class="form-control mb-2">
                                             <option value="">No template / Custom only</option>
@@ -645,27 +651,9 @@
                                             </div>
                                         </div>
 
-                                        <div class="col-md-3">
+                                        <div class="col-md-1">
                                             <div class="input-group">
-                                                <div class="input-group-prepend">
-                                                    <button type="button" class="btn btn-sm btn-orange decrement-amount" tabindex="-1">-</button>
-                                                </div>
-                                                <input type="number" name="allowances[{{ $i }}][amount]" class="form-control allowance-amount text-center" placeholder="Amount" step="100" min="0" value="{{ old("allowances.$i.amount", optional($user->allowances->firstWhere('id',$al->id))->pivot->amount ?? '') }}" {{ !(isset($user) && $user->allowances->contains($al->id)) ? 'disabled' : '' }}>
-                                                <div class="input-group-append">
-                                                    <button type="button" class="btn btn-sm btn-orange increment-amount" tabindex="-1">+</button>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div class="col-md-3">
-                                            <div class="input-group">
-                                                <div class="input-group-prepend">
-                                                    <button type="button" class="btn btn-sm btn-orange decrement-count" tabindex="-1">-</button>
-                                                </div>
-                                                <input type="number" name="allowances[{{ $i }}][monthly_count]" class="form-control allowance-count text-center" placeholder="Count" step="1" min="0" value="{{ old("allowances.$i.monthly_count", optional($user->allowances->firstWhere('id',$al->id))->pivot->monthly_count ?? '') }}" {{ !(isset($user) && $user->allowances->contains($al->id)) ? 'disabled' : '' }}>
-                                                <div class="input-group-append">
-                                                    <button type="button" class="btn btn-sm btn-orange increment-count" tabindex="-1">+</button>
-                                                </div>
+                                                <input type="number" name="allowances[{{ $i }}][amount]" class="form-control allowance-amount text-center" placeholder="Enter Amount Here" step="100" min="0" value="{{ old("allowances.$i.amount", optional($user->allowances->firstWhere('id',$al->id))->pivot->amount ?? '') }}" {{ !(isset($user) && $user->allowances->contains($al->id)) ? 'disabled' : '' }}>
                                             </div>
                                         </div>
 
@@ -676,38 +664,124 @@
                                     @endforeach
                                 </div>
 
-                                <h6 class="mt-5">Leaves</h6>
-                                <div id="leaves-list">
-                                    @foreach($leaves as $i => $lv)
-                                    <div class="form-row align-items-center mb-2 leave-row">
-                                        <div class="col-md-5">
-                                            <div class="form-check">
-                                                <input class="form-check-input leave-checkbox" type="checkbox" name="leaves[{{ $i }}][leave_id]" value="{{ $lv->id }}" id="leave_{{ $lv->id }}" {{ (isset($user) && $user->leaves->contains($lv->id)) ? 'checked' : '' }}>
-                                                <label class="form-check-label" for="leave_{{ $lv->id }}">{{ $lv->name }}</label>
-                                            </div>
-                                        </div>
+                                <h6 class="mt-5 mb-3">Leaves</h6>
 
-                                        <div class="col-md-3">
-                                            <div class="input-group">
-                                                <div class="input-group-prepend">
-                                                    <button type="button" class="btn btn-sm btn-orange decrement-days" tabindex="-1">-</button>
-                                                </div>
-                                                <input type="number" name="leaves[{{ $i }}][assigned_days]" class="form-control leave-days text-center" placeholder="Days" step="1" min="0" value="{{ old("leaves.$i.assigned_days", optional($user->leaves->firstWhere('id',$lv->id))->pivot->assigned_days ?? '') }}" {{ !(isset($user) && $user->leaves->contains($lv->id)) ? 'disabled' : '' }}>
-                                                <div class="input-group-append">
-                                                    <button type="button" class="btn btn-sm btn-orange increment-days" tabindex="-1">+</button>
-                                                </div>
-                                            </div>
-                                        </div>
+                    <!-- Header -->
+                    <div class="row fw-bold small text-secondary mb-2">
+                        <div class="col-md-5 ps-1">Leave Type</div>
+                        <div class="col-md-2 text-center">Leave Credits</div>
+                        <div class="col-md-2 text-center">Used Leaves</div>
+                        <div class="col-md-2 text-center">Leave Balance</div>
+                        <div class="col-md-1 text-center">Action</div>
+                    </div>
 
-                                        <div class="col-md-3">
-                                            <input type="date" name="leaves[{{ $i }}][effective_date]" class="form-control leave-effective" value="{{ old("leaves.$i.effective_date", optional($user->leaves->firstWhere('id',$lv->id))->pivot->effective_date ?? '') }}" {{ !(isset($user) && $user->leaves->contains($lv->id)) ? 'disabled' : '' }}>
-                                        </div>
+                    <div id="leaves-list">
+                        @foreach($leaves as $i => $lv)
+                        <div class="leave-row row align-items-center py-2 border-bottom" data-leave-id="{{ $lv->id }}">
 
-                                        <div class="col-md-1"><button type="button" class="btn btn-sm btn-outline-danger remove-leave">Remove</button></div>
-                                    </div>
-                                    @endforeach
+                            <!-- Leave Type -->
+                            <div class="col-md-5">
+                                <div class="form-check">
+                                    <input class="form-check-input leave-checkbox" type="checkbox"
+                                            name="leaves[{{ $i }}][leave_id]" value="{{ $lv->id }}" id="leave_{{ $lv->id }}"
+                                            {{ old("leaves.$i.assigned_days") ? 'checked' : '' }}>
+                                    <label class="form-check-label" for="leave_{{ $lv->id }}">{{ $lv->name }}</label>
                                 </div>
                             </div>
+
+                            <!-- Credits -->
+                            <div class="col-md-2 text-center">
+                                <input type="number" name="leaves[{{ $i }}][assigned_days]"
+                                    class="form-control form-control-sm leave-days text-center leave-credits"
+                                    min="0" step="1"
+                                    value="{{ old("leaves.$i.assigned_days", $user->leaves->firstWhere('id', $lv->id)?->pivot?->assigned_days ?? 0) }}"
+                                    {{ ! $user->leaves->contains($lv->id) ? 'disabled' : '' }}>
+                            </div>
+
+                            <!-- Used -->
+                            <div class="col-md-2 text-center text-muted">
+                                <span class="leave-used">0</span>
+                            </div>
+
+                            <!-- Balance -->
+                            <div class="col-md-2 text-center fw-medium">
+                        <span class="leave-balance">
+                            {{ old("leaves.$i.assigned_days", $user->leaves->firstWhere('id', $lv->id)?->pivot?->assigned_days ?? 0) }}
+                        </span>
+                    </div>
+
+                            <!-- Action -->
+                            <div class="col-md-1 text-center">
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-link text-secondary p-0" type="button"
+                                            data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="fas fa-ellipsis-v fa-sm"></i>
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                                        <li>
+                                            <a class="dropdown-item assign-leave-inline" href="javascript:void(0)"
+                                            data-leave-id="{{ $lv->id }}"
+                                            data-leave-name="{{ $lv->name }}">
+                                                Assign Leave
+                                            </a>
+                                        </li>
+                                        <!-- You can add Leave History here later -->
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                    <!-- Inline assign form (hidden by default) -->
+                    <div id="assign-form-{{ $lv->id }}"
+                        class="assign-leave-form row bg-white border border-secondary-subtle p-3 rounded-3 shadow-sm d-none mb-3"
+                        data-leave-id="{{ $lv->id }}">
+
+                        <div class="col-12 mb-3">
+                            <h6 class="mb-0 fw-semibold text-dark">
+                                Assign {{ $lv->name }}
+                            </h6>
+                        </div>
+
+                        <div class="col-md-5 mb-3">
+                            <label class="form-label small fw-medium text-muted mb-1 d-block">
+                                Number of days
+                            </label>
+                        <input type="number"
+                        class="form-control form-control-sm"
+                        id="assign-days-{{ $lv->id }}"
+                        name="assign_days"
+                        value="1"
+                        min="1"
+                        required>
+                        </div>
+
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label small fw-medium text-muted mb-1 d-block">
+                                Effective Date (optional)
+                            </label>
+                            <input type="date"
+                                class="form-control form-control-sm"
+                                id="assign-date-{{ $lv->id }}"
+                                name="leaves[{{ $i }}][effective_date]">   <!-- ← add this name -->
+                        </div>
+
+                        <div class="col-md-3 mb-3 d-flex align-items-end gap-2">
+                            <button type="button"
+                                    class="btn btn-sm btn-primary px-4 save-assign-leave"
+                                    data-leave-id="{{ $lv->id }}"
+                                    data-index="{{ $i }}">   <!-- pass index for JS -->
+                                Save
+                            </button>
+                            <button type="button"
+                                    class="btn btn-sm btn-outline-secondary px-4 cancel-assign-leave"
+                                    data-leave-id="{{ $lv->id }}">
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                        @endforeach
+                    </div>
+                </div>
                         </div>
                     </div>
 
@@ -771,7 +845,7 @@
                                 </div>
                                 <button type="button" id="add-educ" class="btn btn-sm btn-outline-primary">Add education</button>
 
-                                <!-- Attachments (copied from create) -->
+                               <!-- Attachments (copied from create) -->
                                 <div class="card mt-4 border-orange">
                                     <div class="card-body">
                                         <h6 class="mb-4 text-orange">Attachments</h6>
@@ -794,35 +868,56 @@
                                                 ];
                                             @endphp
 
-                                            @foreach($commonAttachments as $index => $name)
+                                        @foreach($commonAttachments as $index => $name)
+                                            @php
+                                                $existing = $user->attachments->firstWhere('name', $name);
+                                                $hasFile  = $existing !== null;
+                                                $fileName = $existing ? $existing->file_name : '';
+                                                $filePath = $hasFile ? Storage::url($existing->file_path) : '';
+                                            @endphp
+
                                             <div class="attachment-row row align-items-center mb-3">
                                                 <div class="col-md-4">
                                                     <div class="form-check">
-                                                        {{-- <input class="form-check-input attachment-checkbox" type="checkbox" id="attach_{{ $index }}" value="{{ $name }}"> --}}
-                                                        <input 
-    class="form-check-input attachment-checkbox" 
-    type="checkbox" 
-    id="attach_{{ $index }}"
-    name="attachment_checked[{{ $index }}]" 
-    value="{{ $name }}"
->
+                                                        <input
+                                                            class="form-check-input attachment-checkbox"
+                                                            type="checkbox"
+                                                            id="attach_{{ $index }}"
+                                                            name="attachment_checked[{{ $index }}]"
+                                                            value="{{ $name }}"
+                                                            {{ old("attachment_checked.$index") ? 'checked' : '' }}
+                                                            {{ $hasFile ? 'checked' : '' }}
+                                                        >
                                                         <label class="form-check-label" for="attach_{{ $index }}">{{ $name }}</label>
                                                     </div>
                                                 </div>
+
                                                 <div class="col-md-6">
                                                     <div class="input-group">
                                                         <div class="custom-file">
-                                                            <input type="file" class="custom-file-input attachment-file" name="attachments[{{ $index }}]" id="file_{{ $index }}" accept=".pdf,.jpg,.jpeg,.png" disabled>
-                                                            <label class="custom-file-label text-truncate" for="file_{{ $index }}">Choose file...</label>
+                                                            <input
+                                                                type="file"
+                                                                class="custom-file-input attachment-file"
+                                                                name="attachments[{{ $index }}]"
+                                                                id="file_{{ $index }}"
+                                                                accept=".pdf,.jpg,.jpeg,.png"
+                                                                disabled
+                                                            >
+                                                            <label class="custom-file-label text-truncate" for="file_{{ $index }}">
+                                                                {{ $hasFile ? $fileName : 'Choose file...' }}
+                                                            </label>
                                                         </div>
                                                     </div>
+
+
                                                     <input type="hidden" name="attachment_names[{{ $index }}]" class="attachment-name" value="{{ $name }}" disabled>
                                                 </div>
+
                                                 <div class="col-md-2 text-right">
-                                                    <button type="button" class="btn btn-sm btn-danger remove-attachment" disabled>Remove</button>
+                                                    <button type="button" class="btn btn-sm btn-danger remove-attachment" {{ !$hasFile ? 'disabled' : '' }}>Remove</button>
                                                 </div>
                                             </div>
-                                            @endforeach
+                                        @endforeach
                                         </div>
                                     </div>
                                 </div>
@@ -841,7 +936,7 @@
         </form>
     </div>
 </div>
-@endsection
+@endsection 
 
 @section('scripts')
 
@@ -1325,9 +1420,6 @@ document.querySelector('form').addEventListener('submit', function () {
     const container = document.getElementById('branch-permissions-list');
     const addBtn = document.getElementById('add-branch-permission');
 
-    // Determine a safe starting index for new rows to avoid colliding
-    // with existing server-rendered inputs. We parse current input names
-    // and pick the next integer index.
     const computeStartingIndex = () => {
         if (!container) return 0;
         const selects = container.querySelectorAll('select[name^="branch_permissions["]');
@@ -1377,7 +1469,6 @@ document.getElementById('attachments-list')?.addEventListener('change', function
     if (e.target.classList.contains('attachment-checkbox')) {
         const row = e.target.closest('.attachment-row');
         const fileInput = row.querySelector('.attachment-file');
-        const fileLabel = row.querySelector('.custom-file-label');
         const removeBtn = row.querySelector('.remove-attachment');
         const nameInput = row.querySelector('.attachment-name');
 
@@ -1387,11 +1478,12 @@ document.getElementById('attachments-list')?.addEventListener('change', function
             nameInput.disabled = false;
         } else {
             fileInput.disabled = true;
-            fileInput.value = '';
-            if(fileLabel) fileLabel.textContent = 'Choose file...';
+            fileInput.value = '';                    // clear file
+            row.querySelector('.custom-file-label').textContent = 'Choose file...';
             removeBtn.disabled = true;
-            nameInput.disabled = true;
+            // nameInput.disabled = true;            // usually keep enabled
         }
+    // }
 
         document.querySelectorAll('.attachment-checkbox:checked').forEach(checkbox => {
             const row = checkbox.closest('.attachment-row');
@@ -1416,17 +1508,19 @@ document.getElementById('attachments-list')?.addEventListener('change', function
 });
 
 // Remove button (clears checkbox and file)
+// Remove button – also uncheck the checkbox!
 document.getElementById('attachments-list')?.addEventListener('click', function(e) {
     if (e.target.classList.contains('remove-attachment')) {
         const row = e.target.closest('.attachment-row');
         const checkbox = row.querySelector('.attachment-checkbox');
+        if (checkbox) checkbox.checked = false;     // ← important!
+        
         const fileInput = row.querySelector('.attachment-file');
-        const label = row.querySelector('.custom-file-label');
-
-        if(checkbox) checkbox.checked = false;
-        if(fileInput) fileInput.value = '';
-        if(label) label.textContent = 'Choose file...';
-        if(fileInput) fileInput.disabled = true;
+        if (fileInput) {
+            fileInput.value = '';
+            row.querySelector('.custom-file-label').textContent = 'Choose file...';
+            fileInput.disabled = true;
+        }
         e.target.disabled = true;
     }
 });
@@ -1435,95 +1529,174 @@ document.getElementById('attachments-list')?.addEventListener('click', function(
 document.querySelectorAll('.attachment-checkbox').forEach(cb => {
     if (cb.checked) {
         const row = cb.closest('.attachment-row');
-        row.querySelectorAll('.attachment-file, .remove-attachment').forEach(el => el.disabled = false);
+        row.querySelectorAll('.attachment-file, .remove-attachment').forEach(el => {
+            el.disabled = false;
+        });
     }
 });
 
-// Track which shift id originally had the saved custom values (if any).
-// This prevents applying a previously-saved custom time blob to a different
-// template when the user selects another shift.
 window.__initialAssignedShiftId = document.getElementById('assigned_shift_id')?.value || '';
 
-// When the shift selector changes, prepare the modal view-model. Prefer the
-// saved custom blob only when it belongs to the same shift template.
+// Force aggregation before ANY form submit (safety net)
+document.querySelector('form')?.addEventListener('submit', function(e) {
+    // If modal is open → aggregate NOW (prevents lost changes)
+    const modalEl = document.getElementById('shiftModal');
+    if (modalEl && modalEl.classList.contains('show')) {
+        console.log('[Shift] Form submitting while modal open → forcing aggregation');
+        aggregateShiftModalAndPopulateHidden();
+    }
+});
+
+// Shift template dropdown change
 document.getElementById('shift_select')?.addEventListener('change', function () {
     const option = this.options[this.selectedIndex];
     const modal = $('#shiftModal');
     const shiftId = option.value;
 
-    // set assigned shift hidden input so form submits the chosen template
     document.getElementById('assigned_shift_id').value = shiftId || '';
 
-    // if no template selected, just hide modal and return
     if (!shiftId) {
         modal.modal('hide');
         return;
     }
 
-    const shift = JSON.parse(option.dataset.shift);
-    // Update modal title
-    document.getElementById('modal-shift-name').textContent = shift.name + ' - Customize';
+    const shift = JSON.parse(option.dataset.shift || '{}');
 
-    // Only prefer existing saved custom values when those custom values belong
-    // to the same shift template. This prevents a previous template's custom
-    // blob from overriding the selected template's times.
-    const initialAssigned = window.__initialAssignedShiftId || '';
-    let useCustom = false;
-    try { useCustom = initialAssigned && initialAssigned.toString() === shiftId.toString(); } catch (e) { useCustom = false; }
+    // Update title
+    document.getElementById('modal-shift-name').textContent = (shift.name || 'Custom') + ' - Customize';
 
-    const customTs = useCustom ? (document.getElementById('custom_time_start_input')?.value || '') : '';
-    const customTe = useCustom ? (document.getElementById('custom_time_end_input')?.value || '') : '';
-    const customBs = useCustom ? (document.getElementById('custom_break_start_input')?.value || '') : '';
-    const customBe = useCustom ? (document.getElementById('custom_break_end_input')?.value || '') : '';
-    let customWorkDays = useCustom ? (document.getElementById('custom_work_days_input')?.value || '') : '';
-    let customRestDays = useCustom ? (document.getElementById('custom_rest_days_input')?.value || '') : '';
-    let customOpenTime = useCustom ? (document.getElementById('custom_open_time_input')?.value || '') : '';
+    // Always load current DB values (no aggressive clear)
+    const customTs = document.getElementById('custom_time_start_input')?.value || shift.time_start || '';
+    const customTe = document.getElementById('custom_time_end_input')?.value || shift.time_end || '';
+    const customBs = document.getElementById('custom_break_start_input')?.value || shift.break_start || '';
+    const customBe = document.getElementById('custom_break_end_input')?.value || shift.break_end || '';
 
-    try { customWorkDays = customWorkDays ? JSON.parse(customWorkDays) : []; } catch(e){ customWorkDays = []; }
-    try { customRestDays = customRestDays ? JSON.parse(customRestDays) : []; } catch(e){ customRestDays = []; }
-    try { customOpenTime = customOpenTime ? JSON.parse(customOpenTime) : []; } catch(e){ customOpenTime = []; }
+    let customWorkDays = document.getElementById('custom_work_days_input')?.value || '[]';
+    let customRestDays = document.getElementById('custom_rest_days_input')?.value || '[]';
+    let customOpenTime = document.getElementById('custom_open_time_input')?.value || '{}';
 
-    // Build a view-model for the modal that prefers saved custom values only when
-    // they belong to the same shift template.
-    window.currentShiftInModal = Object.assign({}, shift, {
-        time_start: customTs || shift.time_start,
-        time_end: customTe || shift.time_end,
-        break_start: customBs || shift.break_start,
-        break_end: customBe || shift.break_end,
-        work_days: (Array.isArray(customWorkDays) && customWorkDays.length) ? customWorkDays : (shift.work_days || []),
-        rest_days: (Array.isArray(customRestDays) && customRestDays.length) ? customRestDays : (shift.rest_days || []),
-        open_time: (Array.isArray(customOpenTime) && customOpenTime.length) ? customOpenTime : (shift.open_time || []),
-    });
+    try { customWorkDays = JSON.parse(customWorkDays); } catch(e) { customWorkDays = []; }
+    try { customRestDays = JSON.parse(customRestDays); } catch(e) { customRestDays = []; }
+    try { customOpenTime = JSON.parse(customOpenTime); } catch(e) { customOpenTime = {}; }
 
-    // Reset preview times from the modal view-model (may be custom)
-    document.getElementById('pv-start').textContent = (window.currentShiftInModal.time_start || '').slice(0,5) || 'N/A';
-    document.getElementById('pv-end').textContent = (window.currentShiftInModal.time_end || '').slice(0,5) || 'N/A';
-    document.getElementById('pv-break-start').textContent = (window.currentShiftInModal.break_start || '').slice(0,5) || 'N/A';
-    document.getElementById('pv-break-end').textContent = (window.currentShiftInModal.break_end || '').slice(0,5) || 'N/A';
+    // Build current model (prefer DB customs, fallback to template)
+    window.currentShiftInModal = {
+        ...shift,
+        time_start: customTs,
+        time_end: customTe,
+        break_start: customBs,
+        break_end: customBe,
+        work_days: Array.isArray(customWorkDays) && customWorkDays.length ? customWorkDays : (shift.work_days || []),
+        rest_days: Array.isArray(customRestDays) && customRestDays.length ? customRestDays : (shift.rest_days || []),
+        open_time: Object.keys(customOpenTime).length ? customOpenTime : (shift.open_time || {}),
+    };
 
-    // render preset-per-date cards if a date range is already set
-    if(document.getElementById('preset_start') && document.getElementById('preset_end')){
-        const container = document.getElementById('preset-dates-list');
-        // If the user already generated/edited per-date cards (they exist in DOM),
-        // range from one template (e.g. Graveyard) being shown for another.
-        const generatedFor = container?.dataset?.generatedFor || '';
-        if (generatedFor && generatedFor.toString() !== (shiftId || '').toString()) {
-            container.innerHTML = '';
-            const ps = document.getElementById('preset_start');
-            const pe = document.getElementById('preset_end');
-            if(ps) ps.value = '';
-            if(pe) pe.value = '';
-        }
+    // Update preview
+    document.getElementById('pv-start').textContent = (window.currentShiftInModal.time_start || '').slice(0,5) || '-';
+    document.getElementById('pv-end').textContent = (window.currentShiftInModal.time_end || '').slice(0,5) || '-';
+    document.getElementById('pv-break-start').textContent = (window.currentShiftInModal.break_start || '').slice(0,5) || '-';
+    document.getElementById('pv-break-end').textContent = (window.currentShiftInModal.break_end || '').slice(0,5) || '-';
 
-        if (!container || container.children.length === 0) {
-            renderPresetDates(window.currentShiftInModal || shift);
-        } else {
-            // ensure preview and hidden inputs reflect any existing edits
-            try { aggregateShiftModalAndPopulateHidden(); } catch(e) { /* ignore */ }
-        }
+    // Reset preset list only if switching templates
+    const container = document.getElementById('preset-dates-list');
+    if (container?.dataset?.generatedFor !== shiftId) {
+        container.innerHTML = '';
+        document.getElementById('preset_start').value = '';
+        document.getElementById('preset_end').value = '';
+        container.dataset.generatedFor = shiftId;
+    }
+
+    // Render if range exists, or wait for user input
+    if (document.getElementById('preset_start')?.value && document.getElementById('preset_end')?.value) {
+        renderPresetDates(window.currentShiftInModal);
     }
 
     modal.modal('show');
+});
+
+// Aggregate function – called on modal save + form submit
+function aggregateShiftModalAndPopulateHidden() {
+    console.log('[Shift] Aggregating modal values...');
+
+    const container = document.getElementById('preset-dates-list');
+    if (!container) return;
+
+    const cards = container.querySelectorAll('.card');
+    const work = [], rest = [], openTimes = {};
+    let firstStart = '', firstEnd = '', firstBreakStart = '', firstBreakEnd = '';
+
+    cards.forEach(card => {
+        const date = card.querySelector('input[name$="[date]"]')?.value;
+        const tstart = card.querySelector('input[name$="[time_start]"]')?.value;
+        const tend   = card.querySelector('input[name$="[time_end]"]')?.value;
+        const lstart = card.querySelector('input[name$="[lunch_start]"]')?.value;
+        const lend   = card.querySelector('input[name$="[lunch_end]"]')?.value;
+        const dayType = card.querySelector('input[name$="[day_type]"]:checked')?.value || 'work';
+
+        if (date) {
+            if (dayType === 'work') work.push(date);
+            else if (dayType === 'rest') rest.push(date);
+
+            openTimes[date] = {
+                start: tstart || null,
+                end: tend || null,
+                lunch_start: lstart || null,
+                lunch_end: lend || null,
+                day_type: dayType
+            };
+        }
+
+        // Use first non-empty time as representative
+        if (!firstStart && tstart) firstStart = tstart;
+        if (!firstEnd && tend) firstEnd = tend;
+        if (!firstBreakStart && lstart) firstBreakStart = lstart;
+        if (!firstBreakEnd && lend) firstBreakEnd = lend;
+    });
+
+    const shift = window.currentShiftInModal || {};
+
+    document.getElementById('custom_time_start_input').value   = firstStart || shift.time_start || '';
+    document.getElementById('custom_time_end_input').value     = firstEnd   || shift.time_end   || '';
+    document.getElementById('custom_break_start_input').value  = firstBreakStart || shift.break_start || '';
+    document.getElementById('custom_break_end_input').value    = firstBreakEnd   || shift.break_end   || '';
+
+    document.getElementById('custom_work_days_input').value    = JSON.stringify(work);
+    document.getElementById('custom_rest_days_input').value    = JSON.stringify(rest);
+    document.getElementById('custom_open_time_input').value    = JSON.stringify(openTimes);
+
+    // Update preview
+    document.getElementById('pv-start').textContent       = firstStart || shift.time_start?.slice(0,5) || '-';
+    document.getElementById('pv-end').textContent         = firstEnd   || shift.time_end?.slice(0,5)   || '-';
+    document.getElementById('pv-break-start').textContent = firstBreakStart || shift.break_start?.slice(0,5) || '-';
+    document.getElementById('pv-break-end').textContent   = firstBreakEnd   || shift.break_end?.slice(0,5)   || '-';
+
+    console.log('[Shift] Aggregation complete → customs saved to hidden inputs');
+}
+
+// Modal Save button
+document.getElementById('save-shift-modal-btn')?.addEventListener('click', function(){
+    aggregateShiftModalAndPopulateHidden();
+    window.__initialAssignedShiftId = document.getElementById('assigned_shift_id')?.value || window.__initialAssignedShiftId;
+    $('#shiftModal').modal('hide');
+});
+
+// Live preview update while editing times
+document.getElementById('preset-dates-list')?.addEventListener('input', function(e){
+    if (e.target.matches('input[type="time"], input[type="radio"]')) {
+        aggregateShiftModalAndPopulateHidden();
+    }
+});
+
+// Preset date range change → render cards
+['preset_start', 'preset_end'].forEach(id => {
+    document.getElementById(id)?.addEventListener('change', () => {
+        renderPresetDates(window.currentShiftInModal || {});
+    });
+});
+
+// Apply preset button (manual render)
+document.getElementById('apply-preset-btn')?.addEventListener('click', function(){
+    renderPresetDates(window.currentShiftInModal || {});
 });
 
 // Shift preset date rendering helpers
@@ -1634,7 +1807,9 @@ function aggregateShiftModalAndPopulateHidden(){
         const tend = card.querySelector('input[name$="[time_end]"]');
         const lstart = card.querySelector('input[name$="[lunch_start]"]');
         const lend = card.querySelector('input[name$="[lunch_end]"]');
-        const dayType = card.querySelector('input[type="radio"][name$="[day_type]":checked]') || card.querySelector('input[type="radio"][name$="[day_type]"]:checked');
+        // const dayType = card.querySelector('input[type="radio"][name$="[day_type]":checked]') || card.querySelector('input[type="radio"][name$="[day_type]"]:checked');
+        const dayTypeInput = card.querySelector('input[type="radio"][name$="[day_type]"]:checked');
+        const dayType = dayTypeInput ? dayTypeInput.value : 'work';
         const type = dayType ? dayType.value : 'work';
 
         if(date){
@@ -1773,5 +1948,102 @@ $(document).ready(function () {
         console.error('populateFromServer error', e);
     }
 })();
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Click on "Assign Leave" link in dropdown
+    document.querySelectorAll('.assign-leave-inline').forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault(); // very important
+
+            const leaveId = this.dataset.leaveId;
+            const targetForm = document.getElementById(`assign-form-${leaveId}`);
+
+            if (!targetForm) {
+                console.warn(`Form not found for leave ID: ${leaveId}`);
+                return;
+            }
+
+            // Hide ALL other assign forms first (only one open at a time)
+            document.querySelectorAll('.assign-leave-form').forEach(form => {
+                form.classList.add('d-none');
+            });
+
+            // Show the clicked one
+            targetForm.classList.remove('d-none');
+
+            // Focus the days input for better UX
+            targetForm.querySelector(`#assign-days-${leaveId}`)?.focus();
+        });
+    });
+
+    // Save button handler
+   document.addEventListener('click', e => {
+    if (!e.target.closest('.save-assign-leave')) return;
+
+    const btn = e.target.closest('.save-assign-leave');
+    const leaveId = btn.dataset.leaveId;
+    const index = btn.dataset.index;
+
+    const daysInput = document.getElementById(`assign-days-${leaveId}`);
+    const dateInput = document.getElementById(`assign-date-${leaveId}`);
+
+    const newDays = parseInt(daysInput?.value.trim() || '0', 10);
+    if (newDays < 1) {
+        alert('Please enter at least 1 day');
+        daysInput?.focus();
+        return;
+    }
+
+    const mainCreditsInput = document.querySelector(`input[name="leaves[${index}][assigned_days]"]`);
+    const mainCheckbox = document.querySelector(`input[name="leaves[${index}][leave_id]"]`);
+
+    if (!mainCreditsInput || !mainCheckbox) {
+        console.warn('Main leave inputs not found');
+        return;
+    }
+
+    let current = parseInt(mainCreditsInput.value.trim() || '0', 10);
+    const updated = current + newDays;
+
+    mainCreditsInput.value = updated;
+    mainCreditsInput.disabled = false;
+    mainCheckbox.checked = true;
+
+    const displayCredits = document.querySelector(`.leave-row[data-leave-id="${leaveId}"] .leave-credits`);
+    if (displayCredits) displayCredits.value = updated;
+
+    const used = parseInt(document.querySelector(`.leave-row[data-leave-id="${leaveId}"] .leave-used`)?.textContent.trim() || '0', 10);
+    const balanceEl = document.querySelector(`.leave-row[data-leave-id="${leaveId}"] .leave-balance`);
+    if (balanceEl) balanceEl.textContent = updated - used;
+
+    alert(`Added ${newDays} day(s). New total credits: ${updated}`);
+
+    document.getElementById(`assign-form-${leaveId}`)?.classList.add('d-none');
+    daysInput.value = '1';
+    dateInput.value = '';
+});
+});
+</script>
+
+<script>
+    const assignLeaveButtons = document.querySelectorAll('.assign-leave-inline');
+    const assignForms = document.querySelectorAll('.assign-leave-form');
+
+    assignLeaveButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            const leaveId = this.dataset.leaveId;
+            const form = document.getElementById(`assign-form-${leaveId}`);
+
+            // Hide all assign forms
+            assignForms.forEach(form => {
+                form.classList.add('d-none');
+            });
+
+            // Show the specific assign form
+            if (form) {
+                form.classList.remove('d-none');
+            }
+        });
+    });
 </script>
 @endsection
