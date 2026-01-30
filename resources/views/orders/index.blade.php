@@ -1143,34 +1143,33 @@ function updatePersonData(orderId, discountId, index, field, value) {
                      <div class="d-flex justify-content-between fw-bold mt-2"><span>Total Charge</span> <span>₱{{ number_format($order->total_charge ?? $order->net_amount ?? 0,2) }}</span></div>
 
                      {{-- Payments breakdown grouped by payment method (Cash, GCash, Credit Card, etc.) --}}
-                     @php
-                  // Prefer showing the cash equivalent (e.g. "Cash On Hand | Noel", "GCash | 0977...")
-                  // and fall back to the payment method name (e.g. "Check", "Card") if none.
-                  $paymentsByMethod = $order->paymentDetails->groupBy(function($pd) {
-                     return optional($pd->cashEquivalent)->name ?? optional($pd->payment)->name ?? 'Other';
-                  })->map(function($group) {
-                     return $group->sum(fn($g) => floatval($g->amount_paid));
-                  });
-
-                        // total rendered & change: prefer order-level fields if available
-                        $totalRendered = floatval($order->total_payment_rendered ?? $order->paymentDetails->sum('amount_paid') ?? 0);
-                        $changeAmount = floatval($order->change_amount ?? $order->paymentDetails->last()?->change_amount ?? 0);
+                    @php
+                        $paymentsByMethod = $order->paymentDetails->groupBy(function($pd) {
+                           return optional($pd->cashEquivalent)->name ?? optional($pd->payment)->name ?? 'Other';
+                        })->map(fn($group) => $group->sum('amount_paid'));
                      @endphp
 
-                     @foreach($paymentsByMethod as $method => $amt)
-                        <div class="d-flex justify-content-between">
-                           <span>{{ $method }}</span>
-                           <span>₱{{ number_format($amt, 2) }}</span>
+                     @if($paymentsByMethod->isNotEmpty())
+                        @foreach($paymentsByMethod as $method => $amt)
+                           <div class="d-flex justify-content-between">
+                                 <span>{{ $method }}</span>
+                                 <span>₱{{ number_format($amt, 2) }}</span>
+                           </div>
+                        @endforeach
+                     @else
+                        <div class="d-flex justify-content-between text-muted">
+                           <span>No payments recorded yet</span>
+                           <span>₱0.00</span>
                         </div>
-                     @endforeach
+                     @endif
 
                      <div class="d-flex justify-content-between fw-bold">
                         <span>Total Rendered</span>
-                        <span>₱{{ number_format($totalRendered, 2) }}</span>
+                        <span>₱{{ number_format($order->total_payment_rendered ?? 0, 2) }}</span>
                      </div>
                      <div class="d-flex justify-content-between fw-bold">
                         <span>Change</span>
-                        <span>₱{{ number_format($changeAmount, 2) }}</span>
+                        <span>₱{{ number_format($order->change_amount ?? 0, 2) }}</span>
                      </div>
                               </div>
                   <p class="d-flex justify-content-between fw-bold mt-2"><span>POS Provided by:</span> <span>OMNI Systems Solutions</span></p>

@@ -62,7 +62,7 @@
             @endif
         @endisset
 
-        @if($status === 'resigned')
+        {{-- @if($status === 'resigned')
             @isset($deleteRoute)
                 <li role="presentation">
                     <form action="{{ $deleteRoute }}" method="POST" class="swal-confirm"
@@ -81,7 +81,7 @@
             @endisset
 
             <li><hr class="dropdown-divider"></li>
-        @endif
+        @endif --}}
 
         @isset($branchEditRoute)
         <li role="presentation">

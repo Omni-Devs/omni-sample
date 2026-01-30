@@ -431,7 +431,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                     <th>Table No.</th>
                                     <th>No. of Pax</th>
                                     <th>Total Charge</th>
-                                    <th>Amount Paid</th>
+                                    {{-- <th>Amount Paid</th> --}}
                                     <th>Invoice No.</th>
                                     <th class="text-right">Action</th>
                                 </tr>
@@ -445,7 +445,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         <td>{{ $order->table_no }}</td>
                         <td>{{ $order->number_pax }}</td>
                         <td>₱{{ number_format($order->total_charge, 2) }}</td>
-                        <td>₱{{ number_format($order->total_payment_rendered, 2) }}</td>
+                        {{-- <td>₱{{ number_format($order->total_payment_rendered, 2) }}</td> --}}
                         <td>{{ $order->id }}</td>
                         {{-- <td>
                             <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal"

@@ -133,48 +133,48 @@
    <section class="ps-container sidebar-left-secondary ps rtl-ps-none">
       <div>
 
-          <ul data-parent="dashboard" class="childNav d-none">
-              <li class="nav-item"><a href="/" class=""><i class="nav-icon i-Bar-Chart"></i> <span class="item-name">Branch</span></a> </li>
-              <li class="nav-item dropdown-sidemenu">
-                <a href="#">
-                    <i class="nav-icon i-Line-Chart"></i>
-                    <span class="item-name">Global</span>
-                    <i class="dd-arrow i-Arrow-Down"></i>
-                </a>
-                <ul class="submenu">
-                    <li class="nav-item">
-                      <a href="#" class="">
-                          <i class="nav-icon i-Library"></i>
-                          <span class="item-name">Workforce</span>
-                      </a>
-                    </li>
-                    <li class="nav-item">
-                      <a href="#" class="">
-                          <i class="nav-icon i-Building"></i>
-                          <span class="item-name">Inventory</span>
-                      </a>
-                    </li>
-                    <li class="nav-item">
-                      <a href="#" class="">
-                          <i class="nav-icon i-Full-Basket"></i>
-                          <span class="item-name">Sales</span>
-                      </a>
-                    </li>
-                    <li class="nav-item">
-                      <a href="#" class="">
-                          <i class="nav-icon i-Edit-Map"></i>
-                          <span class="item-name">Accounting</span>
-                      </a>
-                    </li>
-                    <li class="nav-item">
-                      <a href="#" class="">
-                          <i class="nav-icon i-Business-Mens"></i>
-                          <span class="item-name">People</span>
-                      </a>
-                    </li>
-                </ul>
-              </li>
-              <li class="nav-item"><a href="#" class=""><i class="nav-icon i-Administrator"></i> <span class="item-name">Log History</span></a> </li>
+         <ul data-parent="dashboard" class="childNav d-none">
+               <li class="nav-item"><a href="/" class=""><i class="nav-icon i-Bar-Chart"></i> <span class="item-name">Branch</span></a> </li>
+               <li class="nav-item dropdown-sidemenu">
+                  <a href="#">
+                     <i class="nav-icon i-Line-Chart"></i>
+                     <span class="item-name">Global</span>
+                     <i class="dd-arrow i-Arrow-Down"></i>
+                  </a>
+                  <ul class="submenu">
+                     <li class="nav-item">
+                        <a href="#" class="">
+                           <i class="nav-icon i-Library"></i>
+                           <span class="item-name">Workforce</span>
+                        </a>
+                     </li>
+                     <li class="nav-item">
+                        <a href="#" class="">
+                           <i class="nav-icon i-Building"></i>
+                           <span class="item-name">Inventory</span>
+                        </a>
+                     </li>
+                     <li class="nav-item">
+                        <a href="#" class="">
+                           <i class="nav-icon i-Full-Basket"></i>
+                           <span class="item-name">Sales</span>
+                        </a>
+                     </li>
+                     <li class="nav-item">
+                        <a href="#" class="">
+                           <i class="nav-icon i-Edit-Map"></i>
+                           <span class="item-name">Accounting</span>
+                        </a>
+                     </li>
+                     <li class="nav-item">
+                        <a href="#" class="">
+                           <i class="nav-icon i-Business-Mens"></i>
+                           <span class="item-name">People</span>
+                        </a>
+                     </li>
+                  </ul>
+               </li>
+               <li class="nav-item"><a href="#" class=""><i class="nav-icon i-Administrator"></i> <span class="item-name">Log History</span></a> </li>
          </ul>
 
          <ul data-parent="EmployeeProfile" class="childNav d-none">
@@ -212,11 +212,11 @@
             <li class="nav-item"><a href="/app/workforce/assign-allowances" class=""><i class="nav-icon i-Money-2"></i> <span class="item-name">Assign Allowances</span></a></li> --}}
             {{-- <li class="nav-item"><a href="/app/workforce/leave-requests" class=""><i class="nav-icon i-Blinklist"></i> <span class="item-name">Daily Time Record</span></a></li> --}}
             <li class="nav-item">
-    <a href="{{ route('dtr.index') }}" class="">
-        <i class="nav-icon i-Blinklist"></i>
-        <span class="item-name">Daily Time Record</span>
-    </a>
-</li>
+               <a href="{{ route('dtr.index') }}" class="">
+                  <i class="nav-icon i-Time-Machine"></i>
+                  <span class="item-name">Daily Time Record</span>
+               </a>
+            </li>
             <li class="nav-item"><a href="/workforce/leave-requests" class=""><i class="nav-icon i-Blinklist"></i> <span class="item-name">Request For Leaves</span></a></li>
             <li class="nav-item"><a href="/app/workforce/overtime-requests" class=""><i class="nav-icon i-Over-Time"></i> <span class="item-name">Request for Overtime</span></a></li>
             {{-- <li class="nav-item"><a href="/app/workforce/restday-overtime-requests" class=""><i class="nav-icon i-Over-Time"></i> <span class="item-name">Request for Restday Overtime</span></a></li> --}}
