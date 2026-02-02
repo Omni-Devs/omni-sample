@@ -115,19 +115,29 @@ public function index(Request $request)
     foreach ($employees as $user) {
         $salaryMethod = $user->salaryMethod;
 
-        // Determine valid work days for this salary method
         $workDays = [];
 
-        if ($salaryMethod?->custom_open_time) {
+    if ($salaryMethod?->custom_open_time) {
             $customTimes = json_decode($salaryMethod->custom_open_time, true);
+
+            if (!is_array($customTimes)) {
+                $customTimes = [];
+            }
+
             foreach ($customTimes as $dateStr => $times) {
                 $date = \Carbon\Carbon::parse($dateStr);
                 if ($date->year == $year && $date->month == $month) {
-                    $workDays[$dateStr] = $times; // keep start/end for this day
+                    $workDays[$dateStr] = $times;
                 }
             }
         } elseif ($salaryMethod?->custom_work_days) {
             $allWorkDays = json_decode($salaryMethod->custom_work_days, true);
+
+            // Add this safety
+            if (!is_array($allWorkDays)) {
+                $allWorkDays = [];
+            }
+
             foreach ($allWorkDays as $dateStr) {
                 $date = \Carbon\Carbon::parse($dateStr);
                 if ($date->year == $year && $date->month == $month) {
@@ -138,7 +148,6 @@ public function index(Request $request)
                 }
             }
         } elseif ($salaryMethod && $salaryMethod->custom_time_start && $salaryMethod->custom_time_end) {
-            // fallback: include all days of month
             $daysInMonth = \Carbon\Carbon::create($year, $month)->daysInMonth;
             for ($day = 1; $day <= $daysInMonth; $day++) {
                 $dateStr = \Carbon\Carbon::create($year, $month, $day)->format('Y-m-d');
@@ -157,6 +166,13 @@ public function index(Request $request)
             ->keyBy(fn($dtr) => $dtr->date->format('Y-m-d'));
 
         foreach ($workDays as $date => $shiftTimes) {
+            // // Normalize to string
+            if (is_array($shiftTimes)) {
+                $timeOfShift = ($shiftTimes['start'] ?? '--') . '-' . ($shiftTimes['end'] ?? '--');
+            } else {
+                $timeOfShift = $shiftTimes;           // already string like "08:00-17:00"
+            }
+
             $dtr = $dtrs[$date] ?? null;
 
             $records[] = (object)[
@@ -169,7 +185,7 @@ public function index(Request $request)
                 'salary_method_id' => $salaryMethod?->id,
                 'salary_method_name' => $salaryMethod?->shift?->name ?? 'Shift #' . ($salaryMethod?->shift_id ?? '-'),
                 'shift_id' => $salaryMethod?->shift_id,
-                'time_of_shift' => $shiftTimes, // array with start/end for this day
+                'time_of_shift' => $timeOfShift, // array with start/end for this day
                 'time_in_reports' => $dtr?->time_in_reports,
                 'time_out_reports' => $dtr?->time_out_reports,
                 'other_reports' => $dtr?->other_reports,

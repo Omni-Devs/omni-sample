@@ -17,4 +17,14 @@ class EmployeeWorkInformation extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    public function designation()
+    {
+        return $this->belongsTo(Designation::class, 'designation_id');
+    }
+
+    public function department()
+    {
+        return $this->belongsTo(Department::class, 'department_id');
+    }
 }

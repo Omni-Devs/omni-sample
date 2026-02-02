@@ -513,15 +513,50 @@
                                         </div>
                                     </div>
                                     <div class="row">
-                                        <div class="col-md-3 form-group">
-                                            <label>Supervisor</label>
-                                            <select id="wi_supervisor" class="form-control">
-                                                <option value="">Select Supervisor</option>
-                                                @foreach($users as $u)
-                                                    <option value="{{ $u->username }}" {{ old('wi_supervisor') == $u->username ? 'selected' : '' }}>{{ $u->username }}</option>
-                                                @endforeach
-                                            </select>
-                                        </div>
+                          {{-- <div class="col-md-3 form-group">
+    <label>Supervisor</label>
+    <select id="wi_supervisor" name="wi_supervisor" class="form-control">
+        <option value="">No Supervisor / Not Applicable</option>
+        @foreach($potentialSupervisors as $supervisor)
+            <option value="{{ $supervisor->username }}"
+                    {{ old('wi_supervisor', $workInformations->first()?->direct_supervisor ?? '') === $supervisor->username ? 'selected' : '' }}>
+                {{ $supervisor->name ?? $supervisor->username }}
+                <small class="text-muted">
+                    ({{ $supervisor->username }} •
+                    @if($latest = $supervisor->employeeWorkInformations->first())
+                        {{ $latest->designation?->name ?? '—' }}
+                    @else
+                        (no position)
+                    @endif
+                    )
+                </small>
+            </option>
+        @endforeach
+    </select>
+</div> --}}
+
+<div class="col-md-3 form-group">
+    <label>Supervisor</label>
+    <select id="wi_supervisor" name="wi_supervisor" class="form-control">
+        <option value="">Select Supervisor</option>
+        
+        @foreach($potentialSupervisors as $supervisor)
+            @php
+                $latestDesignation = $supervisor->employeeWorkInformations->first()?->designation?->name ?? '';
+            @endphp
+            
+            <option value="{{ $supervisor->username }}"
+                    data-designation="{{ strtolower($latestDesignation) }}"
+                    {{ old('wi_supervisor', $workInformations->first()?->direct_supervisor ?? '') === $supervisor->username ? 'selected' : '' }}>
+                {{ $supervisor->name ?? $supervisor->username }}
+                <small class="text-muted">
+                    ({{ $supervisor->username }} • {{ $latestDesignation ?: '—' }})
+                </small>
+            </option>
+        @endforeach
+    </select>
+</div>
+
                                         <div class="col-md-3 form-group"><label>Monthly Rate</label><input type="number" step="0.01" id="wi_monthly_rate" class="form-control"></div>
                                         <div class="col-md-3 form-group"><label>Daily Rate</label><input type="number" step="0.01" id="wi_daily_rate" class="form-control"></div>
                                         <div class="col-md-3 form-group"><label>Hourly Rate</label><input type="number" step="0.01" id="wi_hourly_rate" class="form-control"></div>
@@ -655,10 +690,6 @@
                                             <div class="input-group">
                                                 <input type="number" name="allowances[{{ $i }}][amount]" class="form-control allowance-amount text-center" placeholder="Enter Amount Here" step="100" min="0" value="{{ old("allowances.$i.amount", optional($user->allowances->firstWhere('id',$al->id))->pivot->amount ?? '') }}" {{ !(isset($user) && $user->allowances->contains($al->id)) ? 'disabled' : '' }}>
                                             </div>
-                                        </div>
-
-                                        <div class="col-md-1">
-                                            <button type="button" class="btn btn-sm btn-outline-danger remove-allowance">Remove</button>
                                         </div>
                                     </div>
                                     @endforeach
@@ -2046,4 +2077,63 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 </script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const positionSelect = document.getElementById('wi_designation');
+        const supervisorSelect = document.getElementById('wi_supervisor');
+
+        if (!positionSelect || !supervisorSelect) return;
+
+        // Store all options once (this captures ALL possible supervisors, even pre-filled ones)
+        const allSupervisorOptions = Array.from(supervisorSelect.options);
+
+        function filterSupervisors() {
+            const selectedPosition = positionSelect.value.toLowerCase();
+            
+            // Clear current options except the placeholder
+            supervisorSelect.innerHTML = '';
+            supervisorSelect.appendChild(allSupervisorOptions[0].cloneNode(true));
+
+            let allowedDesignations = [];
+
+            // Your business rules (customize these strings to match your actual designation names)
+            if (selectedPosition === '') {
+                allowedDesignations = ['manager', 'supervisor', 'director', 'ceo'];
+            } else if (['staff', 'regular', 'employee', 'technician'].includes(selectedPosition)) {
+                allowedDesignations = ['manager', 'supervisor', 'director', 'ceo'];
+            } else if (selectedPosition === 'supervisor') {
+                allowedDesignations = ['manager', 'director', 'ceo']; // only higher-ups
+            } else if (selectedPosition === 'manager') {
+                allowedDesignations = ['director', 'ceo'];
+            } else if (['director', 'ceo', 'president'].includes(selectedPosition)) {
+                allowedDesignations = []; // no supervisor needed
+            } else {
+                // fallback: show everyone
+                allowedDesignations = ['manager', 'supervisor', 'director', 'ceo'];
+            }
+
+            // Re-add only allowed supervisors
+            allSupervisorOptions.forEach(opt => {
+                if (opt.value === '') return; // skip placeholder
+
+                const optDesignation = (opt.getAttribute('data-designation') || '').toLowerCase();
+                if (allowedDesignations.includes(optDesignation)) {
+                    supervisorSelect.appendChild(opt.cloneNode(true));
+                }
+            });
+
+            // Optional: if current selected supervisor is no longer allowed, reset to empty
+            if (!supervisorSelect.querySelector(`option[value="${supervisorSelect.dataset.currentValue || ''}"]`)) {
+                supervisorSelect.value = '';
+            }
+        }
+
+        // Run immediately (important for edit page pre-filled values)
+        filterSupervisors();
+
+        // Re-run every time position changes
+        positionSelect.addEventListener('change', filterSupervisors);
+    });
+    </script>
 @endsection
