@@ -115,10 +115,7 @@
                                     <label class="form-label">Status</label>
                                     <input type="text" class="form-control" value="{{ ucfirst($order->status) }}" readonly>
                                  </div>
-                                 <div class="col-md-3">
-                                    <label class="form-label">Cashier</label>
-                                    <input type="text" class="form-control" value="{{ auth()->user()->name ?? '' }}" readonly>
-                                 </div>
+                              
                               </div>
 
                               <hr>
@@ -481,6 +478,10 @@ if ($status === 'serving') {
                <label class="form-label">Date & Time</label>
                <input type="text" class="form-control" value="{{ $order->created_at->format('Y-m-d H:i') }}" readonly>
                </div>
+               <div class="col-md-3">
+               <label class="form-label">Cashier</label>
+               <input type="text" class="form-control" value="{{ $order->cashier?->name ?? auth()->user()->name }}" readonly>
+               </div>
             </div>
 
             <div class="row mb-2">
@@ -495,10 +496,6 @@ if ($status === 'serving') {
                <div class="col-md-2">
                <label class="form-label">Status</label>
                <input type="text" class="form-control" value="{{ ucfirst($order->status) }}" readonly>
-               </div>
-               <div class="col-md-3">
-               <label class="form-label">Cashier</label>
-               <input type="text" class="form-control" value="{{ $order->cashier?->name ?? auth()->user()->name }}" readonly>
                </div>
             </div>
 
@@ -1282,64 +1279,64 @@ window.openInvoiceModalFromResponse = function(orderData) {
 // =====================================
 // Intercept submitPayment() function
 // =====================================
-window.submitPayment = function(orderId) {
-    console.log('💳 Submitting payment for order', orderId);
+      window.submitPayment = function(orderId) {
+         console.log('💳 Submitting payment for order', orderId);
 
-    const payments = [];
-    const tbody = document.getElementById('payments_table_body_' + orderId);
-    if (tbody) {
-        tbody.querySelectorAll('tr[data-row-id]').forEach(tr => {
-            const rid = tr.dataset.rowId;
-            const method = document.getElementById(`pm_${orderId}_${rid}`)?.value || '';
-            const ref = document.getElementById(`pref_${orderId}_${rid}`)?.value || '';
-            const dest = document.getElementById(`pdest_${orderId}_${rid}`)?.value || '';
-            const amount = parseFloat(document.getElementById(`pamt_${orderId}_${rid}`)?.value || 0);
-            if (method && dest && amount > 0) {
-                payments.push({ payment_method_id: method, reference_no: ref, cash_equivalent_id: dest, amount_paid: amount });
-            }
-        });
-    }
+         const payments = [];
+         const tbody = document.getElementById('payments_table_body_' + orderId);
+         if (tbody) {
+            tbody.querySelectorAll('tr[data-row-id]').forEach(tr => {
+                  const rid = tr.dataset.rowId;
+                  const method = document.getElementById(`pm_${orderId}_${rid}`)?.value || '';
+                  const ref = document.getElementById(`pref_${orderId}_${rid}`)?.value || '';
+                  const dest = document.getElementById(`pdest_${orderId}_${rid}`)?.value || '';
+                  const amount = parseFloat(document.getElementById(`pamt_${orderId}_${rid}`)?.value || 0);
+                  if (method && dest && amount > 0) {
+                     payments.push({ payment_method_id: method, reference_no: ref, cash_equivalent_id: dest, amount_paid: amount });
+                  }
+            });
+         }
 
-    if (payments.length === 0) {
-        alert('⚠️ No payments to submit. Please add at least one valid payment row.');
-        return;
-    }
+         if (payments.length === 0) {
+            alert('⚠️ No payments to submit. Please add at least one valid payment row.');
+            return;
+         }
 
-   const totalRendered = parseFloat(document.getElementById('payments_total_' + orderId)?.textContent?.replace(/[^\d.-]/g, '') || 0);
-   const changeAmount = parseFloat(document.getElementById('payments_change_' + orderId)?.textContent?.replace(/[^\d.-]/g, '') || 0);
+         const totalRendered = parseFloat(document.getElementById('payments_total_' + orderId)?.textContent?.replace(/[^\d.-]/g, '') || 0);
+         const changeAmount = parseFloat(document.getElementById('payments_change_' + orderId)?.textContent?.replace(/[^\d.-]/g, '') || 0);
 
-   // Validate that rendered payment covers total charge
-   const totalChargeStr = document.getElementById('pay_totalCharge_' + orderId)?.value || document.getElementById('totalCharge_' + orderId)?.value || 0;
-   const totalCharge = parseFloat(String(totalChargeStr).replace(/,/g, '')) || 0;
-   if (totalRendered < totalCharge) {
-      alert('⚠️ Insufficient payment. Total rendered (' + Number(totalRendered).toFixed(2) + ') is less than total charge (' + Number(totalCharge).toFixed(2) + ').');
-      return;
-   }
+         // Validate that rendered payment covers total charge
+         const totalChargeStr = document.getElementById('pay_totalCharge_' + orderId)?.value || document.getElementById('totalCharge_' + orderId)?.value || 0;
+         const totalCharge = parseFloat(String(totalChargeStr).replace(/,/g, '')) || 0;
+         if (totalRendered < totalCharge) {
+            alert('⚠️ Insufficient payment. Total rendered (' + Number(totalRendered).toFixed(2) + ') is less than total charge (' + Number(totalCharge).toFixed(2) + ').');
+            return;
+         }
 
-   const payload = new FormData();
-    payload.append('payments', JSON.stringify(payments));
-    payload.append('total_payment_rendered', totalRendered);
-    payload.append('change_amount', changeAmount);
+         const payload = new FormData();
+         payload.append('payments', JSON.stringify(payments));
+         payload.append('total_payment_rendered', totalRendered);
+         payload.append('change_amount', changeAmount);
 
-    const token = document.querySelector('meta[name="csrf-token"]').content;
+         const token = document.querySelector('meta[name="csrf-token"]').content;
 
-    fetch('/orders/' + orderId + '/payment', {
-        method: 'POST',
-        headers: { 'X-CSRF-TOKEN': token },
-        body: payload,
-        credentials: 'same-origin'
-    })
-    .then(res => res.json())
-    .then(data => {
-        console.log('✅ Payment response:', data);
+         fetch('/orders/' + orderId + '/payment', {
+            method: 'POST',
+            headers: { 'X-CSRF-TOKEN': token },
+            body: payload,
+            credentials: 'same-origin'
+         })
+         .then(res => res.json())
+         .then(data => {
+            console.log('✅ Payment response:', data);
 
-        if (data.success) {
+            if (data.success) {
 
             // Update UI
             const row = document.querySelector(`.toggle-details[data-id="${orderId}"]`)?.closest('tr');
             if (row) {
-                const statusCell = row.querySelectorAll('td')[5];
-                if (statusCell) statusCell.textContent = 'Paid';
+                  const statusCell = row.querySelectorAll('td')[5];
+                  if (statusCell) statusCell.textContent = 'Paid';
             }
 
             // Close payment modal, then show invoice

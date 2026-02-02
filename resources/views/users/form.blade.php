@@ -435,17 +435,28 @@
                                     </div>
                                     <div class="row">
                                         {{-- <div class="col-md-3 form-group"><label>Supervisor (user id)</label><input type="number" id="wi_supervisor" class="form-control" placeholder="Supervisor id"></div> --}}
-                                        <div class="col-md-3 form-group">
-                                            <label>Supervisor</label>
-                                            <select id="wi_supervisor" class="form-control">
-                                                <option value="">Select Supervisor</option>
-                                                @foreach($users as $u)
-                                                    <option value="{{ $u->username }}">
-                                                        {{ $u->username }}
-                                                    </option>
-                                                @endforeach
-                                            </select>
-                                        </div>
+<div class="col-md-3 form-group">
+    <label>Supervisor</label>
+    <select id="wi_supervisor" name="wi_supervisor" class="form-control">
+        <option value="">No Supervisor / Not Applicable</option>
+        
+        @foreach($potentialSupervisors as $supervisor)
+            @php
+                // Get the highest/most recent designation for this supervisor
+                $latestDesignation = $supervisor->employeeWorkInformations->first()?->designation?->name ?? '';
+            @endphp
+            
+            <option value="{{ $supervisor->username }}"
+                    data-designation="{{ strtolower($latestDesignation) }}"
+                    {{ old('wi_supervisor') === $supervisor->username ? 'selected' : '' }}>
+                {{ $supervisor->name ?? $supervisor->username }}
+                <small class="text-muted">
+                    ({{ $supervisor->username }} • {{ $latestDesignation ?: '—' }})
+                </small>
+            </option>
+        @endforeach
+    </select>
+</div>
                                         <div class="col-md-3 form-group"><label>Monthly Rate</label><input type="number" step="0.01" id="wi_monthly_rate" class="form-control"></div>
                                         <div class="col-md-3 form-group"><label>Daily Rate</label><input type="number" step="0.01" id="wi_daily_rate" class="form-control"></div>
                                         <div class="col-md-3 form-group"><label>Hourly Rate</label><input type="number" step="0.01" id="wi_hourly_rate" class="form-control"></div>
@@ -644,11 +655,11 @@
     </div>
 
         <!-- Remove -->
-        <div class="col-md-1">
+        {{-- <div class="col-md-1">
             <button type="button" class="btn btn-sm btn-outline-danger remove-allowance">
                 Remove
             </button>
-        </div>
+        </div> --}}
     </div>
     @endforeach
 </div>
@@ -2053,6 +2064,66 @@ document.addEventListener('click', function(e) {
             }
         });
     });
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const positionSelect = document.getElementById('wi_designation');
+    const supervisorSelect = document.getElementById('wi_supervisor');
+
+    if (!positionSelect || !supervisorSelect) return;
+
+    // Store all options once
+    const allSupervisorOptions = Array.from(supervisorSelect.options);
+
+    function filterSupervisors() {
+        const selectedPosition = positionSelect.value;
+        
+        // Clear current options except the first one ("No Supervisor")
+        supervisorSelect.innerHTML = '';
+        supervisorSelect.appendChild(allSupervisorOptions[0].cloneNode(true));
+
+        let allowedDesignations = [];
+
+        // Define rules: who can supervise whom
+        if (selectedPosition === '') {
+            // No position selected → show all
+            allowedDesignations = ['manager', 'supervisor', 'director', 'ceo'];
+        } else if (['staff', 'regular', 'employee'].includes(selectedPosition.toLowerCase())) {
+            // Normal employees can have almost anyone as supervisor
+            allowedDesignations = ['manager', 'supervisor', 'director', 'ceo'];
+        } else if (selectedPosition.toLowerCase() === 'supervisor') {
+            // Supervisors should only have higher-ups
+            allowedDesignations = ['manager', 'director', 'ceo'];
+        } else if (selectedPosition.toLowerCase() === 'manager') {
+            allowedDesignations = ['director', 'ceo'];
+        } else if (['director', 'ceo'].includes(selectedPosition.toLowerCase())) {
+            // Directors/CEOs usually have no supervisor
+            allowedDesignations = [];
+        } else {
+            // Fallback: show all
+            allowedDesignations = ['manager', 'supervisor', 'director', 'ceo'];
+        }
+
+        // Add back matching options
+        allSupervisorOptions.forEach(opt => {
+            if (opt.value === '') return; // skip placeholder
+
+            const optDesignation = opt.getAttribute('data-designation') || '';
+            if (allowedDesignations.includes(optDesignation)) {
+                supervisorSelect.appendChild(opt.cloneNode(true));
+            }
+        });
+
+        // If nothing matches, keep "No Supervisor" as default
+    }
+
+    // Run on page load (for old() values)
+    filterSupervisors();
+
+    // Run when position changes
+    positionSelect.addEventListener('change', filterSupervisors);
+});
 </script>
 @endsection
 

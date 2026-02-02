@@ -84,10 +84,28 @@ class UserController extends Controller
         $designations = Designation::all();
         $departments = Department::all();
 
+        // All possible supervisors (your existing filtered list: Manager/Supervisor/Director/CEO)
+        $potentialSupervisors = User::with(['employeeWorkInformations' => function($q) {
+            $q->latest('hire_date')->limit(1);
+        }])
+            ->whereHas('employeeWorkInformations', function($q) {
+                $q->whereHas('designation', function($dq) {
+                    $dq->whereIn('name', ['Manager', 'Supervisor', 'Director', 'CEO']);
+                });
+            })
+            ->orderBy('username')
+            ->get();
+
+        // // Special: users who are currently "Supervisor"
+        // $supervisorUsersOnly = $potentialSupervisors->filter(function($user) {
+        //     $latest = $user->employeeWorkInformations->first();
+        //     return $latest && $latest->designation?->name === 'Supervisor';
+        // });
+
         // list of users for selects (supervisor etc.)
         $users = User::orderBy('username')->get();
 
-        return view('users.form', compact('roles', 'branches', 'permissions', 'shifts', 'allowances', 'leaves', 'designations', 'departments', 'salaryMethods', 'users'));
+        return view('users.form', compact('roles', 'branches', 'potentialSupervisors', 'permissions', 'shifts', 'allowances', 'leaves', 'designations', 'departments', 'salaryMethods', 'users'));
     }
 
     // Store a newly created user
@@ -621,6 +639,21 @@ if (!empty($validated['salary_method'])) {
         ];
         $designations = Designation::all();
         $departments = Department::all();
+
+        $potentialSupervisors = User::with(['employeeWorkInformations' => function($q) {
+            $q->latest('hire_date')->limit(1);
+        }])
+            ->whereHas('employeeWorkInformations.designation', function($q) {
+                $q->whereIn('name', ['Manager', 'Supervisor', 'Director', 'CEO']);
+            })
+            ->orderBy('username')
+            ->get();
+
+        $supervisorUsersOnly = $potentialSupervisors->filter(function($user) {
+            $latest = $user->employeeWorkInformations->first();
+            return $latest && $latest->designation?->name === 'Supervisor';
+        });
+        
         $users = User::orderBy('username')->get();
 
         // Extract related data for the view
@@ -657,6 +690,8 @@ if (!empty($validated['salary_method'])) {
             'educationalBackgrounds' => $educationalBackgrounds,
             'workInformations' => $workInformations,
             'userBranchPermissions' => $userBranchPermissions,
+            'potentialSupervisors' => $potentialSupervisors,
+            'supervisorUsersOnly' => $supervisorUsersOnly
         ]);
     }
 

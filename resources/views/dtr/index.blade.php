@@ -128,14 +128,23 @@
                                         <td>{{ $record->user_name }}</td>
                                         <td>{{ $record->salary_method_name ?? 'Shift #' . ($record->shift_id ?? '-') }}</td>
                                         <td>
-                                            @php
-                                                $shift = is_array($record->time_of_shift)
-                                                    ? $record->time_of_shift
-                                                    : (is_string($record->time_of_shift) ? json_decode($record->time_of_shift, true) : null);
+                                        @php
+                                            $timeStr = $record->time_of_shift ?? '--:----:--';
 
-                                                $start = isset($shift['start']) ? \Carbon\Carbon::createFromFormat('H:i', $shift['start'])->format('g:i A') : '-';
-                                                $end   = isset($shift['end'])   ? \Carbon\Carbon::createFromFormat('H:i', $shift['end'])->format('g:i A')   : '-';
-                                            @endphp
+                                            // Split and clean
+                                            $parts = array_map('trim', explode('-', $timeStr, 2));
+                                            $startRaw = $parts[0] ?? '--:--';
+                                            $endRaw   = $parts[1] ?? '--:--';
+
+                                            // Format to 12-hour with AM/PM if valid time
+                                            $start = $startRaw !== '--:--' && preg_match('/^\d{2}:\d{2}$/', $startRaw)
+                                                ? \Carbon\Carbon::createFromFormat('H:i', $startRaw)->format('g:i A')
+                                                : $startRaw;
+
+                                            $end = $endRaw !== '--:--' && preg_match('/^\d{2}:\d{2}$/', $endRaw)
+                                                ? \Carbon\Carbon::createFromFormat('H:i', $endRaw)->format('g:i A')
+                                                : $endRaw;
+                                        @endphp
 
                                             {{ $start }} - {{ $end }}
                                         </td>
