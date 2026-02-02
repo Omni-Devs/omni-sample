@@ -1,5 +1,11 @@
 @extends('layouts.app')
 @section('content')
+<style>
+  .dropdown-menu {
+        position: relative !important;
+        transform: translate(0px, 0px) !important;
+    }
+</style>
 <div class="main-content" id="orderTypeApp">
    <div>
       <div class="breadcrumb">
@@ -249,35 +255,6 @@
                      </div>
                      <div class="vgt-global-search__actions vgt-pull-right">
                         <div>
-                           <div id="dropdown-form" class="dropdown b-dropdown mx-1 btn-group" rounded="">
-                              <!----><button id="dropdown-form__BV_toggle_" aria-haspopup="menu" aria-expanded="false" type="button" class="btn dropdown-toggle btn-light dropdown-toggle-no-caret"><i class="i-Gear"></i></button>
-                              <ul role="menu" tabindex="-1" aria-labelledby="dropdown-form__BV_toggle_" class="dropdown-menu dropdown-menu-right">
-                                 <li role="presentation">
-                                    <header id="dropdown-header-label" class="dropdown-header">
-                                       Columns
-                                    </header>
-                                 </li>
-                                 <li role="presentation" style="width: 220px;">
-                                    <form tabindex="-1" class="b-dropdown-form p-0">
-                                       <section class="ps-container ps">
-                                          <div class="ps__rail-x" style="left: 0px; bottom: 0px;">
-                                             <div class="ps__thumb-x" tabindex="0" style="left: 0px; width: 0px;"></div>
-                                          </div>
-                                          <div class="ps__rail-y" style="top: 0px; right: 0px;">
-                                             <div class="ps__thumb-y" tabindex="0" style="top: 0px; height: 0px;"></div>
-                                          </div>
-                                       </section>
-                                    </form>
-                                 </li>
-                              </ul>
-                           </div>
-                           <button type="button" class="btn mx-1 btn-outline-info ripple btn-sm collapsed" aria-expanded="false" aria-controls="sidebar-right" style="overflow-anchor: none;"><i class="i-Filter-2"></i>
-                           Filter
-                           </button> <button type="button" class="btn mx-1 btn-outline-success ripple btn-sm"><i class="i-File-Copy"></i> PDF
-                           </button> <button class="btn btn-sm btn-outline-danger ripple mx-1"><i class="i-File-Excel"></i> EXCEL
-                           </button> <button type="button" class="btn btn-info m-1 btn-sm"><i class="i-Upload"></i>
-                           Import
-                           </button>
                            <!-- ADD ORDER BUTTON -->
                            <button
                               type="button"
@@ -340,11 +317,11 @@
                                  <span>Number Of Pax</span>
                                  <button><span class="sr-only">Sort table by Number of Pax in descending order</span></button>
                               </th>
-                              <th scope="col" class="vgt-left-align text-right sortable">
+                              <th scope="col" class="vgt-left-align text-left sortable">
                                  <span>Status</span>
                                  <button><span class="sr-only">Sort table by Status in descending order</span></button>
                               </th>
-                              <th scope="col" class="vgt-left-align text-right sortable">
+                              <th scope="col" class="vgt-left-align text-left sortable">
                                  <span>Amount</span>
                                  <button><span class="sr-only">Sort table by Amount Price in descending order</span></button>
                               </th>
@@ -354,16 +331,18 @@
                            </tr>
                         </thead>
                   <tbody>
-                     @php
-                        // If a tab/status filter is set (via $status), filter the orders here
-                        // so each tab only shows orders that match that status.
-                        $filteredOrders = $orders;
-                           if (!empty($status)) {
-                              $filteredOrders = $orders->filter(function($o) use ($status) {
-                                 return strtolower($o->status) === strtolower($status);
-                              });
-                        }
-                     @endphp
+                    @php
+$filteredOrders = $orders;
+
+if ($status === 'serving') {
+    $filteredOrders = $orders->filter(fn ($o) =>
+    in_array($o->status, ['serving', 'served'])
+    && $o->branch_id === $branch->id
+);
+} elseif ($status) {
+    $filteredOrders = $orders->where('status', $status)->where('branch_id', $branch->id);;
+}
+@endphp
 
                      @forelse ($filteredOrders as $order)
                         <tr x-data="{ open: false }">
@@ -379,7 +358,7 @@
       <td class="text-left">{{ $order->table_no }}</td>
       <td class="text-left">{{ $order->number_pax }}</td>
       <td class="text-left">{{ ucfirst($order->status) }}</td>
-      <td class="text-left" id="amount_{{ $order->id }}">
+      {{-- <td class="text-left" id="amount_{{ $order->id }}"> --}}
       <td class="text-left fw-bold {{ $order->status === 'billout' ? 'text-success' : '' }}">
          @php 
             $grandTotal = 0; 
@@ -434,7 +413,7 @@
                <th>Product</th>
                <th>Qty</th>
                <th>Amount</th>
-               <th></th>
+               <th>Status</th>
             </tr>
          </thead>
          <tbody>
@@ -452,6 +431,9 @@
                   <td>
                         ₱{{ number_format($detail->price, 2) }}
                   </td>
+                  <td>
+                        {{ $detail->status }}
+                  </td>
                </tr>
             @endforeach
             </tbody>
@@ -461,7 +443,7 @@
       </tr>
    @empty
       <tr>
-         <td colspan="7" class="vgt-center-align vgt-text-disabled">
+         <td colspan="9" class="vgt-center-align vgt-text-disabled">
             No orders found
          </td>
       </tr>
