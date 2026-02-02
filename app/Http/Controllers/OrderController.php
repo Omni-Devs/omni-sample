@@ -31,8 +31,12 @@ class OrderController extends Controller
                 $status = 'serving';
             }
 
+        // Get current branch (GLOBAL HELPER)
+        $currentBranchId = current_branch_id();
+
         // Fetch orders filtered by status
         $orders = Order::with(['details.product', 'user', 'paymentDetails'])
+            ->where('branch_id', $currentBranchId)
             ->when($status === 'serving', function ($q) {
             $q->where('status', 'serving')
               ->orWhereHas('details', function ($query) {
@@ -51,8 +55,9 @@ class OrderController extends Controller
         $paymentMethods = Payment::where('status', 'active')->orderBy('name')->get();
         $cashEquivalents = CashEquivalent::where('status', 'active')->orderBy('name')->get();
 
-        // Load branch information (for receipt header). Use first branch as default.
-        $branch = Branch::first();
+        // Current branch info
+        $branch = Branch::find($currentBranchId);
+        // dd($branch);
 
         return view('orders.index', compact('orders', 'discounts', 'status', 'paymentMethods', 'cashEquivalents', 'branch'));
     }

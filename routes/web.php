@@ -47,6 +47,7 @@ use App\Http\Controllers\PosClossingController;
 use App\Http\Controllers\LeavesController;
 use App\Http\Controllers\ShiftsController;
 use App\Http\Controllers\DailyTimeRecordController;
+use App\Http\Controllers\TableLayoutController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -634,6 +635,15 @@ Route::prefix('workforce/leave-requests')->name('leave-requests.')->group(functi
     Route::put('/{id}/update-status', [LeaveRequestController::class, 'updateStatus']);
     Route::get('/{id}/edit', [LeaveRequestController::class, 'edit'])->name('leave-requests.edit');
     Route::put('/{id}', [LeaveRequestController::class, 'update'])->name('leave-requests.update');
+});
+
+Route::prefix('settings/table-layouts')->name('table-layouts.')->group(function () {
+    Route::get('/', [TableLayoutController::class, 'index'])->name('index');
+    // Route::get('/fetch', [LeaveRequestController::class, 'fetchLeaveRequests'])->name('fetch');
+    // Route::post('/', [LeaveRequestController::class, 'store'])->name('store');
+    // Route::put('/{id}/update-status', [LeaveRequestController::class, 'updateStatus']);
+    // Route::get('/{id}/edit', [LeaveRequestController::class, 'edit'])->name('leave-requests.edit');
+    // Route::put('/{id}', [LeaveRequestController::class, 'update'])->name('leave-requests.update');
 });
 
 
