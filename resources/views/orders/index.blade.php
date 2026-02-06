@@ -42,7 +42,7 @@
 
       <!-- Footer -->
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
         <button class="btn btn-primary" @click="submitOrderType">Continue</button>
       </div>
 
@@ -88,7 +88,7 @@
                         <div class="modal-body">
                            <div class="container-fluid">
                               <div class="row mb-2"> 
-                                 <div class="col-md-2">
+                                 <div class="col-md-2 offset-md-2">
                                     <label class="form-label">Order No</label>
                                     <input type="text" class="form-control" value="{{ $order->id }}" readonly>
                                  </div>
@@ -103,7 +103,7 @@
                               </div>
 
                               <div class="row mb-2">
-                                 <div class="col-md-2">
+                                 <div class="col-md-2 offset-md-2">
                                     <label class="form-label">Table No</label>
                                     <input type="text" class="form-control" value="{{ $order->table_no }}" readonly>
                                  </div>
@@ -212,10 +212,13 @@
 
                            </div>
                         </div>
-                        <div class="modal-footer">
-                           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                           <button type="button" class="btn btn-primary" data-bs-target="#paymentModal{{ $order->id }}" data-bs-toggle="modal" onclick="submitPayment({{ $order->id }})">Submit Payment</button>
-                        </div>
+                     <div class="modal-footer justify-content-start">
+                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                     <button type="button" class="btn btn-primary" onclick="submitPayment({{ $order->id }})">
+                        Submit
+                     </button>
+                  </div>
+
                      </div>
                   </div>
                </div>
@@ -450,109 +453,437 @@ if ($status === 'serving') {
       
                   </div>
                   </td></tr></tbody></table>
-@foreach($orders as $order)
-<div class="modal fade" id="billOutModal{{ $order->id }}" tabindex="-1" aria-labelledby="billOutLabel{{ $order->id }}" aria-hidden="true">
-   <div class="modal-dialog modal-lg">
-      <div class="modal-content">
+                  @foreach($orders as $order)
+                  <div class="modal fade" id="billOutModal{{ $order->id }}" tabindex="-1" aria-labelledby="billOutLabel{{ $order->id }}" aria-hidden="true">
+                     <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
 
-         {{-- Modal Header --}}
-         <div class="modal-header">
-         <h5 class="modal-title">Bill Out - Order #{{ $order->id }}</h5>
-         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                           {{-- Modal Header --}}
+                           <div class="modal-header">
+                           <h5 class="modal-title">Bill Out - Order #{{ $order->id }}</h5>
+                           </div>
+
+                           {{-- Modal Body --}}
+                           <div class="modal-body">
+                           <div class="container-fluid">
+                              {{-- Order Info --}}
+                              <div class="row mb-2">
+                                 <div class="col-md-2 offset-md-1">
+                                 <label class="form-label text-center w-100">Order No</label>
+                                 <input type="text" class="form-control text-center" value="{{ $order->id }}" readonly>
+                                 </div>
+                                 <div class="col-md-2">
+                                 <label class="form-label text-center w-100">No of Pax</label>
+                                 <input type="text" class="form-control text-center" value="{{ $order->number_pax }}" readonly>
+                                 </div>
+                                 <div class="col-md-3">
+                                 <label class="form-label text-center w-100">Date & Time</label>
+                                 <input type="text" class="form-control text-center" value="{{ $order->created_at->format('Y-m-d H:i') }}" readonly>
+                                 </div>
+                                 <div class="col-md-2">
+                                 <label class="form-label text-center w-100">Cashier</label>
+                                 <input type="text" class="form-control text-center" value="{{ $order->cashier?->name ?? auth()->user()->name }}" readonly>
+                                 </div>
+                              </div>
+
+                              <div class="row mb-2">
+                                 {{-- <div class="col-md-2">
+                                 <label class="form-label">Table No</label>
+                                 <input type="text" class="form-control" value="{{ $order->table_no }}" readonly> --}}
+                                 <div class="col-md-2 offset-md-2">
+                                 <label class="form-label text-center w-100">Table No</label>
+                                 <input type="text" class="form-control text-center" value="{{ $order->table_no }}" readonly>
+                                 </div>
+                                 <div class="col-md-3">
+                                 <label class="form-label text-center w-100">Waiter</label>
+                                 <input type="text" class="form-control text-center" value="{{ $order->user?->name }}" readonly>
+                                 </div>
+                                 <div class="col-md-2">
+                                 <label class="form-label text-center w-100">Status</label>
+                                 <input type="text" class="form-control text-center" value="{{ ucfirst($order->status) }}" readonly>
+                                 </div>
+                              </div>
+
+                              {{-- Gross Charge --}}
+                              <hr>
+                              <h6 class="fw-bold text-center">GROSS CHARGE</h6>
+                              <div class="row mb-3">
+                                 <div class="col-md-4 offset-md-4">
+                                 <input type="text" class="form-control text-center fw-bold" 
+                                          value="₱{{ number_format($order->details->sum(fn($d) => ($d->price * $d->quantity) - ($d->discount ?? 0)), 2) }}" readonly>
+                                 </div>
+                              </div>
+
+                              @php
+                     // compute gross for this order explicitly (per-order, not a shared var)
+                     $orderGross = $order->details->sum(fn($d) => ($d->price * $d->quantity) - ($d->discount ?? 0));
+                  @endphp
+
+      {{-- Entries Section --}}
+      {{-- <div class="col-md-5 position-relative">
+      <label class="form-label">Discount</label>
+
+      <div class="d-flex align-items-center gap-2">
+         <input type="hidden" name="discount_ids_{{ $order->id }}" id="discountIds_{{ $order->id }}">
+
+         <div class="col-md-12 p-0">
+            <input type="text" id="selectedDiscountName_{{ $order->id }}"
+                     class="form-control"
+                     placeholder="Select discounts..."
+                     onclick="toggleDiscountDropdown({{ $order->id }})"
+                     readonly>
          </div>
+         <button type="button"
+                  class="btn btn-outline-primary btn-sm manage-btn"
+                  onclick="toggleDiscountForm({{ $order->id }})">
+               Manage
+         </button>
+      </div>
 
-         {{-- Modal Body --}}
-         <div class="modal-body">
-         <div class="container-fluid">
-            {{-- Order Info --}}
-            <div class="row mb-2">
-               <div class="col-md-2">
-               <label class="form-label">Order No</label>
-               <input type="text" class="form-control" value="{{ $order->id }}" readonly>
+      <div id="discountDropdown_{{ $order->id }}"
+            class="border rounded p-2 position-absolute bg-white w-100"
+            style="display:none; max-height:200px; overflow-y:auto; z-index:100;">
+         @foreach($discounts as $discount)
+               <div class="form-check">
+                  <input class="form-check-input discount-checkbox-single" type="checkbox"
+                        value="{{ $discount->id }}"
+                        data-name="{{ $discount->name }}"
+                        data-value="{{ $discount->value }}"
+                        onchange="updateSelectedDiscounts({{ $order->id }})"
+                        id="discountCheck_{{ $order->id }}_{{ $discount->id }}">
+                  <label class="form-check-label" for="discountCheck_{{ $order->id }}_{{ $discount->id }}">
+                     {{ $discount->name }} ({{ $discount->value }}%)
+                  </label>
                </div>
-               <div class="col-md-2">
-               <label class="form-label">No of Pax</label>
-               <input type="text" class="form-control" value="{{ $order->number_pax }}" readonly>
-               </div>
-               <div class="col-md-3">
-               <label class="form-label">Date & Time</label>
-               <input type="text" class="form-control" value="{{ $order->created_at->format('Y-m-d H:i') }}" readonly>
-               </div>
-               <div class="col-md-3">
-               <label class="form-label">Cashier</label>
-               <input type="text" class="form-control" value="{{ $order->cashier?->name ?? auth()->user()->name }}" readonly>
-               </div>
-            </div>
-
-            <div class="row mb-2">
-               <div class="col-md-2">
-               <label class="form-label">Table No</label>
-               <input type="text" class="form-control" value="{{ $order->table_no }}" readonly>
-               </div>
-               <div class="col-md-3">
-               <label class="form-label">Waiter</label>
-               <input type="text" class="form-control" value="{{ $order->user?->name }}" readonly>
-               </div>
-               <div class="col-md-2">
-               <label class="form-label">Status</label>
-               <input type="text" class="form-control" value="{{ ucfirst($order->status) }}" readonly>
-               </div>
-            </div>
-
-            {{-- Gross Charge --}}
-            <hr>
-            <h6 class="fw-bold text-center">GROSS CHARGE</h6>
-            <div class="row mb-3">
-               <div class="col-md-4 offset-md-4">
-               <input type="text" class="form-control text-center fw-bold" 
-                        value="₱{{ number_format($order->details->sum(fn($d) => ($d->price * $d->quantity) - ($d->discount ?? 0)), 2) }}" readonly>
-               </div>
-            </div>
-
-            @php
-    // compute gross for this order explicitly (per-order, not a shared var)
-    $orderGross = $order->details->sum(fn($d) => ($d->price * $d->quantity) - ($d->discount ?? 0));
-@endphp
-
-            {{-- Entries Section --}}
-   <div class="col-md-5 position-relative">
-    <label class="form-label">Discount</label>
-
-    <input type="text" id="selectedDiscountName_{{ $order->id }}"
-           class="form-control" placeholder="Select discounts..."
-           onclick="toggleDiscountDropdown({{ $order->id }})" readonly>
-
-    <div id="discountDropdown_{{ $order->id }}"
-         class="border rounded p-2 position-absolute bg-white w-100"
-         style="display:none; max-height:200px; overflow-y:auto; z-index:100;">
-        @foreach($discounts as $discount)
-            <div class="form-check">
-                <input class="form-check-input discount-checkbox-single" type="checkbox"
-                       value="{{ $discount->id }}"
-                       data-name="{{ $discount->name }}"
-                       data-value="{{ $discount->value }}"
-                       onchange="updateSelectedDiscounts({{ $order->id }})"
-                       id="discountCheck_{{ $order->id }}_{{ $discount->id }}">
-                <label class="form-check-label" for="discountCheck_{{ $order->id }}_{{ $discount->id }}">
-                    {{ $discount->name }} ({{ $discount->value }}%)
-                </label>
-            </div>
-        @endforeach
-    </div>
+         @endforeach
+      </div>
 
     <input type="hidden" name="discount_ids_{{ $order->id }}" id="discountIds_{{ $order->id }}">
 
-    <!-- Manage toggles the Apply Discount box only (don't call calculate here) -->
-    <button type="button" class="btn btn-outline-primary btn-sm mt-2 manage-btn"
-            onclick="toggleDiscountForm({{ $order->id }})">
-        Manage
-    </button>
+</div> --}}
+
+{{-- Entries Section --}}
+<div class="row mb-3">
+    <div class="col-md-10 position-relative">
+        <label class="form-label">Discount <span class="text-danger">*</span></label>
+
+        <div class="d-flex align-items-start gap-2">
+            <input type="hidden" name="discount_ids_{{ $order->id }}" id="discountIds_{{ $order->id }}">
+
+            <div class="flex-grow-1 position-relative">
+                <!-- Selected Tags Display -->
+                <div class="form-control discount-select-container" 
+                     id="discountSelectContainer_{{ $order->id }}"
+                     onclick="if (!event.target.closest('.discount-tag-close')) toggleDiscountDropdown({{ $order->id }})"
+                     style="min-height: 80px; max-height: 150px; overflow-y: auto; cursor: pointer; display: flex; flex-wrap: wrap; gap: 6px; align-items: flex-start; align-content: flex-start; padding: 8px;">
+                    <span class="text-muted" id="discountPlaceholder_{{ $order->id }}" style="margin: 4px;">Select discounts...</span>
+                </div>
+
+                <!-- Dropdown Menu -->
+                <div id="discountDropdown_{{ $order->id }}"
+                     class="discount-dropdown-menu border rounded bg-white shadow-sm"
+                     style="display:none; position: absolute; top: 100%; left: 0; right: 0; max-height: 250px; overflow-y: auto; z-index: 1050; margin-top: 2px;">
+                    @foreach($discounts as $discount)
+                        <div class="discount-dropdown-item" 
+                             onclick="toggleDiscountSelection({{ $order->id }}, {{ $discount->id }}, '{{ $discount->name }}', {{ $discount->value }})"
+                             style="padding: 10px 12px; cursor: pointer; transition: background-color 0.15s ease;">
+                            <div class="form-check mb-0">
+                                <input class="form-check-input discount-checkbox-single" 
+                                       type="checkbox"
+                                       value="{{ $discount->id }}"
+                                       data-name="{{ $discount->name }}"
+                                       data-value="{{ $discount->value }}"
+                                       id="discountCheck_{{ $order->id }}_{{ $discount->id }}"
+                                       style="pointer-events: none;">
+                                <label class="form-check-label" 
+                                       for="discountCheck_{{ $order->id }}_{{ $discount->id }}"
+                                       style="cursor: pointer; user-select: none; font-size: 14px;">
+                                    {{ $discount->name }} ({{ $discount->value }}%)
+                                </label>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+
+            <button type="button"
+                    class="btn btn-outline-primary btn-sm manage-btn"
+                    onclick="toggleDiscountForm({{ $order->id }})"
+                    style="white-space: nowrap; margin-top: 0;">
+                Manage
+            </button>
+        </div>
+    </div>
 </div>
+<style>
+
+/* Submit button disabled state */
+#submitBtn_{{ $order->id }}:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+#submitBtn_{{ $order->id }}:not(:disabled) {
+    opacity: 1;
+    cursor: pointer;
+}
+
+/* Discount Select Styles */
+.discount-select-container {
+    position: relative;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.discount-select-container:hover {
+    border-color: #86b7fe;
+}
+
+.discount-select-container::-webkit-scrollbar {
+    width: 8px;
+}
+
+.discount-select-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.discount-select-container::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+}
+
+.discount-select-container::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+.discount-tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 10px;
+    background-color: #e7f3ff;
+    border: 1px solid #b3d9ff;
+    border-radius: 4px;
+    font-size: 13px;
+    gap: 8px;
+    white-space: nowrap;
+    margin: 2px;
+}
+
+.discount-tag-close {
+    cursor: pointer;
+    font-weight: bold;
+    color: #0066cc;
+    padding: 0 4px;
+    border-radius: 3px;
+    transition: background-color 0.15s ease;
+    line-height: 1;
+    font-size: 18px;
+}
+
+.discount-tag-close:hover {
+    background-color: rgba(0, 102, 204, 0.15);
+    color: #004080;
+}
+
+.discount-dropdown-menu {
+    border: 1px solid #dee2e6 !important;
+}
+
+.discount-dropdown-item {
+    display: flex;
+    align-items: center;
+}
+
+.discount-dropdown-item:hover {
+    background-color: #f0f7ff;
+}
+
+.discount-dropdown-item .form-check {
+    width: 100%;
+    margin-bottom: 0;
+}
+
+.discount-dropdown-item .form-check-input:checked {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+}
+
+.discount-dropdown-item:not(:last-child) {
+    border-bottom: 1px solid #f0f0f0;
+}
+
+/* Scrollbar styling for dropdown */
+.discount-dropdown-menu::-webkit-scrollbar {
+    width: 6px;
+}
+
+.discount-dropdown-menu::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.discount-dropdown-menu::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 3px;
+}
+
+.discount-dropdown-menu::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* Manage button alignment */
+.manage-btn {
+    height: 38px;
+    align-self: flex-start;
+}
+
+/* Button disabled state */
+#calculateBtn_{{ $order->id }}:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+#calculateBtn_{{ $order->id }}:not(:disabled) {
+    opacity: 1;
+    cursor: pointer;
+}
+</style>
+
+
+<script>
+// Toggle discount dropdown visibility
+function toggleDiscountDropdown(orderId) {
+    const dropdown = document.getElementById('discountDropdown_' + orderId);
+    const isVisible = dropdown.style.display === 'block';
+    
+    // Close all other dropdowns
+    document.querySelectorAll('[id^="discountDropdown_"]').forEach(dd => {
+        if (dd.id !== 'discountDropdown_' + orderId) {
+            dd.style.display = 'none';
+        }
+    });
+    
+    dropdown.style.display = isVisible ? 'none' : 'block';
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click', function(event) {
+    const target = event.target;
+    const isDropdownClick = target.closest('[id^="discountSelectContainer_"]') || 
+                           target.closest('[id^="discountDropdown_"]');
+    
+    if (!isDropdownClick) {
+        document.querySelectorAll('[id^="discountDropdown_"]').forEach(dd => {
+            dd.style.display = 'none';
+        });
+    }
+});
+
+// Toggle discount selection
+// Toggle discount selection
+function toggleDiscountSelection(orderId, discountId, discountName, discountValue) {
+    const checkbox = document.getElementById(`discountCheck_${orderId}_${discountId}`);
+    const hiddenInput = document.getElementById('discountIds_' + orderId);
+
+    // Toggle the checkbox
+    checkbox.checked = !checkbox.checked;
+
+    // Update visual tags
+    updateSelectedDiscountTags(orderId);
+
+    // ────────────────────────────────────────────────
+    // NEW: Auto-close dropdown after selection
+    const dropdown = document.getElementById('discountDropdown_' + orderId);
+    if (dropdown) {
+        dropdown.style.display = 'none';
+    }
+    // ────────────────────────────────────────────────
+
+    // Update button states
+    setTimeout(() => {
+        updateCalculateButtonState(orderId);
+    }, 100);
+}
+
+// Update the visual tags display
+function updateSelectedDiscountTags(orderId) {
+    const container = document.getElementById('discountSelectContainer_' + orderId);
+    const placeholder = document.getElementById('discountPlaceholder_' + orderId);
+    const hiddenInput = document.getElementById('discountIds_' + orderId);
+    
+    // Get all checked checkboxes
+    const checkedBoxes = document.querySelectorAll(
+        `#discountDropdown_${orderId} input[type="checkbox"]:checked`
+    );
+    
+    // Clear container
+    container.innerHTML = '';
+    
+    if (checkedBoxes.length === 0) {
+        // Show placeholder
+        const placeholderSpan = document.createElement('span');
+        placeholderSpan.className = 'text-muted';
+        placeholderSpan.id = `discountPlaceholder_${orderId}`;
+        placeholderSpan.textContent = 'Select discounts...';
+        container.appendChild(placeholderSpan);
+        hiddenInput.value = '';
+    } else {
+        // Create tags for selected items
+        const selectedIds = [];
+        checkedBoxes.forEach(checkbox => {
+            const discountName = checkbox.dataset.name;
+            const discountValue = checkbox.dataset.value;
+            const discountId = checkbox.value;
+            
+            selectedIds.push(discountId);
+            
+            const tag = document.createElement('span');
+            tag.className = 'discount-tag';
+            tag.innerHTML = `
+                ${discountName}
+                <span class="discount-tag-close" 
+                      onclick="removeDiscountTag(event, ${orderId}, ${discountId})"
+                      title="Remove">×</span>
+            `;
+            container.appendChild(tag);
+        });
+        
+        // Update hidden input
+        hiddenInput.value = selectedIds.join(',');
+    }
+}
+
+// Remove individual discount tag
+function removeDiscountTag(event, orderId, discountId) {
+    event.stopPropagation();
+    
+    const checkbox = document.getElementById(`discountCheck_${orderId}_${discountId}`);
+    if (checkbox) {
+        checkbox.checked = false;
+        updateSelectedDiscountTags(orderId);
+        
+        // Clear saved data for this discount
+        if (savedDiscountPersons[orderId] && savedDiscountPersons[orderId][discountId]) {
+            delete savedDiscountPersons[orderId][discountId];
+        }
+        
+        // Update button state when discount is removed
+        setTimeout(() => {
+            updateCalculateButtonState(orderId);
+        }, 100);
+    }
+}
+
+// Update the old function to use the new logic
+function updateSelectedDiscounts(orderId) {
+    updateSelectedDiscountTags(orderId);
+}
+</script>
+
 </div>
 
       <!-- Apply Discount form (rendered by toggle) -->
 <div id="discountForm_{{ $order->id }}" class="border rounded p-3 mt-3" style="display:none;">
-    <h6 class="text-center mb-3">Apply Discount</h6>
+    <h6 class="text-center mb-3">Manage Discount</h6>
     <div id="selectedDiscountsContainer_{{ $order->id }}"></div>
     <div class="d-flex justify-content-center mt-3">
         <button type="button" class="btn btn-danger btn-sm px-3" onclick="toggleDiscountForm({{ $order->id }})">
@@ -563,9 +894,9 @@ if ($status === 'serving') {
 
 <!-- Other Charges / Calculate -->
 <div class="row mb-2">
-    <div class="col-md-4 mt-3">
+    <div class="col-md-4 mt-3 offset-md-2">
         <label class="form-label">Other Charges</label>
-        <input type="number" class="form-control" id="otherCharges_{{ $order->id }}" name="other_charges" placeholder="Enter amount">
+        <input type="number" class="form-control" id="otherCharges_{{ $order->id }}" name="other_charges" placeholder="Enter Amount">
     </div>
     <div class="col-md-4 mt-3">
         <label class="form-label">Charges Description</label>
@@ -575,9 +906,10 @@ if ($status === 'serving') {
 
 <div class="row mb-3">
    <div class="col-md-12 text-center">
-      <!-- pass the computed per-order gross explicitly (no shared $grandTotal) -->
-      <button type="button" class="btn btn-success"
-              onclick="calculateChargesAndDiscounts({{ $order->id }}, {{ json_encode((float)$orderGross) }}, {{ $order->number_pax }})">
+      <button type="button" 
+               class="btn btn-success" 
+               id="calculateBtn_{{ $order->id }}"
+               onclick="calculateChargesAndDiscounts({{ $order->id }}, {{ json_encode((float)$orderGross) }}, {{ $order->number_pax }})">
          Calculate Charges and Discounts
       </button>
    </div>
@@ -633,11 +965,16 @@ if ($status === 'serving') {
       </div>
    </div>
 
-                  {{-- Modal Footer (Submit inside form now) --}}
-                  <div class="modal-footer">
-                     <button type="button8" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                     <button type="button" class="btn btn-primary" onclick="confirmBillOut({{ $order->id }})">Confirm Bill Out</button>
-                  </div>
+               {{-- Modal Footer (Submit inside form now) --}}
+               <div class="modal-footer justify-content-start">
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                  <button type="button" 
+                           class="btn btn-primary"
+                           id="submitBtn_{{ $order->id }}"
+                           onclick="confirmBillOut({{ $order->id }})">
+                     Submit
+                  </button>
+               </div>
                </form>
 
                </div>
@@ -647,6 +984,140 @@ if ($status === 'serving') {
 
       </div>
    </div>
+</div>
+@endforeach
+
+<!-- Bill Out Preview Modal -->
+@foreach($orders as $order)
+<div class="modal fade" id="billOutPreviewModal{{ $order->id }}" tabindex="-1" aria-labelledby="billOutPreviewLabel{{ $order->id }}" aria-hidden="true">
+    <div class="modal-dialog modal-sm modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-body p-0">
+                <div style="max-width:400px; margin:0 auto; font-family:Arial,Helvetica,sans-serif; font-size:13px; line-height:1.4;">
+                    <!-- Header - aligned with receipt -->
+                    <div class="text-center">
+                        <div class="invoice_logo mb-2">
+                            <img src="/images/logo-default.png" alt="Omni Logo" width="60" height="60">
+                        </div>
+                        <div class="d-flex flex-column small">
+                            <span class="t-font-boldest">{{ $branch->name ?? 'omni' }}</span>
+                            <span>{{ $branch->address ?? 'Main Commisary, 123 Main St, Cityville' }}</span>
+                            <span>Permit #: {{ $branch->permit_number ?? '' }}</span>
+                            <span>DTI Issued: {{ $branch->dti_issued ?? '' }}</span>
+                            <span>POS SN: {{ $branch->pos_sn ?? '' }}</span>
+                            <span>MIN#: {{ $branch->min_number ?? '' }}</span>
+                        </div>
+
+                        <h6 class="t-font-boldest mt-3 mb-1">BILL-OUT SLIP</h6>
+                        <div class="mb-1">INV: {{ sprintf('%08d', $order->id) }}</div>
+                        <div class="mb-1">Date: {{ $order->created_at->format('Y-m-d H:i') }}</div>
+                        <div class="mb-1">TBL: {{ $order->table_no ?? '—' }}</div>
+                        <div class="mb-2"># of Pax: {{ $order->number_pax ?? '—' }}</div>
+                    </div>
+
+                    <!-- Items table - same style as receipt -->
+                    <table class="table table-invoice-items m-0" style="width:100%; font-size:13px; border-collapse:collapse;">
+                        <thead>
+                            <tr>
+                                <th style="text-align:left; width:10%;">QTY</th>
+                                <th style="text-align:left; width:60%;">DESCRIPTION</th>
+                                <th style="text-align:right; width:30%;">AMOUNT</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($order->details as $d)
+                            <tr>
+                                <td>{{ $d->quantity }}x</td>
+                                <td>
+                                    <div class="d-flex flex-column">
+                                        <span>{{ $d->item_name }}</span>
+                                        <span style="font-size:11px; color:#666;">@₱{{ number_format($d->price, 2) }}</span>
+                                    </div>
+                                </td>
+                                <td style="text-align:right;">₱{{ number_format($d->quantity * $d->price, 2) }}</td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+
+                    <hr style="margin:8px 0;">
+
+                    
+
+                    <!-- Summary - matched order & labels from receipt -->
+                   <table class="table table-invoice-data m-0" style="width:100%; font-size:13px;">
+    <tbody>
+        <tr>
+            <td>Gross Charge</td>
+            <td class="text-right gross-charge">
+                ₱{{ number_format($order->details->sum(fn($d) => $d->quantity * $d->price - ($d->discount ?? 0)), 2) }}
+            </td>
+        </tr>
+        <tr>
+            <td>Less Discount</td>
+            <td class="text-right less-discount">
+                ₱{{ number_format($order->sr_pwd_discount ?? 0, 2) }}
+            </td>
+        </tr>
+        <tr>
+            <td>Vatable</td>
+            <td class="text-right vatable">
+                ₱{{ number_format($order->vatable ?? 0, 2) }}
+            </td>
+        </tr>
+        <tr>
+            <td>Vat 12%</td>
+            <td class="text-right vat-12">
+                ₱{{ number_format($order->vat_12 ?? 0, 2) }}
+            </td>
+        </tr>
+        <tr>
+            <td>Reg Bill</td>
+            <td class="text-right reg-bill">
+                ₱{{ number_format($order->vatable ?? 0, 2) }}
+            </td>
+        </tr>
+        <tr>
+            <td>SR/PWD Bill</td>
+            <td class="text-right sr-pwd-bill">
+                ₱{{ number_format($order->sr_pwd_discount ?? 0, 2) }}
+            </td>
+        </tr>
+        <tr>
+            <td><strong>Total</strong></td>
+            <td class="text-right total-due">
+                <strong>₱{{ number_format($order->total_charge ?? $order->gross_amount ?? 0, 2) }}</strong>
+            </td>
+        </tr>
+    </tbody>
+</table>
+
+                    <div class="text-center mt-4" style="border:1px dashed #666; padding:10px; font-size:14px; font-weight:bold;">
+                        PAYMENT PENDING<br>
+                        Please proceed to the cashier
+                    </div>
+
+                    <div class="text-center small mt-4">
+                        Thank you for dining with us!<br>
+                        This document is not valid as an official receipt until payment is made.
+                    </div>
+
+                    <p class="d-flex justify-content-between fw-bold mt-3 mb-1">
+                        <span>POS Provided by:</span>
+                        <span>OMNI Systems Solutions</span>
+                    </p>
+                    <div class="d-flex flex-column small">
+                        <span class="t-font-boldest">TIN: {{ $branch->tin ?? '123-456-789' }}</span>
+                        <span>OMNI Address: A. C. Cortes Ave, Mandaue, 6014 Cebu</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer justify-content-center">
+                <button class="btn btn-outline-primary btn-sm" onclick="window.print()">Print Bill</button>
+                <button class="btn btn-primary btn-sm" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
 </div>
 @endforeach
 
@@ -715,12 +1186,28 @@ function calculateChargesAndDiscounts(orderId, grossAmount, pax) {
     // ✅ NET BILL for SR/PWD
     const netBill = srPwdVatable - discount20;
 
-   // ✅ TOTAL CHARGE (Regular + SR/PWD discounted + Other discounts)
-   //  const totalCharge = (regBill + (netBill * (1 + vatRate))) - otherDiscountTotal;
+    // ✅ TOTAL CHARGE
+    const totalCharge = ((grossAmount - otherDiscountTotal) - ((srPwdBill / (1 + vatRate)) * vatRate) - ((srPwdBill / (1 + vatRate)) * (discountPercent / 100)));
 
-   // ✅ TOTAL CHARGE (SR/PWD + Regular + Other Discounts)
-   const totalCharge = ((grossAmount - otherDiscountTotal) - ((srPwdBill / (1 + vatRate)) * vatRate) - ((srPwdBill / (1 + vatRate)) * (discountPercent / 100)));
+    // Calculate vat_exempt_12
+    const vatExempt12 = grossAmount / (1 + vatRate);
+    const vatExempt12Rounded = Number(vatExempt12.toFixed(2));
 
+    // Store in hidden input
+    let vatExemptInput = document.getElementById('vat_exempt_12_' + orderId);
+    if (!vatExemptInput) {
+        vatExemptInput = document.createElement('input');
+        vatExemptInput.type = 'hidden';
+        vatExemptInput.id = 'vat_exempt_12_' + orderId;
+        vatExemptInput.name = 'vat_exempt_12';
+        const form = document.getElementById('billOutForm_' + orderId);
+        if (form) {
+            form.appendChild(vatExemptInput);
+        }
+    }
+    if (vatExemptInput) {
+        vatExemptInput.value = vatExempt12Rounded;
+    }
 
     // --- Update UI fields ---
     const setVal = (id, val) => {
@@ -736,6 +1223,47 @@ function calculateChargesAndDiscounts(orderId, grossAmount, pax) {
     setVal('netBill', netBill);
     setVal('otherDiscount', otherDiscountTotal);
     setVal('totalCharge', totalCharge);
+
+    // ✅ NEW: Mark that calculation has been performed
+    hasCalculatedCharges[orderId] = true;
+    console.log(`[order ${orderId}] ✅ Charges calculated successfully`);
+
+    // ✅ NEW: Enable the Submit button now
+    enableSubmitButton(orderId);
+}
+
+function enableSubmitButton(orderId) {
+    const submitBtn = document.getElementById('submitBtn_' + orderId);
+    if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.style.opacity = '1';
+        submitBtn.style.cursor = 'pointer';
+        submitBtn.title = '';
+        console.log(`[order ${orderId}] ✅ Submit button ENABLED`);
+    }
+}
+
+function areChargesFieldsPopulated(orderId) {
+    const totalCharge = document.getElementById('totalCharge_' + orderId);
+    const srPwdBill = document.getElementById('srPwdBill_' + orderId);
+    const regBill = document.getElementById('regBill_' + orderId);
+    
+    // Check if total charge has a value greater than 0
+    const hasValue = totalCharge && parseFloat(totalCharge.value || 0) > 0;
+    
+    console.log(`[order ${orderId}] Charges populated: ${hasValue}`);
+    return hasValue;
+}
+
+function disableSubmitButton(orderId, message = 'Please calculate charges first') {
+    const submitBtn = document.getElementById('submitBtn_' + orderId);
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.style.opacity = '0.6';
+        submitBtn.style.cursor = 'not-allowed';
+        submitBtn.title = message;
+        console.log(`[order ${orderId}] 🔒 Submit button DISABLED: ${message}`);
+    }
 }
 
 const savedDiscountPersons = {}; 
@@ -762,134 +1290,572 @@ function saveDiscountPersons(orderId) {
     savedDiscountPersons[orderId] = personsMap;
 }
 
-function confirmBillOut(orderId) {
-      const form = document.getElementById('billOutForm_' + orderId);
-      const formData = new FormData(form);
+// Check if all name + ID fields are filled
+function areAllDiscountFieldsFilled(orderId) {
+    const container = document.getElementById('selectedDiscountsContainer_' + orderId);
+    if (!container) {
+        console.log(`[order ${orderId}] Container not found`);
+        return false; // Changed from true to false
+    }
 
-      // ✅ Include computed discount and billing fields
-      const fields = [
-         'srPwdBill', 'discount20', 'otherDiscount',
-         'netBill', 'vatable', 'vat12', 'totalCharge'
-      ];
-      fields.forEach(f => {
-         const el = document.getElementById(f + '_' + orderId);
-         if (el) formData.append(f, el.value);
-      });
+    // Check if container has any discount forms
+    const discountForms = container.querySelectorAll('[id^="discountPersons_"]');
+    if (discountForms.length === 0) {
+        console.log(`[order ${orderId}] No discount forms found`);
+        
+        // Check if discounts are selected
+        const hidden = document.getElementById('discountIds_' + orderId);
+        const hasSelectedDiscounts = hidden && hidden.value && hidden.value.trim() !== '';
+        
+        // If discounts are selected but no forms rendered, fields are NOT filled
+        if (hasSelectedDiscounts) {
+            console.log(`[order ${orderId}] Discounts selected but no forms - fields NOT filled`);
+            return false;
+        }
+        
+        // No discounts selected at all
+        return true;
+    }
 
-         // ✅ Collect discount persons from saved memory
-      const personsData = [];
-      if (savedDiscountPersons[orderId]) {
-         Object.entries(savedDiscountPersons[orderId]).forEach(([discountId, persons]) => {
-               persons.forEach(p => {
-                  personsData.push({
-                     discount_id: discountId,
-                     name: p.name || '',
-                     id_number: p.id_number || ''
-                  });
-               });
-         });
-      }
-      // ✅ Attach JSON string of all persons to form data
-   formData.append('persons', JSON.stringify(personsData));
+    // Check all name and ID inputs
+    const nameInputs = container.querySelectorAll('input[placeholder="Enter name here"]');
+    const idInputs = container.querySelectorAll('input[placeholder="Enter ID number here"]');
 
-      // ✅ Submit request
-      fetch(form.action, {
-         method: 'POST',
-         headers: {
-               'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-         },
-         body: formData
-      })
-      .then(res => res.json())
-      .then(data => {
-         if (data.success) {
-               document.getElementById('totalCharge_' + orderId).value = data.order.total_charge;
+    console.log(`[order ${orderId}] Found ${nameInputs.length} name inputs and ${idInputs.length} ID inputs`);
 
-               // Optional: reload or move order to Bill-Out section
-               setTimeout(() => location.reload(), 1000);
-         } else {
-               alert('⚠️ Failed to save bill: ' + (data.message || 'Unknown error'));
-         }
-      })
-      .catch(err => {
-         console.error(err);
-      });
+    // If no inputs found but forms exist, something is wrong
+    if (nameInputs.length === 0 && idInputs.length === 0) {
+        console.log(`[order ${orderId}] No input fields found in forms`);
+        return false;
+    }
+
+    // Check if all fields are filled
+    for (let i = 0; i < nameInputs.length; i++) {
+        const nameValue = nameInputs[i].value.trim();
+        const idValue = idInputs[i] ? idInputs[i].value.trim() : '';
+        
+        if (!nameValue || !idValue) {
+            console.log(`[order ${orderId}] Empty field detected at index ${i} → fields NOT filled`);
+            return false;
+        }
+    }
+
+    console.log(`[order ${orderId}] All discount fields filled`);
+    return true;
 }
 
+// Update the button state logic
+function updateCalculateButtonState(orderId) {
+
+   // You can keep this as fallback when no discounts are selected
+    const hasDiscounts = document.getElementById('discountIds_' + orderId)?.value?.trim();
+    if (!hasDiscounts) {
+        const btn = document.getElementById('calculateBtn_' + orderId);
+        if (btn) {
+            btn.disabled = false;
+            btn.style.opacity = '1';
+            btn.style.cursor = 'pointer';
+            btn.title = '';
+        }
+    }
+    
+    const calculateBtn = document.getElementById('calculateBtn_' + orderId);
+    const submitBtn = document.getElementById('submitBtn_' + orderId);
+    
+    if (!calculateBtn) {
+        console.warn(`[order ${orderId}] Calculate button not found!`);
+        return;
+    }
+
+    const form = document.getElementById('discountForm_' + orderId);
+    const hidden = document.getElementById('discountIds_' + orderId);
+    
+    // Check if discount form/manage section is open
+    const isFormOpen = form && form.style.display === 'block';
+    
+    // Check if any discounts are selected
+    const hasSelectedDiscounts = hidden && hidden.value && hidden.value.trim() !== '';
+
+    console.log(`[order ${orderId}] Form open: ${isFormOpen}, Has discounts: ${hasSelectedDiscounts}`);
+
+    if (!hasSelectedDiscounts) {
+        // No discounts selected - enable both Calculate and Submit buttons
+        calculateBtn.disabled = false;
+        calculateBtn.style.opacity = '1';
+        calculateBtn.style.cursor = 'pointer';
+        calculateBtn.title = '';
+        
+        // ✅ ALSO ENABLE SUBMIT BUTTON
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.style.opacity = '1';
+            submitBtn.style.cursor = 'pointer';
+            submitBtn.title = '';
+        }
+        
+        console.log(`[order ${orderId}] No discounts selected → Both buttons ENABLED`);
+        return;
+    }
+
+    // Discounts are selected - check if fields are filled
+    const allFilled = areAllDiscountFieldsFilled(orderId);
+    
+    // Update Calculate button
+    calculateBtn.disabled = !allFilled;
+    calculateBtn.style.opacity = calculateBtn.disabled ? '0.6' : '1';
+    calculateBtn.style.cursor = calculateBtn.disabled ? 'not-allowed' : 'pointer';
+    calculateBtn.title = calculateBtn.disabled ? 'Please fill all name and ID fields in the discount form' : '';
+    
+    // ✅ UPDATE SUBMIT BUTTON - SYNC WITH CALCULATE BUTTON STATE
+    if (submitBtn) {
+        submitBtn.disabled = calculateBtn.disabled;
+        submitBtn.style.opacity = submitBtn.disabled ? '0.6' : '1';
+        submitBtn.style.cursor = submitBtn.disabled ? 'not-allowed' : 'pointer';
+        submitBtn.title = submitBtn.disabled ? 'Please fill all required fields first' : '';
+    }
+    
+    console.log(`[order ${orderId}] Form ${isFormOpen ? 'open' : 'closed'}, Both buttons: ${calculateBtn.disabled ? 'DISABLED' : 'ENABLED'}`);
+}
+
+
+function confirmBillOut(orderId) {
+    // ✅ NEW: Validate that calculation was performed
+    if (!hasCalculatedCharges[orderId]) {
+        alert('⚠️ Please click "Calculate Charges and Discounts" first!');
+        return;
+    }
+    
+    // ✅ NEW: Validate that charges fields are populated
+    if (!areChargesFieldsPopulated(orderId)) {
+        alert('⚠️ Charges and discounts are empty. Please calculate first!');
+        return;
+    }
+
+    const form = document.getElementById('billOutForm_' + orderId);
+    const formData = new FormData(form);
+
+    // Include computed discount and billing fields
+    const fields = [
+        'srPwdBill', 'discount20', 'otherDiscount',
+        'netBill', 'vatable', 'vat12', 'totalCharge'
+    ];
+    fields.forEach(f => {
+        const el = document.getElementById(f + '_' + orderId);
+        if (el) formData.append(f, el.value);
+    });
+
+    // Collect discount persons from saved memory
+    const personsData = [];
+    if (savedDiscountPersons[orderId]) {
+        Object.entries(savedDiscountPersons[orderId]).forEach(([discountId, persons]) => {
+            persons.forEach(p => {
+                personsData.push({
+                    discount_id: discountId,
+                    name: p.name || '',
+                    id_number: p.id_number || ''
+                });
+            });
+        });
+    }
+    formData.append('persons', JSON.stringify(personsData));
+
+    // Submit request
+    fetch(form.action, {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        },
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success !== true) {
+            alert('Failed to save bill: ' + (data.message || 'Unknown error'));
+            return;
+        }
+
+        const totalEl = document.getElementById('totalCharge_' + orderId);
+        if (totalEl && data.order?.total_charge != null) {
+            totalEl.value = Number(data.order.total_charge).toFixed(2);
+        }
+
+        const billOutModalEl = document.getElementById('billOutModal' + orderId);
+        if (billOutModalEl) {
+            const billOutModal = bootstrap.Modal.getInstance(billOutModalEl);
+            if (billOutModal) {
+                billOutModalEl.addEventListener('hidden.bs.modal', function onHidden() {
+                    billOutModalEl.removeEventListener('hidden.bs.modal', onHidden);
+
+                    if (data.order) {
+                        showUpdatedBillOutPreview(orderId, data.order);
+                    } else {
+                        showPreviewModal(orderId);
+                    }
+                }, { once: true });
+
+                billOutModal.hide();
+                return;
+            }
+        }
+
+        if (data.order) {
+            showUpdatedBillOutPreview(orderId, data.order);
+        } else {
+            showPreviewModal(orderId);
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        alert('Error submitting bill-out. Please try again.');
+    });
+}
+
+function showUpdatedBillOutPreview(orderId, orderData) {
+    const modalEl = document.getElementById('billOutPreviewModal' + orderId);
+    if (!modalEl) {
+        console.error(`Preview modal #billOutPreviewModal${orderId} not found`);
+        alert('Preview modal not found. Please refresh the page.');
+        return;
+    }
+
+    // Helper to update text safely
+    const setText = (className, value) => {
+        const el = modalEl.querySelector(`.${className}`);
+        if (el) {
+            const formatted = '₱' + Number(value || 0).toFixed(2);
+            el.textContent = formatted;
+            console.log(`Updated ${className} → ${formatted}`);
+        } else {
+            console.warn(`Element with class .${className} not found in preview modal`);
+        }
+    };
+
+    // Calculate gross fallback
+    const gross = Number(orderData.gross_amount || 0) ||
+                  (orderData.details || []).reduce((sum, d) => {
+                      return sum + (Number(d.price || 0) * Number(d.quantity || 0) - Number(d.discount || 0));
+                  }, 0);
+
+    // Update all fields
+    setText('gross-charge', gross);
+    setText('less-discount', orderData.sr_pwd_discount || 0);
+    setText('vatable', orderData.vatable || 0);
+    setText('vat-12', orderData.vat_12 || 0);
+    setText('reg-bill', orderData.vatable || 0);
+    setText('sr-pwd-bill', orderData.sr_pwd_discount || 0);
+    setText('total-due strong', orderData.total_charge || gross);
+
+    // Force show the modal
+    try {
+        const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
+        modalInstance.show();
+        console.log(`Preview modal ${orderId} shown successfully`);
+    } catch (e) {
+        console.error('Failed to show modal:', e);
+        alert('Could not open preview. Please check console for errors.');
+    }
+
+    // Reload page when preview is closed (to refresh order list)
+    modalEl.addEventListener('hidden.bs.modal', () => {
+        window.location.reload();
+    }, { once: true });
+}
+
+// Helper: show preview after old modal is gone
+function showPreviewModal(orderId) {
+    const previewEl = document.getElementById('billOutPreviewModal' + orderId);
+    if (previewEl) {
+        console.log('Showing Bill Out Slip preview for order ' + orderId);
+        const previewModal = bootstrap.Modal.getOrCreateInstance(previewEl);
+        previewModal.show();
+
+        // Reload page when user closes the preview (clean state)
+        previewEl.addEventListener('hidden.bs.modal', function onClose() {
+            previewEl.removeEventListener('hidden.bs.modal', onClose);
+            window.location.reload();
+        }, { once: true });
+    } else {
+        console.error('Preview modal not found: billOutPreviewModal' + orderId);
+        alert('Bill saved, but preview modal could not be displayed.');
+    }
+}
+
+const hasCalculatedCharges = {}
+
+// Add this event listener when the bill-out modal opens
+document.querySelectorAll('[id^="billOutModal"]').forEach(modal => {
+    modal.addEventListener('show.bs.modal', function () {
+        const orderId = this.id.replace('billOutModal', '');
+        
+        // ✅ Reset calculation state when modal opens
+        hasCalculatedCharges[orderId] = false;
+        
+        // ✅ Disable submit button initially
+        disableSubmitButton(orderId, 'Please calculate charges and discounts first');
+        
+        console.log(`[order ${orderId}] 📋 Bill-out modal opened - Submit button disabled`);
+    });
+});
+
+// function toggleDiscountForm(orderId) {
+
+//    if (!willBeOpen) {   // closing
+//         // ...
+//         hasSuccessfullyCalculated[orderId] = false;
+//         disableSubmit(orderId);
+//     }
+
+//     const hidden = document.getElementById('discountIds_' + orderId);
+//     const selectedIds = hidden && hidden.value
+//         ? hidden.value.split(',').map(s => s.trim()).filter(Boolean)
+//         : [];
+
+//     if (!selectedIds.length) {
+//         alert('Please select at least one discount first.');
+//         return;
+//     }
+    
+//     const container = document.getElementById('selectedDiscountsContainer_' + orderId);
+//     const form = document.getElementById('discountForm_' + orderId);
+//     const willBeOpen = form.style.display !== 'block';
+
+//     // Helper - disable Calculate (and Submit if you want)
+//     const disableCalculate = () => {
+//         const btn = document.getElementById('calculateBtn_' + orderId);
+//         if (btn) {
+//             btn.disabled = true;
+//             btn.style.opacity = '0.6';
+//             btn.style.cursor = 'not-allowed';
+//             btn.title = 'Please close Manage Discount first';
+//         }
+//         // Optional: also disable Submit if you want
+//         // const submitBtn = document.getElementById('submitBtn_' + orderId);
+//         // if (submitBtn) submitBtn.disabled = true;
+//     };
+
+//     // Helper - enable Calculate (only when form is closed and fields are valid)
+//     const tryEnableCalculate = () => {
+//         const allFilled = areAllDiscountFieldsFilled(orderId);
+//         const btn = document.getElementById('calculateBtn_' + orderId);
+//         if (!btn) return;
+
+//         if (allFilled) {
+//             btn.disabled = false;
+//             btn.style.opacity = '1';
+//             btn.style.cursor = 'pointer';
+//             btn.title = '';
+//         } else {
+//             btn.disabled = true;
+//             btn.style.opacity = '0.6';
+//             btn.style.cursor = 'not-allowed';
+//             btn.title = 'Please fill all name and ID fields';
+//         }
+//     };
+
+//     if (willBeOpen) {
+//         // ─── Opening the form ────────────────────────────────────────────────
+//         container.innerHTML = '';
+
+//         selectedIds.forEach(id => {
+//             const chk = document.getElementById(`discountCheck_${orderId}_${id}`);
+//             if (!chk) return;
+
+//             const discountName = chk.dataset.name || 'Discount';
+//             const valuePct = chk.dataset.value || '0';
+
+//             // Initialize store if not exist
+//             if (!savedDiscountPersons[orderId]) savedDiscountPersons[orderId] = {};
+//             if (!savedDiscountPersons[orderId][id]) {
+//                 savedDiscountPersons[orderId][id] = [{ name: '', id_number: '' }];
+//             }
+
+//             const persons = savedDiscountPersons[orderId][id];
+
+//             const block = document.createElement('div');
+//             block.className = 'mb-4 p-2 border rounded';
+//             block.innerHTML = `
+//                 <h6 class="fw-bold">${discountName} (${valuePct}%)</h6>
+//                 <div class="form-group mb-2 d-flex align-items-center">
+//                     <label class="me-2"># of Entries</label>
+//                     <input type="number"
+//                            id="discountCount_${orderId}_${id}"
+//                            class="form-control"
+//                            style="width:100px" min="1"
+//                            value="${persons.length}"
+//                            oninput="renderDiscountPersons(${orderId}, ${id})">
+//                 </div>
+//                 <div id="discountPersons_${orderId}_${id}"></div>
+//             `;
+//             container.appendChild(block);
+
+//             renderDiscountPersons(orderId, id);
+//         });
+
+//         form.style.display = 'block';
+//         console.log(`[order ${orderId}] Discount form OPENED`);
+
+//         // Force disable Calculate button while form is open
+//         disableCalculate();
+//     } else {
+//         // ─── Closing the form ────────────────────────────────────────────────
+//         form.style.display = 'none';
+//         console.log(`[order ${orderId}] Discount form CLOSED`);
+
+//         // Only now check if fields are filled → decide if Calculate can be enabled
+//         tryEnableCalculate();
+//     }
+// }
+
+// Global tracker (per order) — whether the discount form was closed with valid data
+const discountFormClosedValid = {};
+
+// ──────────────────────────────────────────────────────────────
+// Helper: Force disable Calculate & Submit buttons
+// ──────────────────────────────────────────────────────────────
+function disableCalculateAndSubmit(orderId, tooltip = '') {
+    const calcBtn = document.getElementById('calculateBtn_' + orderId);
+    const subBtn  = document.getElementById('submitBtn_' + orderId);
+
+    if (calcBtn) {
+        calcBtn.disabled = true;
+        calcBtn.style.opacity = '0.6';
+        calcBtn.style.cursor = 'not-allowed';
+        if (tooltip) calcBtn.title = tooltip;
+    }
+    if (subBtn) {
+        subBtn.disabled = true;
+        subBtn.style.opacity = '0.6';
+        subBtn.style.cursor = 'not-allowed';
+    }
+}
+
+// ──────────────────────────────────────────────────────────────
+// Helper: Enable Calculate & Submit buttons
+// ──────────────────────────────────────────────────────────────
+function enableCalculateAndSubmit(orderId) {
+    const calcBtn = document.getElementById('calculateBtn_' + orderId);
+    const subBtn  = document.getElementById('submitBtn_' + orderId);
+
+    if (calcBtn) {
+        calcBtn.disabled = false;
+        calcBtn.style.opacity = '1';
+        calcBtn.style.cursor = 'pointer';
+        calcBtn.title = '';
+    }
+    if (subBtn) {
+        subBtn.disabled = false;
+        subBtn.style.opacity = '1';
+        subBtn.style.cursor = 'pointer';
+        subBtn.title = '';
+    }
+}
+
+// ──────────────────────────────────────────────────────────────
+// Updated toggleDiscountForm
+// ──────────────────────────────────────────────────────────────
 function toggleDiscountForm(orderId) {
     const hidden = document.getElementById('discountIds_' + orderId);
     const selectedIds = hidden && hidden.value
         ? hidden.value.split(',').map(s => s.trim()).filter(Boolean)
         : [];
 
+    
     if (!selectedIds.length) {
         alert('Please select at least one discount first.');
         return;
     }
 
     const container = document.getElementById('selectedDiscountsContainer_' + orderId);
-    container.innerHTML = '';
-
-    selectedIds.forEach(id => {
-        const chk = document.getElementById(`discountCheck_${orderId}_${id}`);
-        if (!chk) return;
-        const discountName = chk.dataset.name || 'Discount';
-        const valuePct = chk.dataset.value || '0';
-
-        // Initialize store if not exist
-        if (!savedDiscountPersons[orderId]) savedDiscountPersons[orderId] = {};
-        if (!savedDiscountPersons[orderId][id]) savedDiscountPersons[orderId][id] = [
-            { name: '', id_number: '' }
-        ];
-
-        const persons = savedDiscountPersons[orderId][id];
-
-        // Build discount block
-        const block = document.createElement('div');
-        block.className = 'mb-4 p-2 border rounded';
-        block.innerHTML = `
-            <h6 class="fw-bold">${discountName} (${valuePct}%)</h6>
-            <div class="form-group mb-2 d-flex align-items-center">
-                <label class="me-2"># of Entries</label>
-                <input type="number"
-                       id="discountCount_${orderId}_${id}"
-                       class="form-control"
-                       style="width:100px" min="1"
-                       value="${persons.length}"
-                       oninput="renderDiscountPersons(${orderId}, ${id})">
-            </div>
-            <div id="discountPersons_${orderId}_${id}"></div>
-        `;
-        container.appendChild(block);
-
-        renderDiscountPersons(orderId, id); // render saved data
-    });
-
-    // Toggle visibility
     const form = document.getElementById('discountForm_' + orderId);
-    form.style.display = form.style.display === 'block' ? 'none' : 'block';
+    const willOpen = form.style.display !== 'block';
+
+    if (willOpen) {
+        // ─── OPENING the Manage Discount form ────────────────────────
+        container.innerHTML = '';
+
+        selectedIds.forEach(id => {
+            const chk = document.getElementById(`discountCheck_${orderId}_${id}`);
+            if (!chk) return;
+
+            const discountName = chk.dataset.name || 'Discount';
+            const valuePct = chk.dataset.value || '0';
+
+            // Initialize storage if needed
+            if (!savedDiscountPersons[orderId]) savedDiscountPersons[orderId] = {};
+            if (!savedDiscountPersons[orderId][id]) {
+                savedDiscountPersons[orderId][id] = [{ name: '', id_number: '' }];
+            }
+
+            const persons = savedDiscountPersons[orderId][id];
+
+            const block = document.createElement('div');
+            block.className = 'mb-4 p-2 border rounded';
+            block.innerHTML = `
+                <h6 class="fw-bold">${discountName} (${valuePct}%)</h6>
+                <div class="form-group mb-2 d-flex align-items-center">
+                    <label class="me-2"># of Entries</label>
+                    <input type="number"
+                           id="discountCount_${orderId}_${id}"
+                           class="form-control"
+                           style="width:100px" min="1"
+                           value="${persons.length}"
+                           oninput="renderDiscountPersons(${orderId}, ${id})">
+                </div>
+                <div id="discountPersons_${orderId}_${id}"></div>
+            `;
+            container.appendChild(block);
+
+            renderDiscountPersons(orderId, id);
+        });
+
+        form.style.display = 'block';
+        console.log(`[order ${orderId}] Discount form OPENED`);
+
+        // IMPORTANT: While form is open → always disable buttons
+        discountFormClosedValid[orderId] = false; // reset flag
+        disableCalculateAndSubmit(orderId, 'Please close Manage Discount form first');
+    } 
+    else {
+    // ─── CLOSING the Manage Discount form ────────────────────────
+    form.style.display = 'none';
+    console.log(`[order ${orderId}] Discount form CLOSED`);
+
+    const allFieldsFilled = areAllDiscountFieldsFilled(orderId);
+
+    if (allFieldsFilled) {
+        discountFormClosedValid[orderId] = true;
+        enableCalculateAndSubmit(orderId);
+        
+        // ✅ NEW: But Submit should still be disabled until Calculate is clicked
+        if (!hasCalculatedCharges[orderId]) {
+            disableSubmitButton(orderId, 'Please click Calculate Charges and Discounts');
+        }
+    } else {
+        discountFormClosedValid[orderId] = false;
+        disableCalculateAndSubmit(orderId, 'Please complete all name and ID fields');
+    }
+}
 }
 
-/**
- * Render person rows and keep values synced to memory
- */
 function renderDiscountPersons(orderId, discountId) {
     const countInput = document.getElementById(`discountCount_${orderId}_${discountId}`);
-    const count = Math.max(parseInt(countInput.value) || 0, 1);
+    const count = Math.max(parseInt(countInput?.value) || 1, 1);
 
     if (!savedDiscountPersons[orderId]) savedDiscountPersons[orderId] = {};
     if (!savedDiscountPersons[orderId][discountId]) savedDiscountPersons[orderId][discountId] = [];
 
     const persons = savedDiscountPersons[orderId][discountId];
 
-    // Adjust the array size
+    // Adjust array length
     while (persons.length < count) persons.push({ name: '', id_number: '' });
     while (persons.length > count) persons.pop();
 
     const container = document.getElementById(`discountPersons_${orderId}_${discountId}`);
+    if (!container) return;
+
     container.innerHTML = '';
 
-    persons.forEach((p, index) => {
+    persons.forEach((p, idx) => {
         const row = document.createElement('div');
         row.className = 'row mb-2';
         row.innerHTML = `
@@ -898,18 +1864,20 @@ function renderDiscountPersons(orderId, discountId) {
                        class="form-control"
                        placeholder="Enter name here"
                        value="${p.name || ''}"
-                       oninput="updatePersonData(${orderId}, ${discountId}, ${index}, 'name', this.value)">
+                       oninput="updatePersonData(${orderId}, ${discountId}, ${idx}, 'name', this.value)">
             </div>
             <div class="col-md-6">
                 <input type="text"
                        class="form-control"
                        placeholder="Enter ID number here"
                        value="${p.id_number || ''}"
-                       oninput="updatePersonData(${orderId}, ${discountId}, ${index}, 'id_number', this.value)">
+                       oninput="updatePersonData(${orderId}, ${discountId}, ${idx}, 'id_number', this.value)">
             </div>
         `;
         container.appendChild(row);
     });
+
+    // DO NOT call updateCalculateButtonState() here
 }
 
 /**
@@ -918,10 +1886,16 @@ function renderDiscountPersons(orderId, discountId) {
 function updatePersonData(orderId, discountId, index, field, value) {
     if (!savedDiscountPersons[orderId]) return;
     if (!savedDiscountPersons[orderId][discountId]) return;
+    
     savedDiscountPersons[orderId][discountId][index][field] = value;
+
+    console.log(`[order ${orderId}] Updated person data: discount ${discountId}, index ${index}, ${field} = ${value}`);
+    
+    // Live update button state whenever user types
+   //  updateCalculateButtonState(orderId);
 }
 
-   </script>
+</script>
    <script>
 
    // helper to add a payment row in the modal table
@@ -1032,6 +2006,7 @@ function updatePersonData(orderId, discountId, index, field, value) {
          if (changeEl) changeEl.textContent = Number(Math.max(0, total - totalCharge)).toFixed(2);
       }
    </script>
+   
 <!-- Invoice / Receipt Modal Template -->
 @foreach($orders as $order)
 <div class="modal fade" id="invoiceModal{{ $order->id }}" tabindex="-1" aria-labelledby="invoiceLabel{{ $order->id }}" aria-hidden="true">
@@ -1055,7 +2030,7 @@ function updatePersonData(orderId, discountId, index, field, value) {
                         <span>MIN#: {{ $branch->min_number ?? '' }}</span>
                      </div>
 
-                     <h6 class="t-font-boldest mt-3">SALES INVOICE</h6>
+                     <h6 class="t-font-boldest mt-3">BILL-OUT INVOICE</h6>
                      <div class="mb-2">INV: {{ sprintf('%08d', $order->id) }}</div>
                      <div class="mb-1">Date: {{ $order->created_at->format('Y-m-d H:i') }}</div>
                      <div class="mb-1">TBL: {{ $order->table_no }}</div>
@@ -1168,7 +2143,6 @@ function updatePersonData(orderId, discountId, index, field, value) {
 </div>
 @endforeach
 
-
 <script>
 window.openInvoiceModalFromResponse = function(orderData) {
          console.log('🧾 openInvoiceModalFromResponse called', orderData);
@@ -1225,7 +2199,7 @@ window.openInvoiceModalFromResponse = function(orderData) {
                                                 <div>Permit #: ${branch.permit_number || ''}</div>
                                                 <div>DTI: ${branch.dti_issued || ''} | POS SN: ${branch.pos_sn || ''}</div>
                                           </div>
-                                          <div class="mb-2 text-center"><strong>SALES INVOICE</strong></div>
+                                          <div class="mb-2 text-center"><strong>BILL-OUT INVOICE</strong></div>
                                           <div>Date: ${orderData.created_at || ''}</div>
                                           <div>INV: ${String(orderId).padStart(8, '0')}</div>
                                           <div>TBL: ${orderData.table_no || ''} | Pax: ${orderData.number_pax || ''}</div>

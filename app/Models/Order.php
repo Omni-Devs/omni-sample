@@ -23,6 +23,7 @@ class Order extends Model
         'net_amount',
         'vatable',
         'vat_12',
+        'vat_exempt_12',
         'non_taxable',
         'total_charge',
         'discount_total',

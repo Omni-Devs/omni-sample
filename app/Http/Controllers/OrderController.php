@@ -39,9 +39,9 @@ class OrderController extends Controller
             ->where('branch_id', $currentBranchId)
             ->when($status === 'serving', function ($q) {
             $q->where('status', 'serving')
-              ->orWhereHas('details', function ($query) {
-                  $query->where('status', 'served');
-              });
+                ->orWhereHas('details', function ($query) {
+                    $query->where('status', 'served');
+                });
         })
             ->when($status === 'billout', fn($q) => $q->where('status', 'billout'))
             ->when($status === 'payments', fn($q) => $q->where('status', 'payments'))
@@ -252,46 +252,103 @@ class OrderController extends Controller
     ]);
     }
 
+    // public function billout(Request $request, $orderId)
+    // {
+    //     $order = Order::findOrFail($orderId);
+
+    //     // Update order with computed totals
+    //     $order->update([
+    //         'gross_amount' => $request->input('gross_amount', 0),
+    //         'sr_pwd_discount' => $request->input('discount20', 0),
+    //         'other_discounts' => $request->input('otherDiscount', 0),
+    //         'net_amount' => $request->input('netBill', 0),
+    //         'vatable' => $request->input('vatable', 0),
+    //         'vat_12' => $request->input('vat12', 0),
+    //         'vat_exempt_12' => $request->input('vat_exempt_12', 0),
+    //         'total_charge' => $request->input('totalCharge', 0),
+    //         'charges_description' => $request->input('charges_description'),
+    //         'status'           => 'billout', // ✅ change order status,
+    //         'cashier_id' => auth()->user()->id, // <-- save user id here
+    //     ]);
+
+    //     // Save discount entries
+    //     if ($request->filled('persons')) {
+    //         $persons = json_decode($request->persons, true);
+
+    //         foreach ($persons as $person) {
+    //             if (!empty($person['discount_id']) && !empty($person['name'])) {
+    //                 DiscountEntry::create([
+    //                     'order_id' => $order->id,
+    //                     'discount_id' => $person['discount_id'],
+    //                     'person_name' => $person['name'] ?? null,
+    //                     'person_id_number' => $person['id_number'] ?? null,
+    //                 ]);
+    //             }
+    //         }
+    //     }
+
+    //     return response()->json([
+    //         'success' => true,
+    //         'order' => $order
+    //     ]);
+    // }
+
     public function billout(Request $request, $orderId)
-    {
-        $order = Order::findOrFail($orderId);
+{
+    $order = Order::findOrFail($orderId);
 
-        // Update order with computed totals
-        $order->update([
-            'gross_amount' => $request->input('gross_amount', 0),
-            'sr_pwd_discount' => $request->input('discount20', 0),
-            'other_discounts' => $request->input('otherDiscount', 0),
-            'net_amount' => $request->input('netBill', 0),
-            'vatable' => $request->input('vatable', 0),
-            'vat_12' => $request->input('vat12', 0),
-            'total_charge' => $request->input('totalCharge', 0),
-            'charges_description' => $request->input('charges_description'),
-            'status'           => 'billout', // ✅ change order status,
-             'cashier_id' => auth()->user()->id, // <-- save user id here
-        ]);
+    // Validate everything that comes from the form
+    $validated = $request->validate([
+        'gross_amount'     => 'nullable|numeric|min:0',
+        'srPwdBill'        => 'nullable|numeric|min:0',       // SR/PWD Bill
+        'regBill'          => 'nullable|numeric|min:0',       // Regular Bill
+        'discount20'       => 'nullable|numeric|min:0',       // 20% discount amount
+        'netBill'          => 'nullable|numeric|min:0',       // Net Bill after SR/PWD discount
+        'vatable'          => 'nullable|numeric|min:0',
+        'vat12'            => 'nullable|numeric|min:0',
+        'totalCharge'      => 'required|numeric|min:0',       // Final total charge
+        'otherDiscount'    => 'nullable|numeric|min:0',
+        'vat_exempt_12'    => 'nullable|numeric|min:0',
+        'charges_description' => 'nullable|string|max:500',
+        'persons'          => 'nullable|json',
+    ]);
 
-        // Save discount entries
-        if ($request->filled('persons')) {
-            $persons = json_decode($request->persons, true);
+    // Save ALL the calculated fields
+    $order->update([
+        'gross_amount'     => $request->input('gross_amount', 0),
+        'sr_pwd_discount'  => $request->input('srPwdBill', 0),      // ← SR/PWD portion
+        'other_discounts'  => $request->input('otherDiscount', 0),
+        'net_amount'       => $request->input('netBill', 0),        // ← Net after SR/PWD discount
+        'vatable'          => $request->input('vatable', 0),
+        'vat_12'           => $request->input('vat12', 0),
+        'vat_exempt_12'    => $request->input('vat_exempt_12', 0),  // from your previous update
+        'total_charge'     => $request->input('totalCharge', 0),
+        'charges_description' => $request->input('charges_description'),
+        'status'           => 'billout',
+        'cashier_id'       => auth()->id(),
+    ]);
 
-            foreach ($persons as $person) {
-                if (!empty($person['discount_id']) && !empty($person['name'])) {
-                    DiscountEntry::create([
-                        'order_id' => $order->id,
-                        'discount_id' => $person['discount_id'],
-                        'person_name' => $person['name'] ?? null,
-                        'person_id_number' => $person['id_number'] ?? null,
-                    ]);
-                }
+    // Handle discount entries (persons with name & ID)
+    if ($request->filled('persons')) {
+        $persons = json_decode($request->persons, true);
+        foreach ($persons as $person) {
+            if (!empty($person['discount_id']) && !empty($person['name'])) {
+                DiscountEntry::create([
+                    'order_id'         => $order->id,
+                    'discount_id'      => $person['discount_id'],
+                    'person_name'      => $person['name'],
+                    'person_id_number' => $person['id_number'] ?? null,
+                ]);
             }
         }
-
-        return response()->json([
-            'success' => true,
-            'order' => $order
-        ]);
     }
 
+    // Return the updated order so frontend can show correct preview
+    return response()->json([
+        'success' => true,
+        'order'   => $order->fresh(['details', 'discountEntries', 'paymentDetails'])
+    ]);
+}
     
     public function edit($id)
     {
@@ -461,8 +518,8 @@ public function show($id)
                 'cash_equivalent_id' => $p['cash_equivalent_id'],
                 'transaction_reference_no' => $p['reference_no'] ?? null,
                 'amount_paid' => $p['amount_paid'],
-                'total_rendered' => 0, // fill in after computing totals
-                'change_amount' => 0,  // only cash will receive change_amount later
+                'total_rendered' => 0,
+                'change_amount' => 0,
             ]);
 
             $createdPaymentDetailIds[] = $pd->id;
@@ -479,16 +536,14 @@ public function show($id)
             'total_payment_rendered' => $totalPaid,
             'change_amount' => $changeAmount,
             'charges_description' => ($order->charges_description ?? '') . "\nPayments added on " . now()->toDateTimeString(),
-            'cashier_id' => auth()->user()->id, // <-- save cashier here
+            'cashier_id' => auth()->user()->id,
         ]);
 
-        // update all payment details for this order: set total_rendered and clear change_amount
         PaymentDetail::where('order_id', $order->id)->update([
             'total_rendered' => $totalPaid,
             'change_amount' => 0,
         ]);
 
-        // Assign change_amount only to the Cash payment detail (case-insensitive match on Payment.name)
         $cashPayment = Payment::whereRaw('LOWER(name) = ?', [strtolower('cash')])->first();
         if ($cashPayment) {
             $cashPaymentDetail = PaymentDetail::where('order_id', $order->id)
@@ -504,7 +559,6 @@ public function show($id)
             }
         }
 
-        // Reload order with relations for response (so view can render receipt)
         $order = Order::with([
             'details.product',
             'details.component',
