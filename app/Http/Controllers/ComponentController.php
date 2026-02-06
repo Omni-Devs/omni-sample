@@ -41,74 +41,147 @@ class ComponentController extends Controller
 
     public function index(Request $request)
 {
-    $status  = $request->get('status', 'active');
-    $perPage = $request->get('perPage', 10);
-    $search  = $request->get('search');
+    // $status  = $request->get('status', 'active');
+    // $perPage = $request->get('perPage', 10);
+    // $search  = $request->get('search');
 
-    // ✅ Use current_branch() instead of auth()->user()
+    // // ✅ Use current_branch() instead of auth()->user()
+    // $branchId = current_branch_id();
+
+    // /**
+    //  |--------------------------------------------------
+    //  | MAIN BRANCH (branch_id = 1)
+    //  |--------------------------------------------------
+    //  */
+    // if ($branchId == 1) {
+
+    //     $components = Component::with(['category', 'subcategory'])
+    //         ->where('status', $status)
+    //         ->when($search, function ($query, $search) {
+    //             $query->where(function ($q) use ($search) {
+    //                 $q->where('name', 'like', "%{$search}%")
+    //                   ->orWhereHas('category', fn ($q) =>
+    //                       $q->where('name', 'like', "%{$search}%")
+    //                   )
+    //                   ->orWhereHas('subcategory', fn ($q) =>
+    //                       $q->where('name', 'like', "%{$search}%")
+    //                   );
+    //             });
+    //         })
+    //         ->orderBy('components.created_at', 'desc')
+    //         ->paginate($perPage)
+    //         ->appends(compact('search', 'perPage'));
+
+    // /**
+    //  |--------------------------------------------------
+    //  | OTHER BRANCHES (branch-aware inventory)
+    //  |--------------------------------------------------
+    //  */
+    // } else {
+
+    //     $components = Component::query()
+    //         ->select([
+    //             'components.*',
+    //             'bc.onhand',
+    //             'bc.cost',
+    //             'bc.price',
+    //             'bc.for_sale',
+    //             'bc.status as status'
+    //         ])
+    //         ->join('branch_components as bc', 'bc.component_id', '=', 'components.id')
+    //         ->where('bc.branch_id', $branchId)
+    //         ->where('components.status', $status)
+    //         ->with(['category', 'subcategory'])
+    //         ->when($search, function ($query, $search) {
+    //             $query->where(function ($q) use ($search) {
+    //                 $q->where('components.name', 'like', "%{$search}%")
+    //                   ->orWhereHas('category', fn ($q) =>
+    //                       $q->where('name', 'like', "%{$search}%")
+    //                   )
+    //                   ->orWhereHas('subcategory', fn ($q) =>
+    //                       $q->where('name', 'like', "%{$search}%")
+    //                   );
+    //             });
+    //         })
+    //         ->orderBy('components.created_at', 'desc')
+    //         ->paginate($perPage)
+    //         ->appends(compact('search', 'perPage'));
+    // }
+
+    // return view('components.index', compact('components', 'status', 'search'));
+
+    return view('components.index', [
+        'status' => $request->get('status', 'active'),
+    ]);
+}
+
+public function fetchComponents(Request $request)
+{
+    $status   = $request->get('status', 'active');
+    $perPage  = $request->get('perPage', 10);
+    $search   = $request->get('search');
     $branchId = current_branch_id();
 
     /**
      |--------------------------------------------------
-     | MAIN BRANCH (branch_id = 1)
+     | MAIN BRANCH
      |--------------------------------------------------
      */
     if ($branchId == 1) {
 
-        $components = Component::with(['category', 'subcategory'])
-            ->where('status', $status)
-            ->when($search, function ($query, $search) {
-                $query->where(function ($q) use ($search) {
-                    $q->where('name', 'like', "%{$search}%")
-                      ->orWhereHas('category', fn ($q) =>
-                          $q->where('name', 'like', "%{$search}%")
-                      )
-                      ->orWhereHas('subcategory', fn ($q) =>
-                          $q->where('name', 'like', "%{$search}%")
-                      );
-                });
-            })
-            ->orderBy('components.created_at', 'desc')
-            ->paginate($perPage)
-            ->appends(compact('search', 'perPage'));
+        $query = Component::with(['category', 'subcategory'])
+            ->where('status', $status);
 
     /**
      |--------------------------------------------------
-     | OTHER BRANCHES (branch-aware inventory)
+     | OTHER BRANCHES
      |--------------------------------------------------
      */
     } else {
 
-        $components = Component::query()
+        $query = Component::query()
             ->select([
                 'components.*',
                 'bc.onhand',
                 'bc.cost',
                 'bc.price',
+                'bc.unit',
                 'bc.for_sale',
                 'bc.status as status'
             ])
             ->join('branch_components as bc', 'bc.component_id', '=', 'components.id')
             ->where('bc.branch_id', $branchId)
             ->where('components.status', $status)
-            ->with(['category', 'subcategory'])
-            ->when($search, function ($query, $search) {
-                $query->where(function ($q) use ($search) {
-                    $q->where('components.name', 'like', "%{$search}%")
-                      ->orWhereHas('category', fn ($q) =>
-                          $q->where('name', 'like', "%{$search}%")
-                      )
-                      ->orWhereHas('subcategory', fn ($q) =>
-                          $q->where('name', 'like', "%{$search}%")
-                      );
-                });
-            })
-            ->orderBy('components.created_at', 'desc')
-            ->paginate($perPage)
-            ->appends(compact('search', 'perPage'));
+            ->with(['category', 'subcategory']);
     }
 
-    return view('components.index', compact('components', 'status', 'search'));
+    /**
+     |--------------------------------------------------
+     | SEARCH FILTER
+     |--------------------------------------------------
+     */
+    $query->when($search, function ($query) use ($search) {
+        $query->where(function ($q) use ($search) {
+            $q->where('components.name', 'like', "%{$search}%")
+              ->orWhereHas('category', fn ($q) =>
+                  $q->where('name', 'like', "%{$search}%")
+              )
+              ->orWhereHas('subcategory', fn ($q) =>
+                  $q->where('name', 'like', "%{$search}%")
+              );
+        });
+    });
+
+    /**
+     |--------------------------------------------------
+     | SORT & PAGINATION
+     |--------------------------------------------------
+     */
+    $components = $query
+        ->orderBy('components.created_at', 'desc')
+        ->paginate($perPage);
+
+    return response()->json($components);
 }
 
     public function create()
