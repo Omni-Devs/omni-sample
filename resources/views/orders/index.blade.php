@@ -461,7 +461,6 @@ if ($status === 'serving') {
                            {{-- Modal Header --}}
                            <div class="modal-header">
                            <h5 class="modal-title">Bill Out - Order #{{ $order->id }}</h5>
-                           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                            </div>
 
                            {{-- Modal Body --}}
@@ -520,7 +519,7 @@ if ($status === 'serving') {
                      $orderGross = $order->details->sum(fn($d) => ($d->price * $d->quantity) - ($d->discount ?? 0));
                   @endphp
 
-            {{-- Entries Section --}}
+      {{-- Entries Section --}}
       {{-- <div class="col-md-5 position-relative">
       <label class="form-label">Discount</label>
 
@@ -575,7 +574,7 @@ if ($status === 'serving') {
                 <!-- Selected Tags Display -->
                 <div class="form-control discount-select-container" 
                      id="discountSelectContainer_{{ $order->id }}"
-                     onclick="toggleDiscountDropdown({{ $order->id }})"
+                     onclick="if (!event.target.closest('.discount-tag-close')) toggleDiscountDropdown({{ $order->id }})"
                      style="min-height: 80px; max-height: 150px; overflow-y: auto; cursor: pointer; display: flex; flex-wrap: wrap; gap: 6px; align-items: flex-start; align-content: flex-start; padding: 8px;">
                     <span class="text-muted" id="discountPlaceholder_{{ $order->id }}" style="margin: 4px;">Select discounts...</span>
                 </div>
@@ -780,17 +779,26 @@ document.addEventListener('click', function(event) {
 });
 
 // Toggle discount selection
+// Toggle discount selection
 function toggleDiscountSelection(orderId, discountId, discountName, discountValue) {
     const checkbox = document.getElementById(`discountCheck_${orderId}_${discountId}`);
     const hiddenInput = document.getElementById('discountIds_' + orderId);
-    
-    // Toggle checkbox
+
+    // Toggle the checkbox
     checkbox.checked = !checkbox.checked;
-    
-    // Update selected discounts
+
+    // Update visual tags
     updateSelectedDiscountTags(orderId);
-    
-    // Update button state when selection changes
+
+    // ────────────────────────────────────────────────
+    // NEW: Auto-close dropdown after selection
+    const dropdown = document.getElementById('discountDropdown_' + orderId);
+    if (dropdown) {
+        dropdown.style.display = 'none';
+    }
+    // ────────────────────────────────────────────────
+
+    // Update button states
     setTimeout(() => {
         updateCalculateButtonState(orderId);
     }, 100);
@@ -984,10 +992,6 @@ function updateSelectedDiscounts(orderId) {
 <div class="modal fade" id="billOutPreviewModal{{ $order->id }}" tabindex="-1" aria-labelledby="billOutPreviewLabel{{ $order->id }}" aria-hidden="true">
     <div class="modal-dialog modal-sm modal-dialog-scrollable">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Bill Out Slip</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
             <div class="modal-body p-0">
                 <div style="max-width:400px; margin:0 auto; font-family:Arial,Helvetica,sans-serif; font-size:13px; line-height:1.4;">
                     <!-- Header - aligned with receipt -->
@@ -1004,7 +1008,7 @@ function updateSelectedDiscounts(orderId) {
                             <span>MIN#: {{ $branch->min_number ?? '' }}</span>
                         </div>
 
-                        <h6 class="t-font-boldest mt-3 mb-1">BILL-OUT INVOICE</h6>
+                        <h6 class="t-font-boldest mt-3 mb-1">BILL-OUT SLIP</h6>
                         <div class="mb-1">INV: {{ sprintf('%08d', $order->id) }}</div>
                         <div class="mb-1">Date: {{ $order->created_at->format('Y-m-d H:i') }}</div>
                         <div class="mb-1">TBL: {{ $order->table_no ?? '—' }}</div>
@@ -1182,28 +1186,20 @@ function calculateChargesAndDiscounts(orderId, grossAmount, pax) {
     // ✅ NET BILL for SR/PWD
     const netBill = srPwdVatable - discount20;
 
-   // ✅ TOTAL CHARGE (Regular + SR/PWD discounted + Other discounts)
-   //  const totalCharge = (regBill + (netBill * (1 + vatRate))) - otherDiscountTotal;
+    // ✅ TOTAL CHARGE
+    const totalCharge = ((grossAmount - otherDiscountTotal) - ((srPwdBill / (1 + vatRate)) * vatRate) - ((srPwdBill / (1 + vatRate)) * (discountPercent / 100)));
 
-   // ✅ TOTAL CHARGE (SR/PWD + Regular + Other Discounts)
-   const totalCharge = ((grossAmount - otherDiscountTotal) - ((srPwdBill / (1 + vatRate)) * vatRate) - ((srPwdBill / (1 + vatRate)) * (discountPercent / 100)));
-
-   // ────────────────────────────────────────────────
-    // NEW: Calculate vat_exempt_12 (base amount before 12% VAT)
-    // This is typically the gross amount divided by 1.12
-    // Rounded to 2 decimal places
+    // Calculate vat_exempt_12
     const vatExempt12 = grossAmount / (1 + vatRate);
     const vatExempt12Rounded = Number(vatExempt12.toFixed(2));
 
-    // ────────────────────────────────────────────────
-    // Store in hidden input so it gets submitted with the form
+    // Store in hidden input
     let vatExemptInput = document.getElementById('vat_exempt_12_' + orderId);
     if (!vatExemptInput) {
         vatExemptInput = document.createElement('input');
         vatExemptInput.type = 'hidden';
         vatExemptInput.id = 'vat_exempt_12_' + orderId;
         vatExemptInput.name = 'vat_exempt_12';
-        // Append to the form (make sure the form exists)
         const form = document.getElementById('billOutForm_' + orderId);
         if (form) {
             form.appendChild(vatExemptInput);
@@ -1212,9 +1208,6 @@ function calculateChargesAndDiscounts(orderId, grossAmount, pax) {
     if (vatExemptInput) {
         vatExemptInput.value = vatExempt12Rounded;
     }
-
-    // Optional: for debugging (you can remove this later)
-    console.log(`Order ${orderId} - vat_exempt_12 calculated: ${vatExempt12Rounded}`);
 
     // --- Update UI fields ---
     const setVal = (id, val) => {
@@ -1230,6 +1223,47 @@ function calculateChargesAndDiscounts(orderId, grossAmount, pax) {
     setVal('netBill', netBill);
     setVal('otherDiscount', otherDiscountTotal);
     setVal('totalCharge', totalCharge);
+
+    // ✅ NEW: Mark that calculation has been performed
+    hasCalculatedCharges[orderId] = true;
+    console.log(`[order ${orderId}] ✅ Charges calculated successfully`);
+
+    // ✅ NEW: Enable the Submit button now
+    enableSubmitButton(orderId);
+}
+
+function enableSubmitButton(orderId) {
+    const submitBtn = document.getElementById('submitBtn_' + orderId);
+    if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.style.opacity = '1';
+        submitBtn.style.cursor = 'pointer';
+        submitBtn.title = '';
+        console.log(`[order ${orderId}] ✅ Submit button ENABLED`);
+    }
+}
+
+function areChargesFieldsPopulated(orderId) {
+    const totalCharge = document.getElementById('totalCharge_' + orderId);
+    const srPwdBill = document.getElementById('srPwdBill_' + orderId);
+    const regBill = document.getElementById('regBill_' + orderId);
+    
+    // Check if total charge has a value greater than 0
+    const hasValue = totalCharge && parseFloat(totalCharge.value || 0) > 0;
+    
+    console.log(`[order ${orderId}] Charges populated: ${hasValue}`);
+    return hasValue;
+}
+
+function disableSubmitButton(orderId, message = 'Please calculate charges first') {
+    const submitBtn = document.getElementById('submitBtn_' + orderId);
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.style.opacity = '0.6';
+        submitBtn.style.cursor = 'not-allowed';
+        submitBtn.title = message;
+        console.log(`[order ${orderId}] 🔒 Submit button DISABLED: ${message}`);
+    }
 }
 
 const savedDiscountPersons = {}; 
@@ -1312,6 +1346,19 @@ function areAllDiscountFieldsFilled(orderId) {
 
 // Update the button state logic
 function updateCalculateButtonState(orderId) {
+
+   // You can keep this as fallback when no discounts are selected
+    const hasDiscounts = document.getElementById('discountIds_' + orderId)?.value?.trim();
+    if (!hasDiscounts) {
+        const btn = document.getElementById('calculateBtn_' + orderId);
+        if (btn) {
+            btn.disabled = false;
+            btn.style.opacity = '1';
+            btn.style.cursor = 'pointer';
+            btn.title = '';
+        }
+    }
+    
     const calculateBtn = document.getElementById('calculateBtn_' + orderId);
     const submitBtn = document.getElementById('submitBtn_' + orderId);
     
@@ -1372,57 +1419,66 @@ function updateCalculateButtonState(orderId) {
 
 
 function confirmBillOut(orderId) {
-      const form = document.getElementById('billOutForm_' + orderId);
-      const formData = new FormData(form);
+    // ✅ NEW: Validate that calculation was performed
+    if (!hasCalculatedCharges[orderId]) {
+        alert('⚠️ Please click "Calculate Charges and Discounts" first!');
+        return;
+    }
+    
+    // ✅ NEW: Validate that charges fields are populated
+    if (!areChargesFieldsPopulated(orderId)) {
+        alert('⚠️ Charges and discounts are empty. Please calculate first!');
+        return;
+    }
 
-      // ✅ Include computed discount and billing fields
-      const fields = [
-         'srPwdBill', 'discount20', 'otherDiscount',
-         'netBill', 'vatable', 'vat12', 'totalCharge'
-      ];
-      fields.forEach(f => {
-         const el = document.getElementById(f + '_' + orderId);
-         if (el) formData.append(f, el.value);
-      });
+    const form = document.getElementById('billOutForm_' + orderId);
+    const formData = new FormData(form);
 
-         // ✅ Collect discount persons from saved memory
-      const personsData = [];
-      if (savedDiscountPersons[orderId]) {
-         Object.entries(savedDiscountPersons[orderId]).forEach(([discountId, persons]) => {
-               persons.forEach(p => {
-                  personsData.push({
-                     discount_id: discountId,
-                     name: p.name || '',
-                     id_number: p.id_number || ''
-                  });
-               });
-         });
-      }
-      // ✅ Attach JSON string of all persons to form data
-   formData.append('persons', JSON.stringify(personsData));
+    // Include computed discount and billing fields
+    const fields = [
+        'srPwdBill', 'discount20', 'otherDiscount',
+        'netBill', 'vatable', 'vat12', 'totalCharge'
+    ];
+    fields.forEach(f => {
+        const el = document.getElementById(f + '_' + orderId);
+        if (el) formData.append(f, el.value);
+    });
 
-      // ✅ Submit request
-      fetch(form.action, {
-         method: 'POST',
-         headers: {
-               'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-         },
-         body: formData
-      })
-      .then(res => res.json())
-.then(data => {
+    // Collect discount persons from saved memory
+    const personsData = [];
+    if (savedDiscountPersons[orderId]) {
+        Object.entries(savedDiscountPersons[orderId]).forEach(([discountId, persons]) => {
+            persons.forEach(p => {
+                personsData.push({
+                    discount_id: discountId,
+                    name: p.name || '',
+                    id_number: p.id_number || ''
+                });
+            });
+        });
+    }
+    formData.append('persons', JSON.stringify(personsData));
+
+    // Submit request
+    fetch(form.action, {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        },
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
         if (data.success !== true) {
             alert('Failed to save bill: ' + (data.message || 'Unknown error'));
             return;
         }
 
-        // Optional: update visible total charge in form (just in case)
         const totalEl = document.getElementById('totalCharge_' + orderId);
         if (totalEl && data.order?.total_charge != null) {
             totalEl.value = Number(data.order.total_charge).toFixed(2);
         }
 
-        // Close bill-out modal and show updated preview when closed
         const billOutModalEl = document.getElementById('billOutModal' + orderId);
         if (billOutModalEl) {
             const billOutModal = bootstrap.Modal.getInstance(billOutModalEl);
@@ -1430,11 +1486,9 @@ function confirmBillOut(orderId) {
                 billOutModalEl.addEventListener('hidden.bs.modal', function onHidden() {
                     billOutModalEl.removeEventListener('hidden.bs.modal', onHidden);
 
-                    // Prefer dynamic update if we have fresh data
                     if (data.order) {
                         showUpdatedBillOutPreview(orderId, data.order);
                     } else {
-                        // fallback: show old preview modal
                         showPreviewModal(orderId);
                     }
                 }, { once: true });
@@ -1444,16 +1498,16 @@ function confirmBillOut(orderId) {
             }
         }
 
-        // Fallback if modal instance not found
         if (data.order) {
             showUpdatedBillOutPreview(orderId, data.order);
         } else {
             showPreviewModal(orderId);
         }
     })
-      .catch(err => {
-         console.error(err);
-      });
+    .catch(err => {
+        console.error(err);
+        alert('Error submitting bill-out. Please try again.');
+    });
 }
 
 function showUpdatedBillOutPreview(orderId, orderData) {
@@ -1526,12 +1580,186 @@ function showPreviewModal(orderId) {
     }
 }
 
+const hasCalculatedCharges = {}
+
+// Add this event listener when the bill-out modal opens
+document.querySelectorAll('[id^="billOutModal"]').forEach(modal => {
+    modal.addEventListener('show.bs.modal', function () {
+        const orderId = this.id.replace('billOutModal', '');
+        
+        // ✅ Reset calculation state when modal opens
+        hasCalculatedCharges[orderId] = false;
+        
+        // ✅ Disable submit button initially
+        disableSubmitButton(orderId, 'Please calculate charges and discounts first');
+        
+        console.log(`[order ${orderId}] 📋 Bill-out modal opened - Submit button disabled`);
+    });
+});
+
+// function toggleDiscountForm(orderId) {
+
+//    if (!willBeOpen) {   // closing
+//         // ...
+//         hasSuccessfullyCalculated[orderId] = false;
+//         disableSubmit(orderId);
+//     }
+
+//     const hidden = document.getElementById('discountIds_' + orderId);
+//     const selectedIds = hidden && hidden.value
+//         ? hidden.value.split(',').map(s => s.trim()).filter(Boolean)
+//         : [];
+
+//     if (!selectedIds.length) {
+//         alert('Please select at least one discount first.');
+//         return;
+//     }
+    
+//     const container = document.getElementById('selectedDiscountsContainer_' + orderId);
+//     const form = document.getElementById('discountForm_' + orderId);
+//     const willBeOpen = form.style.display !== 'block';
+
+//     // Helper - disable Calculate (and Submit if you want)
+//     const disableCalculate = () => {
+//         const btn = document.getElementById('calculateBtn_' + orderId);
+//         if (btn) {
+//             btn.disabled = true;
+//             btn.style.opacity = '0.6';
+//             btn.style.cursor = 'not-allowed';
+//             btn.title = 'Please close Manage Discount first';
+//         }
+//         // Optional: also disable Submit if you want
+//         // const submitBtn = document.getElementById('submitBtn_' + orderId);
+//         // if (submitBtn) submitBtn.disabled = true;
+//     };
+
+//     // Helper - enable Calculate (only when form is closed and fields are valid)
+//     const tryEnableCalculate = () => {
+//         const allFilled = areAllDiscountFieldsFilled(orderId);
+//         const btn = document.getElementById('calculateBtn_' + orderId);
+//         if (!btn) return;
+
+//         if (allFilled) {
+//             btn.disabled = false;
+//             btn.style.opacity = '1';
+//             btn.style.cursor = 'pointer';
+//             btn.title = '';
+//         } else {
+//             btn.disabled = true;
+//             btn.style.opacity = '0.6';
+//             btn.style.cursor = 'not-allowed';
+//             btn.title = 'Please fill all name and ID fields';
+//         }
+//     };
+
+//     if (willBeOpen) {
+//         // ─── Opening the form ────────────────────────────────────────────────
+//         container.innerHTML = '';
+
+//         selectedIds.forEach(id => {
+//             const chk = document.getElementById(`discountCheck_${orderId}_${id}`);
+//             if (!chk) return;
+
+//             const discountName = chk.dataset.name || 'Discount';
+//             const valuePct = chk.dataset.value || '0';
+
+//             // Initialize store if not exist
+//             if (!savedDiscountPersons[orderId]) savedDiscountPersons[orderId] = {};
+//             if (!savedDiscountPersons[orderId][id]) {
+//                 savedDiscountPersons[orderId][id] = [{ name: '', id_number: '' }];
+//             }
+
+//             const persons = savedDiscountPersons[orderId][id];
+
+//             const block = document.createElement('div');
+//             block.className = 'mb-4 p-2 border rounded';
+//             block.innerHTML = `
+//                 <h6 class="fw-bold">${discountName} (${valuePct}%)</h6>
+//                 <div class="form-group mb-2 d-flex align-items-center">
+//                     <label class="me-2"># of Entries</label>
+//                     <input type="number"
+//                            id="discountCount_${orderId}_${id}"
+//                            class="form-control"
+//                            style="width:100px" min="1"
+//                            value="${persons.length}"
+//                            oninput="renderDiscountPersons(${orderId}, ${id})">
+//                 </div>
+//                 <div id="discountPersons_${orderId}_${id}"></div>
+//             `;
+//             container.appendChild(block);
+
+//             renderDiscountPersons(orderId, id);
+//         });
+
+//         form.style.display = 'block';
+//         console.log(`[order ${orderId}] Discount form OPENED`);
+
+//         // Force disable Calculate button while form is open
+//         disableCalculate();
+//     } else {
+//         // ─── Closing the form ────────────────────────────────────────────────
+//         form.style.display = 'none';
+//         console.log(`[order ${orderId}] Discount form CLOSED`);
+
+//         // Only now check if fields are filled → decide if Calculate can be enabled
+//         tryEnableCalculate();
+//     }
+// }
+
+// Global tracker (per order) — whether the discount form was closed with valid data
+const discountFormClosedValid = {};
+
+// ──────────────────────────────────────────────────────────────
+// Helper: Force disable Calculate & Submit buttons
+// ──────────────────────────────────────────────────────────────
+function disableCalculateAndSubmit(orderId, tooltip = '') {
+    const calcBtn = document.getElementById('calculateBtn_' + orderId);
+    const subBtn  = document.getElementById('submitBtn_' + orderId);
+
+    if (calcBtn) {
+        calcBtn.disabled = true;
+        calcBtn.style.opacity = '0.6';
+        calcBtn.style.cursor = 'not-allowed';
+        if (tooltip) calcBtn.title = tooltip;
+    }
+    if (subBtn) {
+        subBtn.disabled = true;
+        subBtn.style.opacity = '0.6';
+        subBtn.style.cursor = 'not-allowed';
+    }
+}
+
+// ──────────────────────────────────────────────────────────────
+// Helper: Enable Calculate & Submit buttons
+// ──────────────────────────────────────────────────────────────
+function enableCalculateAndSubmit(orderId) {
+    const calcBtn = document.getElementById('calculateBtn_' + orderId);
+    const subBtn  = document.getElementById('submitBtn_' + orderId);
+
+    if (calcBtn) {
+        calcBtn.disabled = false;
+        calcBtn.style.opacity = '1';
+        calcBtn.style.cursor = 'pointer';
+        calcBtn.title = '';
+    }
+    if (subBtn) {
+        subBtn.disabled = false;
+        subBtn.style.opacity = '1';
+        subBtn.style.cursor = 'pointer';
+        subBtn.title = '';
+    }
+}
+
+// ──────────────────────────────────────────────────────────────
+// Updated toggleDiscountForm
+// ──────────────────────────────────────────────────────────────
 function toggleDiscountForm(orderId) {
     const hidden = document.getElementById('discountIds_' + orderId);
     const selectedIds = hidden && hidden.value
         ? hidden.value.split(',').map(s => s.trim()).filter(Boolean)
         : [];
 
+    
     if (!selectedIds.length) {
         alert('Please select at least one discount first.');
         return;
@@ -1539,27 +1767,27 @@ function toggleDiscountForm(orderId) {
 
     const container = document.getElementById('selectedDiscountsContainer_' + orderId);
     const form = document.getElementById('discountForm_' + orderId);
-    const willBeOpen = form.style.display !== 'block';
+    const willOpen = form.style.display !== 'block';
 
-    if (willBeOpen) {
-        // Opening the form - render discount fields
+    if (willOpen) {
+        // ─── OPENING the Manage Discount form ────────────────────────
         container.innerHTML = '';
 
         selectedIds.forEach(id => {
             const chk = document.getElementById(`discountCheck_${orderId}_${id}`);
             if (!chk) return;
+
             const discountName = chk.dataset.name || 'Discount';
             const valuePct = chk.dataset.value || '0';
 
-            // Initialize store if not exist
+            // Initialize storage if needed
             if (!savedDiscountPersons[orderId]) savedDiscountPersons[orderId] = {};
-            if (!savedDiscountPersons[orderId][id]) savedDiscountPersons[orderId][id] = [
-                { name: '', id_number: '' }
-            ];
+            if (!savedDiscountPersons[orderId][id]) {
+                savedDiscountPersons[orderId][id] = [{ name: '', id_number: '' }];
+            }
 
             const persons = savedDiscountPersons[orderId][id];
 
-            // Build discount block
             const block = document.createElement('div');
             block.className = 'mb-4 p-2 border rounded';
             block.innerHTML = `
@@ -1582,43 +1810,52 @@ function toggleDiscountForm(orderId) {
 
         form.style.display = 'block';
         console.log(`[order ${orderId}] Discount form OPENED`);
+
+        // IMPORTANT: While form is open → always disable buttons
+        discountFormClosedValid[orderId] = false; // reset flag
+        disableCalculateAndSubmit(orderId, 'Please close Manage Discount form first');
+    } 
+    else {
+    // ─── CLOSING the Manage Discount form ────────────────────────
+    form.style.display = 'none';
+    console.log(`[order ${orderId}] Discount form CLOSED`);
+
+    const allFieldsFilled = areAllDiscountFieldsFilled(orderId);
+
+    if (allFieldsFilled) {
+        discountFormClosedValid[orderId] = true;
+        enableCalculateAndSubmit(orderId);
         
-        // When opening, button should be disabled until fields are filled
-        setTimeout(() => {
-            updateCalculateButtonState(orderId);
-        }, 100);
+        // ✅ NEW: But Submit should still be disabled until Calculate is clicked
+        if (!hasCalculatedCharges[orderId]) {
+            disableSubmitButton(orderId, 'Please click Calculate Charges and Discounts');
+        }
     } else {
-        // Closing the form - check if fields are filled before allowing close
-        form.style.display = 'none';
-        console.log(`[order ${orderId}] Discount form CLOSED`);
-        
-        // Update button state when closing
-        setTimeout(() => {
-            updateCalculateButtonState(orderId);
-        }, 100);
+        discountFormClosedValid[orderId] = false;
+        disableCalculateAndSubmit(orderId, 'Please complete all name and ID fields');
     }
 }
+}
 
-/**
- * Render person rows and keep values synced to memory
- */
 function renderDiscountPersons(orderId, discountId) {
     const countInput = document.getElementById(`discountCount_${orderId}_${discountId}`);
-    const count = Math.max(parseInt(countInput.value) || 0, 1);
+    const count = Math.max(parseInt(countInput?.value) || 1, 1);
 
     if (!savedDiscountPersons[orderId]) savedDiscountPersons[orderId] = {};
     if (!savedDiscountPersons[orderId][discountId]) savedDiscountPersons[orderId][discountId] = [];
 
     const persons = savedDiscountPersons[orderId][discountId];
 
-    // Adjust the array size
+    // Adjust array length
     while (persons.length < count) persons.push({ name: '', id_number: '' });
     while (persons.length > count) persons.pop();
 
     const container = document.getElementById(`discountPersons_${orderId}_${discountId}`);
+    if (!container) return;
+
     container.innerHTML = '';
 
-    persons.forEach((p, index) => {
+    persons.forEach((p, idx) => {
         const row = document.createElement('div');
         row.className = 'row mb-2';
         row.innerHTML = `
@@ -1627,20 +1864,20 @@ function renderDiscountPersons(orderId, discountId) {
                        class="form-control"
                        placeholder="Enter name here"
                        value="${p.name || ''}"
-                       oninput="updatePersonData(${orderId}, ${discountId}, ${index}, 'name', this.value)">
+                       oninput="updatePersonData(${orderId}, ${discountId}, ${idx}, 'name', this.value)">
             </div>
             <div class="col-md-6">
                 <input type="text"
                        class="form-control"
                        placeholder="Enter ID number here"
                        value="${p.id_number || ''}"
-                       oninput="updatePersonData(${orderId}, ${discountId}, ${index}, 'id_number', this.value)">
+                       oninput="updatePersonData(${orderId}, ${discountId}, ${idx}, 'id_number', this.value)">
             </div>
         `;
         container.appendChild(row);
     });
 
-    updateCalculateButtonState(orderId);
+    // DO NOT call updateCalculateButtonState() here
 }
 
 /**
@@ -1655,7 +1892,7 @@ function updatePersonData(orderId, discountId, index, field, value) {
     console.log(`[order ${orderId}] Updated person data: discount ${discountId}, index ${index}, ${field} = ${value}`);
     
     // Live update button state whenever user types
-    updateCalculateButtonState(orderId);
+   //  updateCalculateButtonState(orderId);
 }
 
 </script>
