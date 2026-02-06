@@ -11,102 +11,12 @@ use Illuminate\Pagination\LengthAwarePaginator;
 
 class DailyTimeRecordController extends Controller
 {
-// 2nd of the correct versions
-// public function index(Request $request)
-// {
-//     $year = $request->year ?? now()->year;
-//     $month = $request->month ?? now()->month;
-//     $perPage = $request->get('perPage', 10);
-//     $search = $request->get('search');
-
-//     $employees = User::where('status', 'active')->with('salaryMethod.shift')->get();
-
-//     $records = [];
-
-//     foreach ($employees as $user) {
-//         $salaryMethod = $user->salaryMethod;
-
-//         $daysInMonth = \Carbon\Carbon::create($year, $month)->daysInMonth;
-
-//         $dtrs = DailyTimeRecord::where('user_id', $user->id)
-//             ->whereYear('date', $year)
-//             ->whereMonth('date', $month)
-//             ->get()
-//             ->keyBy(fn($dtr) => $dtr->date->format('Y-m-d'));
-
-//         for ($day = 1; $day <= $daysInMonth; $day++) {
-//             $date = \Carbon\Carbon::create($year, $month, $day)->format('Y-m-d');
-//             $dtr = $dtrs[$date] ?? null;
-
-//             $timeOfShift = '-';
-//             if ($salaryMethod) {
-//                 if ($salaryMethod->custom_open_time) {
-//                     $customTimes = json_decode($salaryMethod->custom_open_time, true);
-//                     $timeOfShift = $customTimes[$date] ?? array_values($customTimes)[0];
-//                 } elseif ($salaryMethod->custom_time_start && $salaryMethod->custom_time_end) {
-//                     $timeOfShift = $salaryMethod->custom_time_start . '-' . $salaryMethod->custom_time_end;
-//                 }
-//             }
-
-//             $records[] = (object)[
-//                 'id' => $dtr?->id,
-//                 'is_virtual' => !$dtr,
-//                 'user_id' => $user->id,
-//                 'user_name' => $user->name,
-//                 'employee_number' => $user->id,
-//                 'date' => \Carbon\Carbon::parse($date),
-//                 'salary_method_id' => $salaryMethod?->id,
-//                 'salary_method_name' => $salaryMethod?->shift?->name ?? 'Shift #' . ($salaryMethod?->shift_id ?? '-'),
-//                 'shift_id' => $salaryMethod?->shift_id,
-//                 'time_of_shift' => $timeOfShift,
-//                 'time_in_reports' => $dtr?->time_in_reports,
-//                 'time_out_reports' => $dtr?->time_out_reports,
-//                 'other_reports' => $dtr?->other_reports,
-//                 'status' => $dtr?->status ?? 'worked',
-//             ];
-//         }
-//     }
-
-//     // ✅ Apply search filter if needed
-//     if ($search) {
-//         $records = collect($records)->filter(function ($record) use ($search) {
-//             return str_contains(strtolower($record->user_name), strtolower($search))
-//                 || str_contains(strtolower($record->employee_number), strtolower($search))
-//                 || str_contains(strtolower($record->salary_method_name), strtolower($search));
-//         })->values();
-//     } else {
-//         $records = collect($records);
-//     }
-
-//     // ✅ Paginate the collection manually
-//     $currentPage = LengthAwarePaginator::resolveCurrentPage();
-//     $paginatedRecords = new LengthAwarePaginator(
-//         $records->forPage($currentPage, $perPage),
-//         $records->count(),
-//         $perPage,
-//         $currentPage,
-//         [
-//             'path' => $request->url(),
-//             'query' => $request->query(),
-//         ]
-//     );
-
-//     return view('dtr.index', [
-//         'records' => $paginatedRecords,
-//         'employees' => $employees,
-//         'salaryMethods' => SalaryMethod::with('shift')->get(),
-//         'perPage' => $perPage,
-//         'search' => $search,
-//         'year' => $year,
-//         'month' => $month,
-//     ]);
-// }
 
 public function index(Request $request)
 {
     $year = $request->year ?? now()->year;
     $month = $request->month ?? now()->month;
-    $perPage = $request->get('perPage', 10);
+    $perPage = $request->get('perPage', 50);
     $search = $request->get('search');
 
     $employees = User::where('status', 'active')->with('salaryMethod.shift')->get();
