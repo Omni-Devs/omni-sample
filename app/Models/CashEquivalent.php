@@ -16,6 +16,7 @@ class CashEquivalent extends Model
         'conversion_in_peso',
         'created_by',
         'status',
+        'accountable_id',
     ];
 
     /**
@@ -24,5 +25,9 @@ class CashEquivalent extends Model
     public function creator()
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+    public function accountable()
+    {
+        return $this->belongsTo(User::class, 'accountable_id');
     }
 }

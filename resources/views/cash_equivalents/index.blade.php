@@ -1,6 +1,13 @@
 @extends('layouts.app')
 @section('content')
 
+<style>
+    #accountNumber:disabled {
+    background-color: #f5f5f5;
+    cursor: not-allowed;
+}
+</style>
+
 <div class="main-content">
     <div>
         <div class="breadcrumb">
@@ -58,9 +65,9 @@
             <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="New_CashEquivalentLabel">Add Cash Equivalent</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                {{-- <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                 <span aria-hidden="true">&times;</span>
-                </button>
+                </button> --}}
             </div>
 
             <form action="{{ route('cash_equivalents.store') }}" method="POST">
@@ -70,24 +77,17 @@
             <div id="CreateModal___BV_modal_body_" class="modal-body">
             <div class="row">
                     <div class="col-md-12">
-                        <label for="created_at_ce">Date and Time Created</label>
-                        <div class="d-flex">
-                            <input type="datetime-local" 
-                                id="created_at_ce" 
-                                name="created_at" 
-                                class="form-control" 
-                                value="{{ old('created_at') }}">
-                            
-                            <button type="button" 
-                                class="btn btn-secondary ml-2"
-                                onclick="document.getElementById('created_at_ce').value = ''">
-                                Clear
-                            </button>
-                        </div>
-                        <small class="form-text text-muted">
-                            Leave blank if you want the system to use the current time automatically.
-                        </small>
-                    </div>
+    <label for="created_at_ce">Date and Time Created</label>
+    <div class="d-flex">
+        <input
+            type="datetime-local"
+            id="created_at_ce"
+            name="created_at"
+            class="form-control"
+            value="{{ old('created_at') }}"
+        >
+    </div>
+</div>
 
                     <!-- Radio Buttons -->
                     <div class="col-md-12 mt-3">
@@ -99,7 +99,7 @@
 
                         <div class="custom-control custom-control-inline custom-radio">
                         <input id="radio-group-1_BV_option_1" type="radio" name="Mode" class="custom-control-input" value="2">
-                        <label for="radio-group-1_BV_option_1" class="custom-control-label"><span>Cash On Hand</span></label>
+                        <label for="radio-group-1_BV_option_1" class="custom-control-label"><span>Change Fund</span></label>
                         </div>
 
                         <div class="custom-control custom-control-inline custom-radio">
@@ -115,45 +115,56 @@
                     </div>
 
                     <div class="col-md-12 mt-3">
-                        <label>Cash Equivalent Name *</label>
-                        <input type="text" name="name" id="cashEquivalentName" class="form-control" required>
-                    </div>
+    <label>Cash Equivalent Name *</label>
+    <input
+        type="text"
+        name="name"
+        id="cashEquivalentName"
+        class="form-control"
+        required
+    >
+</div>
+
+<div class="col-md-12 mt-2">
+    <label>Account Number *</label>
+    <input
+        type="text"
+        name="account_number"
+        id="accountNumber"
+        class="form-control"
+    >
+</div>
+
+<div class="col-md-12 mt-2">
+    <label>Accountable Person</label>
+    <select
+        name="accountable_id"
+        id="accountablePerson"
+        class="form-control"
+        required
+    >
+        <option value="" disabled selected>Select Accountable Person</option>
+        @foreach($users as $user)
+            <option value="{{ $user->id }}">{{ $user->name }}</option>
+        @endforeach
+    </select>
+</div>
 
 
-                    <div class="col-md-12 mt-2">
-                        <label>Account Number *</label>
-                        <input type="text" name="account_number" class="form-control">
-                    </div>
+                    <div class="mt-3 col-md-12 d-flex justify-content-start">
+    <button
+        type="button"
+        class="btn btn-secondary mr-2"
+        data-bs-dismiss="modal"
+    >Close
+    </button>
 
-                    <div class="col-md-12 mt-2">
-                        <label for="create-type-of-account">Select Account Type *</label>
-                        <select name="type_of_account" id="create-type-of-account" class="form-control" required>
-                            <option value="" disabled selected>Select Account Type</option>
-                            <option value="Peso Account">Peso Account</option>
-                            <option value="Dollar Account">Dollar Account</option>
-                        </select>
-                    </div>
-
-                    <div class="col-md-12 mt-2">
-                        <label for="create-conversion-in-peso">Enter Conversion in Peso *</label>
-                        <input type="number" 
-                            name="conversion_in_peso" 
-                            id="create-conversion-in-peso" 
-                            class="form-control" 
-                            step="0.01" 
-                            min="0" 
-                            required 
-                            placeholder="Enter conversion in Peso">
-                    </div>
-
-                    <div class="mt-3 col-md-12">
-                        <div class="mr-2">
-                        <div class="b-overlay-wrap position-relative d-inline-block btn-loader">
-                            <button type="submit" class="btn btn-primary"><i class="i-Yes me-2 font-weight-bold"></i>
-                            Submit</button>
-                        </div>
-                        </div>
-                    </div>
+    <div class="b-overlay-wrap position-relative d-inline-block btn-loader">
+        <button type="submit" class="btn btn-primary">
+            <i class="i-Yes me-2 font-weight-bold"></i> Submit
+        </button>
+    </div>
+</div>
                 </div>
             </div>
         </div>
@@ -252,7 +263,7 @@
 
                                 <div class="modal-header">
                                     <h5 class="modal-title" id="editCEModalLabel{{ $ce->id }}">Edit Cash Equivalent</h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    {{-- <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button> --}}
                                 </div>
 
                                 <div class="modal-body">
@@ -278,8 +289,8 @@
                                         </div>
                                         <div class="custom-control custom-control-inline custom-radio">
                                             <input id="edit-radio-2-{{ $ce->id }}" type="radio" name="Mode" class="custom-control-input" value="2"
-                                                {{ $ce->name === 'Cash On Hand' ? 'checked' : '' }}>
-                                            <label for="edit-radio-2-{{ $ce->id }}" class="custom-control-label">Cash On Hand</label>
+                                                {{ $ce->name === 'Change Fund' ? 'checked' : '' }}>
+                                            <label for="edit-radio-2-{{ $ce->id }}" class="custom-control-label">Change Fund</label>
                                         </div>
                                         <div class="custom-control custom-control-inline custom-radio">
                                             <input id="edit-radio-3-{{ $ce->id }}" type="radio" name="Mode" class="custom-control-input" value="3"
@@ -312,7 +323,7 @@
                                     </div>
 
 
-                                    <div class="form-group mb-3">
+                                    {{-- <div class="form-group mb-3">
                                         <label for="ce-type-{{ $ce->id }}">Select Account Type *</label>
                                         <select name="type_of_account"
                                             id="ce-type-{{ $ce->id }}"
@@ -334,11 +345,34 @@
                                         min="0"
                                         value="{{ $ce->conversion_in_peso }}"
                                         required>
+                                </div> --}}
+
+                                <div class="form-group mb-3">
+                                    <label>Accountable Person</label>
+                                    <select
+                                        name="accountable_id"
+                                        class="form-control"
+                                        required
+                                    >
+                                        <option value="" disabled {{ !$ce->accountable_id ? 'selected' : '' }}>
+                                            Select Accountable Person
+                                        </option>
+
+                                        @foreach($users as $user)
+                                            <option
+                                                value="{{ $user->id }}"
+                                                {{ $ce->accountable_id == $user->id ? 'selected' : '' }}
+                                            >
+                                                {{ $user->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
                                 </div>
+
                                 </div>
 
                             
-                                <div class="modal-footer">
+                                <div class="modal-footer" style="justify-content: flex-start">
                                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                                     <button type="submit" class="btn btn-primary">Update</button>
                                 </div>
@@ -395,8 +429,8 @@
     radios.forEach(radio => {
         radio.addEventListener('change', function() {
         switch (this.value) {
-            case '2': // Cash On Hand
-            nameField.value = 'Cash On Hand';
+            case '2': // Change Fund
+            nameField.value = 'Change Fund';
             nameField.readOnly = true;
             break;
             case '3': // Petty Cash
@@ -423,7 +457,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const nameInput = modal.querySelector('input[name="name"]');
         const radios = modal.querySelectorAll('input[name="Mode"]');
         const specialNames = {
-            2: 'Cash On Hand',
+            2: 'Change Fund',
             3: 'Petty Cash',
             4: 'Revolving Fund'
         };
@@ -447,5 +481,45 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     });
+});
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const input = document.getElementById('created_at_ce');
+
+    // only auto-fill if no old value exists
+    if (!input.value) {
+        const now = new Date();
+        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+
+        input.value = now.toISOString().slice(0, 16);
+    }
+});
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const accountInput = document.getElementById('accountNumber');
+    const radios = document.querySelectorAll('input[name="Mode"]');
+
+    function toggleAccountField() {
+        const selected = document.querySelector('input[name="Mode"]:checked');
+
+        if (selected && selected.value === '2') { // Change Fund
+            accountInput.disabled = false;
+            accountInput.required = true;
+        } else {
+            accountInput.disabled = true;
+            accountInput.required = false;
+            accountInput.value = '';
+        }
+    }
+
+    radios.forEach(radio => {
+        radio.addEventListener('change', toggleAccountField);
+    });
+
+    // initial state
+    toggleAccountField();
 });
 </script>

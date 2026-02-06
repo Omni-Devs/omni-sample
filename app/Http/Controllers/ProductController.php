@@ -14,37 +14,92 @@ use Illuminate\Support\Facades\Storage;
 class ProductController extends Controller
 {
     public function index(Request $request)
-    {
-         // Defaults
-        $status = $request->get('status', 'active');
-        $perPage = $request->get('perPage', 10);
-        $search = $request->get('search'); // ✅ added for search
+{
+    // Just redirect to the view, actual fetching happens in fetchProducts
+    return view('products.index', [
+        'status' => $request->get('status', 'active')
+    ]);
+}
 
-        // Fetch products with optional search
+/**
+ * Fetch products based on status, search, pagination, and branch
+ */
+public function fetchProducts(Request $request)
+{
+    $status    = $request->get('status', 'active');
+    $perPage   = $request->get('perPage', 10);
+    $search    = $request->get('search');
+    $category  = $request->get('category');
+    $subcategory = $request->get('subcategory');
+
+    $branchId = current_branch_id();
+
+    if ($branchId == 1) {
+
+        // MAIN BRANCH
         $products = Product::with(['category', 'subcategory'])
             ->where('status', $status)
             ->when($search, function ($query, $search) {
                 $query->where(function ($q) use ($search) {
-                    $q->where('name', 'like', "%{$search}%")
-                        ->orWhere('code', 'like', "%{$search}%")
-                        ->orWhereHas('category', function ($q) use ($search) {
-                            $q->where('name', 'like', "%{$search}%");
-                        })
-                        ->orWhereHas('subcategory', function ($q) use ($search) {
-                            $q->where('name', 'like', "%{$search}%");
-                        });
+                    $q->where('products.name', 'like', "%{$search}%")
+                      ->orWhereHas('category', fn ($q) =>
+                          $q->where('name', 'like', "%{$search}%")
+                      )
+                      ->orWhereHas('subcategory', fn ($q) =>
+                          $q->where('name', 'like', "%{$search}%")
+                      );
                 });
             })
-            ->orderBy('created_at', 'desc')
-            ->paginate($perPage)
-            ->appends([
-                'perPage' => $perPage,
-                'status' => $status,
-                'search' => $search, // ✅ keep search on pagination
-            ]);
+            ->when($category, fn ($q) =>
+                $q->where('category_id', $category)
+            )
+            ->when($subcategory, fn ($q) =>
+                $q->where('subcategory_id', $subcategory)
+            )
+            ->orderBy('products.created_at', 'desc')
+            ->paginate($perPage);
 
-        return view('products.index', compact('products', 'status', 'search'));
+    } else {
+
+        // OTHER BRANCHES
+        $products = Product::query()
+            ->select([
+                'products.*',
+                'bc.onhand',
+                'bc.cost',
+                'bc.price',
+                'bc.for_sale',
+                'bc.status as status'
+            ])
+            ->join('branch_products as bc', 'bc.product_id', '=', 'products.id')
+            ->where('bc.branch_id', $branchId)
+            ->where('products.status', $status)
+            ->with(['category', 'subcategory'])
+            ->when($search, function ($query, $search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('products.name', 'like', "%{$search}%")
+                      ->orWhereHas('category', fn ($q) =>
+                          $q->where('name', 'like', "%{$search}%")
+                      )
+                      ->orWhereHas('subcategory', fn ($q) =>
+                          $q->where('name', 'like', "%{$search}%")
+                      );
+                });
+            })
+            ->when($category, fn ($q) =>
+                $q->where('products.category_id', $category)
+            )
+            ->when($subcategory, fn ($q) =>
+                $q->where('products.subcategory_id', $subcategory)
+            )
+            ->orderBy('products.created_at', 'desc')
+            ->paginate($perPage);
     }
+
+    // 🔥 IMPORTANT: return paginator DIRECTLY
+    return response()->json($products);
+}
+
 
     public function create()
     {
@@ -198,5 +253,87 @@ class ProductController extends Controller
         return redirect()
             ->route('products.index')
             ->with('success', 'Product restored to active successfully.');
+    }
+
+    public function verify(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|mimes:csv,txt'
+        ]);
+
+        $rows = array_map('str_getcsv', file($request->file));
+        $header = array_map('trim', array_shift($rows));
+
+        $preview = [];
+        $errors  = [];
+
+        foreach ($rows as $index => $row) {
+            $data = array_combine($header, $row);
+
+            $category = Category::where('name', $data['Category'])->first();
+            $subcategory = Subcategory::where('name', $data['Subcategory'])->first();
+
+            $rowErrors = [];
+
+            if (!$category) $rowErrors[] = 'Category not found';
+            if (!$subcategory) $rowErrors[] = 'Subcategory not found';
+
+            $preview[] = [
+                'row' => $index + 2,
+                'sku' => $data['SKU'],
+                'name' => $data['Name'],
+                'category' => $data['Category'],
+                'subcategory' => $data['Subcategory'],
+                'quantity' => (float) $data['Quantity'],
+                'unit' => $data['Unit'],
+                'price' => (float) $data['Price'],
+                'errors' => $rowErrors,
+                'valid' => empty($rowErrors),
+            ];
+        }
+
+        return response()->json([
+            'preview' => $preview,
+            'can_submit' => collect($preview)->every(fn ($r) => $r['valid'])
+        ]);
+    }
+
+    public function checkImportDuplicates(Request $request)
+{
+    $rows = $request->rows;
+
+    $skus  = collect($rows)->pluck('code')->filter();
+    $names = collect($rows)->pluck('name')->filter();
+
+    $existingSkus = Product::whereIn('code', $skus)->pluck('code')->toArray();
+    $existingNames = Product::whereIn('name', $names)->pluck('name')->toArray();
+
+    return response()->json([
+        'existingSkus'  => $existingSkus,
+        'existingNames' => $existingNames,
+    ]);
+}
+
+
+    public function import(Request $request)
+    {
+        $file = $request->file('file');
+        $rows = array_map('str_getcsv', file($file));
+
+        foreach ($rows as $i => $row) {
+            if ($i === 0) continue; // skip header
+
+            Product::updateOrCreate(
+                ['code' => $row[0]],
+                [
+                    'name' => $row[1],
+                    'category_id' => $row[2],
+                    'subcategory_id' => $row[3],
+                    'status' => 'active'
+                ]
+            );
+        }
+
+        return response()->json(['success' => true]);
     }
 }

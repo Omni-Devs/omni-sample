@@ -197,6 +197,8 @@ Route::put('/users/{user}/status/{status}', [UserController::class, 'updateStatu
 
 
 Route::get('/products', [ProductController::class, 'index'])->name('products.index');
+Route::get('/products/fetch', [ProductController::class, 'fetchProducts'])
+    ->name('products.fetch');
 Route::get('/products/create', [ProductController::class, 'create'])->name('products.create');
 Route::post('/products', [ProductController::class, 'store'])->name('products.store');
 Route::get('/products/{id}/edit', [ProductController::class, 'edit'])->name('products.edit');
@@ -205,8 +207,15 @@ Route::delete('/products/{id}', [ProductController::class, 'destroy'])->name('pr
 Route::put('/products/{product}/archive', [ProductController::class, 'archive'])->name('products.archive');
 Route::put('/products/{product}/restore', [ProductController::class, 'restore'])->name('products.restore');
 Route::get('/products/{id}/product-stock-card', [ProductController::class, 'stockCard'])->name('products.stock-card');
+Route::post('/products/import', [ProductController::class, 'import'])->name('products.import');
+Route::post('/products/import/verify', [ProductController::class, 'verifyImport'])->name('products.verify-import');
+Route::post('/products/import/check', [ProductController::class, 'checkImportDuplicates']);
+
+
 
 Route::get('/components', [ComponentController::class, 'index'])->name('components.index');
+Route::get('/components/fetch', [ComponentController::class, 'fetchComponents'])
+    ->name('components.fetch');
 Route::get('/components/create', [ComponentController::class, 'create'])->name('components.create');
 Route::post('/components', [ComponentController::class, 'store'])->name('components.store');
 Route::get('/components/{id}/edit', [ComponentController::class, 'edit'])->name('components.edit');

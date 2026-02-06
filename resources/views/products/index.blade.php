@@ -1,281 +1,760 @@
 @extends('layouts.app')
 @section('content')
-<div class="main-content">
-   <div>
-      <div class="breadcrumb">
-         <h1 class="mr-3">Products and Components</h1>
-         <ul>
-            <li><a href=""> Inventory </a></li>
-            <!----> <!---->
-         </ul>
-         <div class="breadcrumb-action"></div>
-      </div>
-      <div class="separator-breadcrumb border-top"></div>
+<style>
+       .modal-dialog {
+         max-width: 90%;
+       }
+</style>
+<div class="main-content" id="app">
+<div>
+   <div class="breadcrumb">
+      <h1 class="mr-3">Products and Components</h1>
+      <ul>
+         <li><a href=""> Inventory </a></li>
+      </ul>
+      <div class="breadcrumb-action"></div>
    </div>
-   <!----> 
-   <div class="wrapper">
-      <div class="row">
-         <div class="col-sm-12 col-md-4">
-            <fieldset class="form-group" id="__BVID__227">
-               <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0" id="__BVID__227__BV_label_">Select Type</legend>
-               <div>
-                  <div class="v-select vs--single vs--searchable">
-                     <div class="vs__dropdown-toggle">
-                        <div class="vs__selected-options">
-                           <span class="vs__selected">Products</span>
-                           {{-- <input type="search" class="vs__search" placeholder="Search..."> --}}
-                        </div>
-                        <div class="vs__actions">
-                           {{-- <button type="button" title="Clear Selected" aria-label="Clear Selected" class="vs__clear">&times;</button> --}}
-                           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="10" role="presentation" class="vs__open-indicator">
-                           <path d="M9.211364 7.59931l4.48338-4.867229c.407008-.441854.407008-1.158247 0-1.60046l-.73712-.80023c-.407008-.441854-1.066904-.441854-1.474243 0L7 5.198617 2.51662.33139c-.407008-.441853-1.066904-.441853-1.474243 0l-.737121.80023c-.407008.441854-.407008 1.158248 0 1.600461l4.48338 4.867228L7 10l2.211364-2.40069z"></path>
-                           </svg>
-                        </div>
-                     </div>
-                     <ul class="vs__listbox">
-                     <a href="/products" style="color: black"><li>Products</li></a>
-                     <a href="/components" style="color: black"><li>Components</li></a>
-                     </ul>
-                     </div>
-                  <!----><!----><!---->
-               </div>
-            </fieldset>
-         </div>
+   <div class="separator-breadcrumb border-top"></div>
+</div>
+<!-- Import Modal -->
+<div class="modal fade" id="importModal" tabindex="-1">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+
+      <div class="modal-header">
+        <h5 class="modal-title">Import Products</h5>
+        <button type="button"
+                class="btn-close"
+                data-bs-dismiss="modal"
+                @click="resetImport">
+        </button>
       </div>
-      <div class="card mt-4">
-         <!----><!---->
-         <div class="card-body">
-            <nav class="card-header">
+
+      <div class="modal-body">
+        <form @submit.prevent="submitImport">
+
+          <div class="row">
+
+            <!-- File upload -->
+            <div class="col-12 mb-4">
+              <div class="d-flex align-items-center gap-3 flex-wrap">
+
+                <div class="flex-grow-1">
+                  <label class="form-label">Choose CSV file</label>
+                  <input
+                    type="file"
+                    class="form-control"
+                    accept=".csv"
+                    ref="importFile"
+                    @change="handleFileChange"
+                  />
+                  <small class="text-muted" v-if="importFileName">
+                    Selected: @{{ importFileName }}
+                  </small>
+                </div>
+
+                <div>
+                  <a href="/import/product_sample/import_for_products.csv"
+                     class="btn btn-info btn-sm"
+                     download>
+                    Download Example
+                  </a>
+                </div>
+
+              </div>
+            </div>
+
+            <!-- CSV Import Preview Table -->
+<div class="mb-3 col-sm-12 col-md-12">
+  <div class="list-group">
+    <div class="list-group-item p-0">
+
+      <div class="table-responsive import-table-container">
+        <table class="table table-sm table-bordered mb-0" id="import-table">
+
+          <!-- TABLE HEADER -->
+          <thead>
+            <tr>
+              <th class="text-center" style="width:40px">Action</th>
+              <th>SKU</th>
+              <th>Name</th>
+              <th>Category</th>
+              <th>Sub Category</th>
+              <th>Quantity</th>
+              <th>Unit</th>
+              <th>Price</th>
+            </tr>
+          </thead>
+
+                <!-- TABLE BODY -->
+          <tbody>
+            <tr v-if="!importRows.length">
+              <td colspan="8" class="text-center text-muted py-4">
+                No data to upload yet
+              </td>
+            </tr>
+
+            <tr v-for="(row, index) in importRows" :key="index">
+
+              <!-- Remove button -->
+              <td class="text-center">
+                <button
+                  type="button"
+                  class="btn btn-link text-danger p-0"
+                  @click="removeImportRow(index)"
+                >
+                  <i class="i-Close"></i>
+                </button>
+              </td>
+
+              <td>@{{ row.code }}</td>
+              <td>@{{ row.name }}</td>
+              <td>@{{ row.category }}</td>
+              <td>@{{ row.subcategory }}</td>
+              <td>@{{ row.quantity }}</td>
+              <td>@{{ row.unit }}</td>
+              <td>@{{ Number(row.price || 0).toFixed(2) }}</td>
+
+            </tr>
+          </tbody>
+         </table>
+      </div>
+       </div>
+       </div>
+</div>
+
+            <!-- Actions -->
+            <div class="col-12">
+              <div class="d-flex gap-2 justify-content-end">
+
+                <button type="button"
+                        class="btn btn-outline-secondary"
+                        :disabled="!importFile"
+                        @click="verifyImport">
+                  Verify Now
+                </button>
+
+                <button type="submit"
+                        class="btn btn-primary"
+                        :disabled="!importVerified">
+                  Submit
+                </button>
+
+              </div>
+            </div>
+
+          </div>
+        </form>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
+<div class="wrapper">
+   <div class="row">
+      <div class="col-md-4">
+         <label class="col-form-label pt-0">Select Type</label>
+         <v-select 
+            :options="types" 
+            label="label" 
+            :reduce="type => type.value" 
+            v-model="selectedType" 
+            @input="goToPage" 
+            placeholder="Select type" 
+            />
+      </div>
+   </div>
+   <div class="card mt-4">
+      <div class="card-body">
+         <nav class="card-header">
             <ul class="nav nav-tabs card-header-tabs">
-                  <li class="nav-item">
-                     <a href="{{ route('products.index', ['status' => 'active']) }}" class="nav-link {{ $status === 'active' ? 'active' : '' }}">Active</a>
-                  </li>
-                  <li class="nav-item">
-                     <a href="{{ route('products.index', ['status' => 'archived']) }}" class="nav-link {{ $status === 'archived' ? 'active' : '' }}">Archived</a>
-                  </li>
-               </ul>
+               <li class="nav-item" v-for="status in statusList" :key="status.value">
+                  <a href="#" 
+                     class="nav-link" 
+                     :class="{ active: statusFilter === status.value }" 
+                     @click.prevent="setStatus(status.value)">
+                  @{{ status.label }}
+                  </a>
+               </li>
+            </ul>
          </nav>
          <div class="card-body">
-            <!----><!---->
-            <div class="vgt-wrap ">
-               <!----> 
+            <div class="vgt-wrap">
                <div class="vgt-inner-wrap">
-                  <!----> 
                   <div class="vgt-global-search vgt-clearfix">
                      <div class="vgt-global-search__input vgt-pull-left">
-                     <span aria-hidden="true" class="input__icon">
-                        <div class="magnifying-glass"></div>
-                     </span>
-                  <form role="search" method="GET" action="{{ route('products.index') }}" class="mb-3" style="position: relative;">
-                     <label for="tableSearch" style="cursor: pointer;" onclick="this.closest('form').submit()">
-                  
-                        <span class="sr-only">Search</span>
-                     </label>
-                     <input 
-                        id="tableSearch" 
-                        name="search" 
-                        type="text" 
-                        value="{{ request('search') }}" 
-                        placeholder="Search this table" 
-                        class="vgt-input vgt-pull-left"
-                        onkeydown="if(event.key === 'Enter') this.form.submit()"
-                     >
-                  </form>
+                        <span aria-hidden="true" class="input__icon">
+                           <div class="magnifying-glass"></div>
+                        </span>
+                        <form role="search" method="GET" action="{{ route('products.index') }}" class="mb-3" style="position: relative;">
+                           <label for="tableSearch" style="cursor: pointer;" onclick="this.closest('form').submit()">
+                           <span class="sr-only">Search</span>
+                           </label>
+                           <input 
+                              id="tableSearch" 
+                              name="search" 
+                              type="text" 
+                              value="{{ request('search') }}" 
+                              placeholder="Search this table" 
+                              class="vgt-input vgt-pull-left" 
+                              onkeydown="if(event.key === 'Enter') this.form.submit()"
+                              >
+                        </form>
                      </div>
                      <div class="vgt-global-search__actions vgt-pull-right">
                         <div>
-                           <div id="dropdown-form" class="dropdown b-dropdown mx-1 btn-group" rounded="">
-                              <!----><button id="dropdown-form__BV_toggle_" aria-haspopup="menu" aria-expanded="false" type="button" class="btn dropdown-toggle btn-light dropdown-toggle-no-caret"><i class="i-Gear"></i></button>
-                              <ul role="menu" tabindex="-1" aria-labelledby="dropdown-form__BV_toggle_" class="dropdown-menu dropdown-menu-right">
+                           <div id="dropdown-form" class="dropdown b-dropdown mx-1 btn-group" :class="{ show: showColumnDropdown }">
+                              <button 
+                                 type="button" 
+                                 class="btn dropdown-toggle btn-light dropdown-toggle-no-caret" 
+                                 @click="toggleDropdown" 
+                                 aria-haspopup="menu">
+                              <i class="i-Gear"></i>
+                              </button>
+                              <ul class="dropdown-menu dropdown-menu-right" v-show="showColumnDropdown" role="menu" style="display: block;">
                                  <li role="presentation">
-                                    <header id="dropdown-header-label" class="dropdown-header">
-                                       Columns
-                                    </header>
+                                    <header class="dropdown-header">Columns</header>
                                  </li>
                                  <li role="presentation" style="width: 220px;">
-                                    <form tabindex="-1" class="b-dropdown-form p-0">
-                                       <section class="ps-container ps">
-                                          <div class="px-4" style="max-height: 400px;">
+                                    <form class="b-dropdown-form p-0">
+                                       <section>
+                                          <div class="px-4" style="max-height: 400px; overflow:auto;">
                                              <ul class="list-unstyled">
-                                                <li>
-                                                   <div class="my-1 custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" value="true" id="__BVID__248"><label class="custom-control-label" for="__BVID__248">Type</label></div>
+                                                <li v-for="col in columns" :key="col.field">
+                                                   <div class="my-1 custom-control custom-checkbox">
+                                                      <input 
+                                                         type="checkbox" 
+                                                         class="custom-control-input" 
+                                                         :id="`col-${col.field}`" 
+                                                         :checked="!col.hidden" 
+                                                         @change="toggleColumn(col.field)"
+                                                         >
+                                                      <label class="custom-control-label" :for="`col-${col.field}`">
+                                                      @{{ col.label }}
+                                                      </label>
+                                                   </div>
                                                 </li>
-                                                <li>
-                                                   <div class="my-1 custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" value="true" id="__BVID__249"><label class="custom-control-label" for="__BVID__249">Sub-Type</label></div>
-                                                </li>
-                                                <li>
-                                                   <div class="my-1 custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" value="true" id="__BVID__250"><label class="custom-control-label" for="__BVID__250">Image</label></div>
-                                                </li>
-                                                <li>
-                                                   <div class="my-1 custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" value="true" id="__BVID__251"><label class="custom-control-label" for="__BVID__251">Date and Time Created</label></div>
-                                                </li>
-                                                <li>
-                                                   <div class="my-1 custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" value="true" id="__BVID__252"><label class="custom-control-label" for="__BVID__252">Created By</label></div>
-                                                </li>
-                                                <li>
-                                                   <div class="my-1 custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" value="true" id="__BVID__253"><label class="custom-control-label" for="__BVID__253">Product Name</label></div>
-                                                </li>
-                                                <li>
-                                                   <div class="my-1 custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" value="true" id="__BVID__254"><label class="custom-control-label" for="__BVID__254">SKU(Product Code)</label></div>
-                                                </li>
-                                                <li>
-                                                   <div class="my-1 custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" value="true" id="__BVID__255"><label class="custom-control-label" for="__BVID__255">Description</label></div>
-                                                </li>
-                                                <li>
-                                                   <div class="my-1 custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" value="true" id="__BVID__256"><label class="custom-control-label" for="__BVID__256">Abbreviation</label></div>
-                                                </li>
-                                                <li>
-                                                   <div class="my-1 custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" value="true" id="__BVID__257"><label class="custom-control-label" for="__BVID__257">Category</label></div>
-                                                </li>
-                                                <li>
-                                                   <div class="my-1 custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" value="true" id="__BVID__258"><label class="custom-control-label" for="__BVID__258">Brand</label></div>
-                                                </li>
-                                                <li>
-                                                   <div class="my-1 custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" value="true" id="__BVID__259"><label class="custom-control-label" for="__BVID__259">Average Cost per Unit</label></div>
-                                                </li>
-                                                <li>
-                                                   <div class="my-1 custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" value="true" id="__BVID__260"><label class="custom-control-label" for="__BVID__260">SRP</label></div>
-                                                </li>
-                                                <li>
-                                                   <div class="my-1 custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" value="true" id="__BVID__261"><label class="custom-control-label" for="__BVID__261">Unit</label></div>
-                                                </li>
-                                                <li>
-                                                   <div class="my-1 custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" value="true" id="__BVID__262"><label class="custom-control-label" for="__BVID__262">Quantity</label></div>
-                                                </li>
-                                                <li>
-                                                   <div class="my-1 custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" value="true" id="__BVID__263"><label class="custom-control-label" for="__BVID__263">Stock Alert</label></div>
-                                                </li>
-                                                <li>
-                                                   <div class="my-1 custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" value="true" id="__BVID__264"><label class="custom-control-label" for="__BVID__264">Action</label></div>
-                                                </li>
-                                                <li><button type="button" class="btn mt-2 mb-3 btn-primary btn-sm">Save</button></li>
                                              </ul>
-                                          </div>
-                                          <div class="ps__rail-x" style="left: 0px; bottom: 0px;">
-                                             <div class="ps__thumb-x" tabindex="0" style="left: 0px; width: 0px;"></div>
-                                          </div>
-                                          <div class="ps__rail-y" style="top: 0px; right: 0px;">
-                                             <div class="ps__thumb-y" tabindex="0" style="top: 0px; height: 0px;"></div>
                                           </div>
                                        </section>
                                     </form>
                                  </li>
                               </ul>
                            </div>
-                           <button type="button" class="btn mx-1 btn-outline-info ripple btn-sm collapsed" aria-expanded="false" aria-controls="sidebar-right" style="overflow-anchor: none;"><i class="i-Filter-2"></i>
-                           Filter
-                           </button> <button type="button" class="btn mx-1 btn-outline-success ripple btn-sm"><i class="i-File-Copy"></i> PDF
-                           </button> <button class="btn btn-sm btn-outline-danger ripple mx-1"><i class="i-File-Excel"></i> EXCEL
+                           <button
+                              type="button"
+                              class="btn mx-1 btn-outline-info btn-sm"
+                              @click="showFilterSidebar = true"
+                              >
+                           <i class="i-Filter-2"></i> Filter
+                           </button>
+                           <button
+                              class="btn btn-sm btn-outline-danger ripple mx-1"
+                              @click="exportExcel"
+                              >
+                              <i class="i-File-Excel"></i> Export
+                           </button>
                            {{-- Import button: hide if archived --}}
                            @if ($status !== 'archived')
-                              <button type="button" class="btn btn-info m-1 btn-sm">
-                                    <i class="i-Upload"></i> Import
-                              </button>
+                           <button
+                              type="button"
+                              class="btn btn-info m-1 btn-sm"
+                              @click="openImportModal"
+                           >
+                              <i class="i-Upload"></i> Import
+                           </button>
                            @endif
-
                            {{-- Add button: hide if archived --}}
                            @if ($status !== 'archived')
-                              <button type="button" class="btn mx-1 btn-btn btn-primary btn-icon"
-                                    onclick="window.location='{{ url('products/create') }}'">
-                                    <i class="i-Add"></i> Add
-                              </button>
+                           <button type="button" class="btn mx-1 btn-btn btn-primary btn-icon" onclick="window.location='{{ url('products/create') }}'">
+                           <i class="i-Add"></i> Add
+                           </button>
                            @endif
-
                            {{-- Stock Alert Summary: show only if not active and not archived --}}
                            @if ($status !== 'active' && $status !== 'archived')
-                              <button type="button" class="btn mx-1 btn-btn btn-primary">
-                                    Stock Alert Summary
-                              </button>
+                           <button type="button" class="btn mx-1 btn-btn btn-primary">
+                           Stock Alert Summary
+                           </button>
                            @endif
                         </div>
                      </div>
                   </div>
-                  <!----> 
-                  <div class="vgt-fixed-header">
-                     <!---->
-                  </div>
-                  <div class="vgt-responsive"style="max-height: 400px; overflow-y: auto;">
-                     <table id="vgt-table" class="table-hover tableOne vgt-table custom-vgt-table ">
-                        <colgroup>
-                           <col id="col-0">
-                           <col id="col-1">
-                           <col id="col-2">
-                           <col id="col-3">
-                           <col id="col-4">
-                           <col id="col-5">
-                           <col id="col-6">
-                           <col id="col-7">
-                           <col id="col-8">
-                           <col id="col-9">
-                           <col id="col-10">
-                           <col id="col-11">
-                           <col id="col-12">
-                           <col id="col-13">
-                           <col id="col-14">
-                           <col id="col-15">
-                           <col id="col-16">
-                        </colgroup>
-                        <thead style="min-width: auto; width: auto;">
-                           <tr>
-                              <th scope="col" class="vgt-left-align text-left sortable">
-                                 <span>Product ID</span>
-                                 <button><span class="sr-only">Sort table by Product ID in descending order</span></button>
-                              </th>
-                              <th scope="col" class="vgt-left-align text-left sortable">
-                                 <span>Product Name</span>
-                                 <button><span class="sr-only">Sort table by Product Name in descending order</span></button>
-                              </th>
-                              <th scope="col" class="vgt-left-align text-left sortable">
-                                 <span>Category Name</span>
-                                 <button><span class="sr-only">Sort table by Category in descending order</span></button>
-                              </th>
-                              <th scope="col" class="vgt-left-align text-left sortable">
-                                 <span>Sub Category Name</span>
-                                 <button><span class="sr-only">Sort table by Category in descending order</span></button>
-                              </th>
-                              <th scope="col" class="vgt-left-align text-right sortable">
-                                 <span>Product Price</span>
-                                 <button><span class="sr-only">Sort table by Unit Price in descending order</span></button>
-                              </th>
-                              <th scope="col" class="vgt-left-align text-right">
-                                 <span>Action</span>
-                              </th>
-                           </tr>
-                        </thead>
-                        <tbody>
-                                 @forelse ($products as $product)
-                                 <tr>
-                                    <td class="text-left">{{ $product->code }}</td>
-                                    <td class="text-left">{{ $product->name }}</td>
-                                    <td class="text-left">{{ $product->category?->name ?? 'N/A' }}</td>
-                                    <td class="text-left">{{ $product->subcategory?->name ?? 'N/A' }}</td>
-                                    <td class="text-right">{{ number_format($product->price, 2, '.', '') }}</td>
-                                    <td class="text-right">
-                                       @include('layouts.actions-dropdown', [
-                                          'id' => $product->id,
-                                          'editRoute' => route('products.edit', $product->id),
-                                          'stockCardRoute' => '#',
-                                          'deleteRoute' => route('products.destroy', $product->id),
-                                          'archiveRoute' => route('products.archive', $product->id),
-                                          'restoreRoute' => route('products.restore', $product->id),
-                                          'logsRoute' => '#',
-                                          'remarksRoute' => '#',
-                                          'status' => $product->status
-                                       ])
-                                    </td>
-                                 </tr>
-                              @empty
-                           <tr>
-                              <td colspan="5" class="vgt-center-align vgt-text-disabled">
-                                 No data for table
-                              </td>
-                           </tr>
-                           @endforelse
-                        </tbody>
-                  </div>
-                  </td></tr></tbody></table>
+               </div>
+            </div>
+         </div>
+<div class="vgt-fixed-header"></div>
 
-                  <script>
+<div class="vgt-responsive" style="max-height: 400px; overflow-y: auto;">
+    <table id="vgt-table" class="table-hover tableOne vgt-table custom-vgt-table">
+        <colgroup>
+            <col v-for="(col, i) in visibleColumns" :key="i">
+        </colgroup>
+        <thead>
+            <tr>
+                <th v-for="col in visibleColumns" 
+                    :key="col.field" 
+                    class="vgt-left-align text-left sortable" 
+                    :data-column="col.field">
+                    <span>@{{ col.label }}</span>
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr v-for="row in filteredRows" :key="row.id">
+                <td v-for="col in visibleColumns" :key="col.field" :data-column="col.field">
+                    <template v-if="col.field === 'product_sku'">
+                        @{{ row.code }}
+                    </template>
+                    <template v-else-if="col.field === 'product_name'">
+                        @{{ row.name }}
+                    </template>
+                    <template v-else-if="col.field === 'category'">
+                        @{{ row.category?.name || 'N/A' }}
+                    </template>
+                    <template v-else-if="col.field === 'subcategory'">
+                        @{{ row.subcategory?.name || 'N/A' }}
+                    </template>
+                    <template v-else-if="col.field === 'product_quantity'">
+                        @{{ Number(row.quantity).toFixed(2) }}
+                    </template>
+                    <template v-else-if="col.field === 'product_price'">
+                        @{{ Number(row.price).toFixed(2) }}
+                    </template>
+                    <template v-else-if="col.field === 'product_unit'">
+                        @{{ row.unit }}
+                    </template>
+                    <template v-else-if="col.field === 'action'">
+                        <div class="vgt-left-align text-right">
+                            <actions-dropdown 
+                                :row="row" 
+                                @edit-route="editRoute"
+                                @delete-route="deleteRoute"
+                                @archive-route="archiveRoute"
+                                @restore-route="restoreRoute"
+                                @stock-card-route="stockCardRoute"
+                                @logs-route="logsRoute"
+                                @remarks-route="remarksRoute"
+                                @open-remarks-modal="openRemarksModal"
+                                >
+                            </actions-dropdown>
+                        </div>
+                    </template>
+                </td>
+            </tr>
+            <tr v-if="!filteredRows.length">
+                <td :colspan="visibleColumns.length" class="vgt-center-align vgt-text-disabled">
+                    No data for table
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<div class="modal fade" id="remarksModal" tabindex="-1" role="dialog" aria-labelledby="remarksModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <header class="modal-header">
+                <h5 class="modal-title" id="remarksModalLabel">Remarks</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </header>
+            <div class="modal-body">
+                <form id="remarksForm">
+                    @csrf
+                    <input type="hidden" id="remarksItemId" value="{{ $product->id ?? '' }}">
+                    <fieldset class="form-group">
+                        <textarea 
+                            name="remarks" 
+                            id="remarksText"
+                            placeholder="Type your message" 
+                            rows="3" 
+                            class="form-control" 
+                            cols="30">
+                        </textarea>
+                        <div class="invalid-feedback">This field is required</div>
+                    </fieldset>
+                    <div class="d-flex justify-content-end">
+                        <button type="submit" class="btn btn-primary btn-icon btn-rounded">
+                            <i class="i-Yes me-2 font-weight-bold"></i> Submit
+                        </button>
+                    </div>
+                </form>
+                <hr>
+                <div class="remarks-history">
+                    <div class="mb-3">
+                        <div class="d-flex align-items-center">
+                            <i class="i-User me-2"></i>
+                            <span class="text-primary fw-bold">
+                                {{ Auth::check() ? Auth::user()->name : 'Guest User' }}
+                            </span>
+                        </div>
+                    </div>
+                    <ul class="timeline" id="remarksTimeline"></ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="vgt-wrap__footer vgt-clearfix mt-3">
+    <div class="footer__row-count vgt-pull-left">
+        <label class="footer__row-count__label">Rows per page:</label>
+        <select v-model="perPage" @change="fetchProducts(1)">
+            <option v-for="size in [10,20,30,40,50]" :key="size" :value="size">
+                @{{ size }}
+            </option>
+        </select>
+    </div>
+
+    <div class="footer__navigation vgt-pull-right">
+        <div class="footer__navigation__page-info me-3">
+            <div>@{{ pageFrom }} - @{{ pageTo }} of @{{ pagination.total }}</div>
+        </div>
+        
+        <button 
+            class="footer__navigation__page-btn" 
+            :class="{ disabled: pagination.current_page === 1 }" 
+            @click="fetchProducts(pagination.current_page - 1)" 
+            :disabled="pagination.current_page === 1">
+            <span class="chevron left"></span>
+            <span>prev</span>
+        </button>
+        
+        <button 
+            class="footer__navigation__page-btn" 
+            :class="{ disabled: pagination.current_page === pagination.last_page }" 
+            @click="fetchProducts(pagination.current_page + 1)" 
+            :disabled="pagination.current_page === pagination.last_page">
+            <span>next</span>
+            <span class="chevron right"></span>
+        </button>
+    </div>
+</div>
+<div tabindex="-1" class="b-sidebar-outer">
+      <!-- Sidebar -->
+      <div
+         id="sidebar-right"
+         tabindex="-1"
+         class="b-sidebar shadow b-sidebar-right bg-white text-dark sidebar-open"
+         v-show="showFilterSidebar"
+         >
+         <!-- Header -->
+         <header class="b-sidebar-header">
+            <button
+               type="button"
+               aria-label="Close"
+               class="close text-dark"
+               @click="showFilterSidebar = false"
+               >
+            ✕
+            </button>
+            <strong id="sidebar-right___title__">Filter</strong>
+         </header>
+         <!-- Body -->
+         <div class="b-sidebar-body">
+            <div class="px-3 py-2">
+               <div class="row">
+                  <!-- Product SKU -->
+                  <div class="col-md-12">
+                     <fieldset class="form-group">
+                        <legend class="col-form-label pt-0">
+                           Product SKU
+                        </legend>
+                        <input
+                           type="text"
+                           class="form-control"
+                           placeholder="Search by product code"
+                           v-model="filters.code"
+                           >
+                     </fieldset>
+                  </div>
+                  <!-- Product Name -->
+                  <div class="col-md-12">
+                     <fieldset class="form-group">
+                        <legend class="col-form-label pt-0">
+                           Product Name
+                        </legend>
+                        <input
+                           type="text"
+                           class="form-control"
+                           placeholder="Search by product name"
+                           v-model="filters.name"
+                           >
+                     </fieldset>
+                  </div>
+                  <!-- Category -->
+                  <div class="col-md-12">
+                     <fieldset class="form-group">
+                        <legend class="col-form-label pt-0">
+                           Category
+                        </legend>
+
+                        <v-select
+                           :options="categories"
+                           label="name"
+                           :reduce="c => c.id"
+                           v-model="filters.category"
+                           placeholder="Select category"
+                           clearable
+                        />
+                     </fieldset>
+                  </div>
+                  <!-- Subcategory -->
+                  <div class="col-md-12">
+                     <fieldset class="form-group">
+                        <legend class="col-form-label pt-0">
+                           Subcategory
+                        </legend>
+                        <v-select
+                           :options="filteredSubcategories"
+                           label="name"
+                           :reduce="s => s.id"
+                           v-model="filters.subcategory"
+                           placeholder="Select subcategory"
+                           :disabled="!filters.category"
+                           clearable
+                        />
+                     </fieldset>
+                  </div>
+                  <!-- Quantity Range -->
+                  <div class="col-md-12">
+                     <fieldset class="form-group">
+                        <legend class="col-form-label pt-0">
+                           Quantity Range
+                        </legend>
+                        <div class="d-flex gap-2">
+                           <input
+                              type="number"
+                              class="form-control"
+                              placeholder="From"
+                              v-model.number="filters.quantity_from"
+                              >
+                           <input
+                              class="form-control"
+                              placeholder="To"
+                              v-model.number="filters.quantity_to"
+                              >
+                        </div>
+                     </fieldset>
+                  </div>
+                  <!-- Price Range -->
+                  <div class="col-md-12">
+                     <fieldset class="form-group">
+                        <legend class="col-form-label pt-0">
+                           Price Range
+                        </legend>
+                        <div class="d-flex gap-2">
+                           <input
+                              type="number"
+                              class="form-control"
+                              placeholder="From"
+                              v-model.number="filters.price_from"
+                              >
+                           <input
+                              type="number"
+                              class="form-control"
+                              placeholder="To"
+                              v-model.number="filters.price_to"
+                              >
+                        </div>
+                     </fieldset>
+                  </div>
+                  <!-- Unit -->
+                  <div class="col-md-12">
+                     <fieldset class="form-group">
+                        <legend class="col-form-label pt-0">
+                           Product Unit
+                        </legend>
+                        <input
+                           type="text"
+                           class="form-control"
+                           placeholder="Search by product unit"
+                           v-model="filters.unit"
+                           >
+                     </fieldset>
+                  </div>
+                  <!-- Buttons -->
+                  <div class="col-sm-12 col-md-6">
+                     <button
+                        type="button"
+                        class="btn btn-primary btn-sm btn-block"
+                        @click="applyFilter"
+                        >
+                     <i class="i-Filter-2"></i>
+                     Filter
+                     </button>
+                  </div>
+                  <div class="col-sm-12 col-md-6">
+                     <button
+                        type="button"
+                        class="btn btn-danger btn-sm btn-block"
+                        @click="resetFilter"
+                        >
+                     <i class="i-Power-2"></i>
+                     Reset
+                     </button>
+                  </div>
+               </div>
+            </div>
+         </div>
+      </div>
+   </div>
+<span data-v-03022ced="">
+   <!---->
+</span>
+</div>
+@endsection
+
+
+@section('scripts')
+<script type="text/x-template" id="actions-dropdown-template">
+<div class="dropdown btn-group" ref="dropdown">
+    <!-- 3 Dots Button -->
+    <button type="button" 
+            class="btn dropdown-toggle btn-link btn-lg text-decoration-none dropdown-toggle-no-caret"
+            @click.stop="toggleDropdown"
+            :aria-expanded="isOpen.toString()">
+        <span class="_dot _r_block-dot bg-dark"></span>
+        <span class="_dot _r_block-dot bg-dark"></span>
+        <span class="_dot _r_block-dot bg-dark"></span>
+    </button>
+
+    <!-- 🔴 Remarks Badge (BESIDE the dots) -->
+    <span
+        :id="`remarksBadge-${row.id}`"
+        class="badge bg-danger text-white remarks-badge d-none"
+    >
+        !
+    </span>
+
+    <!-- Dropdown menu -->
+    <ul :class="['dropdown-menu dropdown-menu-right', { show: isOpen }]">
+
+        <!-- Edit -->
+           <li v-if="row.status == 'active'">
+               <a class="dropdown-item" :href="`/products/${row.id}/edit`">
+                   <i class="nav-icon i-Edit font-weight-bold mr-2"></i>
+                   Edit
+               </a>
+           </li>
+
+           <li v-if="row.status == 'active'">
+               <a class="dropdown-item" :href="`/products/${row.id}/archive`">
+                   <i class="nav-icon i-Letter-Close font-weight-bold mr-2"></i>
+                   Archive
+               </a>
+           </li>
+
+           <li v-if="row.status == 'archived'">
+               <a class="dropdown-item" :href="`/products/${row.id}/restore`">
+                   <i class="nav-icon i-Refresh font-weight-bold mr-2"></i>
+                   Restore
+               </a>
+           </li>
+
+           <li v-if="row.status == 'active'">
+               <a class="dropdown-item" :href="`/products/${row.id}/stock-card`">
+                   <i class="nav-icon i-Receipt font-weight-bold mr-2"></i>
+                   View Stock Card
+               </a>
+           </li>
+
+             <li v-if="row.status == 'active'">
+                <a class="dropdown-item" :href="`/products/${row.id}/logs`">
+                      <i class="nav-icon i-Computer-Secure font-weight-bold mr-2"></i>
+                      Logs
+                </a>
+             </li>
+
+               <li v-if="row.status == 'active'">
+                  <button class="dropdown-item" @click="$emit('open-remarks-modal', row.id)">
+                        <i class="nav-icon i-Mail-Attachement font-weight-bold mr-2"></i>
+                        Remarks
+                        
+                  </button>
+               </li>    
+
+    </ul>
+</div>
+</script>
+
+
+<script>
+Vue.component("actions-dropdown", {
+    template: "#actions-dropdown-template",
+    props: {
+        row: { type: Object, required: true }
+    },
+    data() {
+        return {
+            isOpen: false
+        };
+    },
+    methods: {
+        toggleDropdown() { this.isOpen = !this.isOpen; },
+        handleClickOutside(event) {
+            if (!this.$refs.dropdown?.contains(event.target)) this.isOpen = false;
+        }
+    },
+    mounted() {
+        document.addEventListener("click", this.handleClickOutside);
+    },
+    beforeDestroy() {
+        document.removeEventListener("click", this.handleClickOutside);
+    }
+});
+
+</script>
+
+<script>
+   document.addEventListener("DOMContentLoaded", function () {
+   const table = document.querySelector("#vgt-table");
+   if (!table) return;
+
+   const headers = table.querySelectorAll("thead th");
+
+   headers.forEach((header, index) => {
+      // Make header visually clickable
+      header.style.cursor = "pointer";
+
+      header.addEventListener("click", function () {
+            const tbody = table.querySelector("tbody");
+            const rows = Array.from(tbody.querySelectorAll("tr"));
+            const isAsc = header.classList.toggle("asc");
+
+            // Remove sorting classes from other headers
+            headers.forEach((h, i) => {
+               if (i !== index) h.classList.remove("asc", "desc");
+            });
+            header.classList.toggle("desc", !isAsc);
+
+            rows.sort((a, b) => {
+               const aText = a.children[index].textContent.trim();
+               const bText = b.children[index].textContent.trim();
+
+               const aNum = parseFloat(aText.replace(/,/g, ""));
+               const bNum = parseFloat(bText.replace(/,/g, ""));
+               const bothNumbers = !isNaN(aNum) && !isNaN(bNum);
+
+               if (bothNumbers) {
+                  return isAsc ? aNum - bNum : bNum - aNum;
+               } else {
+                  return isAsc
+                        ? aText.localeCompare(bText)
+                        : bText.localeCompare(aText);
+               }
+            });
+
+            // Reattach sorted rows
+            rows.forEach(row => tbody.appendChild(row));
+      });
+   });
+});
+</script>
+<script>
 function openRemarksModal(productId) {
     // Set the hidden input
     document.getElementById('remarksItemId').value = productId;
@@ -468,362 +947,445 @@ function markAsUnread(remarkId, productId) {
       });
    });
 </script>
-
-         <!-- Remarks Modal -->
-         <div class="modal fade" id="remarksModal" tabindex="-1" role="dialog" aria-labelledby="remarksModalLabel" aria-hidden="true">
-         <div class="modal-dialog" role="document">
-            <div class="modal-content">
-               <header class="modal-header">
-               <h5 class="modal-title" id="remarksModalLabel">Remarks</h5>
-               <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                  <span aria-hidden="true">&times;</span>
-               </button>
-               </header>
-
-            <div class="modal-body">
-            <form id="remarksForm">
-         @csrf
-         <input type="hidden" id="remarksItemId" value="{{ $product->id ?? '' }}">
-         
-         <fieldset class="form-group">
-            <textarea 
-               name="remarks" placeholder="Type your message" rows="3" wrap="soft" class="form-control" cols="30" aria-describedby="Message-feedback" label="Message" id="remarksText">
-            </textarea>   
-            <div class="invalid-feedback">This field is required</div>
-         </fieldset>
-
-                  <div class="d-flex justify-content-end">
-                     <button type="submit" class="btn btn-primary btn-icon btn-rounded">
-                     <i class="i-Yes me-2 font-weight-bold"></i> Submit
-                     </button>
-                  </div>
-               </form>
-
-               <hr>
-
-               
-               <div class="modal-body">
-            <!-- Form -->
-            <form id="remarksForm">
-               @csrf
-               <input type="hidden" id="remarksItemId" value="{{ $product->id ?? '' }}">
-
-               <div class="mb-3">
-                  <div class="d-flex align-items-center">
-                     <i class="i-User me-2"></i>
-                     <span class="text-primary fw-bold">
-                        {{ Auth::check() ? Auth::user()->name : 'Guest User' }}
-                     </span>
-                  </div>
-               </div>
-                           <ul class="timeline" id="remarksTimeline"></ul>
-               
-               </div>
-            </div>
-         </div>
-         </div>
-
-                  <script>
-                     document.addEventListener("DOMContentLoaded", function () {
-                     const table = document.querySelector("#vgt-table");
-                     if (!table) return;
-
-                     const headers = table.querySelectorAll("thead th");
-
-                     headers.forEach((header, index) => {
-                        // Make header visually clickable
-                        header.style.cursor = "pointer";
-
-                        header.addEventListener("click", function () {
-                              const tbody = table.querySelector("tbody");
-                              const rows = Array.from(tbody.querySelectorAll("tr"));
-                              const isAsc = header.classList.toggle("asc");
-
-                              // Remove sorting classes from other headers
-                              headers.forEach((h, i) => {
-                                 if (i !== index) h.classList.remove("asc", "desc");
-                              });
-                              header.classList.toggle("desc", !isAsc);
-
-                              rows.sort((a, b) => {
-                                 const aText = a.children[index].textContent.trim();
-                                 const bText = b.children[index].textContent.trim();
-
-                                 const aNum = parseFloat(aText.replace(/,/g, ""));
-                                 const bNum = parseFloat(bText.replace(/,/g, ""));
-                                 const bothNumbers = !isNaN(aNum) && !isNaN(bNum);
-
-                                 if (bothNumbers) {
-                                    return isAsc ? aNum - bNum : bNum - aNum;
-                                 } else {
-                                    return isAsc
-                                          ? aText.localeCompare(bText)
-                                          : bText.localeCompare(aText);
-                                 }
-                              });
-
-                              // Reattach sorted rows
-                              rows.forEach(row => tbody.appendChild(row));
-                        });
-                     });
-                  });
-                  </script>
-
-               </div>
-               <!----> 
-               <div class="vgt-wrap__footer vgt-clearfix">
-                  <div class="footer__row-count vgt-pull-left">
-                              <div class="vgt-wrap__footer vgt-clearfix mt-3">
-            <div class="footer__row-count vgt-pull-left">
-               <form method="GET" id="perPageForm" class="d-inline">
-                     <label for="vgt-select-rpp" class="footer__row-count__label">
-                        Rows per page:
-                     </label>
-                     <select name="perPage" id="perPage" onchange="this.form.submit()">
-                        @foreach([10, 20, 30, 40, 50] as $size)
-                              <option value="{{ $size }}" {{ request('perPage', 10) == $size ? 'selected' : '' }}>
-                                 {{ $size }}
-                              </option>
-                        @endforeach
-                     </select>
-               </form>
-            </div>
-         </div>
-                  </div>
-
-                  
-                  <div class="footer__navigation vgt-pull-right">
-                        <div class="footer__navigation__page-info me-3">
-               @php
-                  $from = ($products->currentPage() - 1) * $products->perPage() + 1;
-                  $to = min($from + $products->count() - 1, $products->total());
-               @endphp
-               <div>
-                  {{ $products->total() > 0 ? "$from - $to of {$products->total()}" : '0 - 0 of 0' }}
-               </div>
-         </div>
-
-         {{-- Prev button --}}
-         <a href="{{ $products->previousPageUrl() ?: '#' }}"
-            class="footer__navigation__page-btn {{ $products->onFirstPage() ? 'disabled' : '' }}">
-               <span aria-hidden="true" class="chevron left"></span> 
-               <span>prev</span>
-         </a>
-
-         {{-- Next button --}}
-         <a href="{{ $products->nextPageUrl() ?: '#' }}"
-            class="footer__navigation__page-btn {{ !$products->hasMorePages() ? 'disabled' : '' }}">
-               <span>next</span> 
-               <span aria-hidden="true" class="chevron right"></span>
-         </a>
-                  </div>
-               </div>
-            </div>
-         </div>
-      </div>
-      <!----><!---->
-   </div>
-</div>
-<div tabindex="-1" class="b-sidebar-outer">
-   <!---->
-   <div id="sidebar-right" tabindex="-1" role="dialog" aria-modal="false" aria-hidden="true" aria-labelledby="sidebar-right___title__" class="b-sidebar shadow b-sidebar-right bg-white text-dark" style="display: none;">
-      <header class="b-sidebar-header">
-         <button type="button" aria-label="Close" class="close text-dark">
-            <svg viewBox="0 0 16 16" width="1em" height="1em" focusable="false" role="img" aria-label="x" xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi-x b-icon bi">
-               <g>
-                  <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"></path>
-               </g>
-            </svg>
-         </button>
-         <strong id="sidebar-right___title__">Filter</strong>
-      </header>
-      <div class="b-sidebar-body">
-         <div class="px-3 py-2">
-            <div class="row">
-               <div class="col-md-12">
-                  <fieldset class="form-group" id="__BVID__39">
-                     <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0" id="__BVID__39__BV_label_">Name</legend>
-                     <div>
-                        <input type="text" placeholder="Search by Name" class="form-control" label="Name" id="__BVID__40"><!----><!----><!---->
-                     </div>
-                  </fieldset>
-               </div>
-               <div class="col-md-12">
-                  <fieldset class="form-group" id="__BVID__41">
-                     <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0" id="__BVID__41__BV_label_">SKU(Product Code)</legend>
-                     <div>
-                        <input type="text" placeholder="Search SKU(Product Code)" class="form-control" label="SKUProductCode" id="__BVID__42"><!----><!----><!---->
-                     </div>
-                  </fieldset>
-               </div>
-               <div class="col-md-12">
-                  <fieldset class="form-group" id="__BVID__43">
-                     <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0" id="__BVID__43__BV_label_">Category</legend>
-                     <div>
-                        <div dir="auto" class="v-select vs--single vs--searchable">
-                           <div id="vs1__combobox" role="combobox" aria-expanded="false" aria-owns="vs1__listbox" aria-label="Search for option" class="vs__dropdown-toggle">
-                              <div class="vs__selected-options"> <input placeholder="Select Category" aria-autocomplete="list" aria-labelledby="vs1__combobox" aria-controls="vs1__listbox" type="search" autocomplete="off" class="vs__search"></div>
-                              <div class="vs__actions">
-                                 <button type="button" title="Clear Selected" aria-label="Clear Selected" class="vs__clear" style="display: none;">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10">
-                                       <path d="M6.895455 5l2.842897-2.842898c.348864-.348863.348864-.914488 0-1.263636L9.106534.261648c-.348864-.348864-.914489-.348864-1.263636 0L5 3.104545 2.157102.261648c-.348863-.348864-.914488-.348864-1.263636 0L.261648.893466c-.348864.348864-.348864.914489 0 1.263636L3.104545 5 .261648 7.842898c-.348864.348863-.348864.914488 0 1.263636l.631818.631818c.348864.348864.914773.348864 1.263636 0L5 6.895455l2.842898 2.842897c.348863.348864.914772.348864 1.263636 0l.631818-.631818c.348864-.348864.348864-.914489 0-1.263636L6.895455 5z"></path>
-                                    </svg>
-                                 </button>
-                                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="10" role="presentation" class="vs__open-indicator">
-                                    <path d="M9.211364 7.59931l4.48338-4.867229c.407008-.441854.407008-1.158247 0-1.60046l-.73712-.80023c-.407008-.441854-1.066904-.441854-1.474243 0L7 5.198617 2.51662.33139c-.407008-.441853-1.066904-.441853-1.474243 0l-.737121.80023c-.407008.441854-.407008 1.158248 0 1.600461l4.48338 4.867228L7 10l2.211364-2.40069z"></path>
-                                 </svg>
-                                 <div class="vs__spinner" style="display: none;">Loading...</div>
-                              </div>
-                           </div>
-                           <ul id="vs1__listbox" role="listbox" style="display: none; visibility: hidden;"></ul>
-                        </div>
-                        <!----><!----><!---->
-                     </div>
-                  </fieldset>
-               </div>
-               <div class="col-md-12">
-                  <fieldset class="form-group" id="__BVID__48">
-                     <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0" id="__BVID__48__BV_label_">Brand</legend>
-                     <div>
-                        <div dir="auto" class="v-select vs--single vs--searchable">
-                           <div id="vs2__combobox" role="combobox" aria-expanded="false" aria-owns="vs2__listbox" aria-label="Search for option" class="vs__dropdown-toggle">
-                              <div class="vs__selected-options"> <input placeholder="Select Brand" aria-autocomplete="list" aria-labelledby="vs2__combobox" aria-controls="vs2__listbox" type="search" autocomplete="off" class="vs__search"></div>
-                              <div class="vs__actions">
-                                 <button type="button" title="Clear Selected" aria-label="Clear Selected" class="vs__clear" style="display: none;">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10">
-                                       <path d="M6.895455 5l2.842897-2.842898c.348864-.348863.348864-.914488 0-1.263636L9.106534.261648c-.348864-.348864-.914489-.348864-1.263636 0L5 3.104545 2.157102.261648c-.348863-.348864-.914488-.348864-1.263636 0L.261648.893466c-.348864.348864-.348864.914489 0 1.263636L3.104545 5 .261648 7.842898c-.348864.348863-.348864.914488 0 1.263636l.631818.631818c.348864.348864.914773.348864 1.263636 0L5 6.895455l2.842898 2.842897c.348863.348864.914772.348864 1.263636 0l.631818-.631818c.348864-.348864.348864-.914489 0-1.263636L6.895455 5z"></path>
-                                    </svg>
-                                 </button>
-                                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="10" role="presentation" class="vs__open-indicator">
-                                    <path d="M9.211364 7.59931l4.48338-4.867229c.407008-.441854.407008-1.158247 0-1.60046l-.73712-.80023c-.407008-.441854-1.066904-.441854-1.474243 0L7 5.198617 2.51662.33139c-.407008-.441853-1.066904-.441853-1.474243 0l-.737121.80023c-.407008.441854-.407008 1.158248 0 1.600461l4.48338 4.867228L7 10l2.211364-2.40069z"></path>
-                                 </svg>
-                                 <div class="vs__spinner" style="display: none;">Loading...</div>
-                              </div>
-                           </div>
-                           <ul id="vs2__listbox" role="listbox" style="display: none; visibility: hidden;"></ul>
-                        </div>
-                        <!----><!----><!---->
-                     </div>
-                  </fieldset>
-               </div>
-               <div class="col-md-12">
-                  <fieldset class="form-group" id="__BVID__53">
-                     <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0" id="__BVID__53__BV_label_">Unit</legend>
-                     <div>
-                        <div dir="auto" class="v-select vs--single vs--searchable">
-                           <div id="vs3__combobox" role="combobox" aria-expanded="false" aria-owns="vs3__listbox" aria-label="Search for option" class="vs__dropdown-toggle">
-                              <div class="vs__selected-options"> <input placeholder="Select Unit" aria-autocomplete="list" aria-labelledby="vs3__combobox" aria-controls="vs3__listbox" type="search" autocomplete="off" class="vs__search"></div>
-                              <div class="vs__actions">
-                                 <button type="button" title="Clear Selected" aria-label="Clear Selected" class="vs__clear" style="display: none;">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10">
-                                       <path d="M6.895455 5l2.842897-2.842898c.348864-.348863.348864-.914488 0-1.263636L9.106534.261648c-.348864-.348864-.914489-.348864-1.263636 0L5 3.104545 2.157102.261648c-.348863-.348864-.914488-.348864-1.263636 0L.261648.893466c-.348864.348864-.348864.914489 0 1.263636L3.104545 5 .261648 7.842898c-.348864.348863-.348864.914488 0 1.263636l.631818.631818c.348864.348864.914773.348864 1.263636 0L5 6.895455l2.842898 2.842897c.348863.348864.914772.348864 1.263636 0l.631818-.631818c.348864-.348864.348864-.914489 0-1.263636L6.895455 5z"></path>
-                                    </svg>
-                                 </button>
-                                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="10" role="presentation" class="vs__open-indicator">
-                                    <path d="M9.211364 7.59931l4.48338-4.867229c.407008-.441854.407008-1.158247 0-1.60046l-.73712-.80023c-.407008-.441854-1.066904-.441854-1.474243 0L7 5.198617 2.51662.33139c-.407008-.441853-1.066904-.441853-1.474243 0l-.737121.80023c-.407008.441854-.407008 1.158248 0 1.600461l4.48338 4.867228L7 10l2.211364-2.40069z"></path>
-                                 </svg>
-                                 <div class="vs__spinner" style="display: none;">Loading...</div>
-                              </div>
-                           </div>
-                           <ul id="vs3__listbox" role="listbox" style="display: none; visibility: hidden;"></ul>
-                        </div>
-                        <!----><!----><!---->
-                     </div>
-                  </fieldset>
-               </div>
-               <div class="col-md-12">
-                  <fieldset class="form-group" id="__BVID__58">
-                     <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0" id="__BVID__58__BV_label_">Total Cost of Goods</legend>
-                     <div>
-                        <div role="group" class="input-group">
-                           <!----><input type="text" placeholder="Enter Amount (From)" class="form-control" aria-label="cost-from" id="__BVID__59"> 
-                           <div class="input-group-text" style="border-right: 0px; border-left: 0px; border-radius: 0px;">
-                              to
-                           </div>
-                           <input type="text" placeholder="Enter Amount (To)" class="form-control" aria-label="cost-to" id="__BVID__60"><!---->
-                        </div>
-                        <!----><!----><!---->
-                     </div>
-                  </fieldset>
-               </div>
-               <div class="col-md-12">
-                  <fieldset class="form-group" id="__BVID__61">
-                     <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0" id="__BVID__61__BV_label_">SRP</legend>
-                     <div>
-                        <div role="group" class="input-group">
-                           <!----><input type="text" placeholder="Enter Amount (From)" class="form-control" aria-label="price-from" id="__BVID__62"> 
-                           <div class="input-group-text" style="border-right: 0px; border-left: 0px; border-radius: 0px;">
-                              to
-                           </div>
-                           <input type="text" placeholder="Enter Amount (To)" class="form-control" aria-label="price-to" id="__BVID__63"><!---->
-                        </div>
-                        <!----><!----><!---->
-                     </div>
-                  </fieldset>
-               </div>
-               <div class="col-md-12">
-                  <fieldset class="form-group" id="__BVID__64">
-                     <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0" id="__BVID__64__BV_label_">Quantity</legend>
-                     <div>
-                        <div role="group" class="input-group">
-                           <!----><input type="text" placeholder="Enter Amount (From)" class="form-control" aria-label="quantity-from" id="__BVID__65"> 
-                           <div class="input-group-text" style="border-right: 0px; border-left: 0px; border-radius: 0px;">
-                              to
-                           </div>
-                           <input type="text" placeholder="Enter Amount (To)" class="form-control" aria-label="quantity-to" id="__BVID__66"><!---->
-                        </div>
-                        <!----><!----><!---->
-                     </div>
-                  </fieldset>
-               </div>
-               <div class="col-md-12">
-                  <fieldset class="form-group" id="__BVID__67">
-                     <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0" id="__BVID__67__BV_label_">Created By</legend>
-                     <div>
-                        <input type="text" placeholder="Filter by Created by" class="form-control" label="CreatedBy" id="__BVID__68"><!----><!----><!---->
-                     </div>
-                  </fieldset>
-               </div>
-               <div class="col-md-12">
-                  <fieldset class="form-group" id="__BVID__69">
-                     <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0" id="__BVID__69__BV_label_">Created Date</legend>
-                     <div>
-                        <div data-v-1ebd09d2="" class="vue-daterange-picker">
-                           <div data-v-1ebd09d2="" class="form-control reportrange-text"><i data-v-1ebd09d2="" class="glyphicon glyphicon-calendar fa fa-calendar"></i> <span data-v-1ebd09d2=""> - </span><b data-v-1ebd09d2="" class="caret"></b></div>
-                           <!---->
-                        </div>
-                        <button type="button" class="btn btn-danger btn-sm">
-                        Clear Created Date
-                        </button><!----><!----><!---->
-                     </div>
-                  </fieldset>
-               </div>
-               <div class="col-sm-12 col-md-6"><button type="button" class="btn btn-primary btn-sm btn-block"><i class="i-Filter-2"></i>
-                  Filter
-                  </button>
-               </div>
-               <div class="col-sm-12 col-md-6"><button type="button" class="btn btn-danger btn-sm btn-block"><i class="i-Power-2"></i>
-                  Reset
-                  </button>
-               </div>
-            </div>
-         </div>
-      </div>
-      <!---->
-   </div>
-   <!----><!---->
-</div>
-<span data-v-03022ced="">
-   <!---->
-</span>
-</div>
-@endsection
-
-
-@section('scripts')
     <script>
         window.currentPage = "{{ request()->is('components*') ? 'components' : 'products' }}";
     </script>
 
     <script src="{{ asset('js/tableFunctions.js') }}"></script>
+<script>
+      Vue.component('v-select', VueSelect.VueSelect);
+      new Vue({
+    el: '#app',
+    data() {
+        return {
+         importFile: null,
+         importRows: [],
+         importFileName: '',
+         importPreview: [],
+         importVerified: false,
+         statusList: [
+            { label: 'Active', value: 'active' },
+            { label: 'Archived', value: 'archived' }
+        ],
+         statusFilter: 'active',
+         selectedType: 'products',
+         types: [
+         { label: 'Products', value: 'products', url: '/products' },
+         { label: 'Components', value: 'components', url: '/components' },
+         ],
+         showColumnDropdown: false,
+         showFilterSidebar: false,
+         filters: {
+            code: '',
+            name: '',
+            category: null,
+            subcategory: null,
+            quantity_from: null,
+            quantity_to: null,
+            price_from: null,
+            price_to: null,
+            for_sale: null,
+         },
+         columns: [
+            { label: 'SKU', field: 'product_sku', hidden: false },
+            { label: 'Product Name', field: 'product_name', hidden: false },
+            { label: 'Category', field: 'category', hidden: false },
+            { label: 'Sub Category', field: 'subcategory', hidden: false },
+            { label: 'Quantity', field: 'product_quantity', hidden: false },
+            { label: 'Price', field: 'product_price', hidden: false },
+            { label: 'Unit', field: 'product_unit', hidden: false },
+            { label: 'Action', field: 'action', hidden: false },
+         ],
+          rows: [],
+          search: '',
+          perPage: 10,
+          status: 'active',
+          loading: false,
+          categories: [],
+          subcategories: [],
+
+          pagination: {
+            current_page: 1,
+            per_page: 10,
+            total: 0,
+            last_page: 1,
+         }
+      }
+   },
+   computed: {
+  visibleColumns() {
+    return this.columns.filter(col => !col.hidden);
+  },
+  pageFrom() {
+    if (!this.pagination.total) return 0;
+    return (this.pagination.current_page - 1) * this.pagination.per_page + 1;
+  },
+  pageTo() {
+    return Math.min(
+      this.pageFrom + this.rows.length - 1,
+      this.pagination.total
+    );
+  },
+  filteredRows() {
+    return this.rows.filter(row => {
+       if (this.filters.code &&
+        !row.code?.toLowerCase().includes(this.filters.code.toLowerCase())
+      ) return false;
+
+      if (this.filters.name &&
+        !row.name?.toLowerCase().includes(this.filters.name.toLowerCase())
+      ) return false;
+
+      // Category filter
+      if (
+        this.filters.category &&
+        (!row.category || row.category.id !== this.filters.category)
+      ) {
+        return false;
+      }
+
+      // Subcategory filter
+      if (
+        this.filters.subcategory &&
+        (!row.subcategory || row.subcategory.id !== this.filters.subcategory)
+      ) {
+        return false;
+      }
+
+      if (this.filters.cost_from !== null &&
+        Number(row.cost) < this.filters.cost_from
+      ) return false;
+
+      if (this.filters.cost_to !== null &&
+        Number(row.cost) > this.filters.cost_to
+      ) return false;
+
+      if (this.filters.price_from !== null &&
+        Number(row.price) < this.filters.price_from
+      ) return false;
+
+      if (this.filters.price_to !== null &&
+        Number(row.price) > this.filters.price_to
+      ) return false;
+
+      if (this.filters.for_sale !== null &&
+        row.for_sale !== this.filters.for_sale
+      ) return false;
+
+      return true;
+    });
+  },
+   filteredSubcategories() {
+      if (!this.filters.category) return [];
+
+      return this.subcategories.filter(
+         s => Number(s.category_id) === Number(this.filters.category)
+      );
+   },
+},
+   mounted() {
+      this.fetchProducts();
+      document.addEventListener('click', this.handleClickOutside);
+     document.addEventListener('click', this.handleOutside)
+   },
+   beforeUnmount() {
+    document.removeEventListener('click', this.handleClickOutside);
+  },
+   methods: {
+      openImportModal() {
+    const modalEl = document.getElementById('importModal');
+    const modal = new bootstrap.Modal(modalEl);
+    modal.show();
+  },
+      handleFileChange(e) {
+    this.importFile = e.target.files[0]
+    this.importFileName = this.importFile?.name || ''
+    this.importVerified = false
+    this.importPreview = []
+    this.importRows = []
+
+    if (!this.importFile) return
+
+    const reader = new FileReader()
+    reader.onload = (evt) => {
+      const text = evt.target.result
+      this.importPreview = text
+        .split('\n')
+        .filter(row => row.trim() !== '')
+        .slice(0, 10) // preview first 10 rows
+    }
+    reader.readAsText(this.importFile)
+  },
+
+  verifyImport() {
+  if (!this.importFile) return
+
+  const reader = new FileReader()
+
+  reader.onload = async (e) => {
+    const lines = e.target.result.trim().split('\n')
+    const headers = lines.shift().split(',').map(h => h.trim().toLowerCase())
+
+    const parsedRows = lines.map(line => {
+      const values = line.split(',').map(v => v.trim())
+      const row = {}
+
+      headers.forEach((h, i) => {
+        row[h] = values[i] || null
+      })
+
+      return {
+        code: row.sku,
+        name: row.name,
+        category: row.category,
+        subcategory: row.subcategory,
+        unit: row.unit,
+        price: Number(row.price || 0),
+        onhand: Number(row.quantity || 0),
+        errors: [] // 🔥 important
+      }
+    })
+
+    // 🔎 CHECK DUPLICATES FROM SERVER
+    const res = await axios.post('/products/import/check', {
+      rows: parsedRows
+    })
+
+    const { existingSkus, existingNames } = res.data
+
+    this.importRows = parsedRows.map(r => {
+      if (existingSkus.includes(r.code)) {
+        r.errors.push('SKU already exists')
+      }
+
+      if (existingNames.includes(r.name)) {
+        r.errors.push('Name already exists')
+      }
+
+      return r
+    })
+
+    this.importVerified = this.importRows.every(r => r.errors.length === 0)
+  }
+
+  reader.readAsText(this.importFile)
+},
+
+
+  submitImport() {
+    const formData = new FormData()
+    formData.append('file', this.importFile)
+
+    axios.post('/import/products', formData)
+      .then(() => {
+        this.$toast?.success?.('Products imported successfully')
+        this.resetImport()
+        bootstrap.Modal.getInstance(
+          document.getElementById('importModal')
+        ).hide()
+      })
+  },
+  resetImport() {
+    this.importFile = null
+    this.importFileName = ''
+    this.importPreview = []
+    this.importVerified = false
+    if (this.$refs.importFile) {
+      this.$refs.importFile.value = null
+    }
+  },
+      setStatus(status) {
+            this.statusFilter = status;
+            this.fetchProducts();
+        },
+      getCellValue(row, field) {
+    switch (field) {
+      case 'product_sku':
+        return row.code;
+
+      case 'product_name':
+        return row.name;
+
+      case 'category':
+        return row.category?.name || 'N/A';
+
+      case 'subcategory':
+        return row.subcategory?.name || 'N/A';
+
+      case 'product_quantity':
+        return Number(row.quantity || 0);
+
+      case 'product_price':
+        return Number(row.price || 0);
+
+      case 'product_unit':
+        return row.unit || '';
+
+      default:
+        return '';
+    }
+   },
+     exportExcel() {
+    if (!this.filteredRows.length) {
+      alert('No data to export');
+      return;
+    }
+
+    // only visible columns (gear dropdown)
+    const visibleCols = this.columns.filter(col => !col.hidden && col.field !== 'action');
+
+    const data = this.filteredRows.map(row => {
+      const obj = {};
+
+      visibleCols.forEach(col => {
+        obj[col.label] = this.getCellValue(row, col.field);
+      });
+
+      return obj;
+    });
+
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook  = XLSX.utils.book_new();
+
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Products');
+
+    const filename = `products_${new Date().toISOString().slice(0, 10)}.xlsx`;
+
+    XLSX.writeFile(workbook, filename);
+  },
+   goToPage(value) {
+      const selected = this.types.find(t => t.value === value)
+      if (selected) {
+        window.location.href = selected.url
+      }
+    },
+   openSidebar() {
+      this.showFilterSidebar = true;
+      console.log("Button clicked! showFilterSidebar =", this.showFilterSidebar);
+    },
+    closeSidebar() {
+      this.showFilterSidebar = false;
+      console.log("Closed sidebar:", this.showFilterSidebar);
+    },
+    buildCategoryLists() {
+  const categoryMap = {};
+  const subcategoryMap = {};
+
+  this.rows.forEach(c => {
+    if (c.category) {
+      categoryMap[c.category.id] = c.category;
+    }
+
+    if (c.subcategory) {
+      subcategoryMap[c.subcategory.id] = {
+        ...c.subcategory,
+        category_id: c.category?.id,
+      };
+    }
+  });
+
+  this.categories = Object.values(categoryMap);
+  this.subcategories = Object.values(subcategoryMap);
+},
+
+
+
+  toggleDropdown() {
+    this.showColumnDropdown = !this.showColumnDropdown;
+  },
+
+  handleClickOutside(event) {
+    const dropdown = this.$refs.dropdownWrapper;
+    if (dropdown && !dropdown.contains(event.target)) {
+      this.showColumnDropdown = false;
+    }
+  },
+  resetFilter() {
+    this.filters = {
+      name: '',
+      category: '',
+      subcategory: '',
+      cost_from: null,
+      cost_to: null,
+      price_from: null,
+      price_to: null,
+      for_sale: null,
+    };
+  },
+
+  toggleColumn(field) {
+    const col = this.columns.find(c => c.field === field);
+    if (col) col.hidden = !col.hidden;
+  },
+
+  isColumnVisible(field) {
+    const col = this.columns.find(c => c.field === field);
+    return col && !col.hidden;
+  },
+
+  applyFilter() {
+  this.fetchProducts(1);
+  this.showFilterSidebar = false;
+},
+    
+    fetchProducts(page = 1) {
+   this.loading = true;
+
+   axios.get('/products/fetch', {
+      params: {
+         search: this.search,
+         perPage: this.perPage,
+         status: this.status,
+         page: page,
+
+         // 🔹 filters
+         category: this.filters.category,
+         subcategory: this.filters.subcategory,
+      }
+   })
+   .then(res => {
+      // table rows
+      this.rows = res.data.data;
+
+      // pagination
+      this.pagination.current_page = res.data.current_page;
+      this.pagination.per_page    = res.data.per_page;
+      this.pagination.total       = res.data.total;
+      this.pagination.last_page   = res.data.last_page;
+
+      // 🔹 build dropdown lists
+      this.buildCategoryLists();
+   })
+   .finally(() => {
+      this.loading = false;
+   });
+   },
+   buildCategoryLists() {
+  const categoryMap = {};
+  const subcategoryMap = {};
+
+  this.rows.forEach(c => {
+    if (c.category) {
+      categoryMap[c.category.id] = c.category;
+    }
+
+    if (c.subcategory) {
+      subcategoryMap[c.subcategory.id] = {
+        ...c.subcategory,
+        category_id: c.category?.id,
+      };
+    }
+  });
+
+  this.categories = Object.values(categoryMap);
+  this.subcategories = Object.values(subcategoryMap);
+},
+   },
+   watch: {
+  'filters.category'() {
+    this.filters.subcategory = null;
+  },
+},
+});
+</script>
 @endsection
