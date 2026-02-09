@@ -48,6 +48,7 @@ use App\Http\Controllers\LeavesController;
 use App\Http\Controllers\ShiftsController;
 use App\Http\Controllers\DailyTimeRecordController;
 use App\Http\Controllers\TableLayoutController;
+use App\Http\Controllers\StationController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -653,6 +654,16 @@ Route::prefix('settings/table-layouts')->name('table-layouts.')->group(function 
     // Route::put('/{id}/update-status', [LeaveRequestController::class, 'updateStatus']);
     // Route::get('/{id}/edit', [LeaveRequestController::class, 'edit'])->name('leave-requests.edit');
     // Route::put('/{id}', [LeaveRequestController::class, 'update'])->name('leave-requests.update');
+});
+
+Route::prefix('settings/stations')->name('stations.')->group(function () {
+    Route::get('/', [StationController::class, 'index'])->name('index');
+    Route::get('/fetch', [StationController::class, 'fetchStations'])->name('fetch');
+    Route::post('/', [StationController::class, 'store'])->name('store');
+    Route::put('/{id}', [StationController::class, 'update'])->name('update');
+    Route::delete('/{id}', [StationController::class, 'destroy'])->name('destroy');
+    Route::patch('/{id}/archive', [StationController::class, 'archive'])->name('archive');
+    Route::patch('/{id}/restore', [StationController::class, 'restore'])->name('restore');
 });
 
 
