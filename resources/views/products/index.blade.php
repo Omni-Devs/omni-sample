@@ -169,16 +169,25 @@
    <div class="card mt-4">
       <div class="card-body">
          <nav class="card-header">
-            <ul class="nav nav-tabs card-header-tabs">
-               <li class="nav-item" v-for="status in statusList" :key="status.value">
-                  <a href="#" 
-                     class="nav-link" 
-                     :class="{ active: statusFilter === status.value }" 
-                     @click.prevent="setStatus(status.value)">
-                  @{{ status.label }}
-                  </a>
-               </li>
-            </ul>
+               <ul class="nav nav-tabs card-header-tabs">
+                  <li class="nav-item">
+                     <a href="#" 
+                           class="nav-link"
+                           :class="{ active: statusFilter === 'active' }"
+                           @click.prevent="setStatus('active')">
+                           Active
+                     </a>
+                  </li>
+
+                  <li class="nav-item">
+                     <a href="#"
+                           class="nav-link"
+                           :class="{ active: statusFilter === 'archived' }"
+                           @click.prevent="setStatus('archived')">
+                           Archived
+                     </a>
+                  </li>
+               </ul>
          </nav>
          <div class="card-body">
             <div class="vgt-wrap">
@@ -257,7 +266,7 @@
                               <i class="i-File-Excel"></i> Export
                            </button>
                            {{-- Import button: hide if archived --}}
-                           @if ($status !== 'archived')
+                           {{-- @if ($status !== 'archived')
                            <button
                               type="button"
                               class="btn btn-info m-1 btn-sm"
@@ -265,19 +274,19 @@
                            >
                               <i class="i-Upload"></i> Import
                            </button>
-                           @endif
+                           @endif --}}
                            {{-- Add button: hide if archived --}}
-                           @if ($status !== 'archived')
+                           {{-- @if ($status !== 'archived') --}}
                            <button type="button" class="btn mx-1 btn-btn btn-primary btn-icon" onclick="window.location='{{ url('products/create') }}'">
                            <i class="i-Add"></i> Add
                            </button>
-                           @endif
+                           {{-- @endif --}}
                            {{-- Stock Alert Summary: show only if not active and not archived --}}
-                           @if ($status !== 'active' && $status !== 'archived')
+                           {{-- @if ($status !== 'active' && $status !== 'archived')
                            <button type="button" class="btn mx-1 btn-btn btn-primary">
                            Stock Alert Summary
                            </button>
-                           @endif
+                           @endif --}}
                         </div>
                      </div>
                   </div>
@@ -326,7 +335,6 @@
                         @{{ row.unit }}
                     </template>
                     <template v-else-if="col.field === 'action'">
-                        <div class="vgt-left-align text-right">
                             <actions-dropdown 
                                 :row="row" 
                                 @edit-route="editRoute"
@@ -339,7 +347,6 @@
                                 @open-remarks-modal="openRemarksModal"
                                 >
                             </actions-dropdown>
-                        </div>
                     </template>
                 </td>
             </tr>
@@ -620,15 +627,17 @@
         <span class="_dot _r_block-dot bg-dark"></span>
         <span class="_dot _r_block-dot bg-dark"></span>
         <span class="_dot _r_block-dot bg-dark"></span>
-    </button>
-
-    <!-- 🔴 Remarks Badge (BESIDE the dots) -->
+            <!-- 🔴 Remarks Badge (BESIDE the dots) -->
     <span
         :id="`remarksBadge-${row.id}`"
-        class="badge bg-danger text-white remarks-badge d-none"
+        class="badge bg-danger text-white remarks-badge d-none position-absolute "
+        style="font-size: 0.55rem; transform: translate(40%, -40%) !important;"
     >
-        !
+        1
     </span>
+    </button>
+
+
 
     <!-- Dropdown menu -->
     <ul :class="['dropdown-menu dropdown-menu-right', { show: isOpen }]">
@@ -1092,6 +1101,10 @@ function markAsUnread(remarkId, productId) {
     document.removeEventListener('click', this.handleClickOutside);
   },
    methods: {
+       openRemarksModal(productId) {
+        // call the OLD global function
+        window.openRemarksModal(productId);
+    },
       openImportModal() {
     const modalEl = document.getElementById('importModal');
     const modal = new bootstrap.Modal(modalEl);
@@ -1196,7 +1209,7 @@ function markAsUnread(remarkId, productId) {
   },
       setStatus(status) {
             this.statusFilter = status;
-            this.fetchProducts();
+            this.fetchAudits();
         },
       getCellValue(row, field) {
     switch (field) {

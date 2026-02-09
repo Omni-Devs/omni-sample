@@ -339,6 +339,19 @@
                
                <li class="nav-item"><a href="/permission" class=""><i class="nav-icon i-Key"></i> <span class="item-name">Permission</span></a></li>
                <li class="nav-item"><a href="/settings/table-layouts" class=""><i class="fas fa-layer-group"></i> <span class="item-name">Table Layouts Settings</span></a></li>
+               
+               <li class="nav-item dropdown-sidemenu">
+                  <a href="#"><i class="nav-icon i-Gear"></i> <span class="item-name">Kitchen Display Settings</span> <i class="dd-arrow i-Arrow-Down"></i></a> 
+                  <ul class="submenu">
+                     <li class="nav-item">
+                           <a href="settings/stations">
+                              <i class="nav-icon i-Bar-Chart"></i>
+                              <span class="item-name">Station</span>
+                           </a>
+                        </a>
+                     </li>
+                  </ul>
+               </li>
                <li class="nav-item"><a href="/app/settings/general/accounting" class=""><i class="nav-icon i-Data-Backup"></i> <span class="item-name">Back-Up Database</span></a></li>
             </ul>
             <li class="nav-item dropdown-sidemenu">

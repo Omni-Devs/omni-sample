@@ -15,10 +15,7 @@ class ProductController extends Controller
 {
     public function index(Request $request)
 {
-    // Just redirect to the view, actual fetching happens in fetchProducts
-    return view('products.index', [
-        'status' => $request->get('status', 'active')
-    ]);
+    return view('products.index');
 }
 
 /**
@@ -26,17 +23,20 @@ class ProductController extends Controller
  */
 public function fetchProducts(Request $request)
 {
-    $status    = $request->get('status', 'active');
-    $perPage   = $request->get('perPage', 10);
-    $search    = $request->get('search');
-    $category  = $request->get('category');
+    // 🔥 DEFAULT STATUS HANDLED HERE
+    $status = $request->filled('status')
+        ? $request->status
+        : 'active';
+
+    $perPage     = $request->get('perPage', 10);
+    $search      = $request->get('search');
+    $category    = $request->get('category');
     $subcategory = $request->get('subcategory');
 
     $branchId = current_branch_id();
 
     if ($branchId == 1) {
 
-        // MAIN BRANCH
         $products = Product::with(['category', 'subcategory'])
             ->where('status', $status)
             ->when($search, function ($query, $search) {
@@ -61,7 +61,6 @@ public function fetchProducts(Request $request)
 
     } else {
 
-        // OTHER BRANCHES
         $products = Product::query()
             ->select([
                 'products.*',
@@ -96,9 +95,9 @@ public function fetchProducts(Request $request)
             ->paginate($perPage);
     }
 
-    // 🔥 IMPORTANT: return paginator DIRECTLY
     return response()->json($products);
 }
+
 
 
     public function create()

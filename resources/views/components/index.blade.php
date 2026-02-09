@@ -171,6 +171,9 @@
                         <td v-for="col in visibleColumns"
                            :key="col.field"
                            :data-column="col.field">
+                           <template v-if="col.field === 'component_sku'">
+                              @{{ row.code }}
+                           </template>
                            <template v-if="col.field === 'component_name'">
                               @{{ row.name }}
                            </template>
@@ -193,7 +196,7 @@
                               @{{ row.onhand }}
                            </template>
                            <template v-else-if="col.field === 'for_sale'">
-                              <input type="checkbox" :checked="row.for_sale" disabled>
+                              <input type="checkbox" :checked="row.for_sale">
                            </template>
                         </td>
                         <template v-else-if="col.field === 'action'">
@@ -724,6 +727,7 @@
          showColumnDropdown: false,
          showFilterSidebar: false,
          filters: {
+            sku: '',
             name: '',
             category: null,
             subcategory: null,
@@ -832,6 +836,9 @@
   methods: {
    getCellValue(row, field) {
     switch (field) {
+      case 'component_sku':
+        return row.code;
+
       case 'component_name':
         return row.name;
 

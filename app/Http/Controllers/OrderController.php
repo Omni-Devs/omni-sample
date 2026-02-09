@@ -747,36 +747,40 @@ public function show($id)
 
 
    public function checkUnpaidOrders(Request $request)
-    {
-         // Get the currently logged-in cashier
-        $cashierId = Auth::id();
+{
+    // Get the currently logged-in cashier
+    $cashierId = Auth::id();
 
-        // Find the active (open) cash audit session for this cashier
-        $session = CashAudit::where('cashier_id', $cashierId)
-            ->where('status', 'open')
-            ->first();
+    // Find the active (open) cash audit session for this cashier
+    $session = CashAudit::where('cashier_id', $cashierId)
+        ->where('status', 'open')
+        ->first();
 
-        if (!$session) {
-            return response()->json([
-                'has_unpaid_orders' => false,
-                'message' => 'No active POS session found.'
-            ]);
-        }
-
-        // Define the session timeframe
-        $sessionStart = Carbon::parse($session->created_at);
-        $sessionEnd = $session->closed_at ? Carbon::parse($session->closed_at) : Carbon::now();
-
-        // Query orders within the cashier’s session timeframe that are unpaid
-        $hasUnpaidOrders = Order::whereBetween('created_at', [$sessionStart, $sessionEnd])
-            ->where('status', '!=', 'payments')
-            ->exists();
-
+    if (!$session) {
         return response()->json([
-            'has_unpaid_orders' => $hasUnpaidOrders,
-            'session_start' => $sessionStart->toDateTimeString(),
-            'session_end' => $sessionEnd->toDateTimeString(),
+            'has_unpaid_orders' => false,
+            'message' => 'No active POS session found.'
         ]);
     }
+
+    // Define the session timeframe
+    $sessionStart = Carbon::parse($session->created_at);
+    $sessionEnd = $session->closed_at
+        ? Carbon::parse($session->closed_at)
+        : Carbon::now();
+
+    // ✅ Check unpaid orders ONLY for the current branch
+    $hasUnpaidOrders = Order::where('branch_id', current_branch_id())
+        ->whereBetween('created_at', [$sessionStart, $sessionEnd])
+        ->where('status', '!=', 'payments')
+        ->exists();
+
+    return response()->json([
+        'has_unpaid_orders' => $hasUnpaidOrders,
+        'session_start' => $sessionStart->toDateTimeString(),
+        'session_end' => $sessionEnd->toDateTimeString(),
+    ]);
+}
+
 
 }
