@@ -83,14 +83,14 @@
                   </div>
                </div>
                <!-- Step 2: Unpaid Orders Detected -->
-               <div v-else-if="endStep === 'unpaid'" class="text-center">
+               {{-- <div v-else-if="endStep === 'unpaid'" class="text-center">
                   <p>⚠️ Unpaid Orders Detected.<br>
                      Please settle all pending transactions before proceeding with end-of-day closing.
                   </p>
                   <div class="mt-3">
                      <button class="btn btn-warning" @click="handleUnpaidOk">OK</button>
                   </div>
-               </div>
+               </div> --}}
                <!-- Step 3: End of Day Form -->
                <div v-else-if="endStep === 'form'">
                   <div class="modal-body p-3">
