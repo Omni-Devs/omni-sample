@@ -298,7 +298,12 @@
             </li>
             <li class="nav-item"><a href="#" class=""><i class="nav-icon i-Remove-Bag"></i> <span class="item-name">Sales Invoicing</span></a></li>
             <li class="nav-item"><a href="/app/sales/manage-deliveries" class=""><i class="nav-icon i-Jeep"></i> <span class="item-name">Orders and Reservations</span></a></li>
-            <li class="nav-item"><a href="/pos-clossing" class=""><i class="nav-icon i-Hand"></i> <span class="item-name">Closing</span></a></li>
+            <li class="nav-item">
+               <a href="/pos-clossing" class="checkUnpaidTrigger">
+                  <i class="nav-icon i-Hand"></i> 
+                  <span class="item-name">Closing</span>
+               </a>
+            </li>
             <li class="nav-item"><a href="/kitchen" class=""><i class="nav-icon i-Full-Basket"></i> <span class="item-name">Kitchen Dispaly System</span></a></li>
             {{-- <li class="nav-item"><a href="/app/sales/quotations" class=""><i class="nav-icon i-Receipt-3"></i> <span class="item-name">Quotations</span></a></li> --}}
             {{-- <li class="nav-item"><a href="/app/sales/manage-prospects" class=""><i class="nav-icon i-Checked-User"></i> <span class="item-name">Manage Prospects</span></a></li> --}}
@@ -516,6 +521,7 @@
    </section>
    <div class="sidebar-overlay"></div>
    @include('layouts.start_end_day_modal')
+   {{-- @include('layouts.checkUnpaidOrders_modal') --}}
 </div>
 
 
@@ -544,6 +550,9 @@ document.addEventListener("DOMContentLoaded", function () {
   }
   const modal = document.getElementById('startPOSModal');
   if (!modal) return;
+
+  const unpaidModal = document.getElementById('checkUnpaidModal');
+  if (!unpaidModal) return;
 
   const body = modal.querySelector('.modal-body');
 
@@ -629,6 +638,12 @@ new Vue({
     if (window.location.pathname === '/orders') {
       this.handlePOSNavigation('/orders', true);
     }
+
+    // Attach listeners for checkUnpaidTrigger
+    document.querySelector('.checkUnpaidTrigger')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      this.promptcheckUnpaidModal();
+    });
   },
 
   computed: {
@@ -827,6 +842,12 @@ new Vue({
         modal.show();
       });
     },
+      promptcheckUnpaidModal() {
+         this.checkExistingSession().then(() => {
+         const modal = new bootstrap.Modal(document.getElementById('checkUnpaidModal'));
+         modal.show();
+         });
+      },
 
     async handlePOSNavigation(url, auto = false) {
       await this.checkExistingSession();

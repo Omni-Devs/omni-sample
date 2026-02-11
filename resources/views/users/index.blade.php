@@ -152,6 +152,14 @@
                                     Sort table by Employee Name in descending order
                                     </span></button>
                                 </th>
+                                <th scope="col" aria-sort="descending" aria-controls="col-3" class="vgt-left-align text-left sortable" style="min-width: auto; width: auto;"><span>Department</span> <button><span class="sr-only">
+                                    Sort table by Department in descending order
+                                    </span></button>
+                                </th>
+                                <th scope="col" aria-sort="descending" aria-controls="col-3" class="vgt-left-align text-left sortable" style="min-width: auto; width: auto;"><span>Position</span> <button><span class="sr-only">
+                                    Sort table by Position in descending order
+                                    </span></button>
+                                </th>
                                 <th scope="col" aria-sort="descending" aria-controls="col-4" class="vgt-left-align text-left sortable" style="min-width: auto; width: auto;"><span>Permission</span> <button><span class="sr-only">
                                     Sort table by Permission in descending order
                                     </span></button>
@@ -188,8 +196,14 @@
                                     </span>
                                 </td>
                                 <td class="vgt-left-align text-left"><span>
-                                    {{ $user->name }}
+                                    {{ $user->first_name }} {{ $user->last_name }}
                                     </span>
+                                </td>
+                                <td>
+                                    {{ $user->employeeWorkInformations->last()?->department?->name ?? '-' }}
+                                </td>
+                                <td>
+                                    {{ $user->employeeWorkInformations->last()?->designation?->name ?? '-' }}
                                 </td>
                                 <td class="vgt-left-align text-left">
                                     <span>

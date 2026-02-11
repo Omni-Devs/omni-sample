@@ -33,6 +33,7 @@ public function fetchItems(Request $request)
             $q->where('status', $status)
               ->with([
                   'product.category',
+                  'product.subcategory',
                   'product.recipes.component',
                   'product.station',
 
@@ -100,6 +101,7 @@ public function fetchItems(Request $request)
                 'name'            => $item->name ?? 'Unnamed Item',
                 'qty'             => $detail->quantity,
                 'category'         => $item->category->name ?? 'N/A',
+                'subcategory'      => $item->subcategory->name ?? 'N/A',
                 'station'          => $item->station->name ?? 'N/A',
                 'status'          => $detail->status,
                 'recipe'          => $recipe,
