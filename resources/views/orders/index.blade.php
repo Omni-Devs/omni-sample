@@ -212,17 +212,25 @@
 
                            </div>
                         </div>
-                     <div class="modal-footer justify-content-start">
-                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                     <button type="button" class="btn btn-primary" onclick="submitPayment({{ $order->id }})">
-                        Submit
-                     </button>
-                  </div>
+                    <div class="modal-footer justify-content-between flex-wrap gap-2">
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            
+                            <button type="button" class="btn btn-primary" onclick="submitPayment({{ $order->id }})">
+                                    Submit
+                            </button>
+                        </div>
+
+                        <!-- Right side: primary action -->
+                    <button type="button" class="btn btn-warning px-4" onclick="openBillOutFromPayment({{ $order->id }})"> <!-- important: close current modal first -->
+                        Revert to Bill-Out
+                    </button>
+                    </div>
 
                      </div>
                   </div>
                </div>
-               @endforeach
+        @endforeach
                
                   </a>
                </li>
@@ -514,7 +522,7 @@ if ($status === 'serving') {
                                  </div>
                               </div>
 
-                              @php
+                        @php
                      // compute gross for this order explicitly (per-order, not a shared var)
                      $orderGross = $order->details->sum(fn($d) => ($d->price * $d->quantity) - ($d->discount ?? 0));
                   @endphp
@@ -572,10 +580,10 @@ if ($status === 'serving') {
 
             <div class="flex-grow-1 position-relative">
                 <!-- Selected Tags Display -->
-                <div class="form-control discount-select-container" 
+              <div class="form-control discount-select-container" 
                      id="discountSelectContainer_{{ $order->id }}"
                      onclick="if (!event.target.closest('.discount-tag-close')) toggleDiscountDropdown({{ $order->id }})"
-                     style="min-height: 80px; max-height: 150px; overflow-y: auto; cursor: pointer; display: flex; flex-wrap: wrap; gap: 6px; align-items: flex-start; align-content: flex-start; padding: 8px;">
+                     style="min-height: 38px; max-height: 76px; overflow-y: auto; cursor: pointer; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 6px 10px;">
                     <span class="text-muted" id="discountPlaceholder_{{ $order->id }}" style="margin: 4px;">Select discounts...</span>
                 </div>
 
@@ -615,7 +623,15 @@ if ($status === 'serving') {
         </div>
     </div>
 </div>
+
+{{-- css --}}
 <style>
+
+.discount-select-container .discount-tag {
+    font-size: 13px;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
 
 /* Submit button disabled state */
 #submitBtn_{{ $order->id }}:disabled {
@@ -1009,7 +1025,7 @@ function updateSelectedDiscounts(orderId) {
                         </div>
 
                         <h6 class="t-font-boldest mt-3 mb-1">BILL-OUT SLIP</h6>
-                        <div class="mb-1">INV: {{ sprintf('%08d', $order->id) }}</div>
+                        <div class="mb-1">OR #: {{ sprintf('%08d', $order->id) }}</div>
                         <div class="mb-1">Date: {{ $order->created_at->format('Y-m-d H:i') }}</div>
                         <div class="mb-1">TBL: {{ $order->table_no ?? '—' }}</div>
                         <div class="mb-2"># of Pax: {{ $order->number_pax ?? '—' }}</div>
@@ -1045,6 +1061,22 @@ function updateSelectedDiscounts(orderId) {
                     
 
                     <!-- Summary - matched order & labels from receipt -->
+                   @php
+                                                 // Compute reg bill server-side so it matches the JS calculation
+                                                 $payGross = $order->gross_amount ?? $order->details->sum(fn($d) => ($d->price * $d->quantity) - ($d->discount ?? 0));
+                                                 $payPax = max(1, (int)($order->number_pax ?? 1));
+                                                 $payPerPax = $payGross / $payPax;
+                                                 $payQualified = 0;
+                                                 foreach ($order->discountEntries ?? [] as $de) {
+                                                      $dname = strtolower(optional($de->discount)->name ?? '');
+                                                      if (str_contains($dname, 'senior') || str_contains($dname, 'pwd')) {
+                                                            $payQualified += $de->quantity ?? 1;
+                                                      }
+                                                 }
+                                                 $payQualified = min($payQualified, $payPax);
+                                                 $payRegBill = $payPerPax * ($payPax - $payQualified);
+                                            @endphp
+
                    <table class="table table-invoice-data m-0" style="width:100%; font-size:13px;">
     <tbody>
         <tr>
@@ -1053,12 +1085,24 @@ function updateSelectedDiscounts(orderId) {
                 ₱{{ number_format($order->details->sum(fn($d) => $d->quantity * $d->price - ($d->discount ?? 0)), 2) }}
             </td>
         </tr>
-        <tr>
-            <td>Less Discount</td>
-            <td class="text-right less-discount">
-                ₱{{ number_format($order->sr_pwd_discount ?? 0, 2) }}
-            </td>
-        </tr>
+   <tr>
+    <td>Less Discount</td>
+    <td class="text-right less-discount">
+        @php
+            // VAT Exempt 12% (already stored in database)
+            $vatExempt12 = $order->vat_exempt_12 ?? 0;
+
+            // 20% Discount should be computed from the VAT-exempt portion (default 20%)
+            // If you have a stored discount percentage field in the future, use that instead.
+            $discount20 = ($vatExempt12) * 0.20;
+
+            // Less Discount = VAT Exempt 12% + 20% Discount
+            $lessDiscount = $vatExempt12 + $discount20;
+        @endphp
+        ₱{{ number_format($lessDiscount, 2) }}
+    </td>
+</tr>
+
         <tr>
             <td>Vatable</td>
             <td class="text-right vatable">
@@ -1074,7 +1118,7 @@ function updateSelectedDiscounts(orderId) {
         <tr>
             <td>Reg Bill</td>
             <td class="text-right reg-bill">
-                ₱{{ number_format($order->vatable ?? 0, 2) }}
+                ₱{{ number_format($payRegBill ?? 0, 2) }}
             </td>
         </tr>
         <tr>
@@ -1190,7 +1234,7 @@ function calculateChargesAndDiscounts(orderId, grossAmount, pax) {
     const totalCharge = ((grossAmount - otherDiscountTotal) - ((srPwdBill / (1 + vatRate)) * vatRate) - ((srPwdBill / (1 + vatRate)) * (discountPercent / 100)));
 
     // Calculate vat_exempt_12
-    const vatExempt12 = grossAmount / (1 + vatRate);
+    const vatExempt12 = srPwdBill / (1 + vatRate);
     const vatExempt12Rounded = Number(vatExempt12.toFixed(2));
 
     // Store in hidden input
@@ -1432,6 +1476,12 @@ function confirmBillOut(orderId) {
     }
 
     const form = document.getElementById('billOutForm_' + orderId);
+    if (!form) {
+        console.error('Form not found:', 'billOutForm_' + orderId);
+        alert('Form not found. Please refresh the page.');
+        return;
+    }
+
     const formData = new FormData(form);
 
     // Include computed discount and billing fields
@@ -1441,7 +1491,9 @@ function confirmBillOut(orderId) {
     ];
     fields.forEach(f => {
         const el = document.getElementById(f + '_' + orderId);
-        if (el) formData.append(f, el.value);
+        if (el) {
+            formData.append(f, el.value || '0');
+        }
     });
 
     // Collect discount persons from saved memory
@@ -1459,16 +1511,41 @@ function confirmBillOut(orderId) {
     }
     formData.append('persons', JSON.stringify(personsData));
 
+    // Get CSRF token
+    const csrfToken = document.querySelector('meta[name="csrf-token"]');
+    if (!csrfToken) {
+        console.error('CSRF token not found');
+        alert('Security token missing. Please refresh the page.');
+        return;
+    }
+
     // Submit request
     fetch(form.action, {
         method: 'POST',
         headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+            'X-CSRF-TOKEN': csrfToken.content
         },
         body: formData
     })
-    .then(res => res.json())
+    .then(res => {
+        console.log('Response status:', res.status);
+        
+        // Check if response is OK
+        if (!res.ok) {
+            throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        
+        // Check content type
+        const contentType = res.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) {
+            throw new TypeError("Response is not JSON");
+        }
+        
+        return res.json();
+    })
     .then(data => {
+        console.log('Bill-out response:', data);
+        
         if (data.success !== true) {
             alert('Failed to save bill: ' + (data.message || 'Unknown error'));
             return;
@@ -1538,10 +1615,36 @@ function showUpdatedBillOutPreview(orderId, orderData) {
 
     // Update all fields
     setText('gross-charge', gross);
-    setText('less-discount', orderData.sr_pwd_discount || 0);
+
+    // Compute Less Discount = vat_exempt_12 + 20% discount
+    const vatExempt = Number(orderData.vat_exempt_12 || 0);
+    // Prefer the client-side calculated 20% discount if present in the DOM (form)
+    let discount20Val = 0;
+    try {
+        const discountEl = document.getElementById('discount20_' + orderId);
+        if (discountEl) {
+            discount20Val = Number(discountEl.value || 0);
+        } else if (orderData.discount20 != null) {
+            discount20Val = Number(orderData.discount20 || 0);
+        } else {
+            // Fallback: assume standard 20% of vat_exempt (matches JS logic)
+            discount20Val = Number((vatExempt * 0.20) || 0);
+        }
+    } catch (e) {
+        discount20Val = Number((vatExempt * 0.20) || 0);
+    }
+
+    const lessDiscountVal = Number(vatExempt + discount20Val);
+    setText('less-discount', lessDiscountVal);
+
     setText('vatable', orderData.vatable || 0);
     setText('vat-12', orderData.vat_12 || 0);
-    setText('reg-bill', orderData.vatable || 0);
+
+    // Compute Reg Bill from vatable so preview matches calculation
+    const vatRate = 0.12;
+    const vatableVal = Number(orderData.vatable || 0);
+    const computedRegBill = Number((vatableVal * (1 + vatRate)).toFixed(2));
+    setText('reg-bill', computedRegBill);
     setText('sr-pwd-bill', orderData.sr_pwd_discount || 0);
     setText('total-due strong', orderData.total_charge || gross);
 
@@ -2012,15 +2115,18 @@ function updatePersonData(orderId, discountId, index, field, value) {
 <div class="modal fade" id="invoiceModal{{ $order->id }}" tabindex="-1" aria-labelledby="invoiceLabel{{ $order->id }}" aria-hidden="true">
    <div class="modal-dialog modal-sm modal-dialog-scrollable">
       <div class="modal-content">
-         <div class="modal-header">
+        <div class="modal-header">
             <h5 class="modal-title">POS Receipt</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
          </div>
          <div class="modal-body">
             <div id="pos-invoice-{{ $order->id }}">
                <div style="max-width: 400px; margin: 0px auto; font-family: Arial, Helvetica, sans-serif;">
+                  
+                  {{-- Header Info --}}
                   <div class="info text-center">
-                     <div class="invoice_logo mb-2"><img src="/images/logo-default.png" alt="" width="60" height="60"></div>
+                     <div class="invoice_logo mb-2">
+                        <img src="/images/logo-default.png" alt="" width="60" height="60">
+                     </div>
                      <div class="d-flex flex-column small">
                         <span class="t-font-boldest">{{ $branch->name ?? 'Branch Name' }}</span>
                         <span>{{ $branch->address ?? '' }}</span>
@@ -2030,13 +2136,20 @@ function updatePersonData(orderId, discountId, index, field, value) {
                         <span>MIN#: {{ $branch->min_number ?? '' }}</span>
                      </div>
 
-                     <h6 class="t-font-boldest mt-3">BILL-OUT INVOICE</h6>
-                     <div class="mb-2">INV: {{ sprintf('%08d', $order->id) }}</div>
+                     <h6 class="t-font-boldest mt-3">
+                        @if($order->status === 'payments')
+                           OFFICIAL RECEIPT
+                        @else
+                           BILL-OUT INVOICE
+                        @endif
+                     </h6>
+                     <div class="mb-2">OR #: {{ sprintf('%08d', $order->id) }}</div>
                      <div class="mb-1">Date: {{ $order->created_at->format('Y-m-d H:i') }}</div>
                      <div class="mb-1">TBL: {{ $order->table_no }}</div>
                      <div class="mb-1"># of Pax: {{ $order->number_pax }}</div>
                   </div>
 
+                  {{-- Items Table --}}
                   <table class="table table-invoice-items mt-2" style="width:100%; font-size:13px;">
                      <thead>
                         <tr>
@@ -2061,6 +2174,7 @@ function updatePersonData(orderId, discountId, index, field, value) {
                      </tbody>
                   </table>
 
+                  {{-- Summary Table --}}
                   <table class="table table-invoice-data" style="width:100%; font-size:13px;">
                      <tbody>
                         <tr>
@@ -2094,43 +2208,147 @@ function updatePersonData(orderId, discountId, index, field, value) {
                      </tbody>
                   </table>
 
-                     <div class="d-flex justify-content-between fw-bold mt-2"><span>Total Charge</span> <span>₱{{ number_format($order->total_charge ?? $order->net_amount ?? 0,2) }}</span></div>
+                  <div class="d-flex justify-content-between fw-bold mt-2">
+                     <span>Total Charge</span> 
+                     <span>₱{{ number_format($order->total_charge ?? $order->net_amount ?? 0,2) }}</span>
+                  </div>
 
-                     {{-- Payments breakdown grouped by payment method (Cash, GCash, Credit Card, etc.) --}}
-                    @php
+                  {{-- PAYMENT BREAKDOWN - Show for both billout and payments status --}}
+                  @php
+                     $hasPayments = $order->paymentDetails && $order->paymentDetails->count() > 0;
+                  @endphp
+
+                  @if($hasPayments)
+                     <hr style="border-top: 2px dashed #333; margin: 15px 0;">
+                     <div class="fw-bold mb-2" style="text-align: center;">PAYMENT BREAKDOWN</div>
+                     
+                     {{-- Group payments by payment method name --}}
+                     @php
                         $paymentsByMethod = $order->paymentDetails->groupBy(function($pd) {
-                           return optional($pd->cashEquivalent)->name ?? optional($pd->payment)->name ?? 'Other';
-                        })->map(fn($group) => $group->sum('amount_paid'));
+                           return $pd->payment?->name ?? 'Unknown';
+                        })->map(function($group) {
+                           return $group->sum('amount_paid');
+                        });
                      @endphp
 
                      @if($paymentsByMethod->isNotEmpty())
-                        @foreach($paymentsByMethod as $method => $amt)
-                           <div class="d-flex justify-content-between">
-                                 <span>{{ $method }}</span>
-                                 <span>₱{{ number_format($amt, 2) }}</span>
+                        @foreach($paymentsByMethod as $method => $amount)
+                           <div class="d-flex justify-content-between" style="padding: 2px 0;">
+                              <span>{{ $method }}</span>
+                              <span>₱{{ number_format($amount, 2) }}</span>
                            </div>
                         @endforeach
+
+                        <hr style="margin: 8px 0; border-top: 1px dashed #999;">
+
+                        <div class="d-flex justify-content-between fw-bold" style="padding: 4px 0;">
+                           <span>Total Rendered</span>
+                           <span>₱{{ number_format($order->total_payment_rendered ?? 0, 2) }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between fw-bold" style="padding: 4px 0;">
+                           <span>Change</span>
+                           <span>₱{{ number_format($order->change_amount ?? 0, 2) }}</span>
+                        </div>
                      @else
                         <div class="d-flex justify-content-between text-muted">
-                           <span>No payments recorded yet</span>
+                           <span>No payments recorded</span>
                            <span>₱0.00</span>
                         </div>
                      @endif
+                  @endif
 
-                     <div class="d-flex justify-content-between fw-bold">
-                        <span>Total Rendered</span>
-                        <span>₱{{ number_format($order->total_payment_rendered ?? 0, 2) }}</span>
-                     </div>
-                     <div class="d-flex justify-content-between fw-bold">
-                        <span>Change</span>
-                        <span>₱{{ number_format($order->change_amount ?? 0, 2) }}</span>
-                     </div>
-                              </div>
-                  <p class="d-flex justify-content-between fw-bold mt-2"><span>POS Provided by:</span> <span>OMNI Systems Solutions</span></p>
+                  {{-- Footer --}}
+                  <p class="d-flex justify-content-between fw-bold mt-3 mb-1">
+                     <span>POS Provided by:</span> 
+                     <span>OMNI Systems Solutions</span>
+                  </p>
                   <div class="d-flex flex-column small">
-                        <span class="t-font-boldest">TIN: {{ $branch->tin ?? '' }}</span>
-                        <span>OMNI Address: A. C. Cortes Ave, Mandaue, 6014 Cebu</span>
-                     </div>
+                     <span class="t-font-boldest">TIN: {{ $branch->tin ?? '' }}</span>
+                     <span>OMNI Address: A. C. Cortes Ave, Mandaue, 6014 Cebu</span>
+                  </div>
+
+                  {{-- Thank you message --}}
+                  @if(!$hasPayments)
+                      <p class="text-center small mt-3" style="color: #666;">
+                          <em>This is not an official receipt. Payment required to complete transaction.</em>
+                      </p>
+                  @else
+                      <p class="text-center small mt-3" style="color: #666;">
+                          <em>Thank you for your business!</em>
+                      </p>
+                  @endif
+
+                  {{-- ACKNOWLEDGEMENT SLIP - Display below "Thank you" message --}}
+                  @php
+                      $srpwdEntries = $order->discountEntries?->filter(function($de) {
+                           $name = strtolower($de->name ?? '');
+                           return str_contains($name, 'senior') || str_contains($name, 'sr') || str_contains($name, 'pwd');
+                      }) ?? collect();
+
+                      $hasSrpwd = $srpwdEntries->isNotEmpty();
+                      $totalBill = $order->total_charge ?? $order->net_amount ?? 0;
+                      $lessVatExempt = $order->vat_exempt_12 ?? 0;
+                      $discount20 = $order->discount20 ?? ($lessVatExempt * 0.20);
+                      $totalPrivDiscount = $lessVatExempt + $discount20;
+                      $netSrBill = $totalBill - $totalPrivDiscount;
+                  @endphp
+
+                  @if($hasSrpwd && $hasPayments)
+                      <hr style="border-top: 2px dashed #333; margin: 20px 0;">
+                      
+                      <div style="border: 2px solid #333; padding: 15px; margin-top: 15px;">
+                          <div class="text-center fw-bold mb-3" style="font-size: 14px;">ACKNOWLEDGEMENT SLIP</div>
+                          
+                          <div class="small mb-2" style="text-align: center;">
+                              <div>OR #: {{ sprintf('%08d', $order->id) }}</div>
+                              <div>Date: {{ $order->created_at->format('Y-m-d H:i') }}</div>
+                              <div class="mt-2">MEAL FOR (1) SENIOR</div>
+                          </div>
+
+                          <hr style="border-top: 1px solid #333; margin: 10px 0;">
+
+                          <table style="width: 100%; font-size: 12px; margin-top: 10px;">
+                              <tbody>
+                                  <tr>
+                                      <td style="padding: 3px 0;">Total Bill</td>
+                                      <td style="text-align: right; padding: 3px 0;">₱{{ number_format($totalBill, 2) }}</td>
+                                  </tr>
+                                  <tr>
+                                      <td style="padding: 3px 0;">Less Vat Exemption 12%</td>
+                                      <td style="text-align: right; padding: 3px 0;">₱{{ number_format($lessVatExempt, 2) }}</td>
+                                  </tr>
+                                  <tr>
+                                      <td style="padding: 3px 0;">and Senior Discount 20%</td>
+                                      <td style="text-align: right; padding: 3px 0;">₱{{ number_format($discount20, 2) }}</td>
+                                  </tr>
+                                  <tr style="border-top: 1px solid #333;">
+                                      <td style="padding: 5px 0; font-weight: bold;">Total Priv. Discount</td>
+                                      <td style="text-align: right; padding: 5px 0; font-weight: bold;">₱{{ number_format($totalPrivDiscount, 2) }}</td>
+                                  </tr>
+                                  <tr>
+                                      <td style="padding: 5px 0; font-weight: bold;">Net Sr. Citizen Bill</td>
+                                      <td style="text-align: right; padding: 5px 0; font-weight: bold;">₱{{ number_format($netSrBill, 2) }}</td>
+                                  </tr>
+                              </tbody>
+                          </table>
+
+                          <div style="margin-top: 15px;">
+                              <div style="font-size: 11px; margin-bottom: 5px;">SIGN:</div>
+                              <div style="border-bottom: 1px solid #000; height: 30px; margin-bottom: 10px;"></div>
+                          </div>
+
+                          <div style="margin-top: 10px;">
+                              <div style="font-size: 11px; font-weight: bold; margin-bottom: 5px;">NAME AND ID#</div>
+                              @foreach($srpwdEntries as $ent)
+                                  <div style="display: flex; justify-content: space-between; padding: 3px 0; font-size: 12px;">
+                                      <span>{{ $ent->person_name ?? ($ent->name ?? '-') }}</span>
+                                      <span>{{ $ent->person_id_number ?? ($ent->id_number ?? '-') }}</span>
+                                  </div>
+                              @endforeach
+                          </div>
+                      </div>
+                  @endif
+
                </div>
             </div>
          </div>
@@ -2145,109 +2363,315 @@ function updatePersonData(orderId, discountId, index, field, value) {
 
 <script>
 window.openInvoiceModalFromResponse = function(orderData) {
-         console.log('🧾 openInvoiceModalFromResponse called', orderData);
+    console.log('🧾 openInvoiceModalFromResponse called', orderData);
 
-         try {
-            if (!orderData || !orderData.id) {
-                  console.error('❌ Invalid order data passed to invoice modal');
-                  return;
-            }
+    try {
+        if (!orderData || !orderData.id) {
+            console.error('❌ Invalid order data passed to invoice modal');
+            return;
+        }
 
-            const orderId = orderData.id;
-            const modalId = 'invoiceModal' + orderId;
-            let modalEl = document.getElementById(modalId);
+        const orderId = orderData.id;
+        const modalId = 'invoiceModal' + orderId;
+        let modalEl = document.getElementById(modalId);
 
-            // Build modal dynamically if it doesn't exist yet
-            if (!modalEl) {
-                  const branch = window.appBranch || {};
+        if (modalEl) {
+            modalEl.remove();
+        }
 
-                  modalEl = document.createElement('div');
-                  modalEl.className = 'modal fade';
-                  modalEl.id = modalId;
-                  modalEl.tabIndex = -1;
-                  modalEl.setAttribute('aria-hidden', 'true');
+        const branch = window.appBranch || {};
+        modalEl = document.createElement('div');
+        modalEl.className = 'modal fade';
+        modalEl.id = modalId;
+        modalEl.tabIndex = -1;
+        modalEl.setAttribute('aria-hidden', 'true');
 
-                  // Build grouped payments HTML to ensure all methods are shown and summed correctly
-                  const paymentsArr = orderData.payment_details || orderData.paymentDetails || [];
-                  const paymentsMap = {};
-                  let computedTotalPaid = 0;
-                  paymentsArr.forEach(pd => {
-                     const name = (pd.payment && pd.payment.name) || pd.payment_name || 'Other';
-                     const amt = Number(pd.amount_paid || pd.amount || 0) || 0;
-                     computedTotalPaid += amt;
-                     paymentsMap[name] = (paymentsMap[name] || 0) + amt;
-                  });
+        // Build payment breakdown HTML
+        const paymentsArr = orderData.payment_details || orderData.paymentDetails || [];
+        const paymentsMap = {};
+        let computedTotalPaid = 0;
 
-                  const paymentsHtml = Object.keys(paymentsMap).map(k => `\n                     <div style="display:flex;justify-content:space-between">\n                        <div>${k}</div>\n                        <div>₱${Number(paymentsMap[k]).toFixed(2)}</div>\n                     </div>`).join('');
+        paymentsArr.forEach(pd => {
+            const methodName = pd.payment?.name || pd.payment_name || 'Unknown';
+            const amt = Number(pd.amount_paid || pd.amount || 0) || 0;
+            computedTotalPaid += amt;
+            paymentsMap[methodName] = (paymentsMap[methodName] || 0) + amt;
+        });
 
-                  const totalPaidForDisplay = Number(orderData.total_payment_rendered ?? computedTotalPaid ?? 0).toFixed(2);
-                  const changeForDisplay = Number(orderData.change_amount ?? 0).toFixed(2);
+        let paymentsHtml = '';
+        const hasPayments = Object.keys(paymentsMap).length > 0;
 
-                  modalEl.innerHTML = `
-                           <div class="modal-dialog modal-sm modal-dialog-scrollable">
-                              <div class="modal-content">
-                                    <div class="modal-header">
-                                       <h5 class="modal-title">POS Receipt</h5>
-                                       <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                    </div>
-                                    <div class="modal-body">
-                                       <div style="max-width:400px;margin:0 auto;font-family:Arial,Helvetica,sans-serif; font-size:13px;">
-                                          <div class="text-center mb-2">
-                                                <img src="/images/logo-default.png" width="60" height="60" alt="logo" />
-                                                <div><strong>${branch.name || 'Branch Name'}</strong></div>
-                                             2 <div>${branch.address || ''}</div>
-                                                <div>Permit #: ${branch.permit_number || ''}</div>
-                                                <div>DTI: ${branch.dti_issued || ''} | POS SN: ${branch.pos_sn || ''}</div>
-                                          </div>
-                                          <div class="mb-2 text-center"><strong>BILL-OUT INVOICE</strong></div>
-                                          <div>Date: ${orderData.created_at || ''}</div>
-                                          <div>INV: ${String(orderId).padStart(8, '0')}</div>
-                                          <div>TBL: ${orderData.table_no || ''} | Pax: ${orderData.number_pax || ''}</div>
-                                          <hr/>
-                                          <div>
-                                                ${(orderData.details || []).map(d => `
-                                                   <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
-                                                      <div style="width:55%">${(d.product?.name || d.component?.name || d.item_name || 'Item')}</div>
-                                                      <div style="width:10%">${d.quantity}x</div>
-                                                      <div style="width:35%;text-align:right">₱${((d.price || 0) * (d.quantity || 1)).toFixed(2)}</div>
-                                                   </div>
-                                                `).join('')}
-                                          </div>
-                                          <hr/>
-                                          <div style="display:flex;justify-content:space-between"><div>Gross</div><div>₱${Number(orderData.gross_amount || (orderData.details||[]).reduce((s,i)=>s+(i.price||0)*(i.quantity||0),0)).toFixed(2)}</div></div>
-                                          <div style="display:flex;justify-content:space-between"><div>Discount</div><div>₱${Number(orderData.discount_total || orderData.sr_pwd_discount || 0).toFixed(2)}</div></div>
-                                          <div style="display:flex;justify-content:space-between;font-weight:bold"><div>Total</div><div>₱${Number(orderData.total_charge || orderData.net_amount || 0).toFixed(2)}</div></div>
-                                          <hr/>
-                                          <div><strong>Payments</strong></div>
-                                          ${paymentsHtml}
-                                          <div style="display:flex;justify-content:space-between;margin-top:6px"><div>Total Paid</div><div>₱${totalPaidForDisplay}</div></div>
-                                          <div style="display:flex;justify-content:space-between"><div>Change</div><div>₱${changeForDisplay}</div></div>
-                                          <p class="text-center small mt-3"><strong>This is not an official receipt</strong></p>
-                                       </div>
-                                    </div>
-                                    <div class="modal-footer d-flex justify-content-center">
-                                       <button class="btn btn-outline-primary btn-sm me-2" onclick="window.print()">Print</button>
-                                       <button class="btn btn-primary btn-sm" data-bs-dismiss="modal">Close</button>
-                                    </div>
-                              </div>
-                           </div>
-                        `;
+        if (hasPayments) {
+            paymentsHtml = `
+                <hr style="border-top:2px dashed #333;margin:15px 0"/>
+                <div style="font-weight:bold;margin-bottom:10px;text-align:center">PAYMENT BREAKDOWN</div>
+            `;
+            
+            Object.keys(paymentsMap).forEach(method => {
+                paymentsHtml += `
+                    <div style="display:flex;justify-content:space-between;padding:2px 0">
+                        <div>${method}</div>
+                        <div>₱${Number(paymentsMap[method]).toFixed(2)}</div>
+                    </div>
+                `;
+            });
 
-                  document.body.appendChild(modalEl);
-                  modalEl.addEventListener('hidden.bs.modal', () => {
-                     modalEl.remove();
-                     // reload when the dynamically created invoice modal is closed so the orders list updates
-                     try { window.location.reload(); } catch (e) { /* ignore */ }
-                  });
-            }
+            const totalRendered = Number(orderData.total_payment_rendered ?? computedTotalPaid ?? 0);
+            const change = Number(orderData.change_amount ?? 0);
 
-            // Show the modal using Bootstrap
-            const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
-            modal.show();
+            paymentsHtml += `
+                <hr style="margin:8px 0;border-top:1px dashed #999"/>
+                <div style="display:flex;justify-content:space-between;font-weight:bold;padding:4px 0">
+                    <div>Total Rendered</div>
+                    <div>₱${totalRendered.toFixed(2)}</div>
+                </div>
+                <div style="display:flex;justify-content:space-between;font-weight:bold;padding:4px 0">
+                    <div>Change</div>
+                    <div>₱${change.toFixed(2)}</div>
+                </div>
+            `;
+        }
 
-         } catch (e) {
-            console.error('💥 openInvoiceModalFromResponse error', e);
-         }
+        const gross = Number(orderData.gross_amount || 0) ||
+                      (orderData.details || []).reduce((sum, d) => {
+                          return sum + (Number(d.price || 0) * Number(d.quantity || 0) - Number(d.discount || 0));
+                      }, 0);
+
+        const isPaymentComplete = hasPayments;
+
+        // Build acknowledgement slip HTML
+        const srpwdArr = orderData.discount_entries || orderData.discountEntries || [];
+        let ackHtml = '';
+        
+        if (Array.isArray(srpwdArr) && srpwdArr.length > 0 && hasPayments) {
+            const nf = new Intl.NumberFormat('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            const totalBill = Number(orderData.total_charge || orderData.net_amount || 0) || 0;
+            const lessVatExempt = Number(orderData.vat_exempt_12 || 0) || 0;
+            const discount20 = Number(orderData.discount20 ?? (lessVatExempt * 0.20)) || 0;
+            const totalPrivDiscount = lessVatExempt + discount20;
+            const netSrBill = totalBill - totalPrivDiscount;
+
+            ackHtml = `
+                <hr style="border-top:2px dashed #333;margin:20px 0"/>
+                <div style="border:2px solid #333;padding:15px;margin-top:15px">
+                    <!-- Header -->
+                            <div class="text-center mb-2">
+                                <img src="/images/logo-default.png" width="60" height="60" alt="logo" />
+                                <div style="margin-top:8px">
+                                    <div><strong>${branch.name || 'Branch Name'}</strong></div>
+                                    <div style="font-size:12px">${branch.address || ''}</div>
+                                    <div style="font-size:11px">Permit #: ${branch.permit_number || ''}</div>
+                                    <div style="font-size:11px">DTI: ${branch.dti_issued || ''}</div>
+                                    <div style="font-size:11px">POS SN: ${branch.pos_sn || ''}</div>
+                                    <div style="font-size:11px">MIN#: ${branch.min_number || ''}</div>
+                                </div>
+                            </div>
+                            
+                    <div style="text-align:center;font-weight:bold;font-size:14px;margin-bottom:15px">ACKNOWLEDGEMENT SLIP</div>
+                    
+                    <div style="text-align:center;font-size:12px;margin-bottom:10px">
+                        <div>OR #: ${String(orderId).padStart(8,'0')}</div>
+                        <div>Date: ${orderData.created_at || ''}</div>
+                        <div style="margin-top:8px">MEAL FOR (1) SENIOR</div>
+                    </div>
+
+                    <hr style="border-top:1px solid #333;margin:10px 0"/>
+
+                    <table style="width:100%;font-size:12px;margin-top:10px">
+                        <tr>
+                            <td style="padding:3px 0">Total Bill</td>
+                            <td style="text-align:right;padding:3px 0">₱${nf.format(totalBill)}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding:3px 0">Less Vat Exemption 12%</td>
+                            <td style="text-align:right;padding:3px 0">₱${nf.format(lessVatExempt)}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding:3px 0">and Senior Discount 20%</td>
+                            <td style="text-align:right;padding:3px 0">₱${nf.format(discount20)}</td>
+                        </tr>
+                        <tr style="border-top:1px solid #333">
+                            <td style="padding:5px 0;font-weight:bold">Total Priv. Discount</td>
+                            <td style="text-align:right;padding:5px 0;font-weight:bold">₱${nf.format(totalPrivDiscount)}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding:5px 0;font-weight:bold">Net Sr. Citizen Bill</td>
+                            <td style="text-align:right;padding:5px 0;font-weight:bold">₱${nf.format(netSrBill)}</td>
+                        </tr>
+                    </table>
+
+                    <div style="margin-top:15px">
+                        <div style="font-size:11px;margin-bottom:5px">SIGN:</div>
+                        <div style="border-bottom:1px solid #000;height:30px;margin-bottom:10px"></div>
+                    </div>
+
+                    <div style="margin-top:10px">
+                        <div style="font-size:11px;font-weight:bold;margin-bottom:5px">NAME / ID#</div>
+                        ${srpwdArr.map(e => `
+                            <div style="display:flex;justify-content:space-between;padding:3px 0;font-size:12px">
+                                <span>${(e.person_name || e.name || '-')}</span>
+                                <span>${(e.person_id_number || e.id_number || '')}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+
+                      <!-- Footer -->
+                            <div style="margin-top:20px;font-size:11px">
+                                <div style="display:flex;justify-content:space-between;font-weight:bold">
+                                    <span>POS Provided by:</span>
+                                    <span>OMNI Systems Solutions</span>
+                                </div>
+                                <div style="margin-top:5px">
+                                    <div><strong>TIN: ${branch.tin || '123-456-789'}</strong></div>
+                                    <div>OMNI Address: A. C. Cortes Ave, Mandaue, 6014 Cebu</div>
+                                </div>
+                            </div>
+                </div>
+            `;
+        }
+
+        modalEl.innerHTML = `
+            <div class="modal-dialog modal-sm modal-dialog-scrollable">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">POS Receipt</h5>
+                    </div>
+                    <div class="modal-body" style="max-height:80vh; overflow-y:auto;">
+                        <div style="max-width:400px;margin:0 auto;font-family:Arial,Helvetica,sans-serif;font-size:13px;">
+                            
+                            <!-- Header -->
+                            <div class="text-center mb-2">
+                                <img src="/images/logo-default.png" width="60" height="60" alt="logo" />
+                                <div style="margin-top:8px">
+                                    <div><strong>${branch.name || 'Branch Name'}</strong></div>
+                                    <div style="font-size:12px">${branch.address || ''}</div>
+                                    <div style="font-size:11px">Permit #: ${branch.permit_number || ''}</div>
+                                    <div style="font-size:11px">DTI: ${branch.dti_issued || ''}</div>
+                                    <div style="font-size:11px">POS SN: ${branch.pos_sn || ''}</div>
+                                    <div style="font-size:11px">MIN#: ${branch.min_number || ''}</div>
+                                </div>
+                            </div>
+                            
+                            <div style="text-align:center;margin:15px 0">
+                                <strong>${isPaymentComplete ? 'OFFICIAL RECEIPT' : 'BILL-OUT INVOICE'}</strong>
+                            </div>
+                            
+                            <div style="font-size:12px;margin-bottom:10px;text-align:center">
+                                <div>Date: ${orderData.created_at || ''}</div>
+                                <div>OR #: ${String(orderId).padStart(8, '0')}</div>
+                                <div>TBL: ${orderData.table_no || ''}</div>
+                                <div># of Pax: ${orderData.number_pax || ''}</div>
+                            </div>
+                            
+                            <hr style="margin:10px 0"/>
+                            
+                            <!-- Items -->
+                            <table style="width:100%;font-size:13px;margin-bottom:10px">
+                                <thead>
+                                    <tr>
+                                        <th style="text-align:left;width:10%">QTY</th>
+                                        <th style="text-align:left;width:60%">DESCRIPTION</th>
+                                        <th style="text-align:right;width:30%">AMOUNT</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${(orderData.details || []).map(d => `
+                                        <tr>
+                                            <td>${d.quantity}x</td>
+                                            <td>
+                                                <div>${(d.product?.name || d.component?.name || d.item_name || 'Item')}</div>
+                                                <div style="font-size:11px;color:#666">@₱${Number(d.price || 0).toFixed(2)}</div>
+                                            </td>
+                                            <td style="text-align:right">₱${((d.price || 0) * (d.quantity || 1)).toFixed(2)}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                            
+                            <hr style="margin:10px 0"/>
+                            
+                            <!-- Totals -->
+                            <table style="width:100%;font-size:13px">
+                                <tr>
+                                    <td>Gross Charge</td>
+                                    <td style="text-align:right">₱${gross.toFixed(2)}</td>
+                                </tr>
+                                <tr>
+                                    <td>Less Discount</td>
+                                    <td style="text-align:right">₱${Number(orderData.discount_total || orderData.sr_pwd_discount || 0).toFixed(2)}</td>
+                                </tr>
+                                <tr>
+                                    <td>Vatable</td>
+                                    <td style="text-align:right">₱${Number(orderData.vatable || 0).toFixed(2)}</td>
+                                </tr>
+                                <tr>
+                                    <td>Vat 12%</td>
+                                    <td style="text-align:right">₱${Number(orderData.vat_12 || 0).toFixed(2)}</td>
+                                </tr>
+                                <tr>
+                                    <td>Reg Bill</td>
+                                    <td style="text-align:right">₱${Number(orderData.vatable || 0).toFixed(2)}</td>
+                                </tr>
+                                <tr>
+                                    <td>SR/PWD Bill</td>
+                                    <td style="text-align:right">₱${Number(orderData.sr_pwd_discount || 0).toFixed(2)}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Total</strong></td>
+                                    <td style="text-align:right"><strong>₱${Number(orderData.total_charge || orderData.net_amount || 0).toFixed(2)}</strong></td>
+                                </tr>
+                            </table>
+
+                            <div style="display:flex;justify-content:space-between;font-weight:bold;margin-top:10px;padding:5px 0;border-top:2px solid #000">
+                                <div>Total Charge</div>
+                                <div>₱${Number(orderData.total_charge || orderData.net_amount || 0).toFixed(2)}</div>
+                            </div>
+                            
+                            ${paymentsHtml}
+                            
+                            <!-- Footer -->
+                            <div style="margin-top:20px;font-size:11px">
+                                <div style="display:flex;justify-content:space-between;font-weight:bold">
+                                    <span>POS Provided by:</span>
+                                    <span>OMNI Systems Solutions</span>
+                                </div>
+                                <div style="margin-top:5px">
+                                    <div><strong>TIN: ${branch.tin || '123-456-789'}</strong></div>
+                                    <div>OMNI Address: A. C. Cortes Ave, Mandaue, 6014 Cebu</div>
+                                </div>
+                            </div>
+
+                            <p style="text-align:center;font-size:11px;margin-top:15px;color:#666">
+                                <em>${isPaymentComplete ? 'Thank you for your business!' : 'This is not an official receipt. Payment required to complete transaction.'}</em>
+                            </p>
+
+                            ${ackHtml}
+                        </div>
+                    </div>
+                    <div class="modal-footer d-flex justify-content-center">
+                        <button class="btn btn-outline-primary btn-sm me-2" onclick="window.print()">Print</button>
+                        <button class="btn btn-primary btn-sm" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(modalEl);
+        
+        modalEl.addEventListener('hidden.bs.modal', () => {
+            modalEl.remove();
+            try { window.location.reload(); } catch (e) { /* ignore */ }
+        }, { once: true });
+
+        const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+        modal.show();
+
+        console.log(`✅ Invoice modal ${orderId} shown`);
+
+    } catch (e) {
+        console.error('💥 openInvoiceModalFromResponse error', e);
+        alert('Failed to show receipt. Please refresh and try again.');
+    }
 };
 
 // =====================================
@@ -2438,6 +2862,20 @@ window.openInvoiceModalFromResponse = function(orderData) {
 </script>
 <script src="{{ asset('js/tableFunctions.js') }}"></script>
    <script>
+
+    function openBillOutFromPayment(orderId) {
+    // Close payment modal
+    const paymentModalEl = document.getElementById('paymentModal' + orderId);
+    const paymentModal = bootstrap.Modal.getInstance(paymentModalEl);
+    if (paymentModal) paymentModal.hide();
+
+    // Small delay to avoid overlap animation glitch
+    setTimeout(() => {
+        const billOutModalEl = document.getElementById('billOutModal' + orderId);
+        const billOutModal = new bootstrap.Modal(billOutModalEl);
+        billOutModal.show();
+    }, 300);
+}
 
    function submitPayment(orderId) {
       // gather payments rows if any

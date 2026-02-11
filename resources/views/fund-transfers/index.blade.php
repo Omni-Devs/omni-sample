@@ -349,6 +349,59 @@
                         </div>
                     </div>
 
+                    <!-- Add Attachment Modal -->
+                <div class="modal fade" id="attachmentModal" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-md">
+                        <div class="modal-content">
+
+                            <form id="attachmentForm" method="POST"
+                                    action=""  {{-- will be filled dynamically --}}
+                                    enctype="multipart/form-data">
+                                @csrf
+
+                                <input type="hidden" name="fund_transfer_id" id="attachment_ft_id">
+
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Upload Attachments</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+
+                                <div class="modal-body">
+                                    <p class="text-muted">You may upload multiple files.</p>
+                                    <input type="file" name="attachments[]" class="form-control" multiple required>
+                                </div>
+
+                                <div class="modal-footer">
+                                    <button class="btn btn-primary" type="submit">Upload</button>
+                                </div>
+
+                            </form>
+
+                        </div>
+                    </div>
+                </div>
+
+                <!-- View Attachments Modal -->
+                <div class="modal fade" id="viewAttachmentsModal" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+
+                            <div class="modal-header">
+                                <h5 class="modal-title">Attached Files</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+
+                            <div class="modal-body">
+                                <div id="attachmentsList">
+                                    <p class="text-muted">Loading...</p>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+
                     {{-- Table --}}
                     <div class="vgt-responsive">
                         <table class="table-hover tableOne vgt-table">
@@ -524,58 +577,6 @@
 </div>
 
 @endsection
-
-<!-- Add Attachment Modal -->
-<div class="modal fade" id="attachmentModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-md">
-        <div class="modal-content">
-
-            <form id="attachmentForm" method="POST"
-                    action=""  {{-- will be filled dynamically --}}
-                    enctype="multipart/form-data">
-                @csrf
-
-                <input type="hidden" name="fund_transfer_id" id="attachment_ft_id">
-
-                <div class="modal-header">
-                    <h5 class="modal-title">Upload Attachments</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-
-                <div class="modal-body">
-                    <p class="text-muted">You may upload multiple files.</p>
-                    <input type="file" name="attachments[]" class="form-control" multiple required>
-                </div>
-
-                <div class="modal-footer">
-                    <button class="btn btn-primary" type="submit">Upload</button>
-                </div>
-
-            </form>
-
-        </div>
-    </div>
-</div>
-
-<!-- View Attachments Modal -->
-<div class="modal fade" id="viewAttachmentsModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-
-            <div class="modal-header">
-                <h5 class="modal-title">Attached Files</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-
-            <div class="modal-body">
-                <div id="attachmentsList">
-                    <p class="text-muted">Loading...</p>
-                </div>
-            </div>
-
-        </div>
-    </div>
-</div>
 
 <script>
 function openAttachmentModal(ftId) {

@@ -208,9 +208,50 @@
                                 <td class="vgt-left-align text-left">
                                     <span>
                                         <ul class="list-unstyled">
-                                        <li>
-                                            {{ $user->roles()->pluck('name')->join(', ') }}
-                                        </li>
+                                            @php
+                                                // Global role names for the user (eager-loaded)
+                                                $globalRoles = $user->roles->pluck('name')->toArray();
+
+                                                // Collect per-branch role names that apply to this user.
+                                                // Show branch-specific role labels like "Manager (Bantayan)".
+                                                // If a role is represented by a branch, hide the plain global
+                                                // role name to avoid the duplicate appearance (e.g. show
+                                                // "Administrator (Main Commissary)" instead of both
+                                                // "Administrator" and "Administrator (Main Commissary)").
+                                                $branchRoleParts = [];
+                                                $branchRoleNames = [];
+                                                foreach ($user->branches as $b) {
+                                                    // Branch roles were eager-loaded as `roles` on the branch
+                                                    $roleNames = $b->roles->pluck('name')->toArray();
+
+                                                    if (!empty($roleNames)) {
+                                                        $branchRoleParts[] = implode(', ', $roleNames) . ' (' . $b->name . ')';
+                                                        // Keep a quick lookup of role names that appear in branches
+                                                        foreach ($roleNames as $rn) {
+                                                            $branchRoleNames[$rn] = true;
+                                                        }
+                                                    }
+                                                }
+
+                                                // Remove any plain global role that is already shown via branch
+                                                // (so we won't display both "Administrator" and
+                                                // "Administrator (Main Commissary)").
+                                                $filteredGlobalRoles = array_values(array_filter($globalRoles, function($r) use ($branchRoleNames) {
+                                                    return ! isset($branchRoleNames[$r]);
+                                                }));
+
+                                                // Merge filtered global role names (if any) and the per-branch parts
+                                                $displayParts = array_values(array_filter(array_merge($filteredGlobalRoles, $branchRoleParts)));
+                                            @endphp
+
+                                            <li>
+                                                @if(count($displayParts))
+                                                    {{ implode(', ', $displayParts) }}
+                                                @else
+                                                    -
+                                                @endif
+                                            </li>
+                                        
                                         </ul>
                                     </span>
                                 </td>
