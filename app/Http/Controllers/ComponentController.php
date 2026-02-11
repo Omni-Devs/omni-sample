@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\BranchComponent;
 use App\Models\Category;
 use App\Models\Component;
 use App\Models\InventoryAudit;
@@ -77,7 +78,6 @@ public function fetchComponents(Request $request)
                 'bc.onhand',
                 'bc.cost',
                 'bc.price',
-                'bc.unit',
                 'bc.for_sale',
                 'bc.status as status'
             ])
@@ -147,7 +147,23 @@ public function fetchComponents(Request $request)
             $validated['image'] = $request->file('image')->store('components', 'public');
         }
 
-        Component::create($validated);
+         $component = Component::create($validated);
+
+        /*
+        |--------------------------------------------------------------------------
+        | Insert into branch_components
+        |--------------------------------------------------------------------------
+        */
+        BranchComponent::create([
+            'branch_id'    => current_branch_id(),
+            'component_id' => $component->id,
+            'onhand'       => $component->onhand,
+            'cost'         => $component->cost,
+            'price'        => $component->price,
+            'status'       => 'active',
+            'for_sale'     => $component->for_sale,
+            'supplier_id'  => $component->supplier_id,
+        ]);
 
         return redirect()->route('components.index')->with('success', 'Component created successfully.');
     }
@@ -210,13 +226,13 @@ public function fetchComponents(Request $request)
      */
     public function archive(Component $component)
     {
-        $component->update([
-            'status' => 'archived'
-        ]);
+        $component->update(['status' => 'archived']);
 
-        return redirect()
-            ->route('components.index')
-            ->with('success', 'Unit moved to archive successfully.');
+        return response()->json([
+            'message' => 'Component moved to archive successfully.',
+            'status' => 'success',
+            'component_id' => $component->id
+        ]);
     }
 
     /**
@@ -225,12 +241,14 @@ public function fetchComponents(Request $request)
     public function restore(Component $component)
     {
         $component->update([
-            'status' => 'active'
+        'status' => 'active'
         ]);
 
-        return redirect()
-            ->route('components.index')
-            ->with('success', 'Component restored to active successfully.');
+        return response()->json([
+            'message' => 'Component restored to active successfully.',
+            'status' => 'success',
+            'component_id' => $component->id
+        ]);
     }
 
   public function stockCard($id)

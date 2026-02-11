@@ -10,7 +10,7 @@ class Product extends Model
     use HasFactory;
     
     protected $fillable = [
-        'code', 'name', 'price', 'status', 'image', 'category_id', 'subcategory_id', 'quantity', 'unit'
+        'code', 'name', 'price', 'status', 'image', 'category_id', 'subcategory_id', 'quantity', 'unit_id', 'station_id'
     ];
 
     protected $casts = [
@@ -43,4 +43,15 @@ class Product extends Model
     {
         return $this->hasMany(BranchProduct::class);
     }
+
+    public function station()
+    {
+        return $this->belongsTo(Station::class);
+    }
+    public function unit()
+    {
+        return $this->belongsTo(Unit::class);
+    }
+
+    
 }

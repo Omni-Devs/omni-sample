@@ -197,6 +197,24 @@
                                              </div>
                                           </fieldset>
                                           </span>
+
+                                           <span>
+                                          <fieldset class="form-group" id="__BVID__408">
+                                             <legend tabindex="-1" class="bv-no-focus-ring col-form-label pt-0" id="__BVID__408__BV_label_">Quantity</legend>
+                                             <div>
+                                                   <input type="number" step="0.01" 
+                                                      name="quantity" 
+                                                      id="quantity" 
+                                                      class="form-control @error('quantity') is-invalid @enderror" 
+                                                      value="{{ old('quantity', $product->quantity) }}">
+                                                   @error('quantity')
+                                                      <div class="invalid-feedback">{{ $message }}</div>
+                                                   @enderror
+                                                   <div id="Quantity-feedback" class="invalid-feedback"></div>
+                                                   <!----><!----><!---->
+                                             </div>
+                                          </fieldset>
+                                          </span>
                                           
                                        </div>
                                        <div class="col-md-6">
@@ -442,7 +460,135 @@
          }
       });
       </script>
+         <!-- Station select + New button -->
+         <div class="form-group">
+            <label for="station_id">Station</label>
+            <div class="d-flex">
+               <select name="station_id" id="station_id" class="form-control mr-2">
+                  @foreach ($stations as $station)
+                     <option value="{{ $station->id }}" 
+                        {{ old('station_id', $product->station_id) == $station->id ? 'selected' : '' }}>
+                        {{ $station->name }}
+                     </option>
+                  @endforeach
+               </select>
+               <button type="button" id="toggleStationBtn" class="btn btn-outline-success btn-sm" onclick="toggleStationForm()">
+                  <i class="i-Add"></i>
+               </button>
+            </div>
+         </div>
 
+         <!-- Inline new station form (hidden) -->
+         <div id="newSStationForm" class="border rounded p-4 mt-3 bg-white shadow-sm" style="display:none; max-width:600px; margin:auto;">
+            <h4 class="text-center mb-4">Add Station</h4>
+
+            <div class="form-group">
+               <label for="new_station_name" class="font-weight-bold">Station Name *</label>
+               <input type="text" id="new_station_name" class="form-control" placeholder="Enter station name">
+               <div class="invalid-feedback" id="err_new_station_name"></div>
+            </div>
+
+            <div class="form-group mt-3">
+               <label for="new_station_description" class="font-weight-bold">Description</label>
+               <textarea id="new_station_description" class="form-control" rows="3" placeholder="Enter station description"></textarea>
+               <div class="invalid-feedback" id="err_new_station_description"></div>
+            </div>
+
+            <div class="d-flex justify-content-center mt-4">
+               <button type="button" onclick="saveStationForm()" class="btn btn-success px-4 mr-2">Save</button>
+               <button type="button" onclick="toggleStationForm()" class="btn btn-danger px-4">Cancel</button>
+            </div>
+         </div>
+         <script>
+            function toggleStationForm() {
+                  const form = document.getElementById('newSStationForm');
+                  form.style.display = (form.style.display === 'none' || form.style.display === '') ? 'block' : 'none';
+                  clearSStationFormErrors();
+            }
+
+            function clearSStationFormErrors() {
+                  document.getElementById('new_station_name').classList.remove('is-invalid');
+                  document.getElementById('new_station_description').classList.remove('is-invalid');
+                  document.getElementById('err_new_station_name').innerText = '';
+                  document.getElementById('err_new_station_description').innerText = '';
+            }
+
+            function saveStationForm() {
+    clearSStationFormErrors();
+
+    const name = document.getElementById('new_station_name').value.trim();
+    const description = document.getElementById('new_station_description').value.trim();
+
+    if (!name) {
+        document.getElementById('new_station_name').classList.add('is-invalid');
+        document.getElementById('err_new_station_name').innerText = 'Name is required.';
+        return;
+    }
+
+    fetch("{{ route('stations.store') }}", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "X-CSRF-TOKEN": document
+                .querySelector('meta[name="csrf-token"]')
+                .getAttribute("content"),
+        },
+        body: JSON.stringify({
+            name: name,
+            description: description
+        }),
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.errors) {
+            // Laravel validation errors
+            if (data.errors.name) {
+                document.getElementById('new_station_name').classList.add('is-invalid');
+                document.getElementById('err_new_station_name').innerText = data.errors.name[0];
+            }
+            return;
+        }
+
+        // ✅ SUCCESS
+        // Example: add station to select dropdown and auto-select
+        const stationSelect = document.getElementById('station_id');
+        if (stationSelect) {
+            const option = document.createElement('option');
+            option.value = data.station.id;
+            option.text = data.station.name;
+            option.selected = true;
+            stationSelect.appendChild(option);
+        }
+
+        // Reset form
+        document.getElementById('new_station_name').value = '';
+        document.getElementById('new_station_description').value = '';
+
+        // Hide form / modal if needed
+        $('#addStationModal').modal('hide');
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Something went wrong while saving the station.');
+    });
+}
+
+            
+            </script>
+            <!-- Unit select -->
+         <div class="form-group">
+            <label for="unit_id">Unit</label>
+            <div class="d-flex">
+               <select name="unit_id" id="unit_id" class="form-control mr-2">
+                  @foreach ($units as $unit)
+                     <option value="{{ $unit->id }}" 
+                        {{ old('unit_id', $product->unit_id) == $unit->id ? 'selected' : '' }}>
+                        {{ $unit->name }}
+                     </option>
+                  @endforeach
+               </select>
+            </div>
+         </div>
                </div>
          </div>
 

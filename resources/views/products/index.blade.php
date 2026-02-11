@@ -112,7 +112,7 @@
               <td>@{{ row.category }}</td>
               <td>@{{ row.subcategory }}</td>
               <td>@{{ row.quantity }}</td>
-              <td>@{{ row.unit }}</td>
+              <td>@{{ row.unit?.name }}</td>
               <td>@{{ Number(row.price || 0).toFixed(2) }}</td>
 
             </tr>
@@ -332,7 +332,7 @@
                         @{{ Number(row.price).toFixed(2) }}
                     </template>
                     <template v-else-if="col.field === 'product_unit'">
-                        @{{ row.unit }}
+                        @{{ row.unit?.name || 'N/A' }}
                     </template>
                     <template v-else-if="col.field === 'action'">
                             <actions-dropdown 
@@ -651,14 +651,14 @@
            </li>
 
            <li v-if="row.status == 'active'">
-               <a class="dropdown-item" :href="`/products/${row.id}/archive`">
+               <a class="dropdown-item" @click="archiveProduct(row.id)">
                    <i class="nav-icon i-Letter-Close font-weight-bold mr-2"></i>
                    Archive
                </a>
            </li>
 
            <li v-if="row.status == 'archived'">
-               <a class="dropdown-item" :href="`/products/${row.id}/restore`">
+               <a class="dropdown-item" @click="restoreProduct(row.id)">
                    <i class="nav-icon i-Refresh font-weight-bold mr-2"></i>
                    Restore
                </a>
@@ -703,6 +703,54 @@ Vue.component("actions-dropdown", {
         };
     },
     methods: {
+      archiveProduct(productId) {
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "You are about to move this unit to archive!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, archive it!',
+            }).then((result) => {
+               if (result.isConfirmed) {
+                     axios.put(`/products/${productId}/archive`)
+                        .then(res => {
+                           Swal.fire('Archived!', res.data.message, 'success')
+                                 .then(() => {
+                                    // Reload after user clicks Okay
+                                    window.location.reload();
+                                 });
+                        })
+                        .catch(err => {
+                            console.error(err);
+                            Swal.fire('Failed!', 'Could not archive product.', 'error');
+                        });
+                }
+            });
+        },
+        restoreProduct(productId) {
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "You are about to restore this product!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, restore it!',
+            }).then((result) => {
+               if (result.isConfirmed) {
+                     axios.put(`/products/${productId}/restore`)
+                        .then(res => {
+                           Swal.fire('Restored!', res.data.message, 'success')
+                                 .then(() => {
+                                    // Reload after user clicks Okay
+                                    window.location.reload();
+                                 });
+                        })
+                        .catch(err => {
+                            console.error(err);
+                            Swal.fire('Failed!', 'Could not restore product.', 'error');
+                        });
+                }
+            });
+        },
         toggleDropdown() { this.isOpen = !this.isOpen; },
         handleClickOutside(event) {
             if (!this.$refs.dropdown?.contains(event.target)) this.isOpen = false;
@@ -1152,7 +1200,7 @@ function markAsUnread(remarkId, productId) {
         name: row.name,
         category: row.category,
         subcategory: row.subcategory,
-        unit: row.unit,
+        unit: row.unit?.name,
         price: Number(row.price || 0),
         onhand: Number(row.quantity || 0),
         errors: [] // 🔥 important
@@ -1208,8 +1256,9 @@ function markAsUnread(remarkId, productId) {
     }
   },
       setStatus(status) {
+         console.log("Status filter changed to:", status);
             this.statusFilter = status;
-            this.fetchAudits();
+            this.fetchProducts();
         },
       getCellValue(row, field) {
     switch (field) {
@@ -1232,7 +1281,7 @@ function markAsUnread(remarkId, productId) {
         return Number(row.price || 0);
 
       case 'product_unit':
-        return row.unit || '';
+        return row.unit?.name || 'N/A ';
 
       default:
         return '';
@@ -1348,7 +1397,7 @@ function markAsUnread(remarkId, productId) {
       params: {
          search: this.search,
          perPage: this.perPage,
-         status: this.status,
+         status: this.statusFilter,
          page: page,
 
          // 🔹 filters

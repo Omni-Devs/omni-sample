@@ -299,7 +299,7 @@
             <li class="nav-item"><a href="#" class=""><i class="nav-icon i-Remove-Bag"></i> <span class="item-name">Sales Invoicing</span></a></li>
             <li class="nav-item"><a href="/app/sales/manage-deliveries" class=""><i class="nav-icon i-Jeep"></i> <span class="item-name">Orders and Reservations</span></a></li>
             <li class="nav-item"><a href="/pos-clossing" class=""><i class="nav-icon i-Hand"></i> <span class="item-name">Closing</span></a></li>
-            <li class="nav-item"><a href="/kitchen" class=""><i class="nav-icon i-Full-Basket"></i> <span class="item-name">KDS</span></a></li>
+            <li class="nav-item"><a href="/kitchen" class=""><i class="nav-icon i-Full-Basket"></i> <span class="item-name">Kitchen Dispaly System</span></a></li>
             {{-- <li class="nav-item"><a href="/app/sales/quotations" class=""><i class="nav-icon i-Receipt-3"></i> <span class="item-name">Quotations</span></a></li> --}}
             {{-- <li class="nav-item"><a href="/app/sales/manage-prospects" class=""><i class="nav-icon i-Checked-User"></i> <span class="item-name">Manage Prospects</span></a></li> --}}
             <li class="nav-item dropdown-sidemenu">

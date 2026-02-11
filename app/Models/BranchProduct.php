@@ -14,11 +14,15 @@ class BranchProduct extends Model
     protected $fillable = [
         'branch_id',
         'product_id',
-        'onhand',
+        'station_id',
+        'unit_id',
+        'quantity',
+        'price',
+        'status',
     ];
 
     protected $casts = [
-        'onhand' => 'decimal:4',
+        'quantity' => 'decimal:2',
     ];
 
     /* ======================
@@ -33,5 +37,15 @@ class BranchProduct extends Model
     public function product()
     {
         return $this->belongsTo(Product::class);
+    }
+
+    public function station()
+    {
+        return $this->belongsTo(Station::class);
+    }
+
+    public function unit()
+    {
+        return $this->belongsTo(Unit::class);
     }
 }

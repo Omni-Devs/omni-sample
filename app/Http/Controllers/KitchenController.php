@@ -34,8 +34,11 @@ public function fetchItems(Request $request)
               ->with([
                   'product.category',
                   'product.recipes.component',
+                  'product.station',
+
                   'component.category',
-                  'orderItems.cook', // <-- load cook from order_items
+                  'orderItems.cook', 
+                  'component.station',
               ]);
         },
         'user'
@@ -96,7 +99,8 @@ public function fetchItems(Request $request)
                 'code'            => $item->code ?? 'N/A',
                 'name'            => $item->name ?? 'Unnamed Item',
                 'qty'             => $detail->quantity,
-                'station'         => $item->category->name ?? 'N/A',
+                'category'         => $item->category->name ?? 'N/A',
+                'station'          => $item->station->name ?? 'N/A',
                 'status'          => $detail->status,
                 'recipe'          => $recipe,
                 'cook_id'         => $cookId,
