@@ -44,8 +44,13 @@ class UserController extends Controller
             $status = 'active';
         }
 
-        $query = User::with(['roles:id,name', 'branches:id,name'])
-            ->where('status', $status);
+        $query = User::with([
+            'roles:id,name',
+            'branches:id,name',
+            'employeeWorkInformations.department:id,name',
+            'employeeWorkInformations.designation:id,name'
+        ])
+        ->where('status', $status);
 
         if (!empty($branchId)) {
             $query->where('branch_id', $branchId);

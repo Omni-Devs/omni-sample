@@ -135,38 +135,45 @@ tr:hover {
                 </div>
               </div>
             </div>
-<div class="row">
-            <div class="col-md-4">
-  <label class="form-label">Chef / Cook</label>
+            <div class="row">
+              <div class="col-md-4">
+                <label class="form-label">Chef / Cook</label>
 
-  <v-select
-    :options="chefs"
-    label="name"
-    :reduce="chef => chef.id"
-    v-model="selectedOrder.cook_id"
-    placeholder="-- Select Cook --"
-    :clearable="true"
-  />
-</div>
+                <v-select
+                  :options="chefs"
+                  label="name"
+                  :reduce="chef => chef.id"
+                  v-model="selectedOrder.cook_id"
+                  placeholder="-- Select Cook --"
+                  :clearable="true"
+                />
+              </div>
 
 
-<div class="col-md-4">
-  <label class="form-label">Status</label>
+              <div class="col-md-4">
+                <label class="form-label">Status</label>
 
-  <v-select
-    :options="[
-      { label: 'Served', value: 'served' },
-      { label: 'Walked', value: 'walked' },
-      { label: 'Cancelled', value: 'cancelled' }
-    ]"
-    label="label"
-    :reduce="s => s.value"
-    v-model="selectedOrder.status"
-    placeholder="Select Status"
-    :clearable="false"
-  />
-</div>
-</div>
+                <v-select
+                  :options="[
+                    { label: 'Served', value: 'served' },
+                    { label: 'Walked', value: 'walked' },
+                    { label: 'Cancelled', value: 'cancelled' }
+                  ]"
+                  label="label"
+                  :reduce="s => s.value"
+                  v-model="selectedOrder.status"
+                  placeholder="Select Status"
+                  :clearable="false"
+                />
+              </div>
+
+              <div class="col-md-4">
+                <label class="form-label">Station</label>
+                <input type="text" class="form-control" v-model="selectedOrder.station" readonly>
+              </div>
+
+              </div>
+
               <div v-if="selectedOrder" class="mt-3">
               <h5>Ingredients for @{{ selectedOrder.name }}</h5>
 
@@ -396,7 +403,7 @@ tr:hover {
                                 <td class="text-left fw-semibold">@{{ item.code }}</td>
                                 <td class="text-left">@{{ item.name }}</td>
                                 <td class="text-end">@{{ item.qty }}</td>
-                                <td class="text-end">@{{ item.category }}</td>
+                                <td class="text-end">@{{ item.category }}/@{{ item.subcategory }}</td>
                                 <td class="text-end">@{{ item.station }}</td>
                                 <td class="text-end fw-bold"
     :class="statusFilter === 'serving' 
