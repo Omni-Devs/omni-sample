@@ -838,12 +838,12 @@ new Vue({
       }
     },
     async handleConfirmEndDay() {
-      const unpaidOrders = await this.checkUnpaidOrders();
-      if (unpaidOrders) {
-        this.endStep = 'unpaid';
-      } else {
+//       const unpaidOrders = await this.checkUnpaidOrders();
+//       if (unpaidOrders) {
+//         this.endStep = 'unpaid';
+//       } else {
         this.endStep = 'form';
-      }
+//       }
 
 // THIS IS THE MISSING LINE!!!
    //  console.log('%c[END DAY] No unpaid orders → Loading payment breakdown now!', 'color: lime; font-size: 16px; background: black;');
