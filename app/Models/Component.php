@@ -45,4 +45,9 @@ class Component extends Model
         return $this->hasMany(BranchComponent::class);
     }
 
+    public function station()
+    {
+        return $this->belongsTo(Station::class);
+    }
+
 }

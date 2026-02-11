@@ -2,10 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\BranchProduct;
 use App\Models\Category;
 use App\Models\Component;
 use App\Models\Product;
+use App\Models\Station;
 use App\Models\Subcategory;
+use App\Models\Unit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
@@ -24,9 +27,7 @@ class ProductController extends Controller
 public function fetchProducts(Request $request)
 {
     // 🔥 DEFAULT STATUS HANDLED HERE
-    $status = $request->filled('status')
-        ? $request->status
-        : 'active';
+   $status = $request->get('status', 'active');
 
     $perPage     = $request->get('perPage', 10);
     $search      = $request->get('search');
@@ -37,7 +38,7 @@ public function fetchProducts(Request $request)
 
     if ($branchId == 1) {
 
-        $products = Product::with(['category', 'subcategory'])
+        $products = Product::with(['category', 'subcategory', 'unit', 'station'])
             ->where('status', $status)
             ->when($search, function ($query, $search) {
                 $query->where(function ($q) use ($search) {
@@ -64,16 +65,14 @@ public function fetchProducts(Request $request)
         $products = Product::query()
             ->select([
                 'products.*',
-                'bc.onhand',
-                'bc.cost',
+                'bc.quantity',
                 'bc.price',
-                'bc.for_sale',
                 'bc.status as status'
             ])
             ->join('branch_products as bc', 'bc.product_id', '=', 'products.id')
             ->where('bc.branch_id', $branchId)
             ->where('products.status', $status)
-            ->with(['category', 'subcategory'])
+            ->with(['category', 'subcategory', 'unit', 'station'])
             ->when($search, function ($query, $search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('products.name', 'like', "%{$search}%")
@@ -104,7 +103,10 @@ public function fetchProducts(Request $request)
     {
         $categories = Category::where('status', 'active')->get();
         $subcategories = Subcategory::all();
-        return view('products.create', compact('categories', 'subcategories'));
+        $units = Unit::all();
+        $stations = Station::all();
+
+        return view('products.create', compact('categories', 'subcategories', 'units', 'stations'));
     }
 
     public function store(Request $request)
@@ -113,6 +115,11 @@ public function fetchProducts(Request $request)
             'code' => 'required|string|unique:products,code',
             'name' => 'required|string',
             'price' => 'required|numeric',
+
+            'quantity'   => 'required|numeric|min:0',
+            'station_id' => 'required|exists:stations,id',
+            'unit_id'    => 'required|exists:units,id',
+
             'category_id' => 'required|exists:categories,id',
             'subcategory_id' => 'nullable|exists:subcategories,id',
             'image' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:2048',
@@ -129,6 +136,16 @@ public function fetchProducts(Request $request)
 
         // Create product
         $product = Product::create($validated);
+
+         BranchProduct::create([
+            'branch_id'  => current_branch_id(),
+            'product_id' => $product->id,
+            'station_id' => $product->station_id,
+            'unit_id'    => $product->unit_id,
+            'quantity'   => $product->quantity,
+            'price'      => $product->price,
+            'status'     => 'active', // or whatever default you use
+        ]);
 
         // Save recipes
         if ($request->has('recipes')) {
@@ -151,8 +168,10 @@ public function fetchProducts(Request $request)
         $categories = Category::where('status', 'active')->get();
         $subcategories = Subcategory::all();
         $components = Component::all();
+        $units = Unit::all();
+        $stations = Station::all();
 
-        return view('products.edit', compact('product', 'categories', 'subcategories', 'components'));
+        return view('products.edit', compact('product', 'categories', 'subcategories', 'components', 'units', 'stations'));
     }
 
     public function update(Request $request, $id)
@@ -167,6 +186,10 @@ public function fetchProducts(Request $request)
             'subcategory_id' => 'nullable|exists:subcategories,id',
             'image' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:2048',
 
+            'station_id' => 'required|exists:stations,id',
+            'quantity' => 'required|numeric|min:0',
+            'unit_id' => 'required|exists:units,id',
+
             'recipes' => 'nullable|array',
             'recipes.*.component_id' => 'required|exists:components,id',
             'recipes.*.quantity' => 'required|numeric',
@@ -176,7 +199,16 @@ public function fetchProducts(Request $request)
 
         DB::beginTransaction();
         try {
-            $productData = Arr::only($validated, ['code', 'name', 'price', 'category_id', 'subcategory_id']);
+                $productData = Arr::only($validated, [
+                'code',
+                'name',
+                'price',
+                'category_id',
+                'subcategory_id',
+                'station_id',
+                'unit_id',
+                'quantity',
+            ]);
 
             // Handle new image upload
             if ($request->hasFile('image')) {
@@ -230,29 +262,32 @@ public function fetchProducts(Request $request)
      * Move the specified Product to archive (status change).
      */
     public function archive(Product $product)
-    {
-        $product->update([
-            'status' => 'archived'
-        ]);
+{
+    $product->update(['status' => 'archived']);
 
-        return redirect()
-            ->route('products.index')
-            ->with('success', 'Unit moved to archive successfully.');
-    }
+    return response()->json([
+        'message' => 'Product moved to archive successfully.',
+        'status' => 'success',
+        'product_id' => $product->id
+    ]);
+}
+
 
     /**
      * Restore a product from archive.
      */
     public function restore(Product $product)
-    {
-        $product->update([
-            'status' => 'active'
-        ]);
+{
+    $product->update([
+        'status' => 'active'
+    ]);
 
-        return redirect()
-            ->route('products.index')
-            ->with('success', 'Product restored to active successfully.');
-    }
+    return response()->json([
+        'message' => 'Product restored to active successfully.',
+        'status' => 'success',
+        'product_id' => $product->id
+    ]);
+}
 
     public function verify(Request $request)
     {

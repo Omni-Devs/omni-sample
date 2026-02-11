@@ -231,25 +231,7 @@ tr:hover {
       </div>
     </div>
   </div>
-
-
-    <div class="wrapper">
-        <div class="card mt-4">
-            <nav class="card-header">
-                <ul class="nav nav-tabs card-header-tabs">
-                  <li class="nav-item" v-for="status in statusList" :key="status.value">
-                      <a href="#"
-                        class="nav-link"
-                        :class="{ active: statusFilter === status.value }"
-                        @click.prevent="setStatus(status.value)">
-                      @{{ status.label }}
-                      </a>
-                  </li>
-                </ul>
-            </nav>
-            <div class="card-body">
-                <div class="vgt-wrap ">
-                  <div class="row">
+  <div class="row">
                     <div class="col-sm-12 col-md-3">
                       <fieldset class="form-group">
                           <legend class="col-form-label pt-0">Year</legend>
@@ -290,6 +272,24 @@ tr:hover {
                       <button class="btn btn-primary w-100" @click="resetToToday">Today’s Orders</button>
                     </div>
                   </div>
+
+    <div class="wrapper">
+        <div class="card mt-4">
+            <nav class="card-header">
+                <ul class="nav nav-tabs card-header-tabs">
+                  <li class="nav-item" v-for="status in statusList" :key="status.value">
+                      <a href="#"
+                        class="nav-link"
+                        :class="{ active: statusFilter === status.value }"
+                        @click.prevent="setStatus(status.value)">
+                      @{{ status.label }}
+                      </a>
+                  </li>
+                </ul>
+            </nav>
+            <div class="card-body">
+                <div class="vgt-wrap ">
+                  
 
                 <div class="vgt-inner-wrap">
                     <div class="vgt-fixed-header">
@@ -338,17 +338,22 @@ tr:hover {
                                 <i :class="getSortIcon('name')" class="ms-1"></i>
                               </th>
 
-                              <th scope="col" class="vgt-left-align text-right sortable" @click="sortTable('qty')">
+                              <th scope="col" class="vgt-left-align text-left sortable" @click="sortTable('qty')">
                                 <span>Qty</span>
                                 <i :class="getSortIcon('qty')" class="ms-1"></i>
                               </th>
 
-                              <th scope="col" class="vgt-left-align text-right sortable" @click="sortTable('station')">
+                              <th scope="col" class="vgt-left-align text-left sortable" @click="sortTable('category')">
+                                <span>Category</span>
+                                <i :class="getSortIcon('category')" class="ms-1"></i>
+                              </th>
+
+                              <th scope="col" class="vgt-left-align text-left sortable" @click="sortTable('station')">
                                 <span>Station</span>
                                 <i :class="getSortIcon('station')" class="ms-1"></i>
                               </th>
 
-                              <th scope="col" class="vgt-left-align text-right sortable"  @click="sortTable('time_submitted')">
+                              <th scope="col" class="vgt-left-align text-left sortable"  @click="sortTable('time_submitted')">
                                 <span>@{{ dynamicHeaderLabel }}</span>
                                 <i :class="getSortIcon('time_submitted')" class="ms-1"></i>
                               </th>
@@ -356,7 +361,7 @@ tr:hover {
                               <th
                                 v-if="statusFilter !== 'serving'"
                                 scope="col"
-                                class="vgt-left-align text-right sortable"
+                                class="vgt-left-align text-left sortable"
                                 @click="sortTable('cook_name')"
                               >
                                 <span>Chef, Cook</span>
@@ -368,11 +373,11 @@ tr:hover {
                                 <i :class="getSortIcon('running_time')" class="ms-1"></i>
                               </th> --}}
 
-                              <th scope="col" class="vgt-left-align text-right sortable" v-if="statusFilter == 'serving'">
+                              <th scope="col" class="vgt-left-align text-left sortable" v-if="statusFilter == 'serving'">
                                 <span>Recipe</span>
                               </th>
 
-                              <th v-if="statusFilter == 'serving'" scope="col" class="vgt-left-align text-right">
+                              <th v-if="statusFilter == 'serving'" scope="col" class="vgt-left-align text-left">
                                 <span>Action</span>
                               </th>
                             </tr>
@@ -391,6 +396,7 @@ tr:hover {
                                 <td class="text-left fw-semibold">@{{ item.code }}</td>
                                 <td class="text-left">@{{ item.name }}</td>
                                 <td class="text-end">@{{ item.qty }}</td>
+                                <td class="text-end">@{{ item.category }}</td>
                                 <td class="text-end">@{{ item.station }}</td>
                                 <td class="text-end fw-bold"
     :class="statusFilter === 'serving' 
@@ -436,7 +442,7 @@ tr:hover {
 
 
 
-                                <td class="text-right" v-if="statusFilter == 'serving'">
+                                <td class="text-left" v-if="statusFilter == 'serving'">
                                   <div class="dropdown b-dropdown btn-group">
                                     <button id="dropdownMenu{{ $id ?? uniqid() }}"
                                         type="button"

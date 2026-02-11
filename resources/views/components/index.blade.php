@@ -30,13 +30,24 @@
             <nav class="card-header">
                <ul class="nav nav-tabs card-header-tabs">
                   <li class="nav-item">
-                     <a href="{{ route('components.index', ['status' => 'active']) }}" class="nav-link {{ $status === 'active' ? 'active' : '' }}">Active</a>
+                     <a href="#" 
+                           class="nav-link"
+                           :class="{ active: statusFilter === 'active' }"
+                           @click.prevent="setStatus('active')">
+                           Active
+                     </a>
                   </li>
+
                   <li class="nav-item">
-                     <a href="{{ route('components.index', ['status' => 'archived']) }}" class="nav-link {{ $status === 'archived' ? 'active' : '' }}">Archived</a>
+                     <a href="#"
+                           class="nav-link"
+                           :class="{ active: statusFilter === 'archived' }"
+                           @click.prevent="setStatus('archived')">
+                           Archived
+                     </a>
                   </li>
                </ul>
-            </nav>
+         </nav>
             <div class="card-body">
                <!----><!---->
                <div class="vgt-wrap ">
@@ -198,11 +209,22 @@
                            <template v-else-if="col.field === 'for_sale'">
                               <input type="checkbox" :checked="row.for_sale">
                            </template>
+                           <template v-else-if="col.field === 'action'">
+                              <!-- keep blade partial if needed -->
+                              <actions-dropdown 
+                                 :row="row" 
+                                 @edit-route="editRoute"
+                                 @delete-route="deleteRoute"
+                                 @archive-route="archiveRoute"
+                                 @restore-route="restoreRoute"
+                                 @stock-card-route="stockCardRoute"
+                                 @logs-route="logsRoute"
+                                 @remarks-route="remarksRoute"
+                                 @open-remarks-modal="openRemarksModal"
+                                 >
+                              </actions-dropdown>
+                           </template>
                         </td>
-                        <template v-else-if="col.field === 'action'">
-                           <!-- keep blade partial if needed -->
-                           <actions-dropdown :row="row"></actions-dropdown>
-                        </template>
                      </tr>
                      <tr v-if="!rows.length">
                         <td :colspan="visibleColumns.length" class="vgt-center-align vgt-text-disabled">
@@ -466,6 +488,152 @@
 @endsection
 
 @section('scripts')
+<script type="text/x-template" id="actions-dropdown-template">
+<div class="dropdown btn-group" ref="dropdown">
+    <!-- 3 Dots Button -->
+    <button type="button" 
+            class="btn dropdown-toggle btn-link btn-lg text-decoration-none dropdown-toggle-no-caret"
+            @click.stop="toggleDropdown"
+            :aria-expanded="isOpen.toString()">
+        <span class="_dot _r_block-dot bg-dark"></span>
+        <span class="_dot _r_block-dot bg-dark"></span>
+        <span class="_dot _r_block-dot bg-dark"></span>
+            <!-- 🔴 Remarks Badge (BESIDE the dots) -->
+    <span
+        :id="`remarksBadge-${row.id}`"
+        class="badge bg-danger text-white remarks-badge d-none position-absolute "
+        style="font-size: 0.55rem; transform: translate(40%, -40%) !important;"
+    >
+        1
+    </span>
+    </button>
+
+
+
+    <!-- Dropdown menu -->
+    <ul :class="['dropdown-menu dropdown-menu-right', { show: isOpen }]">
+
+        <!-- Edit -->
+           <li v-if="row.status == 'active'">
+               <a class="dropdown-item" :href="`/components/${row.id}/edit`">
+                   <i class="nav-icon i-Edit font-weight-bold mr-2"></i>
+                   Edit
+               </a>
+           </li>
+
+           <li v-if="row.status == 'active'">
+               <a class="dropdown-item" @click="archive(row.id)">
+                   <i class="nav-icon i-Letter-Close font-weight-bold mr-2"></i>
+                   Archive
+               </a>
+           </li>
+
+           <li v-if="row.status == 'archived'">
+               <a class="dropdown-item" @click="restore(row.id)">
+                   <i class="nav-icon i-Refresh font-weight-bold mr-2"></i>
+                   Restore
+               </a>
+           </li>
+
+           <li v-if="row.status == 'active'">
+               <a class="dropdown-item" :href="`/components/${row.id}/stock-card`">
+                   <i class="nav-icon i-Receipt font-weight-bold mr-2"></i>
+                   View Stock Card
+               </a>
+           </li>
+
+             <li v-if="row.status == 'active'">
+                <a class="dropdown-item" :href="`/components/${row.id}/logs`">
+                      <i class="nav-icon i-Computer-Secure font-weight-bold mr-2"></i>
+                      Logs
+                </a>
+             </li>
+
+               <li v-if="row.status == 'active'">
+                  <button class="dropdown-item" @click="$emit('open-remarks-modal', row.id)">
+                        <i class="nav-icon i-Mail-Attachement font-weight-bold mr-2"></i>
+                        Remarks
+                        
+                  </button>
+               </li>    
+
+    </ul>
+</div>
+</script>
+<script>
+Vue.component("actions-dropdown", {
+    template: "#actions-dropdown-template",
+    props: {
+        row: { type: Object, required: true }
+    },
+    data() {
+        return {
+            isOpen: false
+        };
+    },
+    methods: {
+      archive(componentId) {
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "You are about to move this unit to archive!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, archive it!',
+            }).then((result) => {
+               if (result.isConfirmed) {
+                     axios.put(`/components/${componentId}/archive`)
+                        .then(res => {
+                           Swal.fire('Archived!', res.data.message, 'success')
+                                 .then(() => {
+                                    // Reload after user clicks Okay
+                                    window.location.reload();
+                                 });
+                        })
+                        .catch(err => {
+                            console.error(err);
+                            Swal.fire('Failed!', 'Could not archive component.', 'error');
+                        });
+                }
+            });
+        },
+        restore(componentId) {
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "You are about to restore this component!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, restore it!',
+            }).then((result) => {
+               if (result.isConfirmed) {
+                     axios.put(`/components/${componentId}/restore`)
+                        .then(res => {
+                           Swal.fire('Restored!', res.data.message, 'success')
+                                 .then(() => {
+                                    // Reload after user clicks Okay
+                                    window.location.reload();
+                                 });
+                        })
+                        .catch(err => {
+                            console.error(err);
+                            Swal.fire('Failed!', 'Could not restore component.', 'error');
+                        });
+                }
+            });
+        },
+        toggleDropdown() { this.isOpen = !this.isOpen; },
+        handleClickOutside(event) {
+            if (!this.$refs.dropdown?.contains(event.target)) this.isOpen = false;
+        }
+    },
+    mounted() {
+        document.addEventListener("click", this.handleClickOutside);
+    },
+    beforeDestroy() {
+        document.removeEventListener("click", this.handleClickOutside);
+    }
+});
+
+</script>
 <script>
   document.addEventListener("DOMContentLoaded", function() {
     const table = document.querySelector("#vgt-table");
@@ -720,6 +888,7 @@
     data() {
         return {
          selectedType: 'components',
+         statusFilter: 'active',
          types: [
          { label: 'Products', value: 'products', url: '/products' },
          { label: 'Components', value: 'components', url: '/components' },
@@ -834,6 +1003,11 @@
 },
 
   methods: {
+   setStatus(status) {
+         console.log("Status filter changed to:", status);
+            this.statusFilter = status;
+            this.fetchComponents();
+        },
    getCellValue(row, field) {
     switch (field) {
       case 'component_sku':
@@ -916,7 +1090,7 @@
       params: {
          search: this.search,
          perPage: this.perPage,
-         status: this.status,
+         status: this.statusFilter,
          page: page,
 
          // 🔹 filters
