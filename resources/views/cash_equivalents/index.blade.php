@@ -99,7 +99,7 @@
 
                         <div class="custom-control custom-control-inline custom-radio">
                         <input id="radio-group-1_BV_option_1" type="radio" name="Mode" class="custom-control-input" value="2">
-                        <label for="radio-group-1_BV_option_1" class="custom-control-label"><span>Change Fund</span></label>
+                        <label for="radio-group-1_BV_option_1" class="custom-control-label"><span>Cash On Hand</span></label>
                         </div>
 
                         <div class="custom-control custom-control-inline custom-radio">
@@ -189,6 +189,7 @@
                             <th scope="col" class="vgt-left-align text-left"><span>Date and Time Created</span></th>
                             <th scope="col" class="gvt-left-align text-left"><span>Created By</span></th>
                             <th scope="col" class="gvt-left-align text-left"><span>Cash Equivalent Name</span></th>
+                            <th scope="col" class="vgt-left-align text-left"><span>Accountable Name</span></th>
                             <th scope="col" class="gvt-left-align text-left"><span>Account Number</span></th>
                             <th scope="col" class="gvt-left-align text-left"><span>Type of Account</span></th>
                             <th scope="col" class="vgt-left-align text-right"><span>Action</span></th>
@@ -201,6 +202,7 @@
                     <td class="vgt-left-align text-left">{{ $ce->created_at->format('Y-m-d H:i') }}</td>
                     <td class="vgt-left-align text-left">{{ $ce->creator?->username ?? 'N/A' }}</td>
                     <td class="vgt-left-align text-left">{{ $ce->name }}</td>
+                    <td class="vgt-left-align text-left">{{ $ce->accountable?->username ?? 'N/A' }}</td>
                     <td class="vgt-left-align text-left">{{ $ce->account_number ?? 'Default' }}</td>
                     <td class="vgt-left-align text-left">{{ $ce->type_of_account ?? '' }}</td>
                     <td class="vgt-left-align text-right">
@@ -289,8 +291,8 @@
                                         </div>
                                         <div class="custom-control custom-control-inline custom-radio">
                                             <input id="edit-radio-2-{{ $ce->id }}" type="radio" name="Mode" class="custom-control-input" value="2"
-                                                {{ $ce->name === 'Change Fund' ? 'checked' : '' }}>
-                                            <label for="edit-radio-2-{{ $ce->id }}" class="custom-control-label">Change Fund</label>
+                                                {{ $ce->name === 'Cash On Hand' ? 'checked' : '' }}>
+                                            <label for="edit-radio-2-{{ $ce->id }}" class="custom-control-label">Cash On Hand</label>
                                         </div>
                                         <div class="custom-control custom-control-inline custom-radio">
                                             <input id="edit-radio-3-{{ $ce->id }}" type="radio" name="Mode" class="custom-control-input" value="3"
@@ -429,8 +431,8 @@
     radios.forEach(radio => {
         radio.addEventListener('change', function() {
         switch (this.value) {
-            case '2': // Change Fund
-            nameField.value = 'Change Fund';
+            case '2': // Cash On Hand
+            nameField.value = 'Cash On Hand';
             nameField.readOnly = true;
             break;
             case '3': // Petty Cash
@@ -457,7 +459,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const nameInput = modal.querySelector('input[name="name"]');
         const radios = modal.querySelectorAll('input[name="Mode"]');
         const specialNames = {
-            2: 'Change Fund',
+            2: 'Cash On Hand',
             3: 'Petty Cash',
             4: 'Revolving Fund'
         };
@@ -505,7 +507,7 @@ document.addEventListener('DOMContentLoaded', function () {
     function toggleAccountField() {
         const selected = document.querySelector('input[name="Mode"]:checked');
 
-        if (selected && selected.value === '2') { // Change Fund
+        if (selected && selected.value === '2') { // Cash On Hand
             accountInput.disabled = false;
             accountInput.required = true;
         } else {

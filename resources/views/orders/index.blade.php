@@ -1700,115 +1700,6 @@ document.querySelectorAll('[id^="billOutModal"]').forEach(modal => {
     });
 });
 
-// function toggleDiscountForm(orderId) {
-
-//    if (!willBeOpen) {   // closing
-//         // ...
-//         hasSuccessfullyCalculated[orderId] = false;
-//         disableSubmit(orderId);
-//     }
-
-//     const hidden = document.getElementById('discountIds_' + orderId);
-//     const selectedIds = hidden && hidden.value
-//         ? hidden.value.split(',').map(s => s.trim()).filter(Boolean)
-//         : [];
-
-//     if (!selectedIds.length) {
-//         alert('Please select at least one discount first.');
-//         return;
-//     }
-    
-//     const container = document.getElementById('selectedDiscountsContainer_' + orderId);
-//     const form = document.getElementById('discountForm_' + orderId);
-//     const willBeOpen = form.style.display !== 'block';
-
-//     // Helper - disable Calculate (and Submit if you want)
-//     const disableCalculate = () => {
-//         const btn = document.getElementById('calculateBtn_' + orderId);
-//         if (btn) {
-//             btn.disabled = true;
-//             btn.style.opacity = '0.6';
-//             btn.style.cursor = 'not-allowed';
-//             btn.title = 'Please close Manage Discount first';
-//         }
-//         // Optional: also disable Submit if you want
-//         // const submitBtn = document.getElementById('submitBtn_' + orderId);
-//         // if (submitBtn) submitBtn.disabled = true;
-//     };
-
-//     // Helper - enable Calculate (only when form is closed and fields are valid)
-//     const tryEnableCalculate = () => {
-//         const allFilled = areAllDiscountFieldsFilled(orderId);
-//         const btn = document.getElementById('calculateBtn_' + orderId);
-//         if (!btn) return;
-
-//         if (allFilled) {
-//             btn.disabled = false;
-//             btn.style.opacity = '1';
-//             btn.style.cursor = 'pointer';
-//             btn.title = '';
-//         } else {
-//             btn.disabled = true;
-//             btn.style.opacity = '0.6';
-//             btn.style.cursor = 'not-allowed';
-//             btn.title = 'Please fill all name and ID fields';
-//         }
-//     };
-
-//     if (willBeOpen) {
-//         // ─── Opening the form ────────────────────────────────────────────────
-//         container.innerHTML = '';
-
-//         selectedIds.forEach(id => {
-//             const chk = document.getElementById(`discountCheck_${orderId}_${id}`);
-//             if (!chk) return;
-
-//             const discountName = chk.dataset.name || 'Discount';
-//             const valuePct = chk.dataset.value || '0';
-
-//             // Initialize store if not exist
-//             if (!savedDiscountPersons[orderId]) savedDiscountPersons[orderId] = {};
-//             if (!savedDiscountPersons[orderId][id]) {
-//                 savedDiscountPersons[orderId][id] = [{ name: '', id_number: '' }];
-//             }
-
-//             const persons = savedDiscountPersons[orderId][id];
-
-//             const block = document.createElement('div');
-//             block.className = 'mb-4 p-2 border rounded';
-//             block.innerHTML = `
-//                 <h6 class="fw-bold">${discountName} (${valuePct}%)</h6>
-//                 <div class="form-group mb-2 d-flex align-items-center">
-//                     <label class="me-2"># of Entries</label>
-//                     <input type="number"
-//                            id="discountCount_${orderId}_${id}"
-//                            class="form-control"
-//                            style="width:100px" min="1"
-//                            value="${persons.length}"
-//                            oninput="renderDiscountPersons(${orderId}, ${id})">
-//                 </div>
-//                 <div id="discountPersons_${orderId}_${id}"></div>
-//             `;
-//             container.appendChild(block);
-
-//             renderDiscountPersons(orderId, id);
-//         });
-
-//         form.style.display = 'block';
-//         console.log(`[order ${orderId}] Discount form OPENED`);
-
-//         // Force disable Calculate button while form is open
-//         disableCalculate();
-//     } else {
-//         // ─── Closing the form ────────────────────────────────────────────────
-//         form.style.display = 'none';
-//         console.log(`[order ${orderId}] Discount form CLOSED`);
-
-//         // Only now check if fields are filled → decide if Calculate can be enabled
-//         tryEnableCalculate();
-//     }
-// }
-
 // Global tracker (per order) — whether the discount form was closed with valid data
 const discountFormClosedValid = {};
 
@@ -2017,12 +1908,19 @@ function updatePersonData(orderId, discountId, index, field, value) {
          'name' => $m->name
       ])) !!};
 
-      // include account_number in mapping for display
-      const cashEquivalents = {!! json_encode($cashEquivalents->map(fn($c) => [
-         'id' => $c->id,
-         'name' => $c->name,
-         'account_number' => $c->account_number
-      ])) !!};
+            // include account_number and creator name in mapping for display
+                const cashEquivalents = {!! json_encode($cashEquivalents->map(fn($c) => [
+                    'id' => $c->id,
+                    'name' => $c->name,
+                    'account_number' => $c->account_number,
+                    'creator_name' => $c->creator?->name ?? null,
+                    'created_by' => $c->created_by
+                ])) !!};
+
+            // expose full list globally so other handlers can reference creator_name/account_number
+            window.cashEquivalentsList = window.cashEquivalentsList || cashEquivalents;
+            // expose current logged-in user id so we can filter 'Cash On Hand' destinations
+            window.currentUserId = window.currentUserId || {!! json_encode(auth()->id()) !!};
 
       // expose maps globally so invoice builder can reliably lookup names even when relations
       // are not present in the AJAX response (defensive fallback)
@@ -2043,14 +1941,14 @@ function updatePersonData(orderId, discountId, index, field, value) {
                   ${paymentMethods.map(m => `<option value="${m.id}">${m.name}</option>`).join('')}
                </select>
          </td>
-         <td>
-               <select id="pdest_${orderId}_${counter}" class="form-select form-select-sm" onchange="toggleReferenceInput(${orderId}, ${counter})">
-                  <option value=""></option>
-                  ${cashEquivalents.map(c => 
-                     `<option value="${c.id}">${c.name} | ${c.account_number ?? ''}</option>`
-                  ).join('')}
-               </select>
-         </td>
+            <td>
+                    <select id="pdest_${orderId}_${counter}" class="form-select form-select-sm" onchange="toggleReferenceInput(${orderId}, ${counter})">
+                        <option value=""></option>
+                        ${cashEquivalents.map(c => 
+                            `<option value="${c.id}">${c.name} | ${c.account_number ?? ''}</option>`
+                        ).join('')}
+                    </select>
+            </td>
          
          <td id="pref_td_${orderId}_${counter}" style="display:none;">
                <input type="text" id="pref_${orderId}_${counter}" class="form-control form-control-sm" placeholder="Ref. No." />
@@ -2064,8 +1962,54 @@ function updatePersonData(orderId, discountId, index, field, value) {
       `;
 
       tbody.appendChild(tr);
+        // When payment method changes, update the destination labels accordingly.
+        const pmSelect = document.getElementById(`pm_${orderId}_${counter}`);
+        const pdestSelect = document.getElementById(`pdest_${orderId}_${counter}`);
+        if (pmSelect && pdestSelect) {
+            pmSelect.addEventListener('change', function () {
+                try { updateDestOptions(orderId, counter, this.value); } catch (e) { console.error(e); }
+            });
+              // initialize destination options according to the (possibly default) payment method
+              try { updateDestOptions(orderId, counter, pmSelect.value); } catch (e) { /* ignore init errors */ }
+        }
       recalcPayments(orderId);
    }
+
+    // Update payment destination options to show creator name when payment method is Cash
+    function updateDestOptions(orderId, rowId, paymentMethodId) {
+            // Find payment method name from global map
+            let pmName = (window.paymentMethodsMap && window.paymentMethodsMap[paymentMethodId]) || '';
+
+            const pmLower = String(pmName).trim().toLowerCase();
+            const pdest = document.getElementById(`pdest_${orderId}_${rowId}`);
+            if (!pdest) return;
+
+            // Preserve currently selected value
+            const current = pdest.value;
+
+            // - If payment method is other types (check, credit card, debit card, gcash), exclude Cash On Hand entries.
+            const list = window.cashEquivalentsList || [];
+                pdest.innerHTML = '<option value=""></option>' + list.filter(c => {
+                    const nameLower = String(c.name || '').toLowerCase();
+                    const isCashOnHand = nameLower.includes('cash on hand');
+
+                    if (pmLower === 'cash') {
+                        // For Cash payment method: show ONLY Cash On Hand entries created by current user
+                        return isCashOnHand && Number(c.created_by) === Number(window.currentUserId);
+                    }
+
+                    // For non-cash payment methods: exclude Cash On Hand entries, include others
+                    return !isCashOnHand;
+                }).map(c => {
+                const nameLower = String(c.name || '').toLowerCase();
+                const isCashOnHand = nameLower.includes('cash on hand');
+                const suffix = isCashOnHand ? (c.creator_name || c.account_number || '') : (c.account_number || c.creator_name || '');
+                return `<option value="${c.id}">${c.name} | ${suffix}</option>`;
+            }).join('');
+
+            // restore selection if still present
+            if (current) pdest.value = current;
+    }
 
       // ✅ new function: show/hide the reference input based on selection
       function toggleReferenceInput(orderId, rowId) {
@@ -2291,9 +2235,12 @@ function updatePersonData(orderId, discountId, index, field, value) {
                       $discount20 = $order->discount20 ?? ($lessVatExempt * 0.20);
                       $totalPrivDiscount = $lessVatExempt + $discount20;
                       $netSrBill = $totalBill - $totalPrivDiscount;
+                      // other discount check (numeric field on order if present)
+                      $otherDiscount = $order->other_discounts ?? 0;
                   @endphp
 
-                  @if($hasSrpwd && $hasPayments)
+                  @if($hasSrpwd || (float)($totalPrivDiscount ?? 0) > 0 || (float)($otherDiscount ?? 0) > 0)
+
                       <hr style="border-top: 2px dashed #333; margin: 20px 0;">
                       
                       <div style="border: 2px solid #333; padding: 15px; margin-top: 15px;">
@@ -2347,6 +2294,7 @@ function updatePersonData(orderId, discountId, index, field, value) {
                               @endforeach
                           </div>
                       </div>
+
                   @endif
 
                </div>
@@ -2442,8 +2390,14 @@ window.openInvoiceModalFromResponse = function(orderData) {
         // Build acknowledgement slip HTML
         const srpwdArr = orderData.discount_entries || orderData.discountEntries || [];
         let ackHtml = '';
-        
-        if (Array.isArray(srpwdArr) && srpwdArr.length > 0 && hasPayments) {
+
+        // Show acknowledgement slip when there are SR/PWD entries OR any computed privilege/other discounts
+        const hasAckCondition = (Array.isArray(srpwdArr) && srpwdArr.length > 0)
+            || (Number(orderData.other_discounts || 0) > 0)
+            || (Number(orderData.vat_exempt_12 || 0) > 0)
+            || (Number(orderData.discount20 || 0) > 0);
+
+        if (hasAckCondition && hasPayments) {
             const nf = new Intl.NumberFormat('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
             const totalBill = Number(orderData.total_charge || orderData.net_amount || 0) || 0;
             const lessVatExempt = Number(orderData.vat_exempt_12 || 0) || 0;
