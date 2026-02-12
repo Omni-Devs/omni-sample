@@ -46,7 +46,7 @@ class UserController extends Controller
 
         $query = User::with([
             'roles:id,name',
-            'branches:id,name',
+            'branches.roles:id,name',
             'employeeWorkInformations.department:id,name',
             'employeeWorkInformations.designation:id,name'
         ])
@@ -728,10 +728,9 @@ if (!empty($validated['salary_method'])) {
             'civil_status_id', 'address', 'branch_id',
         ]));
 
-        // Add this after update
-    if ($request->filled('branch_id')) {
-        $user->branches()->syncWithoutDetaching([$request->input('branch_id')]);
-    }
+        // NOTE: primary-branch handling is performed later after branch_permissions
+        // are processed. Do NOT sync here (was re-attaching branches that the
+        // user intended to remove in the edit form).
 
         // Handle image
         if ($request->hasFile('image')) {
@@ -966,9 +965,70 @@ elseif ($request->has('branches')) {
     $branchesToSync = $request->input('branches', []);
 }
 
-// 3. Actually sync branches (only if we have something to sync)
-if (!empty($branchesToSync)) {
+// 3. Actually sync branches
+// If branch_permissions were submitted (even if empty) we treat that as an
+// explicit replacement of the user's branches. This allows removing all
+// branches by submitting an empty set. Otherwise fall back to the legacy
+// `branches[]` input.
+if (!empty($bpFiltered)) {
     $user->branches()->sync(array_unique($branchesToSync));
+} elseif ($request->has('branches')) {
+    $user->branches()->sync($request->input('branches', []));
+}
+
+// 3.a Persist any branch -> role assignments submitted via branch_permissions
+// We will replace the branch_role rows for each branch with the submitted
+// role set (so unselected roles are removed). Then compute the final set of
+// user role ids as the union of explicitly-selected global roles + all
+// submitted branch roles, and sync the user's roles to that set (removing
+// roles that were unchecked).
+if (!empty($bpFiltered)) {
+    $collectedRoleIds = [];
+
+    foreach ($bpFiltered as $row) {
+        $branchId = $row['branch_id'] ?? null;
+        $rolesForBranch = is_array($row['permissions']) ? $row['permissions'] : [];
+        if (empty($branchId)) continue;
+
+        // Normalize role ids to integers and remove empty values
+        $submitted = array_values(array_filter(array_map(function($v){ return is_numeric($v) ? (int)$v : null; }, $rolesForBranch)));
+
+        // Existing roles for this branch
+        $existing = DB::table('branch_role')->where('branch_id', $branchId)->pluck('role_id')->toArray();
+
+        // Roles to delete (existing but not submitted)
+        $toDelete = array_diff($existing, $submitted);
+        if (!empty($toDelete)) {
+            DB::table('branch_role')->where('branch_id', $branchId)->whereIn('role_id', $toDelete)->delete();
+        }
+
+        // Roles to insert (submitted but not existing)
+        $toInsert = array_diff($submitted, $existing);
+        foreach ($toInsert as $rid) {
+            DB::table('branch_role')->insert([
+                'branch_id' => $branchId,
+                'role_id' => $rid,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        // Collect for user role sync
+        $collectedRoleIds = array_merge($collectedRoleIds, $submitted);
+    }
+
+    // Final user roles: union of explicit global roles (if any) + branch-selected roles
+    $explicitRoles = $request->input('roles', []);
+    $explicitRoles = is_array($explicitRoles) ? array_map('intval', $explicitRoles) : [];
+
+    $collectedRoleIds = array_values(array_unique(array_filter($collectedRoleIds)));
+    $finalRoleIds = array_values(array_unique(array_merge($explicitRoles, $collectedRoleIds)));
+
+    try {
+        $user->roles()->sync($finalRoleIds);
+    } catch (\Throwable $e) {
+        try { Log::warning('users.update - syncRoles failed', ['error' => $e->getMessage()]); } catch (\Throwable $_) {}
+    }
 }
 
 // 4. Update primary branch_id column (always, if submitted)
