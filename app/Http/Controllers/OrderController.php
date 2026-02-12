@@ -15,6 +15,7 @@ use App\Models\PaymentDetail;
 use App\Models\User;
 use App\Models\Branch;
 use App\Models\CashAudit;
+use App\Models\OrderDetail;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 
@@ -746,39 +747,62 @@ public function show($id)
     }
 
 
-   public function checkUnpaidOrders(Request $request)
+//    public function checkUnpaidOrders(Request $request)
+// {
+//     // Get the currently logged-in cashier
+//     $cashierId = Auth::id();
+
+//     // Find the active (open) cash audit session for this cashier
+//     $session = CashAudit::where('cashier_id', $cashierId)
+//         ->where('status', 'open')
+//         ->first();
+
+//     if (!$session) {
+//         return response()->json([
+//             'has_unpaid_orders' => false,
+//             'message' => 'No active POS session found.'
+//         ]);
+//     }
+
+//     // Define the session timeframe
+//     $sessionStart = Carbon::parse($session->created_at);
+//     $sessionEnd = $session->closed_at
+//         ? Carbon::parse($session->closed_at)
+//         : Carbon::now();
+
+//     // ✅ Check unpaid orders ONLY for the current branch
+//     $hasUnpaidOrders = Order::where('branch_id', current_branch_id())
+//         ->whereBetween('created_at', [$sessionStart, $sessionEnd])
+//         ->where('status', '!=', 'payments')
+//         ->exists();
+
+//     return response()->json([
+//         'has_unpaid_orders' => $hasUnpaidOrders,
+//         'session_start' => $sessionStart->toDateTimeString(),
+//         'session_end' => $sessionEnd->toDateTimeString(),
+//     ]);
+// }
+
+public function checkUnpaidOrders(Request $request)
 {
-    // Get the currently logged-in cashier
-    $cashierId = Auth::id();
+    $branchId = current_branch_id();
 
-    // Find the active (open) cash audit session for this cashier
-    $session = CashAudit::where('cashier_id', $cashierId)
-        ->where('status', 'open')
-        ->first();
+   // ✅ Check unpaid orders
+$hasUnpaidOrders = Order::where('branch_id', $branchId)
+    ->where('status', '!=', 'payments')
+    ->exists();
 
-    if (!$session) {
-        return response()->json([
-            'has_unpaid_orders' => false,
-            'message' => 'No active POS session found.'
-        ]);
-    }
+// ✅ Check unserved products
+$hasUnservedProducts = OrderDetail::whereHas('order', function ($q) use ($branchId) {
+        $q->where('branch_id', $branchId);
+    })
+    ->where('status', 'serving') // FIXED
+    ->exists();
 
-    // Define the session timeframe
-    $sessionStart = Carbon::parse($session->created_at);
-    $sessionEnd = $session->closed_at
-        ? Carbon::parse($session->closed_at)
-        : Carbon::now();
-
-    // ✅ Check unpaid orders ONLY for the current branch
-    $hasUnpaidOrders = Order::where('branch_id', current_branch_id())
-        ->whereBetween('created_at', [$sessionStart, $sessionEnd])
-        ->where('status', '!=', 'payments')
-        ->exists();
 
     return response()->json([
-        'has_unpaid_orders' => $hasUnpaidOrders,
-        'session_start' => $sessionStart->toDateTimeString(),
-        'session_end' => $sessionEnd->toDateTimeString(),
+        'has_unpaid_orders'     => $hasUnpaidOrders,
+        'has_unserved_products' => $hasUnservedProducts,
     ]);
 }
 

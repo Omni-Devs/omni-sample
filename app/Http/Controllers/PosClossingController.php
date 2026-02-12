@@ -18,12 +18,15 @@ class PosClossingController extends Controller
     }
     public function getClosed(Request $request)
 {
+    $branchId = current_branch_id();
+
     $query = CashAudit::with([
         'cashier',
         'transferTo',
         'auditRecord.submittedBy',   // ✅ REQUIRED
         'auditRecord.transferTo',    // ✅ REQUIRED
-    ]);
+    ])
+    ->where('branch_id', $branchId);
 
     if ($request->filled('status')) {
         $query->where('status', $request->status);
