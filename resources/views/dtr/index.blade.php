@@ -166,7 +166,7 @@
                    data-bs-target="#editDTRModal-{{ $record->user_id }}-{{ $record->date->format('Ymd') }}"
                    data-virtual="{{ $record->is_virtual ? 'true' : 'false' }}"
                    data-time-shift="{{ is_string($record->time_of_shift) ? $record->time_of_shift : '' }}">
-                    <i class="nav-icon i-Edit font-weight-bold mr-2"></i> Edit
+                    <i class="nav-icon i-Receipt font-weight-bold mr-2"></i> Add Time Record
                 </a>
             </li>
             <li>
@@ -189,70 +189,74 @@
 </td>
                                     </tr>
 
-                                  <!-- Edit Modal -->
-{{-- <div class="modal fade" id="editDTRModal-{{ $record->user_id }}-{{ $record->date->format('Ymd') }}" tabindex="-1"> --}}
-    <div class="modal fade" id="editDTRModal-{{ $record->user_id }}-{{ $record->date->format('Ymd') }}" ...>
+  <!-- Edit Modal -->
+<div class="modal fade" id="editDTRModal-{{ $record->user_id }}-{{ $record->date->format('Ymd') }}" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5>Edit Time Record - {{ $record->date->format('M d, Y') }}</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <h5>Add Time Record - {{ $record->date->format('M d, Y') }}</h5>
             </div>
 
             <form method="POST" 
                   action="{{ $record->is_virtual ? route('dtr.store') : route('dtr.update', $record->id) }}"
-                  id="form-{{ $record->user_id }}-{{ $record->date->format('Ymd') }}">
+                  id="form-{{ $record->user_id }}-{{ $record->date->format('Ymd') }}"
+                  class="dtr-form">
 
                 @csrf
                 @if(!$record->is_virtual) @method('PUT') @endif
 
                 <input type="hidden" name="user_id" value="{{ $record->user_id }}">
                 <input type="hidden" name="date" value="{{ $record->date->format('Y-m-d') }}">
-                {{-- <input type="hidden" name="salary_method_id" value="{{ $record->salary_method?->id ?? '' }}"> --}}
-                {{-- <input type="hidden" name="salary_method_id" value="{{ $record->salary_method_id ?? '' }}"> --}}
+                <input type="hidden" name="salary_method_id" value="{{ $record->salary_method_id ?? '' }}">
+                
+                {{-- Hidden status field that will be auto-calculated --}}
+                @php
+                    // If there is already a reported time in, default status should be 'worked',
+                    // otherwise default to 'absent'. Use '-' as placeholder for no value.
+                    $defaultStatus = (isset($record->time_in_reports) && $record->time_in_reports !== '-' && $record->time_in_reports !== null) ? 'worked' : 'absent';
+                @endphp
+                <input type="hidden" name="status" class="calculated-status" value="{{ old('status', $defaultStatus) }}">
+
+                {{-- Store shift times as data attributes for calculation --}}
+                @php
+                    $timeStr = $record->time_of_shift ?? '--:----:--';
+                    $parts = array_map('trim', explode('-', $timeStr, 2));
+                    $shiftStart = $parts[0] ?? '--:--';
+                    $shiftEnd = $parts[1] ?? '--:--';
+                @endphp
 
                 <div class="modal-body">
 
-                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label>Select Activity <span class="text-danger">*</span></label>
+                            <select name="activity" class="form-control activity-select" required>
+                                <option value="">Select Activity</option>
+                                <option value="time_in" {{ old('activity', $record->activity ?? '') == 'time_in' ? 'selected' : '' }}>Time In</option>
+                                <option value="time_out" {{ old('activity', $record->activity ?? '') == 'time_out' ? 'selected' : '' }}>Time Out</option>
+                                <option value="start_lunch" {{ old('activity', $record->activity ?? '') == 'start_lunch' ? 'selected' : '' }}>Start Lunch</option>
+                                <option value="end_lunch" {{ old('activity', $record->activity ?? '') == 'end_lunch' ? 'selected' : '' }}>End Lunch</option>
+                                <option value="start_break" {{ old('activity', $record->activity ?? '') == 'start_break' ? 'selected' : '' }}>Start Break</option>
+                                <option value="end_break" {{ old('activity', $record->activity ?? '') == 'end_break' ? 'selected' : '' }}>End Break</option>
+                                <option value="start_overtime" {{ old('activity', $record->activity ?? '') == 'start_overtime' ? 'selected' : '' }}>Start Overtime</option>
+                                <option value="end_overtime" {{ old('activity', $record->activity ?? '') == 'end_overtime' ? 'selected' : '' }}>End Overtime</option>
+                                <option value="start_field_work" {{ old('activity', $record->activity ?? '') == 'start_field_work' ? 'selected' : '' }}>Start Field Work</option>
+                                <option value="end_field_work" {{ old('activity', $record->activity ?? '') == 'end_field_work' ? 'selected' : '' }}>End Field Work</option>
+                                <option value="arrived_at_location" {{ old('activity', $record->activity ?? '') == 'arrived_at_location' ? 'selected' : '' }}>Arrived at Location</option>
+                                <option value="left_location" {{ old('activity', $record->activity ?? '') == 'left_location' ? 'selected' : '' }}>Left Location</option>
+                            </select>
+                        </div>
 
-                <div class="col-md-4 mb-3">
-                    <label>Time In Report</label>
-                    <input type="time" name="time_in_reports" class="form-control" 
-                        value="{{ old('time_in_reports', is_string($record->time_in_reports) ? $record->time_in_reports : '') }}">
+                        <div class="col-md-6 mb-3">
+                            <label>Select Time <span class="text-danger">*</span></label>
+                            <input type="time" name="time" class="form-control activity-time" 
+                                   value="{{ old('time', $record->time ?? '') }}" required>
+                        </div>
+
                 </div>
 
-                <div class="col-md-4 mb-3">
-                    <label>Time Out Report</label>
-                    <input type="time" name="time_out_reports" class="form-control" 
-                        value="{{ old('time_out_reports', is_string($record->time_out_reports) ? $record->time_out_reports : '') }}">
-                </div>
-
-                <div class="mb-3">
-                    <label>Other Reports / Notes</label>
-                    <input type="text" name="other_reports" class="form-control" 
-                        value="{{ old('other_reports', is_string($record->other_reports) ? $record->other_reports : '') }}"
-                        placeholder="e.g. break 12:00-13:00, training, etc.">
-                </div>
-                
-                    </div>
-
-                    <div class="mb-3">
-                        <label>Status</label>
-                        <select name="status" class="form-control" required>
-                            <option value="worked"     {{ old('status', $record->status) == 'worked'     ? 'selected' : '' }}>Worked</option>
-                            <option value="late"       {{ old('status', $record->status) == 'late'       ? 'selected' : '' }}>Late</option>
-                            <option value="under_time" {{ old('status', $record->status) == 'under_time' ? 'selected' : '' }}>Under Time</option>
-                            <option value="absent"     {{ old('status', $record->status) == 'absent'     ? 'selected' : '' }}>Absent</option>
-                            <option value="rest_day"   {{ old('status', $record->status) == 'rest_day'   ? 'selected' : '' }}>Rest Day</option>
-                        </select>
-                    </div>
-
-                    <!-- You can add auto-calculation later with JS if desired -->
-                </div>
-
-                <div class="modal-footer">
+                                     <div class="modal-footer justify-content-start">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="submit" class="btn btn-primary">Save Record</button>
+                    <button type="submit" class="btn btn-primary">Submit</button>
                 </div>
             </form>
         </div>
@@ -274,7 +278,7 @@
                             <span>Rows per page:</span>
                             <form method="GET" class="mb-0">
                                 <select name="perPage" onchange="this.form.submit()" class="form-select form-select-sm d-inline-block w-auto">
-                                    @foreach([10,25,50,100] as $size)
+                                    @foreach([50,100] as $size)
                                         <option value="{{ $size }}" {{ $perPage == $size ? 'selected' : '' }}>{{ $size }}</option>
                                     @endforeach
                                 </select>
@@ -388,6 +392,151 @@ document.querySelectorAll('[data-virtual="true"]').forEach(link => {
         modal.querySelector('[name="time_in_reports"]').value = start || '';
         modal.querySelector('[name="time_out_reports"]').value = end || '';
     });
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-populate time when activity is selected
+    document.querySelectorAll('.activity-select').forEach(select => {
+        select.addEventListener('change', function() {
+            const form = this.closest('form');
+            const timeInput = form.querySelector('.activity-time');
+            const activity = this.value;
+            
+            // Auto-set current time if no time is set
+            if (!timeInput.value) {
+                const now = new Date();
+                const hours = String(now.getHours()).padStart(2, '0');
+                const minutes = String(now.getMinutes()).padStart(2, '0');
+                timeInput.value = `${hours}:${minutes}`;
+            }
+        });
+    });
+
+    // Calculate status based on time in/out reports
+    document.querySelectorAll('.dtr-form').forEach(form => {
+        const timeInInput = form.querySelector('.time-in-input');
+        const timeOutInput = form.querySelector('.time-out-input');
+        const statusField = form.querySelector('.calculated-status');
+        const statusDisplay = form.querySelector('.status-text');
+        const modalBody = form.querySelector('.modal-body .row');
+        
+        const shiftStart = modalBody.dataset.shiftStart;
+        const shiftEnd = modalBody.dataset.shiftEnd;
+
+        function calculateStatus() {
+            const timeIn = timeInInput.value;
+            const timeOut = timeOutInput.value;
+            
+            let status = 'absent'; // Default
+            let statusClass = 'alert-danger';
+            
+            // If both time in and time out are present
+            if (timeIn && timeOut) {
+                const isLate = isTimeLate(timeIn, shiftStart);
+                const isUndertime = isTimeEarly(timeOut, shiftEnd);
+                
+                if (isLate && isUndertime) {
+                    status = 'late'; // Could also be "late_and_undertime" if you want
+                    statusClass = 'alert-warning';
+                } else if (isLate) {
+                    status = 'late';
+                    statusClass = 'alert-warning';
+                } else if (isUndertime) {
+                    status = 'under_time';
+                    statusClass = 'alert-warning';
+                } else {
+                    status = 'worked';
+                    statusClass = 'alert-success';
+                }
+            } 
+            // If only time in is present
+            else if (timeIn) {
+                status = 'worked'; // Partial work day
+                statusClass = 'alert-info';
+            }
+            // If neither is present, remains 'absent'
+            
+            // Update hidden field and display
+            statusField.value = status;
+            statusDisplay.textContent = formatStatus(status);
+            
+            // Update alert styling
+            const alertDiv = form.querySelector('.status-display');
+            alertDiv.className = 'alert ' + statusClass + ' status-display';
+        }
+
+        function isTimeLate(actualTime, scheduledTime) {
+            if (!actualTime || !scheduledTime || scheduledTime === '--:--') return false;
+            return timeToMinutes(actualTime) > timeToMinutes(scheduledTime);
+        }
+
+        function isTimeEarly(actualTime, scheduledTime) {
+            if (!actualTime || !scheduledTime || scheduledTime === '--:--') return false;
+            return timeToMinutes(actualTime) < timeToMinutes(scheduledTime);
+        }
+
+        function timeToMinutes(time) {
+            const [hours, minutes] = time.split(':').map(Number);
+            return hours * 60 + minutes;
+        }
+
+        function formatStatus(status) {
+            return status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        }
+
+        // Attach event listeners
+        timeInInput.addEventListener('change', calculateStatus);
+        timeOutInput.addEventListener('change', calculateStatus);
+        
+        // Calculate on modal open
+        calculateStatus();
+    });
+
+    // Pre-fill shift times for virtual records
+    document.querySelectorAll('[data-virtual="true"]').forEach(link => {
+        link.addEventListener('click', function() {
+            const modalId = this.getAttribute('data-bs-target');
+            const shift = this.getAttribute('data-time-shift') || '';
+            
+            if (!shift) return;
+            
+            const [start, end] = shift.split('-').map(t => t.trim());
+            
+            const modal = document.querySelector(modalId);
+            if (!modal) return;
+            
+            // Convert 12-hour format back to 24-hour for input fields
+            const startTime = convertTo24Hour(start);
+            const endTime = convertTo24Hour(end);
+            
+            modal.querySelector('[name="time_in_reports"]').value = startTime || '';
+            modal.querySelector('[name="time_out_reports"]').value = endTime || '';
+            
+            // Trigger status calculation
+            const form = modal.querySelector('form');
+            if (form) {
+                const event = new Event('change');
+                form.querySelector('.time-in-input').dispatchEvent(event);
+            }
+        });
+    });
+
+    function convertTo24Hour(time12h) {
+        if (!time12h || time12h === '--:--') return '';
+        
+        const [time, modifier] = time12h.split(' ');
+        let [hours, minutes] = time.split(':');
+        
+        if (hours === '12') {
+            hours = '00';
+        }
+        
+        if (modifier === 'PM') {
+            hours = parseInt(hours, 10) + 12;
+        }
+        
+        return `${String(hours).padStart(2, '0')}:${minutes}`;
+    }
 });
 </script>
 
