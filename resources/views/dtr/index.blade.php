@@ -194,8 +194,7 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5>Edit Time Record - {{ $record->date->format('M d, Y') }}</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <h5>Add Time Record - {{ $record->date->format('M d, Y') }}</h5>
             </div>
 
             <form method="POST" 
@@ -211,7 +210,12 @@
                 <input type="hidden" name="salary_method_id" value="{{ $record->salary_method_id ?? '' }}">
                 
                 {{-- Hidden status field that will be auto-calculated --}}
-                <input type="hidden" name="status" class="calculated-status" value="absent">
+                @php
+                    // If there is already a reported time in, default status should be 'worked',
+                    // otherwise default to 'absent'. Use '-' as placeholder for no value.
+                    $defaultStatus = (isset($record->time_in_reports) && $record->time_in_reports !== '-' && $record->time_in_reports !== null) ? 'worked' : 'absent';
+                @endphp
+                <input type="hidden" name="status" class="calculated-status" value="{{ old('status', $defaultStatus) }}">
 
                 {{-- Store shift times as data attributes for calculation --}}
                 @php
@@ -227,8 +231,8 @@
                             <label>Select Activity <span class="text-danger">*</span></label>
                             <select name="activity" class="form-control activity-select" required>
                                 <option value="">Select Activity</option>
-                                <option value="time_in_reports" {{ old('activity', $record->activity ?? '') == 'time_in' ? 'selected' : '' }}>Time In</option>
-                                <option value="time_out_reports" {{ old('activity', $record->activity ?? '') == 'time_out' ? 'selected' : '' }}>Time Out</option>
+                                <option value="time_in" {{ old('activity', $record->activity ?? '') == 'time_in' ? 'selected' : '' }}>Time In</option>
+                                <option value="time_out" {{ old('activity', $record->activity ?? '') == 'time_out' ? 'selected' : '' }}>Time Out</option>
                                 <option value="start_lunch" {{ old('activity', $record->activity ?? '') == 'start_lunch' ? 'selected' : '' }}>Start Lunch</option>
                                 <option value="end_lunch" {{ old('activity', $record->activity ?? '') == 'end_lunch' ? 'selected' : '' }}>End Lunch</option>
                                 <option value="start_break" {{ old('activity', $record->activity ?? '') == 'start_break' ? 'selected' : '' }}>Start Break</option>

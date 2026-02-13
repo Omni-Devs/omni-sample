@@ -627,6 +627,25 @@ if ($status === 'serving') {
 {{-- css --}}
 <style>
 
+/* Payment destination validation states */
+select.form-select[style*="border-color: rgb(220, 53, 69)"],
+select.form-select[style*="border-color: #dc3545"] {
+    border-color: #dc3545 !important;
+    background-color: #fff5f5;
+}
+
+select.form-select[style*="border-color: rgb(25, 135, 84)"],
+select.form-select[style*="border-color: #198754"] {
+    border-color: #198754 !important;
+    background-color: #f0fff4;
+}
+
+/* Error message in select */
+select.form-select option:first-child[value=""]:only-child {
+    color: #dc3545;
+    font-weight: 500;
+}
+
 .discount-select-container .discount-tag {
     font-size: 13px;
     padding: 2px 6px;
@@ -1893,123 +1912,165 @@ function updatePersonData(orderId, discountId, index, field, value) {
    <script>
 
    // helper to add a payment row in the modal table
-   function addPaymentRow(orderId) {
-      const counterEl = document.getElementById('payments_counter_' + orderId);
-      let counter = counterEl ? parseInt(counterEl.value || 0) : 0;
-      counter++;
-      if (counterEl) counterEl.value = counter;
+ function addPaymentRow(orderId) {
+    const counterEl = document.getElementById('payments_counter_' + orderId);
+    let counter = counterEl ? parseInt(counterEl.value || 0) : 0;
+    counter++;
+    if (counterEl) counterEl.value = counter;
 
-      const tbody = document.getElementById('payments_table_body_' + orderId);
-      if (!tbody) return;
+    const tbody = document.getElementById('payments_table_body_' + orderId);
+    if (!tbody) return;
 
-      // build select options for payment methods and cash equivalents
-      const paymentMethods = {!! json_encode($paymentMethods->map(fn($m) => [
-         'id' => $m->id,
-         'name' => $m->name
-      ])) !!};
+    // Build select options
+    const paymentMethods = {!! json_encode($paymentMethods->map(fn($m) => [
+        'id' => $m->id,
+        'name' => $m->name
+    ])) !!};
 
-            // include account_number and creator name in mapping for display
-                const cashEquivalents = {!! json_encode($cashEquivalents->map(fn($c) => [
-                    'id' => $c->id,
-                    'name' => $c->name,
-                    'account_number' => $c->account_number,
-                    'creator_name' => $c->creator?->name ?? null,
-                    'created_by' => $c->created_by
-                ])) !!};
+    const cashEquivalents = {!! json_encode($cashEquivalents->map(fn($c) => [
+        'id' => $c->id,
+        'name' => $c->name,
+        'account_number' => $c->account_number,
+        'creator_name' => $c->creator?->name ?? null,
+        'created_by' => $c->created_by
+    ])) !!};
 
-            // expose full list globally so other handlers can reference creator_name/account_number
-            window.cashEquivalentsList = window.cashEquivalentsList || cashEquivalents;
-            // expose current logged-in user id so we can filter 'Cash On Hand' destinations
-            window.currentUserId = window.currentUserId || {!! json_encode(auth()->id()) !!};
+    window.cashEquivalentsList = window.cashEquivalentsList || cashEquivalents;
+    window.currentUserId = window.currentUserId || {!! json_encode(auth()->id()) !!};
 
-      // expose maps globally so invoice builder can reliably lookup names even when relations
-      // are not present in the AJAX response (defensive fallback)
-      try {
-         window.paymentMethodsMap = window.paymentMethodsMap || {};
-         paymentMethods.forEach(pm => { window.paymentMethodsMap[pm.id] = pm.name; });
+    try {
+        window.paymentMethodsMap = window.paymentMethodsMap || {};
+        paymentMethods.forEach(pm => { window.paymentMethodsMap[pm.id] = pm.name; });
 
-         window.cashEquivalentsMap = window.cashEquivalentsMap || {};
-         cashEquivalents.forEach(ce => { window.cashEquivalentsMap[ce.id] = ce.name; });
-      } catch (e) { /* ignore map build errors */ }
+        window.cashEquivalentsMap = window.cashEquivalentsMap || {};
+        cashEquivalents.forEach(ce => { window.cashEquivalentsMap[ce.id] = ce.name; });
+    } catch (e) { /* ignore */ }
 
-      const tr = document.createElement('tr');
-      tr.dataset.rowId = counter;
-      tr.innerHTML = `
-         <td>
-               <select id="pm_${orderId}_${counter}" class="form-select form-select-sm">
-                  <option value=""></option>
-                  ${paymentMethods.map(m => `<option value="${m.id}">${m.name}</option>`).join('')}
-               </select>
-         </td>
-            <td>
-                    <select id="pdest_${orderId}_${counter}" class="form-select form-select-sm" onchange="toggleReferenceInput(${orderId}, ${counter})">
-                        <option value=""></option>
-                        ${cashEquivalents.map(c => 
-                            `<option value="${c.id}">${c.name} | ${c.account_number ?? ''}</option>`
-                        ).join('')}
-                    </select>
-            </td>
-         
-         <td id="pref_td_${orderId}_${counter}" style="display:none;">
-               <input type="text" id="pref_${orderId}_${counter}" class="form-control form-control-sm" placeholder="Ref. No." />
-         </td>
-         <td class="text-end">
-               <input type="number" step="0.01" id="pamt_${orderId}_${counter}" class="form-control form-control-sm text-end" value="0.00" oninput="recalcPayments(${orderId})" />
-         </td>
-         <td>
-               <button type="button" class="btn btn-sm btn-danger" onclick="removePaymentRow(${orderId}, ${counter})">Remove</button>
-         </td>
-      `;
+    const tr = document.createElement('tr');
+    tr.dataset.rowId = counter;
+    tr.innerHTML = `
+        <td>
+            <select id="pm_${orderId}_${counter}" class="form-select form-select-sm">
+                <option value=""></option>
+                ${paymentMethods.map(m => `<option value="${m.id}">${m.name}</option>`).join('')}
+            </select>
+        </td>
+        <td>
+            <select id="pdest_${orderId}_${counter}" class="form-select form-select-sm" onchange="toggleReferenceInput(${orderId}, ${counter})">
+                <option value=""></option>
+                ${cashEquivalents.map(c => 
+                    `<option value="${c.id}">${c.name} | ${c.account_number ?? ''}</option>`
+                ).join('')}
+            </select>
+        </td>
+        <td id="pref_td_${orderId}_${counter}" style="display:none;">
+            <input type="text" id="pref_${orderId}_${counter}" class="form-control form-control-sm" placeholder="Ref. No." />
+        </td>
+        <td class="text-end">
+            <input type="number" step="0.01" id="pamt_${orderId}_${counter}" class="form-control form-control-sm text-end" value="0.00" oninput="recalcPayments(${orderId})" />
+        </td>
+        <td>
+            <button type="button" class="btn btn-sm btn-danger" onclick="removePaymentRow(${orderId}, ${counter})">Remove</button>
+        </td>
+    `;
 
-      tbody.appendChild(tr);
-        // When payment method changes, update the destination labels accordingly.
-        const pmSelect = document.getElementById(`pm_${orderId}_${counter}`);
-        const pdestSelect = document.getElementById(`pdest_${orderId}_${counter}`);
-        if (pmSelect && pdestSelect) {
-            pmSelect.addEventListener('change', function () {
-                try { updateDestOptions(orderId, counter, this.value); } catch (e) { console.error(e); }
-            });
-              // initialize destination options according to the (possibly default) payment method
-              try { updateDestOptions(orderId, counter, pmSelect.value); } catch (e) { /* ignore init errors */ }
+    tbody.appendChild(tr);
+
+    // ✅ Attach event listener for payment method change
+    const pmSelect = document.getElementById(`pm_${orderId}_${counter}`);
+    const pdestSelect = document.getElementById(`pdest_${orderId}_${counter}`);
+    
+    if (pmSelect && pdestSelect) {
+        pmSelect.addEventListener('change', function () {
+            try { 
+                updateDestOptions(orderId, counter, this.value); 
+            } catch (e) { 
+                console.error('Error updating destination options:', e); 
+            }
+        });
+        
+        // Initialize destination options
+        try { 
+            updateDestOptions(orderId, counter, pmSelect.value); 
+        } catch (e) { 
+            console.error('Error initializing destination options:', e); 
         }
-      recalcPayments(orderId);
-   }
+    }
+
+    recalcPayments(orderId);
+}
 
     // Update payment destination options to show creator name when payment method is Cash
-    function updateDestOptions(orderId, rowId, paymentMethodId) {
-            // Find payment method name from global map
-            let pmName = (window.paymentMethodsMap && window.paymentMethodsMap[paymentMethodId]) || '';
+    // Update payment destination options and auto-select Cash On Hand for Cash method
+function updateDestOptions(orderId, rowId, paymentMethodId) {
+    // Find payment method name from global map
+    let pmName = (window.paymentMethodsMap && window.paymentMethodsMap[paymentMethodId]) || '';
+    const pmLower = String(pmName).trim().toLowerCase();
+    const pdest = document.getElementById(`pdest_${orderId}_${rowId}`);
+    
+    if (!pdest) return;
 
-            const pmLower = String(pmName).trim().toLowerCase();
-            const pdest = document.getElementById(`pdest_${orderId}_${rowId}`);
-            if (!pdest) return;
+    // Preserve currently selected value
+    const current = pdest.value;
 
-            // Preserve currently selected value
-            const current = pdest.value;
+    const list = window.cashEquivalentsList || [];
+    const filteredList = list.filter(c => {
+        const nameLower = String(c.name || '').toLowerCase();
+        const isCashOnHand = nameLower.includes('cash on hand');
 
-            // - If payment method is other types (check, credit card, debit card, gcash), exclude Cash On Hand entries.
-            const list = window.cashEquivalentsList || [];
-                pdest.innerHTML = '<option value=""></option>' + list.filter(c => {
-                    const nameLower = String(c.name || '').toLowerCase();
-                    const isCashOnHand = nameLower.includes('cash on hand');
+        if (pmLower === 'cash') {
+            // For Cash payment method: show ONLY Cash On Hand entries created by current user
+            return isCashOnHand && Number(c.created_by) === Number(window.currentUserId);
+        }
 
-                    if (pmLower === 'cash') {
-                        // For Cash payment method: show ONLY Cash On Hand entries created by current user
-                        return isCashOnHand && Number(c.created_by) === Number(window.currentUserId);
-                    }
+        // For non-cash payment methods: exclude Cash On Hand entries, include others
+        return !isCashOnHand;
+    });
 
-                    // For non-cash payment methods: exclude Cash On Hand entries, include others
-                    return !isCashOnHand;
-                }).map(c => {
-                const nameLower = String(c.name || '').toLowerCase();
-                const isCashOnHand = nameLower.includes('cash on hand');
-                const suffix = isCashOnHand ? (c.creator_name || c.account_number || '') : (c.account_number || c.creator_name || '');
-                return `<option value="${c.id}">${c.name} | ${suffix}</option>`;
-            }).join('');
+    // Build options HTML
+    pdest.innerHTML = '<option value=""></option>' + filteredList.map(c => {
+        const nameLower = String(c.name || '').toLowerCase();
+        const isCashOnHand = nameLower.includes('cash on hand');
+        const suffix = isCashOnHand ? (c.creator_name || c.account_number || '') : (c.account_number || c.creator_name || '');
+        return `<option value="${c.id}">${c.name} | ${suffix}</option>`;
+    }).join('');
 
-            // restore selection if still present
-            if (current) pdest.value = current;
+    // ✅ AUTO-SELECT and VALIDATE for Cash payment method
+    if (pmLower === 'cash') {
+        if (filteredList.length === 0) {
+            // No Cash On Hand found - show error
+            pdest.innerHTML = '<option value="">⚠️ No Cash On Hand available</option>';
+            pdest.style.borderColor = '#dc3545'; // Red border
+            
+            // Show alert
+            alert('❌ Error: Please create a Cash On Hand account first.\n\nGo to Settings → Cash Equivalents to create your Cash On Hand account.');
+            
+            // Clear payment method selection
+            const pmSelect = document.getElementById(`pm_${orderId}_${rowId}`);
+            if (pmSelect) pmSelect.value = '';
+            
+            return;
+        } else if (filteredList.length === 1) {
+            // Auto-select the only Cash On Hand option
+            pdest.value = filteredList[0].id;
+            pdest.style.borderColor = '#198754'; // Green border
+            
+            // Show reference input since destination is now selected
+            toggleReferenceInput(orderId, rowId);
+            
+            console.log(`✅ Auto-selected Cash On Hand: ${filteredList[0].name}`);
+        } else {
+            // Multiple Cash On Hand options - reset border
+            pdest.style.borderColor = '';
+        }
+    } else {
+        // Non-cash payment - reset border
+        pdest.style.borderColor = '';
+        
+        // Restore selection if still present
+        if (current) pdest.value = current;
     }
+}
 
       // ✅ new function: show/hide the reference input based on selection
       function toggleReferenceInput(orderId, rowId) {
@@ -2831,135 +2892,110 @@ window.openInvoiceModalFromResponse = function(orderData) {
     }, 300);
 }
 
-   function submitPayment(orderId) {
-      // gather payments rows if any
-      const payments = [];
-      const tbody = document.getElementById('payments_table_body_' + orderId);
-      if (tbody) {
-         tbody.querySelectorAll('tr[data-row-id]').forEach(tr => {
+  function submitPayment(orderId) {
+    console.log('💳 Submitting payment for order', orderId);
+
+    const payments = [];
+    const tbody = document.getElementById('payments_table_body_' + orderId);
+    
+    if (tbody) {
+        tbody.querySelectorAll('tr[data-row-id]').forEach(tr => {
             const rid = tr.dataset.rowId;
-            const method = document.getElementById(`pm_${orderId}_${rid}`)?.value || '';
+            const methodId = document.getElementById(`pm_${orderId}_${rid}`)?.value || '';
             const ref = document.getElementById(`pref_${orderId}_${rid}`)?.value || '';
             const dest = document.getElementById(`pdest_${orderId}_${rid}`)?.value || '';
-            const amount = parseFloat(document.getElementById(`pamt_${orderId}_${rid}`)?.value || 0) || 0;
-            if (method && dest && amount > 0) {
-               payments.push({
-                  payment_method_id: method,
-                  reference_no: ref,
-                  cash_equivalent_id: dest,
-                  amount_paid: amount
-               });
+            const amount = parseFloat(document.getElementById(`pamt_${orderId}_${rid}`)?.value || 0);
+            
+            if (methodId && amount > 0) {
+                // ✅ Validate Cash payment has destination
+                const methodName = (window.paymentMethodsMap && window.paymentMethodsMap[methodId]) || '';
+                const isCash = String(methodName).trim().toLowerCase() === 'cash';
+                
+                if (isCash && !dest) {
+                    alert('⚠️ Cash payment requires a Cash On Hand destination.\n\nPlease create a Cash On Hand account if you haven\'t already.');
+                    return;
+                }
+                
+                if (dest && amount > 0) {
+                    payments.push({ 
+                        payment_method_id: methodId, 
+                        reference_no: ref, 
+                        cash_equivalent_id: dest, 
+                        amount_paid: amount 
+                    });
+                }
             }
-         });
-      }
+        });
+    }
 
-      // Fallback: legacy single-field inputs
-      if (payments.length === 0) {
-         const method = document.getElementById('payment_method_id_' + orderId)?.value || '';
-         const dest = document.getElementById('cash_equivalent_id_' + orderId)?.value || '';
-         const ref = document.getElementById('reference_no_' + orderId)?.value || '';
-         const amt = parseFloat(document.getElementById('amount_paid_' + orderId)?.value || 0) || 0;
-         if (method && dest && amt > 0) {
-            payments.push({
-               payment_method_id: method,
-               reference_no: ref,
-               cash_equivalent_id: dest,
-               amount_paid: amt
-            });
-         }
-      }
+    if (payments.length === 0) {
+        alert('⚠️ No valid payments to submit. Please add at least one payment with valid amount and destination.');
+        return;
+    }
 
-      if (payments.length === 0) {
-         alert('No payments to submit. Please add at least one payment row and enter valid amounts.');
-         return;
-      }
+    const totalRendered = parseFloat(
+        document.getElementById('payments_total_' + orderId)?.textContent?.replace(/[^\d.-]/g, '') || 0
+    );
+    const changeAmount = parseFloat(
+        document.getElementById('payments_change_' + orderId)?.textContent?.replace(/[^\d.-]/g, '') || 0
+    );
 
-      // ✅ Get totals from footer
-      const totalRendered = parseFloat(
-         document.getElementById('payments_total_' + orderId)?.textContent?.replace(/[^\d.-]/g, '') || 0
-      );
-      const changeAmount = parseFloat(
-         document.getElementById('payments_change_' + orderId)?.textContent?.replace(/[^\d.-]/g, '') || 0
-      );
+    const totalChargeStr = document.getElementById('pay_totalCharge_' + orderId)?.value || 
+                           document.getElementById('totalCharge_' + orderId)?.value || 0;
+    const totalCharge = parseFloat(String(totalChargeStr).replace(/,/g, '')) || 0;
+    
+    if (totalRendered < totalCharge) {
+        alert(`⚠️ Insufficient payment.\n\nTotal Rendered: ₱${Number(totalRendered).toFixed(2)}\nTotal Charge: ₱${Number(totalCharge).toFixed(2)}\nShortfall: ₱${Number(totalCharge - totalRendered).toFixed(2)}`);
+        return;
+    }
 
-      // Validate payment sufficiency against computed total charge
-      const totalChargeStr = document.getElementById('pay_totalCharge_' + orderId)?.value || document.getElementById('totalCharge_' + orderId)?.value || 0;
-      const totalCharge = parseFloat(String(totalChargeStr).replace(/,/g, '')) || 0;
-      if (totalRendered < totalCharge) {
-         alert('⚠️ Insufficient payment. Total rendered (' + Number(totalRendered).toFixed(2) + ') is less than total charge (' + Number(totalCharge).toFixed(2) + ').');
-         return;
-      }
+    const payload = new FormData();
+    payload.append('payments', JSON.stringify(payments));
+    payload.append('total_payment_rendered', totalRendered);
+    payload.append('change_amount', changeAmount);
 
-      const payload = new FormData();
-      payload.append('payments', JSON.stringify(payments));
-      payload.append('total_payment_rendered', totalRendered);
-      payload.append('change_amount', changeAmount);
+    const token = document.querySelector('meta[name="csrf-token"]').content;
 
-      // include single fields for backward compat if they exist
-      const singleMethod = document.getElementById('payment_method_id_' + orderId);
-      if (singleMethod) payload.append('payment_method_id', singleMethod.value);
-      const singleDest = document.getElementById('cash_equivalent_id_' + orderId);
-      if (singleDest) payload.append('cash_equivalent_id', singleDest.value);
-      const singleRef = document.getElementById('reference_no_' + orderId);
-      if (singleRef) payload.append('reference_no', singleRef.value);
-      const singleAmt = document.getElementById('amount_paid_' + orderId);
-      if (singleAmt) payload.append('amount_paid', singleAmt.value || 0);
+    fetch('/orders/' + orderId + '/payment', {
+        method: 'POST',
+        headers: { 'X-CSRF-TOKEN': token },
+        body: payload,
+        credentials: 'same-origin'
+    })
+    .then(res => res.json())
+    .then(data => {
+        console.log('✅ Payment response:', data);
 
-      // csrf
-      const token = document.querySelector('meta[name="csrf-token"]').content;
-
-      fetch("/orders/" + orderId + "/payment", {
-         method: 'POST',
-         headers: { 'X-CSRF-TOKEN': token },
-         body: payload,
-         credentials: 'same-origin'
-      })
-         .then(res => res.json())
-         .then(data => {
-            if (data.success) {
-               console.log('Payment response', data);
-               // alert('Payment saved. Order marked as PAID');
-
-               // update status display in the row
-               const checkbox = document.querySelector('.toggle-details[data-id="' + orderId + '"]');
-               if (checkbox) {
-                  const row = checkbox.closest('tr');
-                  if (row) {
-                     const statusCell = row.querySelectorAll('td')[5];
-                     if (statusCell) statusCell.textContent = 'Paid';
-
-                     const amountCell = document.getElementById('amount_' + orderId);
-                     if (amountCell)
-                        amountCell.textContent = '₱' +
-                           Number(data.order.total_charge || data.order.net_amount || 0)
-                              .toLocaleString('en-PH', { minimumFractionDigits: 2 });
-                  }
-               }
-
-               // close modal
-               const modalEl = document.getElementById('paymentModal' + orderId);
-               if (modalEl) {
-                  const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
-                     // show invoice modal (if server returned order data)
-                     if (data.order) {
-                        console.log('Attempting to open invoice modal for order', data.order.id);
-                        try { openInvoiceModalFromResponse(data.order); } catch(e) { console.error(e); }
-                     } else {
-                        console.warn('No order returned in payment response');
-                     }
-                     modal.hide();
-
-                     // (removed immediate reload — page will refresh when the receipt modal is closed)
-               }
-            } else {
-               alert('Failed to save payment: ' + (data.message || 'Unknown'));
+        if (data.success) {
+            // Update UI and show receipt
+            const row = document.querySelector(`.toggle-details[data-id="${orderId}"]`)?.closest('tr');
+            if (row) {
+                const statusCell = row.querySelectorAll('td')[6];
+                if (statusCell) statusCell.textContent = 'Payments';
             }
-         })
-         // .catch(err => {
-         //    console.error('Payment error', err);
-         //    alert('Error saving payment');
-         // });
-   }
+
+            const paymentModal = document.getElementById('paymentModal' + orderId);
+            if (paymentModal && typeof bootstrap !== 'undefined') {
+                const pm = bootstrap.Modal.getInstance(paymentModal) || new bootstrap.Modal(paymentModal);
+                paymentModal.addEventListener('hidden.bs.modal', function onHidden() {
+                    paymentModal.removeEventListener('hidden.bs.modal', onHidden);
+                    if (data.order) {
+                        window.openInvoiceModalFromResponse(data.order);
+                    }
+                });
+                pm.hide();
+            } else if (data.order) {
+                window.openInvoiceModalFromResponse(data.order);
+            }
+        } else {
+            alert('❌ Failed to save payment: ' + (data.message || 'Unknown error.'));
+        }
+    })
+    .catch(err => {
+        console.error('💥 Payment error', err);
+        alert('❌ Error saving payment. Please try again.');
+    });
+}
 
 new Vue({
   el: '#orderTypeApp',
